@@ -46,15 +46,15 @@ namespace IS4.Sona.Compiler.States
             EnterState<ParamListState>().EnterParamList(context);
         }
 
-        public override void EnterFuncBlock(FuncBlockContext context)
+        public override void EnterValueBlock(ValueBlockContext context)
         {
             Out.WriteOperator("=");
             Out.WriteLine("begin");
             Out.EnterScope();
-            EnterState<BlockState>().EnterFuncBlock(context);
+            EnterState<BlockState>().EnterValueBlock(context);
         }
 
-        public override void ExitFuncBlock(FuncBlockContext context)
+        public override void ExitValueBlock(ValueBlockContext context)
         {
             Out.ExitScope();
             Out.Write("end");

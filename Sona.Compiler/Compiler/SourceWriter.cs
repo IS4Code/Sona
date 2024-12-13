@@ -16,6 +16,8 @@ namespace IS4.Sona.Compiler
 
         public bool AdjustLines { get; set; } = true;
 
+        int symbolIndex;
+
         public SourceWriter(TextWriter writer) : base(new LineCountingTextWriter(writer), " ")
         {
 
@@ -80,6 +82,11 @@ namespace IS4.Sona.Compiler
         {
             OnNewLine();
             await base.OutputTabsAsync();
+        }
+
+        public string GetTemporarySymbol()
+        {
+            return "_ " + Interlocked.Increment(ref symbolIndex);
         }
 
         public void WriteSymbol(string name)

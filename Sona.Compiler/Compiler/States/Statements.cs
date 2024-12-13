@@ -1,7 +1,5 @@
 ﻿using System;
 using System.IO;
-using FSharp.Compiler.Syntax;
-using FSharp.Compiler.Tokenization;
 using IS4.Sona.Compiler.Tools;
 using static IS4.Sona.Grammar.SonaParser;
 
@@ -14,12 +12,12 @@ namespace IS4.Sona.Compiler.States
             EnterState<MultiFunctionState>().EnterMultiFuncDecl(context);
         }
 
-        public sealed override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
+        public override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
         {
             Out.Write("()");
         }
 
-        public sealed override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
+        public override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
         {
             Out.WriteLine();
         }
@@ -44,44 +42,99 @@ namespace IS4.Sona.Compiler.States
             EnterState<AssignmentOrCallState>().EnterAssignmentOrCall(context);
         }
 
-        public override void EnterImportStatement(ImportStatementContext context)
+        public sealed override void EnterIfStatement(IfStatementContext context)
+        {
+            EnterState<IfStatement>().EnterIfStatement(context);
+        }
+
+        public sealed override void EnterIfStatementReturningClosed(IfStatementReturningClosedContext context)
+        {
+            EnterState<IfStatement>().EnterIfStatementReturningClosed(context);
+        }
+
+        public sealed override void EnterIfStatementReturningOpenSimple(IfStatementReturningOpenSimpleContext context)
+        {
+            EnterState<IfSimpleStatement>().EnterIfStatementReturningOpenSimple(context);
+        }
+
+        public sealed override void EnterIfStatementReturningOpenComplex(IfStatementReturningOpenComplexContext context)
+        {
+            EnterState<IfComplexStatement>().EnterIfStatementReturningOpenComplex(context);
+        }
+
+        public sealed override void EnterIfStatementTerminating(IfStatementTerminatingContext context)
+        {
+            EnterState<IfStatement>().EnterIfStatementTerminating(context);
+        }
+
+        public sealed override void EnterImportStatement(ImportStatementContext context)
         {
             EnterState<TopLevelStatement>().EnterImportStatement(context);
         }
 
-        public override void EnterImportTypeStatement(ImportTypeStatementContext context)
+        public sealed override void EnterImportTypeStatement(ImportTypeStatementContext context)
         {
             EnterState<TopLevelStatement>().EnterImportTypeStatement(context);
         }
 
-        public override void EnterImportFileStatement(ImportFileStatementContext context)
+        public sealed override void EnterImportFileStatement(ImportFileStatementContext context)
         {
             EnterState<TopLevelStatement>().EnterImportFileStatement(context);
         }
 
-        public override void EnterIncludeStatement(IncludeStatementContext context)
+        public sealed override void EnterIncludeStatement(IncludeStatementContext context)
         {
             EnterState<TopLevelStatement>().EnterIncludeStatement(context);
         }
 
-        public override void EnterRequireStatement(RequireStatementContext context)
+        public sealed override void EnterRequireStatement(RequireStatementContext context)
         {
             EnterState<TopLevelStatement>().EnterRequireStatement(context);
         }
 
-        public sealed override void ExitStatement(StatementContext context)
+        public override void EnterStatement(StatementContext context)
+        {
+
+        }
+
+        public override void ExitStatement(StatementContext context)
         {
             Out.WriteLine();
         }
 
-        public sealed override void ExitFuncFinalStatement(FuncFinalStatementContext context)
+        public override void EnterReturningStatement(ReturningStatementContext context)
+        {
+
+        }
+
+        public override void ExitReturningStatement(ReturningStatementContext context)
         {
             Out.WriteLine();
         }
 
-        public sealed override void ExitBlockFinalStatement(BlockFinalStatementContext context)
+        public override void EnterConditionallyReturningStatement(ConditionallyReturningStatementContext context)
+        {
+
+        }
+
+        public override void ExitConditionallyReturningStatement(ConditionallyReturningStatementContext context)
         {
             Out.WriteLine();
+        }
+
+        public override void EnterTerminatingStatement(TerminatingStatementContext context)
+        {
+
+        }
+
+        public override void ExitTerminatingStatement(TerminatingStatementContext context)
+        {
+            Out.WriteLine();
+        }
+
+        public sealed override void EnterTopLevelStatement(TopLevelStatementContext context)
+        {
+
         }
 
         public sealed override void ExitTopLevelStatement(TopLevelStatementContext context)
@@ -89,19 +142,39 @@ namespace IS4.Sona.Compiler.States
             Out.WriteLine();
         }
 
-        public override void ExitSubBlock(SubBlockContext context)
+        public sealed override void ExitValuelessBlock(ValuelessBlockContext context)
         {
-            ExitState()?.ExitSubBlock(context);
+            ExitState()?.ExitValuelessBlock(context);
         }
 
-        public override void ExitFuncBlock(FuncBlockContext context)
+        public sealed override void ExitTerminatingBlock(TerminatingBlockContext context)
         {
-            ExitState()?.ExitFuncBlock(context);
+            ExitState()?.ExitTerminatingBlock(context);
         }
 
-        public override void ExitMainBlock(MainBlockContext context)
+        public sealed override void ExitClosedBlock(ClosedBlockContext context)
         {
-            ExitState()?.ExitMainBlock(context);
+            ExitState()?.ExitClosedBlock(context);
+        }
+
+        public sealed override void ExitReturningBlock(ReturningBlockContext context)
+        {
+            ExitState()?.ExitReturningBlock(context);
+        }
+
+        public sealed override void ExitValueBlock(ValueBlockContext context)
+        {
+            ExitState()?.ExitValueBlock(context);
+        }
+
+        public sealed override void ExitOpenBlock(OpenBlockContext context)
+        {
+            ExitState()?.ExitOpenBlock(context);
+        }
+
+        public sealed override void ExitControlBlock(ControlBlockContext context)
+        {
+            ExitState()?.ExitControlBlock(context);
         }
     }
 
@@ -112,19 +185,9 @@ namespace IS4.Sona.Compiler.States
             Initialize(environment, null);
         }
 
-        public override void ExitSubBlock(SubBlockContext context)
-        {
-
-        }
-
         public override void ExitMainBlock(MainBlockContext context)
         {
 
-        }
-
-        public override void ExitFuncBlock(FuncBlockContext context)
-        {
-            
         }
     }
 
@@ -148,11 +211,21 @@ namespace IS4.Sona.Compiler.States
 
     internal sealed class ReturnState : ArgumentStatementState
     {
+        public override void EnterExprList(ExprListContext context)
+        {
+            Out.Write('(');
+            base.EnterExprList(context);
+        }
+
         public override void ExitReturnStatement(ReturnStatementContext context)
         {
             if(!HasExpression)
             {
                 Out.Write("()");
+            }
+            else
+            {
+                Out.Write(")");
             }
 
             ExitState().ExitReturnStatement(context);
@@ -167,9 +240,14 @@ namespace IS4.Sona.Compiler.States
             base.EnterExprList(context);
         }
 
+        public override void ExitExprList(ExprListContext context)
+        {
+
+        }
+
         public override void EnterThrowStatement(ThrowStatementContext context)
         {
-            Out.Write("do ");
+
         }
 
         public override void ExitThrowStatement(ThrowStatementContext context)

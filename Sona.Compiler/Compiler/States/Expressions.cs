@@ -422,7 +422,7 @@ namespace IS4.Sona.Compiler.States
             EnterState<ParamListState>().EnterParamList(context);
         }
 
-        public override void EnterFuncBlock(FuncBlockContext context)
+        public override void EnterValueBlock(ValueBlockContext context)
         {
             if(name == null)
             {
@@ -434,10 +434,10 @@ namespace IS4.Sona.Compiler.States
             }
             Out.WriteLine("begin");
             Out.EnterScope();
-            EnterState<BlockState>().EnterFuncBlock(context);
+            EnterState<BlockState>().EnterValueBlock(context);
         }
 
-        public override void ExitFuncBlock(FuncBlockContext context)
+        public override void ExitValueBlock(ValueBlockContext context)
         {
             Out.ExitScope();
             if(name == null)

@@ -3,17 +3,48 @@ options {
   tokenVocab = SonaLexer;
 }
 
+/* Blocks */
+
+// The whole program
 chunk:
   mainBlock EOF;
 
-subBlock:
-  (statement (';')?)* (blockFinalStatement (';')? | implicitReturnStatement);
+/*
+The sequence of statements is intentionally lazy, to make the
+finishing statement take as much of the block as possible.
+*/
 
-funcBlock:
-  (statement (';')?)* ((funcFinalStatement | blockFinalStatement) (';')? | implicitReturnStatement);
-
+// The program's body, supporting top-level statements and conditionals
 mainBlock:
-  (globalAttrList (topLevelStatement | statement) (';')?)* globalAttrList ((funcFinalStatement | blockFinalStatement) (';')? | implicitReturnStatement);
+  (globalAttrList (topLevelStatement | statement) ';'?)*? globalAttrList ((closingStatement | conditionallyReturningStatement) ';'? | implicitReturnStatement);
+
+// A block that is evaluated as a whole (a function body)
+valueBlock:
+  (statement ';'?)*? ((closingStatement | conditionallyReturningStatement) ';'? | implicitReturnStatement);
+
+// A block without return (no special handling when in a free-standing conditional)
+valuelessBlock:
+  (statement ';'?)*? (terminatingStatement ';'? | implicitReturnStatement);
+
+// A block that does not return or throw at all (special handling in a final conditional)
+openBlock:
+  (statement ';'?)* implicitReturnStatement;
+
+// A block that explicitly returns or throws
+closedBlock:
+  (statement ';'?)*? closingStatement ';'?;
+
+// A block that explicitly returns
+returningBlock:
+  (statement ';'?)*? returningStatement ';'?;
+
+// A block that explicitly throws
+terminatingBlock:
+  (statement ';'?)*? terminatingStatement ';'?;
+
+// A block that may or may not return
+controlBlock:
+  (statement ';'?)*? conditionallyReturningStatement ';'?;
 
 name:
   NAME | LITERAL_NAME;
@@ -23,7 +54,8 @@ dependentName:
 
 anyKeyword:
   'function' | 'return' | 'break' | 'and' | 'or' | 'not' |
-  'let' | 'var' | 'end' | 'throw' | 'import' | 'include' | 'require';
+  'let' | 'var' | 'end' | 'throw' | 'import' | 'include' | 'require' |
+  'if' | 'then' | 'else' | 'elseif' | 'do' | 'while' | 'for' | 'in';
 
 compoundName:
   name ('.' dependentName)*;
@@ -62,24 +94,117 @@ attrNamedArg:
 
 /* Statements */
 
+// Plain statement, allowed anywhere
 statement:
   variableDecl |
   multiFuncDecl |
-  assignmentOrCall;
+  assignmentOrCall |
+  ifStatement |
+  doStatement |
+  whileStatement;
 
-blockFinalStatement:
-  throwStatement;
+// A statement that must be located at the end of a block
+closingStatement:
+  returningStatement |
+  terminatingStatement;
 
-throwStatement:
-  'throw' (exprList)?;
+// A statement that always returns and evaluating it gives the final value of the block
+returningStatement:
+  returnStatement |
+  ifStatementReturningClosed |
+  doStatementReturning |
+  whileStatementReturningClosed;
 
-funcFinalStatement:
-  returnStatement;
+// A statement that may or may not return
+conditionallyReturningStatement:
+  ifStatementReturningOpenSimple |
+  ifStatementReturningOpenComplex |
+  whileStatementReturningOpen;
 
 returnStatement:
   'return' (exprList)?;
 
 implicitReturnStatement:;
+
+// A statement that guarantees to terminate the execution without returning a value
+terminatingStatement:
+  throwStatement |
+  ifStatementTerminating |
+  doStatementTerminating |
+  whileStatementTerminating;
+
+throwStatement:
+  'throw' (exprList)?;
+
+// A sequence of statements that ends a returning block
+finalStatements:
+  (';'? statement)* (';'? (closingStatement | conditionallyReturningStatement) | implicitReturnStatement);
+
+// A sequence of statements that will never be executed
+ignoredStatements:
+  (';'? statement)* (';'? (closingStatement | conditionallyReturningStatement) | implicitReturnStatement);
+
+if:
+  'if' expression 'then';
+
+elseif:
+  'elseif' expression 'then';
+
+else:
+  'else';
+
+// Free-standing if without returns (but may secretly throw)
+ifStatement:
+  if valuelessBlock (elseif valuelessBlock)* (else valuelessBlock)? 'end';
+
+// All branches are closed; the following statements are unused
+ifStatementReturningClosed:
+  (
+    if returningBlock (elseif closedBlock)* else closedBlock 'end' |
+    if closedBlock (elseif closedBlock)* (elseif returningBlock (elseif closedBlock)* else closedBlock | else returningBlock) 'end'
+  ) ignoredStatements;
+
+// else is open or missing; the following statements are executed as part of it
+ifStatementReturningOpenSimple:
+  (
+    if returningBlock (elseif closedBlock)* (else openBlock)? 'end' |
+    if closedBlock (elseif closedBlock)* elseif returningBlock (elseif closedBlock)* (else openBlock)? 'end'
+  ) finalStatements;
+
+// A non-else branch is open; the following statements are executed if none produced a value
+ifStatementReturningOpenComplex:
+  (
+    if returningBlock (elseif (closedBlock | openBlock))* elseif openBlock (elseif (closedBlock | openBlock))* (else (closedBlock | openBlock))? 'end' |
+    if openBlock (elseif (closedBlock | openBlock))* (elseif returningBlock (elseif (closedBlock | openBlock))* (else (closedBlock | openBlock))? | else returningBlock) 'end'
+  ) finalStatements;
+
+// All branches are terminating; the following statements cannot be executed
+ifStatementTerminating:
+  if terminatingBlock (elseif terminatingBlock)* else terminatingBlock 'end' ignoredStatements;
+
+doStatement:
+  'do' valuelessBlock 'end';
+
+doStatementReturning:
+  'do' returningBlock 'end' ignoredStatements;
+
+doStatementTerminating:
+  'do' terminatingBlock 'end' ignoredStatements;
+
+while:
+  'while' expression 'do';
+
+whileStatement:
+  while valuelessBlock 'end';
+
+whileStatementReturningClosed:
+  WHILE_TRUE_DO returningBlock 'end' ignoredStatements;
+
+whileStatementReturningOpen:
+  while returningBlock 'end' finalStatements;
+
+whileStatementTerminating:
+  WHILE_TRUE_DO valuelessBlock 'end' ignoredStatements;
 
 topLevelStatement:
   importStatement |
@@ -141,10 +266,10 @@ multiFuncDecl:
   funcDecl+;
 
 funcDecl:
-	localAttrList 'function' name funcBody;
+  localAttrList 'function' name funcBody;
 
 funcBody:
-  '(' paramList ')' funcBlock 'end';
+  '(' paramList ')' valueBlock 'end';
 
 paramList:
   paramTuple (';' paramTuple)*;
@@ -177,9 +302,10 @@ logicExprArg:
   outerExpr_Outer;
 
 negatedExpr:
-  'not' ('not' doubleNegation)* logicExprArg;
+  'not' doubleNegation* logicExprArg;
 
-doubleNegation:;
+doubleNegation:
+  'not';
 
 conjunctiveExpr:
   logicExprArg ('and' logicExprArg)* 'and' (negatedExpr | logicExprArg);
