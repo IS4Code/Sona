@@ -112,6 +112,7 @@ closingStatement:
 returningStatement:
   returnStatement |
   ifStatementReturningClosed |
+  ifStatementReturningClosedTrail |
   doStatementReturning |
   whileStatementReturningClosed;
 
@@ -119,6 +120,7 @@ returningStatement:
 conditionallyReturningStatement:
   ifStatementReturningOpenSimple |
   ifStatementReturningOpenComplex |
+  doStatementConditionallyReturning |
   whileStatementReturningOpen;
 
 returnStatement:
@@ -140,6 +142,14 @@ throwStatement:
 finalStatements:
   (';'? statement)* (';'? (closingStatement | conditionallyReturningStatement) | implicitReturnStatement);
 
+// Same but the statements must be closed
+closedFinalStatements:
+  (';'? statement)* ';'? closingStatement;
+
+// Same but the statements must be open
+openFinalStatements:
+  (';'? statement)* implicitReturnStatement;
+
 // A sequence of statements that will never be executed
 ignoredStatements:
   (';'? statement)* (';'? (closingStatement | conditionallyReturningStatement) | implicitReturnStatement);
@@ -157,25 +167,35 @@ else:
 ifStatement:
   if valuelessBlock (elseif valuelessBlock)* (else valuelessBlock)? 'end';
 
-// All branches are closed; the following statements are unused
+// One branch is returning, the other are closed; the following statements are unused
 ifStatementReturningClosed:
   (
     if returningBlock (elseif closedBlock)* else closedBlock 'end' |
     if closedBlock (elseif closedBlock)* (elseif returningBlock (elseif closedBlock)* else closedBlock | else returningBlock) 'end'
   ) ignoredStatements;
 
-// else is open or missing; the following statements are executed as part of it
+// The following statements are closing and so can become a part of else to form a closing statement.
+ifStatementReturningClosedTrail:
+  (
+    if returningBlock (elseif closedBlock)* (else openBlock)? 'end' |
+    if closedBlock (elseif closedBlock)* elseif returningBlock (elseif closedBlock)* (else openBlock)? 'end'
+  ) closedFinalStatements;
+
+// Same but the following statements are open, so the whole statement is open
 ifStatementReturningOpenSimple:
   (
     if returningBlock (elseif closedBlock)* (else openBlock)? 'end' |
     if closedBlock (elseif closedBlock)* elseif returningBlock (elseif closedBlock)* (else openBlock)? 'end'
-  ) finalStatements;
+  ) openFinalStatements;
 
-// A non-else branch is open; the following statements are executed if none produced a value
+// Either same but the returning branch is conditional, or
+// a non-else branch is open; the following statements are executed if no value is returned
 ifStatementReturningOpenComplex:
   (
-    if returningBlock (elseif (closedBlock | openBlock))* elseif openBlock (elseif (closedBlock | openBlock))* (else (closedBlock | openBlock))? 'end' |
-    if openBlock (elseif (closedBlock | openBlock))* (elseif returningBlock (elseif (closedBlock | openBlock))* (else (closedBlock | openBlock))? | else returningBlock) 'end'
+    if controlBlock (elseif closedBlock)* (else openBlock)? 'end' |
+    if closedBlock (elseif closedBlock)* elseif controlBlock (elseif closedBlock)* (else openBlock)? 'end'
+    if (returningBlock | controlBlock) (elseif (closedBlock | openBlock | controlBlock))* elseif openBlock (elseif (closedBlock | openBlock | controlBlock))* (else (closedBlock | openBlock | controlBlock))? 'end' |
+    if openBlock (elseif (closedBlock | openBlock | controlBlock))* (elseif (controlBlock | returningBlock) (elseif (closedBlock | openBlock | controlBlock))* (else (closedBlock | openBlock | controlBlock))? | else (returningBlock | controlBlock)) 'end'
   ) finalStatements;
 
 // All branches are terminating; the following statements cannot be executed
@@ -187,6 +207,9 @@ doStatement:
 
 doStatementReturning:
   'do' returningBlock 'end' ignoredStatements;
+
+doStatementConditionallyReturning:
+  'do' controlBlock 'end' finalStatements;
 
 doStatementTerminating:
   'do' terminatingBlock 'end' ignoredStatements;

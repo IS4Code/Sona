@@ -82,6 +82,19 @@ namespace IS4.Sona.Compiler
             StateLevel = 0;
         }
 
+        protected T? FindScope<T>() where T : class
+        {
+            switch(Parent)
+            {
+                case null:
+                    return null;
+                case T result:
+                    return result;
+                default:
+                    return Parent.FindScope<T>();
+            }
+        }
+
         class Empty : ScriptState
         {
             public static readonly Empty Instance = new();

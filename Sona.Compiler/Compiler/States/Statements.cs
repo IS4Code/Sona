@@ -12,14 +12,33 @@ namespace IS4.Sona.Compiler.States
             EnterState<MultiFunctionState>().EnterMultiFuncDecl(context);
         }
 
-        public override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
+        protected virtual void OnEnterStatement()
         {
-            Out.Write("()");
+
         }
 
-        public override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
+        protected virtual void OnExitStatement()
         {
             Out.WriteLine();
+        }
+
+        public sealed override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
+        {
+            OnEnterStatement();
+            if(FindScope<IReturnScope>()?.VariableName is null)
+            {
+                Out.Write("()");
+            }
+            else
+            {
+                // Result stored in a variable, success returned
+                Out.Write("false");
+            }
+        }
+
+        public sealed override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
+        {
+            OnExitStatement();
         }
 
         public sealed override void EnterReturnStatement(ReturnStatementContext context)
@@ -52,6 +71,11 @@ namespace IS4.Sona.Compiler.States
             EnterState<IfStatement>().EnterIfStatementReturningClosed(context);
         }
 
+        public sealed override void EnterIfStatementReturningClosedTrail(IfStatementReturningClosedTrailContext context)
+        {
+            EnterState<IfSimpleStatement>().EnterIfStatementReturningClosedTrail(context);
+        }
+
         public sealed override void EnterIfStatementReturningOpenSimple(IfStatementReturningOpenSimpleContext context)
         {
             EnterState<IfSimpleStatement>().EnterIfStatementReturningOpenSimple(context);
@@ -65,6 +89,26 @@ namespace IS4.Sona.Compiler.States
         public sealed override void EnterIfStatementTerminating(IfStatementTerminatingContext context)
         {
             EnterState<IfStatement>().EnterIfStatementTerminating(context);
+        }
+
+        public override void EnterDoStatement(DoStatementContext context)
+        {
+            EnterState<DoStatement>().EnterDoStatement(context);
+        }
+
+        public override void EnterDoStatementReturning(DoStatementReturningContext context)
+        {
+            EnterState<DoStatement>().EnterDoStatementReturning(context);
+        }
+
+        public override void EnterDoStatementConditionallyReturning(DoStatementConditionallyReturningContext context)
+        {
+            EnterState<DoControlStatement>().EnterDoStatementConditionallyReturning(context);
+        }
+
+        public override void EnterDoStatementTerminating(DoStatementTerminatingContext context)
+        {
+            EnterState<DoStatement>().EnterDoStatementTerminating(context);
         }
 
         public sealed override void EnterImportStatement(ImportStatementContext context)
@@ -92,54 +136,54 @@ namespace IS4.Sona.Compiler.States
             EnterState<TopLevelStatement>().EnterRequireStatement(context);
         }
 
-        public override void EnterStatement(StatementContext context)
+        public sealed override void EnterStatement(StatementContext context)
         {
-
+            OnEnterStatement();
         }
 
-        public override void ExitStatement(StatementContext context)
+        public sealed override void ExitStatement(StatementContext context)
         {
-            Out.WriteLine();
+            OnExitStatement();
         }
 
-        public override void EnterReturningStatement(ReturningStatementContext context)
+        public sealed override void EnterReturningStatement(ReturningStatementContext context)
         {
-
+            OnEnterStatement();
         }
 
-        public override void ExitReturningStatement(ReturningStatementContext context)
+        public sealed override void ExitReturningStatement(ReturningStatementContext context)
         {
-            Out.WriteLine();
+            OnExitStatement();
         }
 
-        public override void EnterConditionallyReturningStatement(ConditionallyReturningStatementContext context)
+        public sealed override void EnterConditionallyReturningStatement(ConditionallyReturningStatementContext context)
         {
-
+            OnEnterStatement();
         }
 
-        public override void ExitConditionallyReturningStatement(ConditionallyReturningStatementContext context)
+        public sealed override void ExitConditionallyReturningStatement(ConditionallyReturningStatementContext context)
         {
-            Out.WriteLine();
+            OnExitStatement();
         }
 
-        public override void EnterTerminatingStatement(TerminatingStatementContext context)
+        public sealed override void EnterTerminatingStatement(TerminatingStatementContext context)
         {
-
+            OnEnterStatement();
         }
 
-        public override void ExitTerminatingStatement(TerminatingStatementContext context)
+        public sealed override void ExitTerminatingStatement(TerminatingStatementContext context)
         {
-            Out.WriteLine();
+            OnExitStatement();
         }
 
         public sealed override void EnterTopLevelStatement(TopLevelStatementContext context)
         {
-
+            OnEnterStatement();
         }
 
         public sealed override void ExitTopLevelStatement(TopLevelStatementContext context)
         {
-            Out.WriteLine();
+            OnExitStatement();
         }
 
         public sealed override void ExitValuelessBlock(ValuelessBlockContext context)
@@ -178,8 +222,11 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal sealed class ChunkState : BlockState
+    internal sealed class ChunkState : BlockState, IReturnScope
     {
+        // Main block return is currently ignored
+        string? IReturnScope.VariableName => null;
+
         public ChunkState(ScriptEnvironment environment)
         {
             Initialize(environment, null);
@@ -209,10 +256,30 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
+    internal interface IReturnScope
+    {
+        string? VariableName { get; }
+    }
+
     internal sealed class ReturnState : ArgumentStatementState
     {
+        string? returnVariable;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            returnVariable = FindScope<IReturnScope>()?.VariableName;
+        }
+
         public override void EnterExprList(ExprListContext context)
         {
+            if(returnVariable is { } ret)
+            {
+                // Store result in variable
+                Out.WriteSymbol(ret);
+                Out.WriteOperator("<-");
+            }
             Out.Write('(');
             base.EnterExprList(context);
         }
@@ -221,11 +288,23 @@ namespace IS4.Sona.Compiler.States
         {
             if(!HasExpression)
             {
+                if(returnVariable is { } ret)
+                {
+                    Out.WriteSymbol(ret);
+                    Out.WriteOperator("<-");
+                }
                 Out.Write("()");
             }
             else
             {
                 Out.Write(")");
+            }
+
+            if(returnVariable is not null)
+            {
+                // Value returned
+                Out.WriteLine();
+                Out.Write("true");
             }
 
             ExitState().ExitReturnStatement(context);

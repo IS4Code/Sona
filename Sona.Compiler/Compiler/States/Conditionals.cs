@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using IS4.Sona.Compiler.Tools;
-using static IS4.Sona.Grammar.SonaParser;
+﻿using static IS4.Sona.Grammar.SonaParser;
 
 namespace IS4.Sona.Compiler.States
 {
@@ -23,12 +20,17 @@ namespace IS4.Sona.Compiler.States
             Out.EnterScope();
         }
 
-        public override void ExitIgnoredStatements(IgnoredStatementsContext context)
+        void OnExitStatements()
         {
             if(!first)
             {
                 Out.WriteLine();
             }
+        }
+
+        public override void ExitIgnoredStatements(IgnoredStatementsContext context)
+        {
+            OnExitStatements();
             Out.ExitScope();
             Out.WriteLine("end");
             ExitState()?.ExitIgnoredStatements(context);
@@ -41,11 +43,30 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitFinalStatements(FinalStatementsContext context)
         {
-            if(!first)
-            {
-                Out.WriteLine();
-            }
+            OnExitStatements();
             ExitState()?.ExitFinalStatements(context);
+        }
+
+        public override void EnterClosedFinalStatements(ClosedFinalStatementsContext context)
+        {
+
+        }
+
+        public override void ExitClosedFinalStatements(ClosedFinalStatementsContext context)
+        {
+            OnExitStatements();
+            ExitState()?.ExitClosedFinalStatements(context);
+        }
+
+        public override void EnterOpenFinalStatements(OpenFinalStatementsContext context)
+        {
+
+        }
+
+        public override void ExitOpenFinalStatements(OpenFinalStatementsContext context)
+        {
+            OnExitStatements();
+            ExitState()?.ExitOpenFinalStatements(context);
         }
 
         void OnEnter()
@@ -60,136 +81,160 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
-        public override void EnterStatement(StatementContext context)
+        protected override void OnEnterStatement()
         {
             OnEnter();
         }
 
-        public override void ExitStatement(StatementContext context)
+        protected override void OnExitStatement()
         {
-
-        }
-
-        public override void EnterReturningStatement(ReturningStatementContext context)
-        {
-            OnEnter();
-        }
-
-        public override void ExitReturningStatement(ReturningStatementContext context)
-        {
-
-        }
-
-        public override void EnterConditionallyReturningStatement(ConditionallyReturningStatementContext context)
-        {
-            OnEnter();
-        }
-
-        public override void ExitConditionallyReturningStatement(ConditionallyReturningStatementContext context)
-        {
-
-        }
-
-        public override void EnterTerminatingStatement(TerminatingStatementContext context)
-        {
-            OnEnter();
-        }
-
-        public override void ExitTerminatingStatement(TerminatingStatementContext context)
-        {
-
-        }
-
-        public override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
-        {
-            OnEnter();
-            Out.Write("()");
-        }
-
-        public override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
-        {
-
+            
         }
     }
 
     internal abstract class ControlStatement : NodeState
     {
-        public override void EnterValuelessBlock(ValuelessBlockContext context)
+#nullable disable
+        protected string ReturnVariable { get; private set; }
+#nullable restore
+        protected string? OriginalReturnVariable { get; private set; }
+
+        // Nested returns will be stored here
+        protected string? ScopeVariableName => ReturnVariable ?? OriginalReturnVariable;
+
+        protected void InitializeReturnControl()
+        {
+            OriginalReturnVariable = FindScope<IReturnScope>()?.VariableName;
+        }
+
+        protected void EnterReturnScope()
+        {
+            if(OriginalReturnVariable is null)
+            {
+                Out.WriteLine("begin");
+                Out.EnterScope();
+                ReturnVariable = Out.GetTemporarySymbol();
+                // var result = default
+                Out.Write("let mutable ");
+                Out.WriteSymbol(ReturnVariable);
+                Out.WriteOperator("=");
+                Out.WriteOperatorName("Unchecked");
+                Out.WriteLine(".defaultof<_>");
+            }
+        }
+
+        protected void ExitReturnScope()
+        {
+            if(OriginalReturnVariable is null)
+            {
+                Out.WriteLine();
+                Out.ExitScope();
+                Out.Write("end");
+            }
+        }
+
+        protected void ReturnFromScope()
+        {
+            if(OriginalReturnVariable is null)
+            {
+                Out.WriteSymbol(ReturnVariable);
+            }
+            else
+            {
+                // The result is control
+                Out.Write("true");
+            }
+            // Own declared return no longer used
+            ReturnVariable = null;
+        }
+
+        void OnEnterBlock()
         {
             Out.WriteLine("begin");
             Out.EnterScope();
+        }
+
+        void OnExitBlock()
+        {
+            Out.ExitScope();
+            Out.Write("end");
+        }
+
+        public override void EnterValuelessBlock(ValuelessBlockContext context)
+        {
+            OnEnterBlock();
             EnterState<BlockState>().EnterValuelessBlock(context);
         }
 
         public override void ExitValuelessBlock(ValuelessBlockContext context)
         {
-            Out.ExitScope();
-            Out.Write("end");
+            OnExitBlock();
         }
 
         public override void EnterReturningBlock(ReturningBlockContext context)
         {
-            Out.WriteLine("begin");
-            Out.EnterScope();
+            OnEnterBlock();
             EnterState<BlockState>().EnterReturningBlock(context);
         }
 
         public override void ExitReturningBlock(ReturningBlockContext context)
         {
-            Out.ExitScope();
-            Out.Write("end");
+            OnExitBlock();
         }
 
         public override void EnterClosedBlock(ClosedBlockContext context)
         {
-            Out.WriteLine("begin");
-            Out.EnterScope();
+            OnEnterBlock();
             EnterState<BlockState>().EnterClosedBlock(context);
         }
 
         public override void ExitClosedBlock(ClosedBlockContext context)
         {
-            Out.ExitScope();
-            Out.Write("end");
+            OnExitBlock();
         }
 
         public override void EnterTerminatingBlock(TerminatingBlockContext context)
         {
-            Out.WriteLine("begin");
-            Out.EnterScope();
+            OnEnterBlock();
             EnterState<BlockState>().EnterTerminatingBlock(context);
         }
 
         public override void ExitTerminatingBlock(TerminatingBlockContext context)
         {
-            Out.ExitScope();
-            Out.Write("end");
+            OnExitBlock();
         }
 
         public override void EnterValueBlock(ValueBlockContext context)
         {
-            Out.WriteLine("begin");
-            Out.EnterScope();
+            OnEnterBlock();
             EnterState<BlockState>().EnterValueBlock(context);
         }
 
         public override void ExitValueBlock(ValueBlockContext context)
         {
-            Out.ExitScope();
-            Out.Write("end");
+            OnExitBlock();
         }
 
         public override void EnterOpenBlock(OpenBlockContext context)
         {
-            Out.WriteLine("begin");
-            Out.EnterScope();
+            OnEnterBlock();
             EnterState<BlockState>().EnterOpenBlock(context);
         }
 
         public override void ExitOpenBlock(OpenBlockContext context)
         {
-            Out.ExitScope();
-            Out.Write("end");
+            OnExitBlock();
+        }
+
+        public override void EnterControlBlock(ControlBlockContext context)
+        {
+            OnEnterBlock();
+            EnterState<BlockState>().EnterControlBlock(context);
+        }
+
+        public override void ExitControlBlock(ControlBlockContext context)
+        {
+            OnExitBlock();
         }
 
         public override void EnterIgnoredStatements(IgnoredStatementsContext context)
@@ -300,7 +345,7 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal class IfSimpleStatement : IfStatement
+    internal sealed class IfSimpleStatement : IfStatement
     {
         bool hasElse;
 
@@ -309,6 +354,16 @@ namespace IS4.Sona.Compiler.States
             base.Initialize(environment, parent);
 
             hasElse = false;
+        }
+
+        public override void EnterIfStatementReturningClosedTrail(IfStatementReturningClosedTrailContext context)
+        {
+
+        }
+
+        public override void ExitIfStatementReturningClosedTrail(IfStatementReturningClosedTrailContext context)
+        {
+            ExitState().ExitIfStatementReturningClosedTrail(context);
         }
 
         public override void EnterIfStatementReturningOpenSimple(IfStatementReturningOpenSimpleContext context)
@@ -336,7 +391,7 @@ namespace IS4.Sona.Compiler.States
             Out.WriteLine();
         }
 
-        public override void EnterFinalStatements(FinalStatementsContext context)
+        public override void EnterClosedFinalStatements(ClosedFinalStatementsContext context)
         {
             if(!hasElse)
             {
@@ -344,6 +399,68 @@ namespace IS4.Sona.Compiler.States
                 Out.WriteLine("else begin");
                 Out.EnterScope();
             }
+            EnterState<TrailingStatements>().EnterClosedFinalStatements(context);
+        }
+
+        public override void ExitClosedFinalStatements(ClosedFinalStatementsContext context)
+        {
+            Out.ExitScope();
+            Out.Write("end");
+        }
+
+        public override void EnterOpenFinalStatements(OpenFinalStatementsContext context)
+        {
+            if(!hasElse)
+            {
+                Out.WriteLine();
+                Out.WriteLine("else begin");
+                Out.EnterScope();
+            }
+            EnterState<TrailingStatements>().EnterOpenFinalStatements(context);
+        }
+
+        public override void ExitOpenFinalStatements(OpenFinalStatementsContext context)
+        {
+            Out.ExitScope();
+            Out.Write("end");
+        }
+    }
+
+    internal sealed class IfComplexStatement : IfStatement, IReturnScope
+    {
+        string? IReturnScope.VariableName => ScopeVariableName;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            InitializeReturnControl();
+        }
+
+        public override void EnterIfStatementReturningOpenComplex(IfStatementReturningOpenComplexContext context)
+        {
+            EnterReturnScope();
+            Out.WriteLine("if begin");
+            Out.EnterScope();
+        }
+
+        public override void ExitIfStatementReturningOpenComplex(IfStatementReturningOpenComplexContext context)
+        {
+            ExitReturnScope();
+            ExitState().ExitIfStatementReturningOpenComplex(context);
+        }
+
+        public override void EnterFinalStatements(FinalStatementsContext context)
+        {
+            // end then result
+            Out.WriteLine();
+            Out.ExitScope();
+            Out.Write("end then ");
+            ReturnFromScope();
+            Out.WriteLine();
+            // else ...
+            Out.WriteLine("else begin");
+            Out.EnterScope();
             EnterState<TrailingStatements>().EnterFinalStatements(context);
         }
 
@@ -354,109 +471,88 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal class IfComplexStatement : IfStatement
+    internal sealed class DoStatement : ControlStatement
     {
-#nullable disable
-        string successVariable, returnVariable;
-#nullable restore
+        public override void EnterDoStatement(DoStatementContext context)
+        {
+
+        }
+
+        public override void EnterDoStatementReturning(DoStatementReturningContext context)
+        {
+            Out.WriteLine("if true then begin");
+            Out.EnterScope();
+        }
+
+        public override void EnterDoStatementTerminating(DoStatementTerminatingContext context)
+        {
+            Out.WriteLine("if true then begin");
+            Out.EnterScope();
+        }
+
+        public override void ExitDoStatement(DoStatementContext context)
+        {
+            ExitState().ExitDoStatement(context);
+        }
+
+        public override void ExitDoStatementReturning(DoStatementReturningContext context)
+        {
+            Out.ExitScope();
+            Out.Write("end");
+            ExitState().ExitDoStatementReturning(context);
+        }
+
+        public override void ExitDoStatementTerminating(DoStatementTerminatingContext context)
+        {
+            Out.ExitScope();
+            Out.Write("end");
+            ExitState().ExitDoStatementTerminating(context);
+        }
+
+        public override void EnterIgnoredStatements(IgnoredStatementsContext context)
+        {
+            Out.WriteLine();
+            Out.ExitScope();
+            Out.WriteLine("end");
+            Out.WriteLine("else begin");
+            Out.EnterScope();
+            base.EnterIgnoredStatements(context);
+        }
+
+        public override void ExitIgnoredStatements(IgnoredStatementsContext context)
+        {
+            base.ExitIgnoredStatements(context);
+        }
+    }
+
+    internal sealed class DoControlStatement : ControlStatement, IReturnScope
+    {
+        string? IReturnScope.VariableName => ScopeVariableName;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            successVariable = null;
-            returnVariable = null;
+            InitializeReturnControl();
         }
 
-        public override void EnterIfStatementReturningOpenComplex(IfStatementReturningOpenComplexContext context)
+        public override void EnterDoStatementConditionallyReturning(DoStatementConditionallyReturningContext context)
         {
-            successVariable = Out.GetTemporarySymbol();
-            returnVariable = Out.GetTemporarySymbol();
-            Out.WriteLine("begin");
-            Out.EnterScope();
-            // let success = false
-            Out.Write("let mutable ");
-            Out.WriteSymbol(successVariable);
-            Out.WriteOperator("=");
-            Out.WriteLine("false");
-            // let result = default
-            Out.Write("let mutable ");
-            Out.WriteSymbol(returnVariable);
-            Out.WriteOperator("=");
-            Out.WriteOperatorName("Unchecked");
-            Out.WriteLine(".defaultof<_>");
+            EnterReturnScope();
+            Out.Write("if ");
         }
 
-        public override void ExitIfStatementReturningOpenComplex(IfStatementReturningOpenComplexContext context)
+        public override void ExitDoStatementConditionallyReturning(DoStatementConditionallyReturningContext context)
         {
-            Out.WriteLine();
-            Out.ExitScope();
-            Out.Write("end");
-            ExitState().ExitIfStatementReturningOpenComplex(context);
-        }
-
-        void OnEnterValueBranch()
-        {
-            Out.Write("begin");
-            Out.WriteLine();
-            Out.EnterScope();
-            // success = true
-            Out.WriteSymbol(successVariable);
-            Out.WriteOperator("<-");
-            Out.WriteLine("true");
-            // result = ...
-            Out.WriteSymbol(returnVariable);
-            Out.WriteOperator("<-");
-        }
-
-        void OnExitValueBranch()
-        {
-            Out.WriteLine();
-            Out.ExitScope();
-            Out.WriteLine("end");
-        }
-
-        public override void EnterReturningBlock(ReturningBlockContext context)
-        {
-            OnEnterValueBranch();
-            base.EnterReturningBlock(context);
-        }
-
-        public override void ExitReturningBlock(ReturningBlockContext context)
-        {
-            base.ExitReturningBlock(context);
-            OnExitValueBranch();
-        }
-
-        public override void EnterClosedBlock(ClosedBlockContext context)
-        {
-            OnEnterValueBranch();
-            base.EnterClosedBlock(context);
-        }
-
-        public override void ExitClosedBlock(ClosedBlockContext context)
-        {
-            base.ExitClosedBlock(context);
-            OnExitValueBranch();
-        }
-
-        public override void EnterOpenBlock(OpenBlockContext context)
-        {
-            base.EnterOpenBlock(context);
-        }
-
-        public override void ExitOpenBlock(OpenBlockContext context)
-        {
-            base.ExitOpenBlock(context);
+            ExitReturnScope();
+            ExitState().ExitDoStatementConditionallyReturning(context);
         }
 
         public override void EnterFinalStatements(FinalStatementsContext context)
         {
-            // if success then result
-            Out.Write("if ");
-            Out.WriteSymbol(successVariable);
+            // end then result
             Out.Write(" then ");
-            Out.WriteSymbol(returnVariable);
+            ReturnFromScope();
             Out.WriteLine();
             // else ...
             Out.WriteLine("else begin");
