@@ -222,7 +222,7 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal sealed class ChunkState : BlockState, IReturnScope
+    internal sealed class ChunkState : BlockState, IReturnScope, IFunctionScope
     {
         // Main block return is currently ignored
         string? IReturnScope.VariableName => null;
@@ -235,6 +235,18 @@ namespace IS4.Sona.Compiler.States
         public override void ExitMainBlock(MainBlockContext context)
         {
 
+        }
+
+        void IFunctionScope.WriteBegin()
+        {
+            Out.WriteLine("begin");
+            Out.EnterScope();
+        }
+
+        void IFunctionScope.WriteEnd()
+        {
+            Out.ExitScope();
+            Out.WriteLine("end");
         }
     }
 
@@ -254,11 +266,6 @@ namespace IS4.Sona.Compiler.States
             HasExpression = true;
             EnterState<ExpressionListState>().EnterExprList(context);
         }
-    }
-
-    internal interface IReturnScope
-    {
-        string? VariableName { get; }
     }
 
     internal sealed class ReturnState : ArgumentStatementState

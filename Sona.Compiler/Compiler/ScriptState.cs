@@ -16,6 +16,9 @@ namespace IS4.Sona.Compiler
 
         public int StateLevel { get; private set; }
 
+        private protected string begin => Environment.Begin;
+        private protected string end => Environment.End;
+
         protected virtual void UpdateOnToken(IToken token)
         {
             Environment.Output.UpdateLine(token);

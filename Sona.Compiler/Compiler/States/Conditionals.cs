@@ -5,19 +5,23 @@ namespace IS4.Sona.Compiler.States
     internal sealed class TrailingStatements : BlockState
     {
         bool first;
+        IFunctionScope? scope;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             first = true;
+            scope = null;
         }
 
         public override void EnterIgnoredStatements(IgnoredStatementsContext context)
         {
+            scope = FindScope<IFunctionScope>();
+
             Out.WriteOperatorName("ignore");
-            Out.WriteLine(" begin");
-            Out.EnterScope();
+            Out.Write(" ");
+            scope?.WriteBegin();
         }
 
         void OnExitStatements()
@@ -31,8 +35,7 @@ namespace IS4.Sona.Compiler.States
         public override void ExitIgnoredStatements(IgnoredStatementsContext context)
         {
             OnExitStatements();
-            Out.ExitScope();
-            Out.WriteLine("end");
+            scope?.WriteEnd();
             ExitState()?.ExitIgnoredStatements(context);
         }
 
@@ -111,8 +114,6 @@ namespace IS4.Sona.Compiler.States
         {
             if(OriginalReturnVariable is null)
             {
-                Out.WriteLine("begin");
-                Out.EnterScope();
                 ReturnVariable = Out.GetTemporarySymbol();
                 // var result = default
                 Out.Write("let mutable ");
@@ -125,12 +126,7 @@ namespace IS4.Sona.Compiler.States
 
         protected void ExitReturnScope()
         {
-            if(OriginalReturnVariable is null)
-            {
-                Out.WriteLine();
-                Out.ExitScope();
-                Out.Write("end");
-            }
+
         }
 
         protected void ReturnFromScope()
@@ -150,14 +146,14 @@ namespace IS4.Sona.Compiler.States
 
         void OnEnterBlock()
         {
-            Out.WriteLine("begin");
+            Out.WriteLine(begin);
             Out.EnterScope();
         }
 
         void OnExitBlock()
         {
             Out.ExitScope();
-            Out.Write("end");
+            Out.Write(end);
         }
 
         public override void EnterValuelessBlock(ValuelessBlockContext context)
@@ -258,13 +254,15 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterIfStatementReturningClosed(IfStatementReturningClosedContext context)
         {
-            Out.WriteLine("if true then begin");
+            Out.Write("if true then ");
+            Out.WriteLine(begin);
             Out.EnterScope();
         }
 
         public sealed override void EnterIfStatementTerminating(IfStatementTerminatingContext context)
         {
-            Out.WriteLine("if true then begin");
+            Out.Write("if true then ");
+            Out.WriteLine(begin);
             Out.EnterScope();
         }
 
@@ -276,14 +274,14 @@ namespace IS4.Sona.Compiler.States
         public sealed override void ExitIfStatementReturningClosed(IfStatementReturningClosedContext context)
         {
             Out.ExitScope();
-            Out.Write("end");
+            Out.Write(end);
             ExitState().ExitIfStatementReturningClosed(context);
         }
 
         public sealed override void ExitIfStatementTerminating(IfStatementTerminatingContext context)
         {
             Out.ExitScope();
-            Out.Write("end");
+            Out.Write(end);
             ExitState().ExitIfStatementTerminating(context);
         }
 
@@ -333,8 +331,9 @@ namespace IS4.Sona.Compiler.States
         {
             Out.WriteLine();
             Out.ExitScope();
-            Out.WriteLine("end");
-            Out.WriteLine("else begin");
+            Out.WriteLine(end);
+            Out.Write("else ");
+            Out.WriteLine(begin);
             Out.EnterScope();
             base.EnterIgnoredStatements(context);
         }
@@ -379,7 +378,7 @@ namespace IS4.Sona.Compiler.States
         public override void EnterOpenBlock(OpenBlockContext context)
         {
             hasElse = true;
-            Out.WriteLine("begin");
+            Out.WriteLine(begin);
             Out.EnterScope();
             Out.Write("do ");
             base.EnterOpenBlock(context);
@@ -396,7 +395,8 @@ namespace IS4.Sona.Compiler.States
             if(!hasElse)
             {
                 Out.WriteLine();
-                Out.WriteLine("else begin");
+                Out.Write("else ");
+                Out.WriteLine(begin);
                 Out.EnterScope();
             }
             EnterState<TrailingStatements>().EnterClosedFinalStatements(context);
@@ -405,7 +405,7 @@ namespace IS4.Sona.Compiler.States
         public override void ExitClosedFinalStatements(ClosedFinalStatementsContext context)
         {
             Out.ExitScope();
-            Out.Write("end");
+            Out.Write(end);
         }
 
         public override void EnterOpenFinalStatements(OpenFinalStatementsContext context)
@@ -413,7 +413,8 @@ namespace IS4.Sona.Compiler.States
             if(!hasElse)
             {
                 Out.WriteLine();
-                Out.WriteLine("else begin");
+                Out.Write("else ");
+                Out.WriteLine(begin);
                 Out.EnterScope();
             }
             EnterState<TrailingStatements>().EnterOpenFinalStatements(context);
@@ -422,7 +423,7 @@ namespace IS4.Sona.Compiler.States
         public override void ExitOpenFinalStatements(OpenFinalStatementsContext context)
         {
             Out.ExitScope();
-            Out.Write("end");
+            Out.Write(end);
         }
     }
 
@@ -440,7 +441,8 @@ namespace IS4.Sona.Compiler.States
         public override void EnterIfStatementReturningOpenComplex(IfStatementReturningOpenComplexContext context)
         {
             EnterReturnScope();
-            Out.WriteLine("if begin");
+            Out.Write("if ");
+            Out.WriteLine(begin);
             Out.EnterScope();
         }
 
@@ -455,11 +457,13 @@ namespace IS4.Sona.Compiler.States
             // end then result
             Out.WriteLine();
             Out.ExitScope();
-            Out.Write("end then ");
+            Out.Write(end);
+            Out.Write(" then ");
             ReturnFromScope();
             Out.WriteLine();
             // else ...
-            Out.WriteLine("else begin");
+            Out.Write("else ");
+            Out.WriteLine(begin);
             Out.EnterScope();
             EnterState<TrailingStatements>().EnterFinalStatements(context);
         }
@@ -467,7 +471,7 @@ namespace IS4.Sona.Compiler.States
         public override void ExitFinalStatements(FinalStatementsContext context)
         {
             Out.ExitScope();
-            Out.Write("end");
+            Out.Write(end);
         }
     }
 
@@ -480,13 +484,15 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterDoStatementReturning(DoStatementReturningContext context)
         {
-            Out.WriteLine("if true then begin");
+            Out.Write("if true then ");
+            Out.WriteLine(begin);
             Out.EnterScope();
         }
 
         public override void EnterDoStatementTerminating(DoStatementTerminatingContext context)
         {
-            Out.WriteLine("if true then begin");
+            Out.Write("if true then ");
+            Out.WriteLine(begin);
             Out.EnterScope();
         }
 
@@ -498,14 +504,14 @@ namespace IS4.Sona.Compiler.States
         public override void ExitDoStatementReturning(DoStatementReturningContext context)
         {
             Out.ExitScope();
-            Out.Write("end");
+            Out.Write(end);
             ExitState().ExitDoStatementReturning(context);
         }
 
         public override void ExitDoStatementTerminating(DoStatementTerminatingContext context)
         {
             Out.ExitScope();
-            Out.Write("end");
+            Out.Write(end);
             ExitState().ExitDoStatementTerminating(context);
         }
 
@@ -513,8 +519,9 @@ namespace IS4.Sona.Compiler.States
         {
             Out.WriteLine();
             Out.ExitScope();
-            Out.WriteLine("end");
-            Out.WriteLine("else begin");
+            Out.WriteLine(end);
+            Out.Write("else ");
+            Out.WriteLine(begin);
             Out.EnterScope();
             base.EnterIgnoredStatements(context);
         }
@@ -555,7 +562,8 @@ namespace IS4.Sona.Compiler.States
             ReturnFromScope();
             Out.WriteLine();
             // else ...
-            Out.WriteLine("else begin");
+            Out.Write("else ");
+            Out.WriteLine(begin);
             Out.EnterScope();
             EnterState<TrailingStatements>().EnterFinalStatements(context);
         }
@@ -563,7 +571,7 @@ namespace IS4.Sona.Compiler.States
         public override void ExitFinalStatements(FinalStatementsContext context)
         {
             Out.ExitScope();
-            Out.Write("end");
+            Out.Write(end);
         }
     }
 }
