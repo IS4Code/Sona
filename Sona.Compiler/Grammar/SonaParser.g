@@ -193,7 +193,7 @@ ifStatementReturningOpenSimple:
 ifStatementReturningOpenComplex:
   (
     if controlBlock (elseif closedBlock)* (else openBlock)? 'end' |
-    if closedBlock (elseif closedBlock)* elseif controlBlock (elseif closedBlock)* (else openBlock)? 'end'
+    if closedBlock (elseif closedBlock)* elseif controlBlock (elseif closedBlock)* (else openBlock)? 'end' |
     if (returningBlock | controlBlock) (elseif (closedBlock | openBlock | controlBlock))* elseif openBlock (elseif (closedBlock | openBlock | controlBlock))* (else (closedBlock | openBlock | controlBlock))? 'end' |
     if openBlock (elseif (closedBlock | openBlock | controlBlock))* (elseif (controlBlock | returningBlock) (elseif (closedBlock | openBlock | controlBlock))* (else (closedBlock | openBlock | controlBlock))? | else (returningBlock | controlBlock)) 'end'
   ) finalStatements;
