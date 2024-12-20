@@ -258,9 +258,8 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterIgnoredStatements(IgnoredStatementsContext context)
         {
+            OnExitStatement();
             Out.WriteLine();
-            Out.ExitScope();
-            Out.WriteLine(_end_);
             Out.Write("else ");
             Out.WriteLine(_begin_);
             Out.EnterScope();
@@ -275,6 +274,7 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterFinalStatements(FinalStatementsContext context)
         {
+            OnExitStatement();
             Out.WriteLine();
             ReturnFromScope();
             Out.WriteLine(_begin_);
@@ -286,6 +286,16 @@ namespace IS4.Sona.Compiler.States
         {
             Out.ExitScope();
             Out.Write(_end_);
+        }
+
+        protected virtual void OnEnterStatement()
+        {
+
+        }
+
+        protected virtual void OnExitStatement()
+        {
+
         }
     }
 
@@ -369,6 +379,13 @@ namespace IS4.Sona.Compiler.States
         public sealed override void ExitExpression(ExpressionContext context)
         {
             Out.Write(")then ");
+        }
+
+        protected override void OnExitStatement()
+        {
+            Out.WriteLine();
+            Out.ExitScope();
+            Out.Write(_end_);
         }
     }
 
@@ -477,27 +494,36 @@ namespace IS4.Sona.Compiler.States
             ExitReturnScope();
             ExitState().ExitIfStatementReturningOpenComplex(context);
         }
+
+        protected override void OnExitStatement()
+        {
+
+        }
     }
 
     internal abstract class DoStatement : ControlStatement
     {
-        IFunctionScope? scope;
-
-        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        protected sealed override void OnEnterBlock()
         {
-            base.Initialize(environment, parent);
 
-            scope = FindScope<IFunctionScope>();
         }
 
-        protected override void OnEnterBlock()
+        protected sealed override void OnExitBlock()
         {
-            scope?.WriteBegin();
+
         }
 
-        protected override void OnExitBlock()
+        protected sealed override void OnEnterStatement()
         {
-            scope?.WriteEnd();
+            Out.Write("if true then ");
+            Out.WriteLine(_begin_);
+            Out.EnterScope();
+        }
+
+        protected sealed override void OnExitStatement()
+        {
+            Out.ExitScope();
+            Out.Write(_end_);
         }
     }
 
@@ -505,39 +531,34 @@ namespace IS4.Sona.Compiler.States
     {
         public override void EnterDoStatement(DoStatementContext context)
         {
-
+            OnEnterStatement();
         }
 
         public override void EnterDoStatementReturning(DoStatementReturningContext context)
         {
-            Out.Write("if true then ");
-            Out.WriteLine(_begin_);
-            Out.EnterScope();
+            OnEnterStatement();
         }
 
         public override void EnterDoStatementTerminating(DoStatementTerminatingContext context)
         {
-            Out.Write("if true then ");
-            Out.WriteLine(_begin_);
-            Out.EnterScope();
+            OnEnterStatement();
         }
 
         public override void ExitDoStatement(DoStatementContext context)
         {
+            OnExitStatement();
             ExitState().ExitDoStatement(context);
         }
 
         public override void ExitDoStatementReturning(DoStatementReturningContext context)
         {
-            Out.ExitScope();
-            Out.Write(_end_);
+            OnExitStatement();
             ExitState().ExitDoStatementReturning(context);
         }
 
         public override void ExitDoStatementTerminating(DoStatementTerminatingContext context)
         {
-            Out.ExitScope();
-            Out.Write(_end_);
+            OnExitStatement();
             ExitState().ExitDoStatementTerminating(context);
         }
     }
@@ -557,6 +578,7 @@ namespace IS4.Sona.Compiler.States
         public override void EnterDoStatementConditionallyReturning(DoStatementConditionallyReturningContext context)
         {
             EnterReturnScope();
+            OnEnterStatement();
         }
 
         public override void ExitDoStatementConditionallyReturning(DoStatementConditionallyReturningContext context)

@@ -51,6 +51,8 @@ open B")]
         const string ignore = "global.Microsoft.FSharp.Core.Operators.ignore";
         const string @throw = "``throw()``()";
         const string @default = "global.Microsoft.FSharp.Core.Operators.Unchecked.defaultof<_>";
+        const string _1 = "``_ 1``";
+        const string _2 = "``_ 2``";
 
         [DataRow("if a then end", @"if(a)then begin
  ()
@@ -101,6 +103,12 @@ else begin
 end
 f(f)
 ()")]
+        [TestMethod]
+        public void IfNonReturning(string source, string? expected)
+        {
+            AssertBlockEquivalence(source, expected);
+        }
+
         [DataRow("if a then throw b end f(c)", $@"if(a)then begin
  (b).{@throw}
 end
@@ -177,6 +185,12 @@ else begin
  end
  {@default}
 end")]
+        [TestMethod]
+        public void IfThrowing(string source, string? expected)
+        {
+            AssertBlockEquivalence(source, expected);
+        }
+
         [DataRow("if a then return b else end return c", $@"if(a)then begin
  (b)
 end
@@ -208,8 +222,98 @@ else begin
  end
  (e)
 end")]
+        [DataRow("if a then f(b) else return c end", $@"let mutable {_1} = false
+let mutable {_2} = {@default}
+if(a)then begin
+ f(b)
+ ()
+end
+else begin
+ {_2} <- (c)
+ {_1} <- true
+end
+if {_1} then {_2}
+else begin
+ ()
+end")]
+        [DataRow("if a then f(b) else return c end return d", $@"let mutable {_1} = false
+let mutable {_2} = {@default}
+if(a)then begin
+ f(b)
+ ()
+end
+else begin
+ {_2} <- (c)
+ {_1} <- true
+end
+if {_1} then {_2}
+else begin
+ (d)
+end")]
+        [DataRow("if a then return b elseif c then f(d) end", $@"let mutable {_1} = false
+let mutable {_2} = {@default}
+if(a)then begin
+ {_2} <- (b)
+ {_1} <- true
+end
+elif(c)then begin
+ f(d)
+ ()
+end
+if {_1} then {_2}
+else begin
+ ()
+end")]
+        [DataRow("if a then return b elseif c then f(d) else return e end", $@"let mutable {_1} = false
+let mutable {_2} = {@default}
+if(a)then begin
+ {_2} <- (b)
+ {_1} <- true
+end
+elif(c)then begin
+ f(d)
+ ()
+end
+else begin
+ {_2} <- (e)
+ {_1} <- true
+end
+if {_1} then {_2}
+else begin
+ ()
+end")]
         [TestMethod]
-        public void If(string source, string? expected)
+        public void IfReturning(string source, string? expected)
+        {
+            AssertBlockEquivalence(source, expected);
+        }
+
+        
+        [DataRow("do f(a) end", $@"if true then begin
+ f(a)
+ ()
+end
+()")]
+        [DataRow("do return a end", $@"if true then begin
+ (a)
+end
+else begin
+ {ignore} begin
+  ()
+ end
+ {@default}
+end")]
+        [DataRow("do throw a end", $@"if true then begin
+ (a).{@throw}
+end
+else begin
+ {ignore} begin
+  ()
+ end
+ {@default}
+end")]
+        [TestMethod]
+        public void Do(string source, string? expected)
         {
             AssertBlockEquivalence(source, expected);
         }
