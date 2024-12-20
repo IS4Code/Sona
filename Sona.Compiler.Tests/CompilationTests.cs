@@ -65,6 +65,10 @@ end
         protected void AssertExpressionEquivalence(string source, string? expected)
         {
             source = "return " + source + ";";
+            if(expected != null)
+            {
+                expected = $"({expected})";
+            }
             var actual = CompileToSource(source, expected == null);
             Assert.AreEqual(expected, actual);
         }
