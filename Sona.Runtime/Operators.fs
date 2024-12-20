@@ -73,6 +73,10 @@ type ExceptionExtensions private () =
   [<Extension>] static member inline ``throw()``(this) = raise this
 
 [<Extension>]
+type SequenceExtensions private () =
+  [<Extension>] static member inline ``..``(this, other) = Seq.append this other
+
+[<Extension>]
 type NullExtensions private () =
   [<Extension>]
   static member inline ``?``(this: ^T when ^T : null, [<InlineIfLambda>]action: ^T -> ^U): ^U voption =
