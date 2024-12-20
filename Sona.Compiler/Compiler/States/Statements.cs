@@ -25,15 +25,7 @@ namespace IS4.Sona.Compiler.States
         public sealed override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
         {
             OnEnterStatement();
-            if(FindScope<IReturnScope>()?.VariableName is null)
-            {
-                Out.Write("()");
-            }
-            else
-            {
-                // Result stored in a variable, success returned
-                Out.Write("false");
-            }
+            Out.Write("()");
         }
 
         public sealed override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
@@ -83,7 +75,7 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterIfStatementReturningOpenComplex(IfStatementReturningOpenComplexContext context)
         {
-            EnterState<IfComplexStatement>().EnterIfStatementReturningOpenComplex(context);
+            EnterState<IfControlStatement>().EnterIfStatementReturningOpenComplex(context);
         }
 
         public sealed override void EnterIfStatementTerminating(IfStatementTerminatingContext context)
@@ -93,12 +85,12 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterDoStatement(DoStatementContext context)
         {
-            EnterState<DoStatement>().EnterDoStatement(context);
+            EnterState<DoSimpleStatement>().EnterDoStatement(context);
         }
 
         public override void EnterDoStatementReturning(DoStatementReturningContext context)
         {
-            EnterState<DoStatement>().EnterDoStatementReturning(context);
+            EnterState<DoSimpleStatement>().EnterDoStatementReturning(context);
         }
 
         public override void EnterDoStatementConditionallyReturning(DoStatementConditionallyReturningContext context)
@@ -108,7 +100,7 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterDoStatementTerminating(DoStatementTerminatingContext context)
         {
-            EnterState<DoStatement>().EnterDoStatementTerminating(context);
+            EnterState<DoSimpleStatement>().EnterDoStatementTerminating(context);
         }
 
         public sealed override void EnterImportStatement(ImportStatementContext context)
@@ -225,7 +217,8 @@ namespace IS4.Sona.Compiler.States
     internal sealed class ChunkState : BlockState, IReturnScope, IFunctionScope
     {
         // Main block return is currently ignored
-        string? IReturnScope.VariableName => null;
+        string? IReturnScope.ReturnVariable => null;
+        string? IReturnScope.SuccessVariable => null;
 
         public ChunkState(ScriptEnvironment environment)
         {
@@ -246,7 +239,7 @@ namespace IS4.Sona.Compiler.States
         void IFunctionScope.WriteEnd()
         {
             Out.ExitScope();
-            Out.WriteLine("end");
+            Out.Write("end");
         }
     }
 
@@ -270,21 +263,21 @@ namespace IS4.Sona.Compiler.States
 
     internal sealed class ReturnState : ArgumentStatementState
     {
-        string? returnVariable;
+        IReturnScope? scope;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            returnVariable = FindScope<IReturnScope>()?.VariableName;
+            scope = FindScope<IReturnScope>();
         }
 
         public override void EnterExprList(ExprListContext context)
         {
-            if(returnVariable is { } ret)
+            if(scope?.ReturnVariable is { } result)
             {
                 // Store result in variable
-                Out.WriteSymbol(ret);
+                Out.WriteSymbol(result);
                 Out.WriteOperator("<-");
             }
             Out.Write('(');
@@ -295,9 +288,9 @@ namespace IS4.Sona.Compiler.States
         {
             if(!HasExpression)
             {
-                if(returnVariable is { } ret)
+                if(scope?.ReturnVariable is { } result)
                 {
-                    Out.WriteSymbol(ret);
+                    Out.WriteSymbol(result);
                     Out.WriteOperator("<-");
                 }
                 Out.Write("()");
@@ -307,10 +300,12 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(")");
             }
 
-            if(returnVariable is not null)
+            if(scope?.SuccessVariable is { } success)
             {
                 // Value returned
                 Out.WriteLine();
+                Out.WriteSymbol(success);
+                Out.WriteOperator("<-");
                 Out.Write("true");
             }
 

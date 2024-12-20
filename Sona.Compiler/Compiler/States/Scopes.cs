@@ -2,7 +2,8 @@
 {
     internal interface IReturnScope
     {
-        string? VariableName { get; }
+        string? ReturnVariable { get; }
+        string? SuccessVariable { get; }
     }
 
     internal interface IFunctionScope

@@ -37,7 +37,8 @@ namespace IS4.Sona.Compiler.States
     internal sealed class FunctionDeclState : NodeState, IReturnScope
     {
         // Establish a scope to return from
-        string? IReturnScope.VariableName => null;
+        string? IReturnScope.ReturnVariable => null;
+        string? IReturnScope.SuccessVariable => null;
 
         public override void ExitFuncDecl(FuncDeclContext context)
         {
