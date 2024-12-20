@@ -53,7 +53,7 @@ dependentName:
   NAME | LITERAL_NAME | anyKeyword;
 
 anyKeyword:
-  'function' | 'return' | 'break' | 'and' | 'or' | 'not' |
+  'function' | 'return' | 'break' | 'and' | 'or' | 'not' | 'const' |
   'let' | 'var' | 'end' | 'throw' | 'import' | 'include' | 'require' |
   'if' | 'then' | 'else' | 'elseif' | 'do' | 'while' | 'for' | 'in';
 
@@ -277,13 +277,16 @@ assignmentOrCallSuffix:
 /* Declarations */
 
 variableDecl:
-  localAttrList (letDecl | varDecl);
+  localAttrList (letDecl | varDecl | constDecl);
 
 letDecl:
   'let' declList '=' exprList;
 
 varDecl:
   'var' declList '=' exprList;
+
+constDecl:
+  'const' declList '=' exprList;
 
 multiFuncDecl:
   funcDecl+;
@@ -438,10 +441,16 @@ bitShiftExpr_Outer:
   bitShiftExpr_Inner;
 
 bitShiftExpr:
-  bitShiftExprArg (bitShiftBinaryOperator bitShiftExprArg)+;
+  bitShiftExprArg (bitShiftLeftExprNextArg | bitShiftRightExprNextArg)+;
 
 bitShiftExprArg:
   bitShiftExpr_Inner;
+
+bitShiftLeftExprNextArg:
+  '<<' bitShiftExprArg;
+
+bitShiftRightExprNextArg:
+  '>>' bitShiftExprArg;
 
 bitShiftExpr_Inner:
   innerExpr;
@@ -563,9 +572,6 @@ innerBinaryOperator:
 outerBinaryOperator:
   '<' | '<=' | '>' | '>=' | '==' | '!=' | '~=' |
   '&&' | '||';
-
-bitShiftBinaryOperator:
-  '>>' | '<<';
 
 unaryOperator:
   '+' | '-' | '~';

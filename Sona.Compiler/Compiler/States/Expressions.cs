@@ -4,6 +4,17 @@ namespace IS4.Sona.Compiler.States
 {
     internal class ExpressionState : NodeState
     {
+        IExecutionScope? scope;
+
+        protected bool IsLiteral => (scope ??= FindScope<IExecutionScope>())?.IsLiteral ?? false;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            scope = null;
+        }
+
         public override void EnterExpression(ExpressionContext context)
         {
 
@@ -61,7 +72,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterConcatExprNextArg(ConcatExprNextArgContext context)
         {
-            Out.WriteSpecialMember("..");
+            if(IsLiteral)
+            {
+                Out.WriteOperator("+");
+            }
+            else
+            {
+                Out.WriteSpecialMember("..");
+            }
         }
 
         public override void EnterBitOrExprArg(BitOrExprArgContext context)
@@ -76,7 +94,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterBitOrExprNextArg(BitOrExprNextArgContext context)
         {
-            Out.WriteSpecialMember("|");
+            if(IsLiteral)
+            {
+                Out.WriteOperator("|||");
+            }
+            else
+            {
+                Out.WriteSpecialMember("|");
+            }
         }
 
         public override void EnterBitXorExprArg(BitXorExprArgContext context)
@@ -91,7 +116,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterBitXorExprNextArg(BitXorExprNextArgContext context)
         {
-            Out.WriteSpecialMember("^");
+            if(IsLiteral)
+            {
+                Out.WriteOperator("^^^");
+            }
+            else
+            {
+                Out.WriteSpecialMember("^");
+            }
         }
 
         public override void EnterBitAndExprArg(BitAndExprArgContext context)
@@ -106,7 +138,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterBitAndExprNextArg(BitAndExprNextArgContext context)
         {
-            Out.WriteSpecialMember("&");
+            if(IsLiteral)
+            {
+                Out.WriteOperator("&&&");
+            }
+            else
+            {
+                Out.WriteSpecialMember("&");
+            }
         }
 
         public override void EnterBitShiftExprArg(BitShiftExprArgContext context)
@@ -119,6 +158,30 @@ namespace IS4.Sona.Compiler.States
             Out.Write(')');
         }
 
+        public override void EnterBitShiftLeftExprNextArg(BitShiftLeftExprNextArgContext context)
+        {
+            if(IsLiteral)
+            {
+                Out.WriteOperator("<<<");
+            }
+            else
+            {
+                Out.WriteSpecialMember("<<");
+            }
+        }
+
+        public override void EnterBitShiftRightExprNextArg(BitShiftRightExprNextArgContext context)
+        {
+            if(IsLiteral)
+            {
+                Out.WriteOperator(">>>");
+            }
+            else
+            {
+                Out.WriteSpecialMember(">>");
+            }
+        }
+
         public override void EnterHashExpr(HashExprContext context)
         {
             Out.Write('(');
@@ -127,8 +190,15 @@ namespace IS4.Sona.Compiler.States
         public override void ExitHashExpr(HashExprContext context)
         {
             Out.Write(')');
-            Out.WriteSpecialMember("#");
-            Out.Write("()");
+            if(IsLiteral)
+            {
+                Out.Write(".Length");
+            }
+            else
+            {
+                Out.WriteSpecialMember("#");
+                Out.Write("()");
+            }
         }
 
         public override void EnterNotExpr(NotExprContext context)

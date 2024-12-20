@@ -11,4 +11,9 @@
         void WriteBegin();
         void WriteEnd();
     }
+
+    internal interface IExecutionScope
+    {
+        bool IsLiteral { get; }
+    }
 }

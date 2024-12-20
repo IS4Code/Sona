@@ -91,11 +91,6 @@ namespace IS4.Sona.Compiler
             Environment.EnableParseTree();
         }
 
-        public override void EnterBitShiftBinaryOperator(BitShiftBinaryOperatorContext context)
-        {
-            Environment.EnableParseTree();
-        }
-
         public override void ExitOuterBinaryOperator(OuterBinaryOperatorContext context)
         {
             try
@@ -124,19 +119,6 @@ namespace IS4.Sona.Compiler
             {
                 string text = context.GetText();
                 Out.WriteOperator(text);
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
-        }
-
-        public override void ExitBitShiftBinaryOperator(BitShiftBinaryOperatorContext context)
-        {
-            try
-            {
-                string text = context.GetText();
-                Out.WriteSpecialMember(text);
             }
             finally
             {

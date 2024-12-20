@@ -107,15 +107,19 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal sealed class NewVariableState : NodeState
+    internal sealed class NewVariableState : NodeState, IExecutionScope
     {
         bool first;
+        bool isliteral;
+
+        bool IExecutionScope.IsLiteral => isliteral || (FindScope<IExecutionScope>()?.IsLiteral ?? false);
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             first = false;
+            isliteral = false;
         }
 
         public override void EnterVariableDecl(VariableDeclContext context)
@@ -145,6 +149,15 @@ namespace IS4.Sona.Compiler.States
         public override void EnterVarDecl(VarDeclContext context)
         {
             Out.Write("let mutable ");
+        }
+
+        public override void EnterConstDecl(ConstDeclContext context)
+        {
+            Out.Write("[<");
+            Out.WriteNamespacedName("Microsoft.FSharp.Core", "LiteralAttribute");
+            Out.WriteLine(">]");
+            Out.Write("let ");
+            isliteral = true;
         }
 
         public override void EnterExprList(ExprListContext context)

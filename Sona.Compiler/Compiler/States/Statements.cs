@@ -214,11 +214,12 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal sealed class ChunkState : BlockState, IReturnScope, IFunctionScope
+    internal sealed class ChunkState : BlockState, IReturnScope, IFunctionScope, IExecutionScope
     {
         // Main block return is currently ignored
         string? IReturnScope.ReturnVariable => null;
         string? IReturnScope.SuccessVariable => null;
+        bool IExecutionScope.IsLiteral => false;
 
         public ChunkState(ScriptEnvironment environment)
         {
