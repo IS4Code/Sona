@@ -53,39 +53,39 @@ namespace IS4.Sona.Compiler.States
             EnterState<AssignmentOrCallState>().EnterAssignmentOrCall(context);
         }
 
-        public sealed override void EnterIfStatement(IfStatementContext context)
+        public sealed override void EnterIfStatementFree(IfStatementFreeContext context)
         {
-            EnterState<IfStatement>().EnterIfStatement(context);
+            EnterState<IfStatementFree>().EnterIfStatementFree(context);
         }
 
-        public sealed override void EnterIfStatementReturningClosed(IfStatementReturningClosedContext context)
+        public sealed override void EnterIfStatementReturning(IfStatementReturningContext context)
         {
-            EnterState<IfStatement>().EnterIfStatementReturningClosed(context);
+            EnterState<IfStatementFree>().EnterIfStatementReturning(context);
         }
 
-        public sealed override void EnterIfStatementReturningClosedTrail(IfStatementReturningClosedTrailContext context)
+        public sealed override void EnterIfStatementReturningTrail(IfStatementReturningTrailContext context)
         {
-            EnterState<IfSimpleStatement>().EnterIfStatementReturningClosedTrail(context);
+            EnterState<IfSimpleStatement>().EnterIfStatementReturningTrail(context);
         }
 
-        public sealed override void EnterIfStatementReturningOpenSimple(IfStatementReturningOpenSimpleContext context)
+        public sealed override void EnterIfStatementConditionalSimple(IfStatementConditionalSimpleContext context)
         {
-            EnterState<IfSimpleStatement>().EnterIfStatementReturningOpenSimple(context);
+            EnterState<IfSimpleStatement>().EnterIfStatementConditionalSimple(context);
         }
 
-        public sealed override void EnterIfStatementReturningOpenComplex(IfStatementReturningOpenComplexContext context)
+        public sealed override void EnterIfStatementConditionalComplex(IfStatementConditionalComplexContext context)
         {
-            EnterState<IfControlStatement>().EnterIfStatementReturningOpenComplex(context);
+            EnterState<IfControlStatement>().EnterIfStatementConditionalComplex(context);
         }
 
         public sealed override void EnterIfStatementTerminating(IfStatementTerminatingContext context)
         {
-            EnterState<IfStatement>().EnterIfStatementTerminating(context);
+            EnterState<IfStatementFree>().EnterIfStatementTerminating(context);
         }
 
-        public override void EnterDoStatement(DoStatementContext context)
+        public override void EnterDoStatementFree(DoStatementFreeContext context)
         {
-            EnterState<DoSimpleStatement>().EnterDoStatement(context);
+            EnterState<DoSimpleStatement>().EnterDoStatementFree(context);
         }
 
         public override void EnterDoStatementReturning(DoStatementReturningContext context)
@@ -93,9 +93,9 @@ namespace IS4.Sona.Compiler.States
             EnterState<DoSimpleStatement>().EnterDoStatementReturning(context);
         }
 
-        public override void EnterDoStatementConditionallyReturning(DoStatementConditionallyReturningContext context)
+        public override void EnterDoStatementConditional(DoStatementConditionalContext context)
         {
-            EnterState<DoControlStatement>().EnterDoStatementConditionallyReturning(context);
+            EnterState<DoControlStatement>().EnterDoStatementConditional(context);
         }
 
         public override void EnterDoStatementTerminating(DoStatementTerminatingContext context)
@@ -148,12 +148,12 @@ namespace IS4.Sona.Compiler.States
             OnExitStatement();
         }
 
-        public sealed override void EnterConditionallyReturningStatement(ConditionallyReturningStatementContext context)
+        public sealed override void EnterConditionalStatement(ConditionalStatementContext context)
         {
             OnEnterStatement();
         }
 
-        public sealed override void ExitConditionallyReturningStatement(ConditionallyReturningStatementContext context)
+        public sealed override void ExitConditionalStatement(ConditionalStatementContext context)
         {
             OnExitStatement();
         }
@@ -178,9 +178,9 @@ namespace IS4.Sona.Compiler.States
             OnExitStatement();
         }
 
-        public sealed override void ExitValuelessBlock(ValuelessBlockContext context)
+        public sealed override void ExitFreeBlock(FreeBlockContext context)
         {
-            ExitState()?.ExitValuelessBlock(context);
+            ExitState()?.ExitFreeBlock(context);
         }
 
         public sealed override void ExitTerminatingBlock(TerminatingBlockContext context)
@@ -188,9 +188,9 @@ namespace IS4.Sona.Compiler.States
             ExitState()?.ExitTerminatingBlock(context);
         }
 
-        public sealed override void ExitClosedBlock(ClosedBlockContext context)
+        public sealed override void ExitReturnSafeBlock(ReturnSafeBlockContext context)
         {
-            ExitState()?.ExitClosedBlock(context);
+            ExitState()?.ExitReturnSafeBlock(context);
         }
 
         public sealed override void ExitReturningBlock(ReturningBlockContext context)
@@ -208,9 +208,9 @@ namespace IS4.Sona.Compiler.States
             ExitState()?.ExitOpenBlock(context);
         }
 
-        public sealed override void ExitControlBlock(ControlBlockContext context)
+        public sealed override void ExitConditionalBlock(ConditionalBlockContext context)
         {
-            ExitState()?.ExitControlBlock(context);
+            ExitState()?.ExitConditionalBlock(context);
         }
     }
 

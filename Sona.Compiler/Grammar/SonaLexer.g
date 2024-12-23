@@ -90,6 +90,7 @@ LITERAL_NAME:
 
 RETURN: 'return';
 BREAK: 'break';
+CONTINUE: 'continue';
 THROW: 'throw';
 LET: 'let';
 VAR: 'var';
@@ -105,7 +106,7 @@ ELSE: 'else';
 ELSEIF: 'elseif';
 DO: 'do';
 WHILE: 'while';
-WHILE_TRUE_DO: 'while' IGNORE 'true' IGNORE 'do';
+WHILE_TRUE_DO: 'while' IGNORE ('true' | '(' IGNORE 'true' IGNORE ')') IGNORE 'do';
 FOR: 'for';
 IN: 'in';
 
@@ -266,6 +267,7 @@ Interpolation_WHITESPACE: WHITESPACE -> skip;
 Interpolation_LITERAL_NAME: LITERAL_NAME -> type(LITERAL_NAME);
 Interpolation_RETURN: RETURN -> type(RETURN);
 Interpolation_BREAK: BREAK -> type(BREAK);
+Interpolation_CONTINUE: CONTINUE -> type(CONTINUE);
 Interpolation_THROW: THROW -> type(THROW);
 Interpolation_LET: LET -> type(LET);
 Interpolation_VAR: VAR -> type(VAR);
