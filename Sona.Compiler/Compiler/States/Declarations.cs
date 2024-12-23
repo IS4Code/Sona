@@ -113,6 +113,7 @@ namespace IS4.Sona.Compiler.States
         bool isliteral;
 
         bool IExecutionScope.IsLiteral => isliteral || (FindScope<IExecutionScope>()?.IsLiteral ?? false);
+        bool IExecutionScope.IsInline => false;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {

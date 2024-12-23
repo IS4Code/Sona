@@ -15,5 +15,12 @@
     internal interface IExecutionScope
     {
         bool IsLiteral { get; }
+        bool IsInline { get; }
+    }
+
+    internal interface IBindingScope
+    {
+        void Add(string name);
+        bool Contains(string name);
     }
 }

@@ -220,6 +220,7 @@ namespace IS4.Sona.Compiler.States
         string? IReturnScope.ReturnVariable => null;
         string? IReturnScope.SuccessVariable => null;
         bool IExecutionScope.IsLiteral => false;
+        bool IExecutionScope.IsInline => false;
 
         public ChunkState(ScriptEnvironment environment)
         {

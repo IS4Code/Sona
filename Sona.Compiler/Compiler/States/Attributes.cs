@@ -9,6 +9,7 @@ namespace IS4.Sona.Compiler.States
         bool isNamed;
 
         bool IExecutionScope.IsLiteral => true;
+        bool IExecutionScope.IsInline => false;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
