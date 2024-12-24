@@ -38,17 +38,21 @@ returnSafeBlock:
 returningBlock:
   (statement ';'?)*? returningStatement ';'?;
 
-// A block that explicitly interrupts
-interruptingBlock:
-  (statement ';'?)*? interruptingStatement ';'?;
-
 // A block that explicitly throws
 terminatingBlock:
   (statement ';'?)*? terminatingStatement ';'?;
 
+// A block that explicitly returns, interrupts, or throws
+closedBlock:
+  (statement ';'?)*? closingStatement ';'?;
+
 // A block that may or may not return or interrupt
 conditionalBlock:
   (statement ';'?)*? conditionalStatement ';'?;
+
+// A block that may or may not interrupt
+interruptibleBlock:
+  (statement ';'?)*? (interruptibleStatement | interruptingStatement) ';'?;
 
 name:
   NAME | LITERAL_NAME;
@@ -144,6 +148,10 @@ conditionalStatement:
   ifStatementConditionalComplex |
   whileStatementConditional;
 
+// A statement that may or may not interrupt
+interruptibleStatement:
+  doStatementInterruptible;
+
 // A statement that guarantees to terminate the execution without returning a value
 terminatingStatement:
   throwStatement |
@@ -156,15 +164,19 @@ throwStatement:
 
 // A sequence of statements that follows a conditionally returning block (open, closed, or conditionally returning)
 conditionalTrailingStatements:
-  (';'? statement)* (';'? (closingStatement | conditionalStatement) | implicitReturnStatement);
+  (';'? statement)*? (';'? (closingStatement | conditionalStatement | interruptibleStatement) | implicitReturnStatement);
 
 // Same but encountered in a context where never executed (follows a closed block)
 ignoredTrailingStatements:
-  (';'? statement)* (';'? (closingStatement | conditionalStatement) | implicitReturnStatement);
+  (';'? statement)*? (';'? (closingStatement | conditionalStatement | interruptibleStatement) | implicitReturnStatement);
+
+// A sequence of statements that follows an interruptible block
+interruptibleTrailingStatements:
+  (';'? statement)*? (';'? (closingStatement | interruptibleStatement) | implicitReturnStatement);
 
 // A sequence of statements that follows a returning block (returns or throws)
 returnSafeTrailingStatements:
-  (';'? statement)* ';'? (returningStatement | terminatingStatement);
+  (';'? statement)*? ';'? (returningStatement | terminatingStatement);
 
 // Same but the statements must be open
 openTrailingStatements:
@@ -200,18 +212,24 @@ ifStatementReturningTrail:
 // Same but the trailing statements are open, so the whole statement is open
 ifStatementConditionalSimple:
   (
-    if returningBlock (elseif returnSafeBlock)* (else openBlock)? 'end' |
-    if returnSafeBlock (elseif returnSafeBlock)* elseif returningBlock (elseif returnSafeBlock)* (else openBlock)? 'end'
+    if returningBlock (elseif closedBlock)* (else openBlock)? 'end' |
+    if closedBlock (elseif closedBlock)* elseif returningBlock (elseif closedBlock)* (else openBlock)? 'end'
   ) openTrailingStatements;
 
-// Either same but the returning branch is conditional, or
-// a non-else branch is open; the trailing statements are executed if no value is returned
+// The general case:
+// - like previous but the return branch is conditional, or
+// - like previous but the else branch is conditional or interruptible, or
+// - a non-else branch is open.
+// The trailing statements are executed if no value is returned.
 ifStatementConditionalComplex:
   (
-    if conditionalBlock (elseif returnSafeBlock)* (else openBlock)? 'end' |
-    if returnSafeBlock (elseif returnSafeBlock)* elseif conditionalBlock (elseif returnSafeBlock)* (else openBlock)? 'end' |
-    if (returningBlock | conditionalBlock) (elseif (returnSafeBlock | openBlock | conditionalBlock))* elseif openBlock (elseif (returnSafeBlock | openBlock | conditionalBlock))* (else (returnSafeBlock | openBlock | conditionalBlock))? 'end' |
-    if openBlock (elseif (returnSafeBlock | openBlock | conditionalBlock))* (elseif (conditionalBlock | returningBlock) (elseif (returnSafeBlock | openBlock | conditionalBlock))* (else (returnSafeBlock | openBlock | conditionalBlock))? | else (returningBlock | conditionalBlock)) 'end'
+    if conditionalBlock (elseif closedBlock)* (else (openBlock | interruptibleBlock))? 'end' |
+    if closedBlock (elseif closedBlock)* elseif conditionalBlock (elseif closedBlock)* (else (openBlock | conditionalBlock | interruptibleBlock))? 'end' |
+    if returningBlock (elseif closedBlock)* else (conditionalBlock | interruptibleBlock) 'end' |
+    if closedBlock (elseif closedBlock)* elseif returningBlock (elseif closedBlock)* else (conditionalBlock | interruptibleBlock) 'end' |
+    if (returningBlock | conditionalBlock) (elseif (closedBlock | openBlock | conditionalBlock | interruptibleBlock))* elseif (openBlock | conditionalBlock | interruptibleBlock) (elseif (closedBlock | openBlock | conditionalBlock | interruptibleBlock))* (else (closedBlock | openBlock | conditionalBlock | interruptibleBlock))? 'end' |
+    if (openBlock | conditionalBlock | interruptibleBlock) (elseif (closedBlock | openBlock | conditionalBlock | interruptibleBlock))* elseif (conditionalBlock | returningBlock) (elseif (closedBlock | openBlock | conditionalBlock | interruptibleBlock))* (else (closedBlock | openBlock | conditionalBlock | interruptibleBlock))? 'end' |
+    if (openBlock | conditionalBlock | interruptibleBlock) (elseif (closedBlock | openBlock | conditionalBlock | interruptibleBlock))* else (returningBlock | conditionalBlock) 'end'
   ) conditionalTrailingStatements;
 
 // All branches are terminating; the trailing statements cannot be executed
@@ -226,6 +244,9 @@ doStatementReturning:
 
 doStatementConditional:
   'do' conditionalBlock 'end' conditionalTrailingStatements;
+
+doStatementInterruptible:
+  'do' interruptibleBlock 'end' interruptibleTrailingStatements;
 
 doStatementTerminating:
   'do' terminatingBlock 'end' ignoredTrailingStatements;
