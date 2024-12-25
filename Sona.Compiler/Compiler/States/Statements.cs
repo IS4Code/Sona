@@ -188,9 +188,9 @@ namespace IS4.Sona.Compiler.States
             ExitState()?.ExitTerminatingBlock(context);
         }
 
-        public sealed override void ExitReturnSafeBlock(ReturnSafeBlockContext context)
+        public sealed override void ExitReturningSafeBlock(ReturningSafeBlockContext context)
         {
-            ExitState()?.ExitReturnSafeBlock(context);
+            ExitState()?.ExitReturningSafeBlock(context);
         }
 
         public sealed override void ExitReturningBlock(ReturningBlockContext context)

@@ -2,7 +2,7 @@
 
 namespace IS4.Sona.Compiler.States
 {
-    internal sealed class TrailingStatements : BlockState
+    internal sealed class Trail : BlockState
     {
         bool first;
         IFunctionScope? scope;
@@ -15,7 +15,7 @@ namespace IS4.Sona.Compiler.States
             scope = null;
         }
 
-        public override void EnterIgnoredTrailingStatements(IgnoredTrailingStatementsContext context)
+        public override void EnterIgnoredTrail(IgnoredTrailContext context)
         {
             scope = FindScope<IFunctionScope>();
 
@@ -32,45 +32,45 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
-        public override void ExitIgnoredTrailingStatements(IgnoredTrailingStatementsContext context)
+        public override void ExitIgnoredTrail(IgnoredTrailContext context)
         {
             OnExitStatements();
             scope?.WriteEnd();
             Out.WriteLine();
-            ExitState()?.ExitIgnoredTrailingStatements(context);
+            ExitState()?.ExitIgnoredTrail(context);
         }
 
-        public override void EnterConditionalTrailingStatements(ConditionalTrailingStatementsContext context)
+        public override void EnterConditionalTrail(ConditionalTrailContext context)
         {
 
         }
 
-        public override void ExitConditionalTrailingStatements(ConditionalTrailingStatementsContext context)
-        {
-            OnExitStatements();
-            ExitState()?.ExitConditionalTrailingStatements(context);
-        }
-
-        public override void EnterReturnSafeTrailingStatements(ReturnSafeTrailingStatementsContext context)
-        {
-
-        }
-
-        public override void ExitReturnSafeTrailingStatements(ReturnSafeTrailingStatementsContext context)
+        public override void ExitConditionalTrail(ConditionalTrailContext context)
         {
             OnExitStatements();
-            ExitState()?.ExitReturnSafeTrailingStatements(context);
+            ExitState()?.ExitConditionalTrail(context);
         }
 
-        public override void EnterOpenTrailingStatements(OpenTrailingStatementsContext context)
+        public override void EnterReturnSafeTrail(ReturnSafeTrailContext context)
         {
 
         }
 
-        public override void ExitOpenTrailingStatements(OpenTrailingStatementsContext context)
+        public override void ExitReturnSafeTrail(ReturnSafeTrailContext context)
         {
             OnExitStatements();
-            ExitState()?.ExitOpenTrailingStatements(context);
+            ExitState()?.ExitReturnSafeTrail(context);
+        }
+
+        public override void EnterOpenConditionalTrail(OpenConditionalTrailContext context)
+        {
+
+        }
+
+        public override void ExitOpenConditionalTrail(OpenConditionalTrailContext context)
+        {
+            OnExitStatements();
+            ExitState()?.ExitOpenConditionalTrail(context);
         }
 
         void OnEnter()
@@ -201,13 +201,13 @@ namespace IS4.Sona.Compiler.States
             OnExitBlock();
         }
 
-        public override void EnterReturnSafeBlock(ReturnSafeBlockContext context)
+        public override void EnterReturningSafeBlock(ReturningSafeBlockContext context)
         {
             OnEnterBlock();
-            EnterState<BlockState>().EnterReturnSafeBlock(context);
+            EnterState<BlockState>().EnterReturningSafeBlock(context);
         }
 
-        public override void ExitReturnSafeBlock(ReturnSafeBlockContext context)
+        public override void ExitReturningSafeBlock(ReturningSafeBlockContext context)
         {
             OnExitBlock();
         }
@@ -256,33 +256,33 @@ namespace IS4.Sona.Compiler.States
             OnExitBlock();
         }
 
-        public sealed override void EnterIgnoredTrailingStatements(IgnoredTrailingStatementsContext context)
+        public sealed override void EnterIgnoredTrail(IgnoredTrailContext context)
         {
             OnExitStatement();
             Out.WriteLine();
             Out.Write("else ");
             Out.WriteLine(_begin_);
             Out.EnterScope();
-            EnterState<TrailingStatements>().EnterIgnoredTrailingStatements(context);
+            EnterState<Trail>().EnterIgnoredTrail(context);
         }
 
-        public sealed override void ExitIgnoredTrailingStatements(IgnoredTrailingStatementsContext context)
+        public sealed override void ExitIgnoredTrail(IgnoredTrailContext context)
         {
             Out.WriteOperatorName("Unchecked");
             Out.WriteLine(".defaultof<_>");
         }
 
-        public sealed override void EnterConditionalTrailingStatements(ConditionalTrailingStatementsContext context)
+        public sealed override void EnterConditionalTrail(ConditionalTrailContext context)
         {
             OnExitStatement();
             Out.WriteLine();
             ReturnFromScope();
             Out.WriteLine(_begin_);
             Out.EnterScope();
-            EnterState<TrailingStatements>().EnterConditionalTrailingStatements(context);
+            EnterState<Trail>().EnterConditionalTrail(context);
         }
 
-        public sealed override void ExitConditionalTrailingStatements(ConditionalTrailingStatementsContext context)
+        public sealed override void ExitConditionalTrail(ConditionalTrailContext context)
         {
             Out.ExitScope();
             Out.Write(_end_);
@@ -435,7 +435,7 @@ namespace IS4.Sona.Compiler.States
             Out.WriteLine();
         }
 
-        public override void EnterReturnSafeTrailingStatements(ReturnSafeTrailingStatementsContext context)
+        public override void EnterReturnSafeTrail(ReturnSafeTrailContext context)
         {
             if(!hasElse)
             {
@@ -444,16 +444,16 @@ namespace IS4.Sona.Compiler.States
                 Out.WriteLine(_begin_);
                 Out.EnterScope();
             }
-            EnterState<TrailingStatements>().EnterReturnSafeTrailingStatements(context);
+            EnterState<Trail>().EnterReturnSafeTrail(context);
         }
 
-        public override void ExitReturnSafeTrailingStatements(ReturnSafeTrailingStatementsContext context)
+        public override void ExitReturnSafeTrail(ReturnSafeTrailContext context)
         {
             Out.ExitScope();
             Out.Write(_end_);
         }
 
-        public override void EnterOpenTrailingStatements(OpenTrailingStatementsContext context)
+        public override void EnterOpenConditionalTrail(OpenConditionalTrailContext context)
         {
             if(!hasElse)
             {
@@ -462,10 +462,10 @@ namespace IS4.Sona.Compiler.States
                 Out.WriteLine(_begin_);
                 Out.EnterScope();
             }
-            EnterState<TrailingStatements>().EnterOpenTrailingStatements(context);
+            EnterState<Trail>().EnterOpenConditionalTrail(context);
         }
 
-        public override void ExitOpenTrailingStatements(OpenTrailingStatementsContext context)
+        public override void ExitOpenConditionalTrail(OpenConditionalTrailContext context)
         {
             Out.ExitScope();
             Out.Write(_end_);
