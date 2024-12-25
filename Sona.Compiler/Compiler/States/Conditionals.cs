@@ -1,8 +1,9 @@
-﻿using static IS4.Sona.Grammar.SonaParser;
+﻿using Antlr4.Runtime.Misc;
+using static IS4.Sona.Grammar.SonaParser;
 
 namespace IS4.Sona.Compiler.States
 {
-    internal sealed class Trail : BlockState
+    internal sealed class TrailingStatements : BlockState
     {
         bool first;
         IFunctionScope? scope;
@@ -24,7 +25,7 @@ namespace IS4.Sona.Compiler.States
             scope?.WriteBegin();
         }
 
-        void OnExitStatements()
+        void OnExitTrail()
         {
             if(!first)
             {
@@ -34,46 +35,103 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitIgnoredTrail(IgnoredTrailContext context)
         {
-            OnExitStatements();
+            OnExitTrail();
             scope?.WriteEnd();
             Out.WriteLine();
             ExitState()?.ExitIgnoredTrail(context);
         }
 
-        public override void EnterConditionalTrail(ConditionalTrailContext context)
+        #region Trail types
+        public sealed override void EnterOpenTrail(OpenTrailContext context)
         {
 
         }
 
-        public override void ExitConditionalTrail(ConditionalTrailContext context)
+        public sealed override void ExitOpenTrail(OpenTrailContext context)
         {
-            OnExitStatements();
+            OnExitTrail();
+            ExitState()?.ExitOpenTrail(context);
+        }
+
+        public sealed override void EnterReturningTrail(ReturningTrailContext context)
+        {
+
+        }
+
+        public sealed override void ExitReturningTrail(ReturningTrailContext context)
+        {
+            OnExitTrail();
+            ExitState()?.ExitReturningTrail(context);
+        }
+
+        public sealed override void EnterTerminatingTrail(TerminatingTrailContext context)
+        {
+
+        }
+
+        public sealed override void ExitTerminatingTrail(TerminatingTrailContext context)
+        {
+            OnExitTrail();
+            ExitState()?.ExitTerminatingTrail(context);
+        }
+
+        public sealed override void EnterInterruptingTrail(InterruptingTrailContext context)
+        {
+
+        }
+
+        public sealed override void ExitInterruptingTrail(InterruptingTrailContext context)
+        {
+            OnExitTrail();
+            ExitState()?.ExitInterruptingTrail(context);
+        }
+
+        public sealed override void EnterClosingTrail(ClosingTrailContext context)
+        {
+
+        }
+
+        public sealed override void ExitClosingTrail(ClosingTrailContext context)
+        {
+            OnExitTrail();
+            ExitState()?.ExitClosingTrail(context);
+        }
+
+        public sealed override void EnterConditionalTrail(ConditionalTrailContext context)
+        {
+
+        }
+
+        public sealed override void ExitConditionalTrail(ConditionalTrailContext context)
+        {
+            OnExitTrail();
             ExitState()?.ExitConditionalTrail(context);
         }
 
-        public override void EnterReturnSafeTrail(ReturnSafeTrailContext context)
+        public sealed override void EnterInterruptibleTrail(InterruptibleTrailContext context)
         {
 
         }
 
-        public override void ExitReturnSafeTrail(ReturnSafeTrailContext context)
+        public sealed override void ExitInterruptibleTrail(InterruptibleTrailContext context)
         {
-            OnExitStatements();
-            ExitState()?.ExitReturnSafeTrail(context);
+            OnExitTrail();
+            ExitState()?.ExitInterruptibleTrail(context);
         }
 
-        public override void EnterOpenConditionalTrail(OpenConditionalTrailContext context)
+        public sealed override void EnterFullTrail(FullTrailContext context)
         {
 
         }
 
-        public override void ExitOpenConditionalTrail(OpenConditionalTrailContext context)
+        public sealed override void ExitFullTrail(FullTrailContext context)
         {
-            OnExitStatements();
-            ExitState()?.ExitOpenConditionalTrail(context);
+            OnExitTrail();
+            ExitState()?.ExitFullTrail(context);
         }
+        #endregion
 
-        void OnEnter()
+        protected override void OnEnterStatement(StatementFlags flags)
         {
             if(first)
             {
@@ -85,12 +143,7 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
-        protected override void OnEnterStatement()
-        {
-            OnEnter();
-        }
-
-        protected override void OnExitStatement()
+        protected override void OnExitStatement(StatementFlags flags)
         {
             
         }
@@ -109,12 +162,23 @@ namespace IS4.Sona.Compiler.States
         protected string? ScopeReturnVariable => ReturnVariable ?? OriginalReturnVariable;
         protected string? ScopeSuccessVariable => SuccessVariable ?? OriginalSuccessVariable;
 
+        StatementFlags enterFlags;
+        bool exited;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            enterFlags = StatementFlags.None;
+            exited = false;
+        }
+
         protected void InitializeReturnControl()
         {
             if(FindScope<IReturnScope>() is { } scope)
             {
                 OriginalReturnVariable = scope.ReturnVariable;
-                OriginalSuccessVariable = scope.ReturnVariable;
+                OriginalSuccessVariable = scope.SuccessVariable;
             }
         }
 
@@ -139,15 +203,10 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
-        protected void ExitReturnScope()
-        {
-
-        }
-
         protected void ReturnFromScope()
         {
             Out.Write("if ");
-            Out.WriteSymbol(SuccessVariable);
+            Out.WriteSymbol(ScopeSuccessVariable);
             Out.Write(" then ");
             if(OriginalReturnVariable is null)
             {
@@ -167,176 +226,493 @@ namespace IS4.Sona.Compiler.States
             SuccessVariable = null;
         }
 
-        protected virtual void OnEnterBlock()
+        protected virtual void OnEnterBlock(StatementFlags flags)
         {
             Out.WriteLine(_begin_);
             Out.EnterScope();
         }
 
-        protected virtual void OnExitBlock()
+        protected virtual void OnExitBlock(StatementFlags flags)
         {
             Out.ExitScope();
             Out.Write(_end_);
         }
 
-        public override void EnterFreeBlock(FreeBlockContext context)
+        #region Block types
+        public sealed override void EnterValueBlock(ValueBlockContext context)
         {
-            OnEnterBlock();
-            EnterState<BlockState>().EnterFreeBlock(context);
-        }
-
-        public override void ExitFreeBlock(FreeBlockContext context)
-        {
-            OnExitBlock();
-        }
-
-        public override void EnterReturningBlock(ReturningBlockContext context)
-        {
-            OnEnterBlock();
-            EnterState<BlockState>().EnterReturningBlock(context);
-        }
-
-        public override void ExitReturningBlock(ReturningBlockContext context)
-        {
-            OnExitBlock();
-        }
-
-        public override void EnterReturningSafeBlock(ReturningSafeBlockContext context)
-        {
-            OnEnterBlock();
-            EnterState<BlockState>().EnterReturningSafeBlock(context);
-        }
-
-        public override void ExitReturningSafeBlock(ReturningSafeBlockContext context)
-        {
-            OnExitBlock();
-        }
-
-        public override void EnterTerminatingBlock(TerminatingBlockContext context)
-        {
-            OnEnterBlock();
-            EnterState<BlockState>().EnterTerminatingBlock(context);
-        }
-
-        public override void ExitTerminatingBlock(TerminatingBlockContext context)
-        {
-            OnExitBlock();
-        }
-
-        public override void EnterValueBlock(ValueBlockContext context)
-        {
-            OnEnterBlock();
+            OnEnterBlock(StatementFlags.None);
             EnterState<BlockState>().EnterValueBlock(context);
         }
 
-        public override void ExitValueBlock(ValueBlockContext context)
+        public sealed override void ExitValueBlock(ValueBlockContext context)
         {
-            OnExitBlock();
+            OnExitBlock(StatementFlags.None);
         }
 
-        public override void EnterOpenBlock(OpenBlockContext context)
+        public sealed override void EnterFreeBlock(FreeBlockContext context)
         {
-            OnEnterBlock();
+            OnEnterBlock(StatementFlags.OpenPath);
+            EnterState<BlockState>().EnterFreeBlock(context);
+        }
+
+        public sealed override void ExitFreeBlock(FreeBlockContext context)
+        {
+            OnExitBlock(StatementFlags.OpenPath);
+        }
+
+        public sealed override void EnterOpenBlock(OpenBlockContext context)
+        {
+            OnEnterBlock(StatementFlags.OpenPath);
             EnterState<BlockState>().EnterOpenBlock(context);
         }
 
-        public override void ExitOpenBlock(OpenBlockContext context)
+        public sealed override void ExitOpenBlock(OpenBlockContext context)
         {
-            OnExitBlock();
+            OnExitBlock(StatementFlags.OpenPath);
         }
 
-        public override void EnterConditionalBlock(ConditionalBlockContext context)
+        public sealed override void EnterReturningBlock(ReturningBlockContext context)
         {
-            OnEnterBlock();
+            OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            EnterState<BlockState>().EnterReturningBlock(context);
+        }
+
+        public sealed override void ExitReturningBlock(ReturningBlockContext context)
+        {
+            OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+        }
+
+        public sealed override void EnterTerminatingBlock(TerminatingBlockContext context)
+        {
+            OnEnterBlock(StatementFlags.Terminating);
+            EnterState<BlockState>().EnterTerminatingBlock(context);
+        }
+
+        public sealed override void ExitTerminatingBlock(TerminatingBlockContext context)
+        {
+            OnExitBlock(StatementFlags.Terminating);
+        }
+
+        public sealed override void EnterInterruptingBlock(InterruptingBlockContext context)
+        {
+            OnEnterBlock(StatementFlags.InterruptPath);
+            EnterState<BlockState>().EnterInterruptingBlock(context);
+        }
+
+        public sealed override void ExitInterruptingBlock(InterruptingBlockContext context)
+        {
+            OnExitBlock(StatementFlags.InterruptPath);
+        }
+
+        public sealed override void EnterClosingBlock(ClosingBlockContext context)
+        {
+            OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            EnterState<BlockState>().EnterClosingBlock(context);
+        }
+
+        public sealed override void ExitClosingBlock(ClosingBlockContext context)
+        {
+            OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+        }
+
+        public sealed override void EnterConditionalBlock(ConditionalBlockContext context)
+        {
+            OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
             EnterState<BlockState>().EnterConditionalBlock(context);
         }
 
-        public override void ExitConditionalBlock(ConditionalBlockContext context)
+        public sealed override void ExitConditionalBlock(ConditionalBlockContext context)
         {
-            OnExitBlock();
+            OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
         }
+
+        public sealed override void EnterInterruptibleBlock(InterruptibleBlockContext context)
+        {
+            OnEnterBlock(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            EnterState<BlockState>().EnterInterruptibleBlock(context);
+        }
+
+        public sealed override void ExitInterruptibleBlock(InterruptibleBlockContext context)
+        {
+            OnExitBlock(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+        }
+
+        public sealed override void EnterFullBlock(FullBlockContext context)
+        {
+            OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            EnterState<BlockState>().EnterFullBlock(context);
+        }
+
+        public sealed override void ExitFullBlock(FullBlockContext context)
+        {
+            OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+        }
+        #endregion
 
         public sealed override void EnterIgnoredTrail(IgnoredTrailContext context)
         {
-            OnExitStatement();
+            OnExitInner(enterFlags);
             Out.WriteLine();
             Out.Write("else ");
             Out.WriteLine(_begin_);
             Out.EnterScope();
-            EnterState<Trail>().EnterIgnoredTrail(context);
+            EnterState<TrailingStatements>().EnterIgnoredTrail(context);
         }
 
         public sealed override void ExitIgnoredTrail(IgnoredTrailContext context)
         {
             Out.WriteOperatorName("Unchecked");
             Out.WriteLine(".defaultof<_>");
+            Out.ExitScope();
+            Out.Write("end");
+        }
+
+        protected virtual void OnEnterTrail(StatementFlags flags)
+        {
+            OnExitInner(enterFlags);
+            Out.WriteLine(_begin_);
+            Out.EnterScope();
+        }
+
+        protected virtual void OnExitTrail(StatementFlags flags)
+        {
+            Out.ExitScope();
+            Out.Write(_end_);
+        }
+
+        #region Trail types
+        public sealed override void EnterOpenTrail(OpenTrailContext context)
+        {
+            OnEnterTrail(StatementFlags.OpenPath);
+            EnterState<TrailingStatements>().EnterOpenTrail(context);
+        }
+
+        public sealed override void ExitOpenTrail(OpenTrailContext context)
+        {
+            OnExitTrail(StatementFlags.OpenPath);
+        }
+
+        public sealed override void EnterReturningTrail(ReturningTrailContext context)
+        {
+            OnEnterTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            EnterState<TrailingStatements>().EnterReturningTrail(context);
+        }
+
+        public sealed override void ExitReturningTrail(ReturningTrailContext context)
+        {
+            OnExitTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+        }
+
+        public sealed override void EnterClosingTrail(ClosingTrailContext context)
+        {
+            OnEnterTrail(StatementFlags.Terminating);
+            EnterState<TrailingStatements>().EnterClosingTrail(context);
+        }
+
+        public sealed override void ExitClosingTrail(ClosingTrailContext context)
+        {
+            OnExitTrail(StatementFlags.Terminating);
+        }
+
+        public sealed override void EnterTerminatingTrail(TerminatingTrailContext context)
+        {
+            OnEnterTrail(StatementFlags.Terminating);
+            EnterState<TrailingStatements>().EnterTerminatingTrail(context);
+        }
+
+        public sealed override void ExitTerminatingTrail(TerminatingTrailContext context)
+        {
+            OnExitTrail(StatementFlags.Terminating);
+        }
+
+        public sealed override void EnterInterruptingTrail(InterruptingTrailContext context)
+        {
+            OnEnterTrail(StatementFlags.InterruptPath);
+            EnterState<TrailingStatements>().EnterInterruptingTrail(context);
+        }
+
+        public sealed override void ExitInterruptingTrail(InterruptingTrailContext context)
+        {
+            OnExitTrail(StatementFlags.InterruptPath);
         }
 
         public sealed override void EnterConditionalTrail(ConditionalTrailContext context)
         {
-            OnExitStatement();
-            Out.WriteLine();
-            ReturnFromScope();
-            Out.WriteLine(_begin_);
-            Out.EnterScope();
-            EnterState<Trail>().EnterConditionalTrail(context);
+            OnEnterTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            EnterState<TrailingStatements>().EnterConditionalTrail(context);
         }
 
         public sealed override void ExitConditionalTrail(ConditionalTrailContext context)
         {
-            Out.ExitScope();
-            Out.Write(_end_);
+            OnExitTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
         }
 
-        protected virtual void OnEnterStatement()
+        public sealed override void EnterInterruptibleTrail(InterruptibleTrailContext context)
+        {
+            OnEnterTrail(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            EnterState<TrailingStatements>().EnterInterruptibleTrail(context);
+        }
+
+        public sealed override void ExitInterruptibleTrail(InterruptibleTrailContext context)
+        {
+            OnExitTrail(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+        }
+
+        public sealed override void EnterFullTrail(FullTrailContext context)
+        {
+            OnEnterTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            EnterState<TrailingStatements>().EnterFullTrail(context);
+        }
+
+        public sealed override void ExitFullTrail(FullTrailContext context)
+        {
+            OnExitTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+        }
+        #endregion
+
+        protected virtual void OnEnter(StatementFlags flags)
         {
 
         }
 
-        protected virtual void OnExitStatement()
+        protected virtual void OnExit(StatementFlags flags)
         {
 
         }
-    }
 
-    internal class IfStatementFree : ControlStatement
-    {
+        private void OnEnterInner(StatementFlags flags)
+        {
+            if(this is IReturnScope)
+            {
+                flags |= StatementFlags.OpenPath;
+            }
+            enterFlags = flags;
+            OnEnter(flags);
+        }
+
+        private void OnExitInner(StatementFlags flags)
+        {
+            if(this is IReturnScope)
+            {
+                flags |= StatementFlags.OpenPath;
+            }
+            if(!exited)
+            {
+                exited = true;
+                OnExit(flags);
+            }
+        }
+
+        #region Statement types
         public sealed override void EnterIfStatementFree(IfStatementFreeContext context)
         {
-
-        }
-
-        public sealed override void EnterIfStatementReturning(IfStatementReturningContext context)
-        {
-            Out.Write("if true then ");
-            Out.WriteLine(_begin_);
-            Out.EnterScope();
-        }
-
-        public sealed override void EnterIfStatementTerminating(IfStatementTerminatingContext context)
-        {
-            Out.Write("if true then ");
-            Out.WriteLine(_begin_);
-            Out.EnterScope();
+            OnEnterInner(StatementFlags.OpenPath);
         }
 
         public sealed override void ExitIfStatementFree(IfStatementFreeContext context)
         {
+            OnExitInner(StatementFlags.OpenPath);
             ExitState().ExitIfStatementFree(context);
+        }
+
+        public sealed override void EnterIfStatementReturning(IfStatementReturningContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
         }
 
         public sealed override void ExitIfStatementReturning(IfStatementReturningContext context)
         {
-            Out.ExitScope();
-            Out.Write(_end_);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
             ExitState().ExitIfStatementReturning(context);
+        }
+
+        public sealed override void EnterIfStatementReturningTrail(IfStatementReturningTrailContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+        }
+
+        public sealed override void ExitIfStatementReturningTrail(IfStatementReturningTrailContext context)
+        {
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            ExitState().ExitIfStatementReturningTrail(context);
+        }
+
+        public sealed override void EnterIfStatementReturningTrailFromElse(IfStatementReturningTrailFromElseContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+        }
+
+        public sealed override void ExitIfStatementReturningTrailFromElse(IfStatementReturningTrailFromElseContext context)
+        {
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            ExitState().ExitIfStatementReturningTrailFromElse(context);
+        }
+
+        public sealed override void EnterIfStatementInterrupting(IfStatementInterruptingContext context)
+        {
+            OnEnterInner(StatementFlags.InterruptPath);
+        }
+
+        public sealed override void ExitIfStatementInterrupting(IfStatementInterruptingContext context)
+        {
+            OnExitInner(StatementFlags.InterruptPath);
+            ExitState().ExitIfStatementInterrupting(context);
+        }
+
+        public sealed override void EnterIfStatementInterruptingTrail(IfStatementInterruptingTrailContext context)
+        {
+            OnEnterInner(StatementFlags.InterruptPath);
+        }
+
+        public sealed override void ExitIfStatementInterruptingTrail(IfStatementInterruptingTrailContext context)
+        {
+            OnExitInner(StatementFlags.InterruptPath);
+            ExitState().ExitIfStatementInterruptingTrail(context);
+        }
+
+        public sealed override void EnterIfStatementInterruptible(IfStatementInterruptibleContext context)
+        {
+            OnEnterInner(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+        }
+
+        public sealed override void ExitIfStatementInterruptible(IfStatementInterruptibleContext context)
+        {
+            OnExitInner(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            ExitState().ExitIfStatementInterruptible(context);
+        }
+
+        public sealed override void EnterIfStatementTerminating(IfStatementTerminatingContext context)
+        {
+            OnEnterInner(StatementFlags.Terminating);
         }
 
         public sealed override void ExitIfStatementTerminating(IfStatementTerminatingContext context)
         {
-            Out.ExitScope();
-            Out.Write(_end_);
+            OnExitInner(StatementFlags.Terminating);
             ExitState().ExitIfStatementTerminating(context);
+        }
+
+        public sealed override void EnterIfStatementConditional(IfStatementConditionalContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+        }
+
+        public sealed override void ExitIfStatementConditional(IfStatementConditionalContext context)
+        {
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            ExitState().ExitIfStatementConditional(context);
+        }
+
+        public sealed override void EnterDoStatementFree(DoStatementFreeContext context)
+        {
+            OnEnterInner(StatementFlags.OpenPath);
+        }
+
+        public sealed override void ExitDoStatementFree(DoStatementFreeContext context)
+        {
+            OnExitInner(StatementFlags.OpenPath);
+            ExitState().ExitDoStatementFree(context);
+        }
+
+        public sealed override void EnterDoStatementTerminating(DoStatementTerminatingContext context)
+        {
+            OnEnterInner(StatementFlags.Terminating);
+        }
+
+        public sealed override void ExitDoStatementTerminating(DoStatementTerminatingContext context)
+        {
+            OnExitInner(StatementFlags.OpenPath);
+            ExitState().ExitDoStatementTerminating(context);
+        }
+
+        public sealed override void EnterDoStatementReturning(DoStatementReturningContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+        }
+
+        public sealed override void ExitDoStatementReturning(DoStatementReturningContext context)
+        {
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            ExitState().ExitDoStatementReturning(context);
+        }
+
+        public sealed override void EnterDoStatementInterrupting(DoStatementInterruptingContext context)
+        {
+            OnEnterInner(StatementFlags.InterruptPath);
+        }
+
+        public sealed override void ExitDoStatementInterrupting(DoStatementInterruptingContext context)
+        {
+            OnExitInner(StatementFlags.InterruptPath);
+            ExitState().ExitDoStatementInterrupting(context);
+        }
+
+        public sealed override void EnterDoStatementInterruptingTrail(DoStatementInterruptingTrailContext context)
+        {
+            OnEnterInner(StatementFlags.InterruptPath);
+        }
+
+        public sealed override void ExitDoStatementInterruptingTrail(DoStatementInterruptingTrailContext context)
+        {
+            OnExitInner(StatementFlags.InterruptPath);
+            ExitState().ExitDoStatementInterruptingTrail(context);
+        }
+
+        public sealed override void EnterDoStatementInterruptible(DoStatementInterruptibleContext context)
+        {
+            OnEnterInner(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+        }
+
+        public sealed override void ExitDoStatementInterruptible(DoStatementInterruptibleContext context)
+        {
+            OnExitInner(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            ExitState().ExitDoStatementInterruptible(context);
+        }
+
+        public sealed override void EnterDoStatementConditional(DoStatementConditionalContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+        }
+
+        public sealed override void ExitDoStatementConditional(DoStatementConditionalContext context)
+        {
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            ExitState().ExitDoStatementConditional(context);
+        }
+        #endregion
+    }
+
+    internal abstract class IfStatement : ControlStatement
+    {
+        protected bool HasElse { get; private set; }
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            HasElse = false;
+        }
+
+        const StatementFlags conditionalFlags = StatementFlags.OpenPath | StatementFlags.ReturnPath;
+
+        protected override void OnEnter(StatementFlags flags)
+        {
+            if((flags & conditionalFlags) == conditionalFlags)
+            {
+                // Open and returning - prepare variables
+                EnterReturnScope();
+            }
+        }
+
+        protected override void OnExit(StatementFlags flags)
+        {
+            if((flags & conditionalFlags) == conditionalFlags)
+            {
+                // Open and returning - conditional return
+                Out.WriteLine();
+                ReturnFromScope();
+            }
         }
 
         public sealed override void EnterIf(IfContext context)
@@ -368,7 +744,7 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitElse(ElseContext context)
         {
-
+            HasElse = true;
         }
 
         public sealed override void EnterExpression(ExpressionContext context)
@@ -380,99 +756,85 @@ namespace IS4.Sona.Compiler.States
         {
             Out.Write(")then ");
         }
-
-        protected override void OnExitStatement()
-        {
-            Out.WriteLine();
-            Out.ExitScope();
-            Out.Write(_end_);
-        }
     }
 
-    internal sealed class IfSimpleStatement : IfStatementFree
+    /// <summary>
+    /// <c>if</c> with no trailing statements (free or ignored).
+    /// </summary>
+    internal class IfStatementNoTrail : IfStatement
     {
-        bool hasElse;
-
-        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        protected override void OnEnter(StatementFlags flags)
         {
-            base.Initialize(environment, parent);
-
-            hasElse = false;
-        }
-
-        public override void EnterIfStatementReturningTrail(IfStatementReturningTrailContext context)
-        {
-
-        }
-
-        public override void ExitIfStatementReturningTrail(IfStatementReturningTrailContext context)
-        {
-            ExitState().ExitIfStatementReturningTrail(context);
-        }
-
-        public override void EnterIfStatementConditionalSimple(IfStatementConditionalSimpleContext context)
-        {
-
-        }
-
-        public override void ExitIfStatementConditionalSimple(IfStatementConditionalSimpleContext context)
-        {
-            ExitState().ExitIfStatementConditionalSimple(context);
-        }
-
-        public override void EnterOpenBlock(OpenBlockContext context)
-        {
-            hasElse = true;
-            Out.WriteLine(_begin_);
-            Out.EnterScope();
-            Out.Write("do ");
-            base.EnterOpenBlock(context);
-        }
-
-        public override void ExitOpenBlock(OpenBlockContext context)
-        {
-            base.ExitOpenBlock(context);
-            Out.WriteLine();
-        }
-
-        public override void EnterReturnSafeTrail(ReturnSafeTrailContext context)
-        {
-            if(!hasElse)
+            if((flags & StatementFlags.OpenPath) == 0)
             {
-                Out.WriteLine();
-                Out.Write("else ");
+                // Not open, there will be ignored statements
+                Out.Write("if true then ");
                 Out.WriteLine(_begin_);
                 Out.EnterScope();
+                return;
             }
-            EnterState<Trail>().EnterReturnSafeTrail(context);
+            base.OnEnter(flags);
         }
 
-        public override void ExitReturnSafeTrail(ReturnSafeTrailContext context)
+        protected override void OnExit(StatementFlags flags)
         {
-            Out.ExitScope();
-            Out.Write(_end_);
-        }
-
-        public override void EnterOpenConditionalTrail(OpenConditionalTrailContext context)
-        {
-            if(!hasElse)
+            if((flags & StatementFlags.OpenPath) == 0)
             {
+                // Exit for ignored statements
+                Out.ExitScope();
                 Out.WriteLine();
-                Out.Write("else ");
-                Out.WriteLine(_begin_);
-                Out.EnterScope();
+                Out.Write(_end_);
+                return;
             }
-            EnterState<Trail>().EnterOpenConditionalTrail(context);
-        }
-
-        public override void ExitOpenConditionalTrail(OpenConditionalTrailContext context)
-        {
-            Out.ExitScope();
-            Out.Write(_end_);
+            base.OnEnter(flags);
         }
     }
 
-    internal sealed class IfControlStatement : IfStatementFree, IReturnScope
+    /// <summary>
+    /// <c>if</c> with trailing statements.
+    /// </summary>
+    internal sealed class IfStatementTrail : IfStatement
+    {
+
+    }
+    
+    /// <summary>
+    /// <c>if</c> with trailing statements as a part of <c>else</c>.
+    /// </summary>
+    internal sealed class IfStatementTrailFromElse : IfStatement
+    {
+        protected override void OnEnterBlock(StatementFlags flags)
+        {
+            if((flags & StatementFlags.OpenPath) != 0)
+            {
+                Out.WriteLine(_begin_);
+                Out.EnterScope();
+                Out.Write("do ");
+            }
+            base.OnEnterBlock(flags);
+        }
+
+        protected override void OnExitBlock(StatementFlags flags)
+        {
+            base.OnExitBlock(flags);
+            if((flags & StatementFlags.OpenPath) != 0)
+            {
+                Out.WriteLine();
+            }
+        }
+
+        protected override void OnEnterTrail(StatementFlags flags)
+        {
+            if(!HasElse)
+            {
+                Out.WriteLine();
+                Out.Write("else ");
+                base.OnEnterTrail(flags);
+            }
+        }
+    }
+
+    internal sealed class IfStatementControl : IfStatement, IReturnScope
     {
         string? IReturnScope.ReturnVariable => ScopeReturnVariable;
         string? IReturnScope.SuccessVariable => ScopeSuccessVariable;
@@ -483,87 +845,49 @@ namespace IS4.Sona.Compiler.States
 
             InitializeReturnControl();
         }
-
-        public override void EnterIfStatementConditionalComplex(IfStatementConditionalComplexContext context)
-        {
-            EnterReturnScope();
-        }
-
-        public override void ExitIfStatementConditionalComplex(IfStatementConditionalComplexContext context)
-        {
-            ExitReturnScope();
-            ExitState().ExitIfStatementConditionalComplex(context);
-        }
-
-        protected override void OnExitStatement()
-        {
-
-        }
     }
 
-    internal abstract class DoStatementFree : ControlStatement
+    internal abstract class DoStatement : ControlStatement
     {
-        protected sealed override void OnEnterBlock()
-        {
+        const StatementFlags conditionalFlags = StatementFlags.OpenPath | StatementFlags.ReturnPath;
 
+        protected override void OnEnter(StatementFlags flags)
+        {
+            if((flags & conditionalFlags) == conditionalFlags)
+            {
+                // Open and returning - prepare variables
+                EnterReturnScope();
+            }
         }
 
-        protected sealed override void OnExitBlock()
+        protected override void OnExit(StatementFlags flags)
         {
-
+            if((flags & conditionalFlags) == conditionalFlags)
+            {
+                // Open and returning - conditional return
+                Out.WriteLine();
+                ReturnFromScope();
+            }
         }
 
-        protected sealed override void OnEnterStatement()
+        protected override void OnEnterBlock(StatementFlags flags)
         {
             Out.Write("if true then ");
-            Out.WriteLine(_begin_);
-            Out.EnterScope();
-        }
-
-        protected sealed override void OnExitStatement()
-        {
-            Out.ExitScope();
-            Out.Write(_end_);
+            base.OnEnterBlock(flags);
         }
     }
 
-    internal sealed class DoSimpleStatement : DoStatementFree
+    internal sealed class DoStatementNoTrail : DoStatement
     {
-        public override void EnterDoStatementFree(DoStatementFreeContext context)
-        {
-            OnEnterStatement();
-        }
 
-        public override void EnterDoStatementReturning(DoStatementReturningContext context)
-        {
-            OnEnterStatement();
-        }
-
-        public override void EnterDoStatementTerminating(DoStatementTerminatingContext context)
-        {
-            OnEnterStatement();
-        }
-
-        public override void ExitDoStatementFree(DoStatementFreeContext context)
-        {
-            OnExitStatement();
-            ExitState().ExitDoStatementFree(context);
-        }
-
-        public override void ExitDoStatementReturning(DoStatementReturningContext context)
-        {
-            OnExitStatement();
-            ExitState().ExitDoStatementReturning(context);
-        }
-
-        public override void ExitDoStatementTerminating(DoStatementTerminatingContext context)
-        {
-            OnExitStatement();
-            ExitState().ExitDoStatementTerminating(context);
-        }
     }
 
-    internal sealed class DoControlStatement : DoStatementFree, IReturnScope
+    internal sealed class DoStatementTrail : DoStatement
+    {
+
+    }
+
+    internal sealed class DoStatementControl : DoStatement, IReturnScope
     {
         string? IReturnScope.ReturnVariable => ScopeReturnVariable;
         string? IReturnScope.SuccessVariable => ScopeSuccessVariable;
@@ -573,18 +897,6 @@ namespace IS4.Sona.Compiler.States
             base.Initialize(environment, parent);
 
             InitializeReturnControl();
-        }
-
-        public override void EnterDoStatementConditional(DoStatementConditionalContext context)
-        {
-            EnterReturnScope();
-            OnEnterStatement();
-        }
-
-        public override void ExitDoStatementConditional(DoStatementConditionalContext context)
-        {
-            ExitReturnScope();
-            ExitState().ExitDoStatementConditional(context);
         }
     }
 }

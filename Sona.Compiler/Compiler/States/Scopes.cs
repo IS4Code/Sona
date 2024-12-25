@@ -1,4 +1,6 @@
-﻿namespace IS4.Sona.Compiler.States
+﻿using System;
+
+namespace IS4.Sona.Compiler.States
 {
     internal interface IReturnScope
     {
@@ -22,5 +24,18 @@
     {
         void Add(string name);
         bool Contains(string name);
+    }
+
+    [Flags]
+    internal enum InterruptFlags
+    {
+        None,
+        CanBreak = 1,
+        CanContinue = 2
+    }
+
+    internal interface IInterruptibleScope
+    {
+        InterruptFlags Flags { get; }
     }
 }
