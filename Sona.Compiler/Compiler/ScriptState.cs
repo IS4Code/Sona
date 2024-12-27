@@ -98,6 +98,11 @@ namespace IS4.Sona.Compiler
             }
         }
 
+        protected string Error(string message)
+        {
+            throw new Exception(message);
+        }
+
         class Empty : ScriptState
         {
             public static readonly Empty Instance = new();

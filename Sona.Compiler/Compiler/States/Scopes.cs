@@ -5,7 +5,7 @@ namespace IS4.Sona.Compiler.States
     internal interface IReturnScope
     {
         string? ReturnVariable { get; }
-        string? SuccessVariable { get; }
+        string? ReturningVariable { get; }
     }
 
     internal interface IFunctionScope
@@ -37,5 +37,10 @@ namespace IS4.Sona.Compiler.States
     internal interface IInterruptibleScope
     {
         InterruptFlags Flags { get; }
+
+        string? InterruptingVariable { get; }
+
+        void WriteBreak(bool hasExpression);
+        void WriteContinue(bool hasExpression);
     }
 }

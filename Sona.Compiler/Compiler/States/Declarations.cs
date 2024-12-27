@@ -34,11 +34,15 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal sealed class FunctionDeclState : NodeState, IReturnScope
+    internal sealed class FunctionDeclState : NodeState, IReturnScope, IInterruptibleScope, IFunctionScope
     {
         // Establish a scope to return from
         string? IReturnScope.ReturnVariable => null;
-        string? IReturnScope.SuccessVariable => null;
+        string? IReturnScope.ReturningVariable => null;
+
+        InterruptFlags IInterruptibleScope.Flags => InterruptFlags.None;
+
+        string? IInterruptibleScope.InterruptingVariable => null;
 
         public override void ExitFuncDecl(FuncDeclContext context)
         {
@@ -62,6 +66,28 @@ namespace IS4.Sona.Compiler.States
         {
             Out.ExitScope();
             Out.Write("end");
+        }
+
+        void IFunctionScope.WriteBegin()
+        {
+            Out.WriteLine("begin");
+            Out.EnterScope();
+        }
+
+        void IFunctionScope.WriteEnd()
+        {
+            Out.ExitScope();
+            Out.Write("end");
+        }
+
+        void IInterruptibleScope.WriteBreak(bool hasExpression)
+        {
+            Error("`break` must be used in a statement that supports it.");
+        }
+
+        void IInterruptibleScope.WriteContinue(bool hasExpression)
+        {
+            Error("`continue` must be used in a statement that supports it.");
         }
     }
 

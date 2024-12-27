@@ -53,6 +53,16 @@ namespace IS4.Sona.Compiler.States
             EnterState<ThrowState>().EnterThrowStatement(context);
         }
 
+        public sealed override void EnterBreakStatement(BreakStatementContext context)
+        {
+            EnterState<BreakState>().EnterBreakStatement(context);
+        }
+
+        public sealed override void EnterContinueStatement(ContinueStatementContext context)
+        {
+            EnterState<ContinueState>().EnterContinueStatement(context);
+        }
+
         public sealed override void EnterVariableDecl(VariableDeclContext context)
         {
             EnterState<NewVariableState>().EnterVariableDecl(context);
@@ -151,6 +161,31 @@ namespace IS4.Sona.Compiler.States
         public sealed override void EnterDoStatementConditional(DoStatementConditionalContext context)
         {
             EnterState<DoStatementControl>().EnterDoStatementConditional(context);
+        }
+
+        public sealed override void EnterWhileStatementFree(WhileStatementFreeContext context)
+        {
+            EnterState<WhileStatementNoTrail>().EnterWhileStatementFree(context);
+        }
+
+        public sealed override void EnterWhileStatementFreeInterrupted(WhileStatementFreeInterruptedContext context)
+        {
+            EnterState<WhileStatementFreeInterrupted>().EnterWhileStatementFreeInterrupted(context);
+        }
+
+        public sealed override void EnterWhileStatementTerminating(WhileStatementTerminatingContext context)
+        {
+            EnterState<WhileStatementNoTrail>().EnterWhileStatementTerminating(context);
+        }
+
+        public sealed override void EnterWhileStatementReturningTrail(WhileStatementReturningTrailContext context)
+        {
+            EnterState<WhileStatementControl>().EnterWhileStatementReturningTrail(context);
+        }
+
+        public sealed override void EnterWhileStatementConditional(WhileStatementConditionalContext context)
+        {
+            EnterState<WhileStatementControl>().EnterWhileStatementConditional(context);
         }
 
         public sealed override void EnterImportStatement(ImportStatementContext context)
@@ -301,13 +336,17 @@ namespace IS4.Sona.Compiler.States
         #endregion
     }
 
-    internal sealed class ChunkState : BlockState, IReturnScope, IFunctionScope, IExecutionScope
+    internal sealed class ChunkState : BlockState, IReturnScope, IFunctionScope, IExecutionScope, IInterruptibleScope
     {
         // Main block return is currently ignored
         string? IReturnScope.ReturnVariable => null;
-        string? IReturnScope.SuccessVariable => null;
+        string? IReturnScope.ReturningVariable => null;
         bool IExecutionScope.IsLiteral => false;
         bool IExecutionScope.IsInline => false;
+
+        InterruptFlags IInterruptibleScope.Flags => InterruptFlags.None;
+
+        string? IInterruptibleScope.InterruptingVariable => null;
 
         public ChunkState(ScriptEnvironment environment)
         {
@@ -329,6 +368,16 @@ namespace IS4.Sona.Compiler.States
         {
             Out.ExitScope();
             Out.Write("end");
+        }
+
+        void IInterruptibleScope.WriteBreak(bool hasExpression)
+        {
+            Error("`break` must be used in a statement that supports it.");
+        }
+
+        void IInterruptibleScope.WriteContinue(bool hasExpression)
+        {
+            Error("`continue` must be used in a statement that supports it.");
         }
     }
 
@@ -352,18 +401,18 @@ namespace IS4.Sona.Compiler.States
 
     internal sealed class ReturnState : ArgumentStatementState
     {
-        IReturnScope? scope;
+        IReturnScope? returnScope;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            scope = FindScope<IReturnScope>();
+            returnScope = FindScope<IReturnScope>();
         }
 
         public override void EnterExprList(ExprListContext context)
         {
-            if(scope?.ReturnVariable is { } result)
+            if(returnScope?.ReturnVariable is { } result)
             {
                 // Store result in variable
                 Out.WriteIdentifier(result);
@@ -377,7 +426,7 @@ namespace IS4.Sona.Compiler.States
         {
             if(!HasExpression)
             {
-                if(scope?.ReturnVariable is { } result)
+                if(returnScope?.ReturnVariable is { } result)
                 {
                     Out.WriteIdentifier(result);
                     Out.WriteOperator("<-");
@@ -389,13 +438,28 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(")");
             }
 
-            if(scope?.SuccessVariable is { } success)
+            // Control variables must be set last, in case the expression throws
+
+            if(returnScope?.ReturningVariable is { } success)
             {
                 // Value returned
                 Out.WriteLine();
                 Out.WriteIdentifier(success);
                 Out.WriteOperator("<-");
                 Out.Write("true");
+            }
+
+            var interruptScope = FindScope<IInterruptibleScope>();
+            if(interruptScope != null && (interruptScope.Flags & InterruptFlags.CanBreak) == 0)
+            {
+                // No need for break
+                interruptScope = null;
+            }
+
+            if(interruptScope != null)
+            {
+                Out.WriteLine();
+                interruptScope.WriteBreak(false);
             }
 
             ExitState().ExitReturnStatement(context);
@@ -435,6 +499,128 @@ namespace IS4.Sona.Compiler.States
             }
 
             ExitState().ExitThrowStatement(context);
+        }
+    }
+
+    internal sealed class BreakState : ArgumentStatementState
+    {
+        IInterruptibleScope? scope;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            scope = FindScope<IInterruptibleScope>();
+            if(scope != null && (scope.Flags & InterruptFlags.CanBreak) == 0)
+            {
+                scope = null;
+            }
+        }
+
+        public override void EnterExprList(ExprListContext context)
+        {
+            if(scope == null)
+            {
+                Error("`break` must be used in a statement that supports it.");
+            }
+            else
+            {
+                scope.WriteBreak(true);
+            }
+            Out.Write('(');
+            base.EnterExprList(context);
+        }
+
+        public override void ExitExprList(ExprListContext context)
+        {
+
+        }
+
+        public override void EnterBreakStatement(BreakStatementContext context)
+        {
+
+        }
+
+        public override void ExitBreakStatement(BreakStatementContext context)
+        {
+            if(!HasExpression)
+            {
+                if(scope == null)
+                {
+                    Error("`break` must be used in a statement that supports it.");
+                }
+                else
+                {
+                    scope.WriteBreak(false);
+                }
+            }
+            else
+            {
+                Out.Write(")");
+            }
+
+            ExitState().ExitBreakStatement(context);
+        }
+    }
+
+    internal sealed class ContinueState : ArgumentStatementState
+    {
+        IInterruptibleScope? scope;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            scope = FindScope<IInterruptibleScope>();
+            if(scope != null && (scope.Flags & InterruptFlags.CanContinue) == 0)
+            {
+                scope = null;
+            }
+        }
+
+        public override void EnterExprList(ExprListContext context)
+        {
+            if(scope == null)
+            {
+                Error("`continue` must be used in a statement that supports it.");
+            }
+            else
+            {
+                scope.WriteContinue(true);
+            }
+            Out.Write('(');
+            base.EnterExprList(context);
+        }
+
+        public override void ExitExprList(ExprListContext context)
+        {
+
+        }
+
+        public override void EnterContinueStatement(ContinueStatementContext context)
+        {
+
+        }
+
+        public override void ExitContinueStatement(ContinueStatementContext context)
+        {
+            if(!HasExpression)
+            {
+                if(scope == null)
+                {
+                    Error("`continue` must be used in a statement that supports it.");
+                }
+                else
+                {
+                    scope.WriteContinue(false);
+                }
+            }
+            else
+            {
+                Out.Write(")");
+            }
+
+            ExitState().ExitContinueStatement(context);
         }
     }
 

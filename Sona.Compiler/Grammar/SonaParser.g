@@ -136,7 +136,8 @@ statement:
   assignmentOrCall |
   ifStatementFree |
   doStatementFree |
-  whileStatementFree;
+  whileStatementFree |
+  whileStatementFreeInterrupted;
 
 // A statement that must be located at the end of a block and stops its execution
 closingStatement:
@@ -167,7 +168,7 @@ returningStatement:
   ifStatementReturning |
   ifStatementReturningTrailFromElse |
   ifStatementReturningTrail |
-  whileStatementReturning;
+  whileStatementReturningTrail;
 
 // A statement that has interrupting paths and all other paths are terminating
 interruptingStatement:
@@ -221,12 +222,12 @@ doStatementReturning:
   'do' returningBlock 'end' ignoredTrail |
   // Body is interruptible but trail returns
   'do' interruptibleBlock 'end' returningTrail |
-  // Body is conditional but trail terminates or returns
-  'do' conditionalBlock 'end' (terminatingTrail | returningTrail);
+  // Body is conditional but trail closes
+  'do' conditionalBlock 'end' closingTrail;
 
 doStatementConditional:
-  // Body is conditional, trail is open or conditional
-  'do' conditionalBlock 'end' (openTrail | conditionalTrail) |
+  // Body is conditional, trail is open, interruptible or conditional
+  'do' conditionalBlock 'end' (openTrail | interruptibleTrail | conditionalTrail) |
   // Body is interrutible but trail is conditional
   'do' interruptibleBlock 'end' conditionalBlock;
 
@@ -472,17 +473,34 @@ ifStatementConditional:
 while:
   'while' expression 'do';
 
+whileTrue:
+  WHILE_TRUE_DO;
+
 whileStatementFree:
   while freeBlock 'end';
 
-whileStatementReturning:
-  WHILE_TRUE_DO returningBlock 'end' ignoredTrail;
-
-whileStatementConditional:
-  while returningBlock 'end' conditionalTrail;
+whileStatementFreeInterrupted:
+  // Body may interrupt
+  (whileTrue | while) (interruptingBlock | interruptibleBlock) 'end';
 
 whileStatementTerminating:
-  WHILE_TRUE_DO freeBlock 'end' ignoredTrail;
+  whileTrue freeBlock 'end' ignoredTrail;
+
+/*
+// `while true do` could be returning but since a returning block
+// may also interrupt, we cannot guarantee that it won't interrupt here.
+whileStatementReturning:
+  // Body may return, trail is ignored
+  whileTrue (returningBlock | conditionalBlock) 'end' ignoredTrail;
+*/
+
+whileStatementReturningTrail:
+  // Body is returning or conditional, but the trail is closing
+  (whileTrue | while) (returningBlock | conditionalBlock) 'end' closingTrail;
+
+whileStatementConditional:
+  // Body is returning or conditional, trail is open or conditional
+  (whileTrue | while) (returningBlock | conditionalBlock) 'end' (openTrail | interruptibleTrail | conditionalTrail);
 
 topLevelStatement:
   importStatement |
