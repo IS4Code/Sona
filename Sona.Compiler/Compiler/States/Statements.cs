@@ -366,7 +366,7 @@ namespace IS4.Sona.Compiler.States
             if(scope?.ReturnVariable is { } result)
             {
                 // Store result in variable
-                Out.WriteSymbol(result);
+                Out.WriteIdentifier(result);
                 Out.WriteOperator("<-");
             }
             Out.Write('(');
@@ -379,7 +379,7 @@ namespace IS4.Sona.Compiler.States
             {
                 if(scope?.ReturnVariable is { } result)
                 {
-                    Out.WriteSymbol(result);
+                    Out.WriteIdentifier(result);
                     Out.WriteOperator("<-");
                 }
                 Out.Write("()");
@@ -393,7 +393,7 @@ namespace IS4.Sona.Compiler.States
             {
                 // Value returned
                 Out.WriteLine();
-                Out.WriteSymbol(success);
+                Out.WriteIdentifier(success);
                 Out.WriteOperator("<-");
                 Out.Write("true");
             }
@@ -424,7 +424,7 @@ namespace IS4.Sona.Compiler.States
         {
             if(!HasExpression)
             {
-                Out.WriteOperatorName("reraise");
+                Out.WriteCoreOperator("reraise");
                 Out.Write("()");
             }
             else
@@ -501,7 +501,7 @@ namespace IS4.Sona.Compiler.States
                 }
             }
 
-            Out.WriteSymbol(name);
+            Out.WriteIdentifier(name);
 
             ExitState().ExitImportFileStatement(context);
         }

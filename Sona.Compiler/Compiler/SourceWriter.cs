@@ -10,13 +10,48 @@ using IS4.Sona.Compiler.Tools;
 
 namespace IS4.Sona.Compiler
 {
-    internal sealed class SourceWriter : IndentedTextWriter
+    internal interface ISourceWriter
+    {
+        string CreateTemporaryIdentifier();
+
+        void Write(string text);
+        void Write(char value);
+        void WriteIdentifier(string name);
+        void WriteOperator(string op);
+        void WriteOperator(char op);
+        void WriteLeftOperator(string op);
+        void WriteLeftOperator(char op);
+        void WriteNamespacedName(string ns, string name);
+
+        void WriteLine();
+        void WriteLine(string text);
+
+        void UpdateLine(IToken token);
+        void EnterScope();
+        void ExitScope();
+    }
+
+    internal static class SourceWriterExtensions
+    {
+        public static void WriteCoreOperator(this ISourceWriter writer, string op)
+        {
+            writer.WriteNamespacedName("Microsoft.FSharp.Core.Operators", op);
+        }
+
+        public static void WriteSpecialMember(this ISourceWriter writer, string op)
+        {
+            writer.Write('.');
+            writer.WriteIdentifier(op);
+        }
+    }
+
+    internal sealed class SourceWriter : IndentedTextWriter, ISourceWriter
     {
         private new LineCountingTextWriter InnerWriter => (LineCountingTextWriter)base.InnerWriter;
 
         public bool AdjustLines { get; set; } = true;
 
-        int symbolIndex;
+        int tmpIdIndex;
 
         public SourceWriter(TextWriter writer) : base(new LineCountingTextWriter(writer), " ")
         {
@@ -84,12 +119,12 @@ namespace IS4.Sona.Compiler
             await base.OutputTabsAsync();
         }
 
-        public string GetTemporarySymbol()
+        public string CreateTemporaryIdentifier()
         {
-            return "_ " + Interlocked.Increment(ref symbolIndex);
+            return "_ " + Interlocked.Increment(ref tmpIdIndex);
         }
 
-        public void WriteSymbol(string name)
+        public void WriteIdentifier(string name)
         {
             if(Syntax.IsValidIdentifierName(name))
             {
@@ -114,30 +149,31 @@ namespace IS4.Sona.Compiler
             Write(" ");
         }
 
+        public void WriteOperator(char op)
+        {
+            Write(" ");
+            Write(op);
+            Write(" ");
+        }
+
         public void WriteLeftOperator(string op)
         {
             Write(" ");
             Write(op);
         }
 
-        public void WriteSpecialMember(string op)
+        public void WriteLeftOperator(char op)
         {
-            Write(".``");
+            Write(" ");
             Write(op);
-            Write("``");
         }
 
-        public void WriteNamespacedName(string ns, string op)
+        public void WriteNamespacedName(string ns, string name)
         {
             Write("global.");
             Write(ns);
             Write('.');
-            Write(op);
-        }
-
-        public void WriteOperatorName(string op)
-        {
-            WriteNamespacedName("Microsoft.FSharp.Core.Operators", op);
+            WriteIdentifier(name);
         }
 
         readonly Stack<(int from, int to)> scopeRestore = new();

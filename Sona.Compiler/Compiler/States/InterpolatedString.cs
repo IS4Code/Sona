@@ -81,7 +81,7 @@ namespace IS4.Sona.Compiler.States
             {
                 var text = context.GetText().Substring(1);
                 Out.Write(':');
-                Out.WriteSymbol(text);
+                Out.WriteIdentifier(text);
             }
             finally
             {

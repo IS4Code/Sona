@@ -20,7 +20,7 @@ namespace IS4.Sona.Compiler.States
         {
             scope = FindScope<IFunctionScope>();
 
-            Out.WriteOperatorName("ignore");
+            Out.WriteCoreOperator("ignore");
             Out.Write(" ");
             scope?.WriteBegin();
         }
@@ -187,18 +187,18 @@ namespace IS4.Sona.Compiler.States
             if(OriginalReturnVariable is null)
             {
                 // Initialize variables for conditional return
-                SuccessVariable = Out.GetTemporarySymbol();
-                ReturnVariable = Out.GetTemporarySymbol();
+                SuccessVariable = Out.CreateTemporaryIdentifier();
+                ReturnVariable = Out.CreateTemporaryIdentifier();
                 // var success = false
                 Out.Write("let mutable ");
-                Out.WriteSymbol(SuccessVariable);
-                Out.WriteOperator("=");
+                Out.WriteIdentifier(SuccessVariable);
+                Out.WriteOperator('=');
                 Out.WriteLine("false");
                 // var result = default
                 Out.Write("let mutable ");
-                Out.WriteSymbol(ReturnVariable);
-                Out.WriteOperator("=");
-                Out.WriteOperatorName("Unchecked");
+                Out.WriteIdentifier(ReturnVariable);
+                Out.WriteOperator('=');
+                Out.WriteCoreOperator("Unchecked");
                 Out.WriteLine(".defaultof<_>");
             }
         }
@@ -206,12 +206,12 @@ namespace IS4.Sona.Compiler.States
         protected void ReturnFromScope()
         {
             Out.Write("if ");
-            Out.WriteSymbol(ScopeSuccessVariable);
+            Out.WriteIdentifier(ScopeSuccessVariable);
             Out.Write(" then ");
             if(OriginalReturnVariable is null)
             {
                 // Nowhere to assign, return
-                Out.WriteSymbol(ReturnVariable);
+                Out.WriteIdentifier(ReturnVariable);
             }
             else
             {
@@ -362,7 +362,7 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitIgnoredTrail(IgnoredTrailContext context)
         {
-            Out.WriteOperatorName("Unchecked");
+            Out.WriteCoreOperator("Unchecked");
             Out.WriteLine(".defaultof<_>");
             Out.ExitScope();
             Out.Write("end");

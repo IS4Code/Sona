@@ -14,7 +14,7 @@ namespace IS4.Sona.Compiler
         {
             try
             {
-                Out.WriteSymbol(context.GetText().TrimStart('@'));
+                Out.WriteIdentifier(context.GetText().TrimStart('@'));
             }
             finally
             {
@@ -31,7 +31,7 @@ namespace IS4.Sona.Compiler
         {
             try
             {
-                Out.WriteSymbol(context.GetText().TrimStart('@'));
+                Out.WriteIdentifier(context.GetText().TrimStart('@'));
             }
             finally
             {

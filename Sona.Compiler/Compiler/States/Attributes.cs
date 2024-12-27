@@ -56,7 +56,7 @@ namespace IS4.Sona.Compiler.States
                     case "item":
                         return;
                 }
-                Out.WriteSymbol(target);
+                Out.WriteIdentifier(target);
                 Out.Write(':');
             }
             finally
@@ -83,7 +83,7 @@ namespace IS4.Sona.Compiler.States
                     case "program":
                         return;
                 }
-                Out.WriteSymbol(target);
+                Out.WriteIdentifier(target);
                 Out.Write(':');
             }
             finally
@@ -143,7 +143,7 @@ namespace IS4.Sona.Compiler.States
         {
             if(isNamed)
             {
-                Out.WriteOperator("=");
+                Out.WriteOperator('=');
             }
             EnterState<Expression>().EnterAtomicExpr(context);
         }

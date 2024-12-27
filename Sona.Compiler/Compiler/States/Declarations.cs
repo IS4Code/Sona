@@ -52,7 +52,7 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterValueBlock(ValueBlockContext context)
         {
-            Out.WriteOperator("=");
+            Out.WriteOperator('=');
             Out.WriteLine("begin");
             Out.EnterScope();
             EnterState<BlockState>().EnterValueBlock(context);
@@ -163,7 +163,7 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterExprList(ExprListContext context)
         {
-            Out.WriteOperator("=");
+            Out.WriteOperator('=');
             EnterState<ExpressionListState>().EnterExprList(context);
         }
 

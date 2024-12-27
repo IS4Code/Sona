@@ -74,7 +74,7 @@ namespace IS4.Sona.Compiler.States
         {
             if(IsLiteral)
             {
-                Out.WriteOperator("+");
+                Out.WriteOperator('+');
             }
             else
             {
@@ -203,7 +203,7 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterNotExpr(NotExprContext context)
         {
-            Out.WriteOperatorName("not");
+            Out.WriteCoreOperator("not");
             Out.Write('(');
         }
 
@@ -500,7 +500,7 @@ namespace IS4.Sona.Compiler.States
             }
             else
             {
-                Out.WriteOperator("=");
+                Out.WriteOperator('=');
             }
             Out.WriteLine("begin");
             Out.EnterScope();
@@ -517,7 +517,7 @@ namespace IS4.Sona.Compiler.States
             else
             {
                 Out.Write("end in ");
-                Out.WriteSymbol(name);
+                Out.WriteIdentifier(name);
                 Out.Write(")");
             }
             Out.ExitScope();
@@ -561,7 +561,7 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterExpression(ExpressionContext context)
         {
-            Out.WriteOperator("=");
+            Out.WriteOperator('=');
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
@@ -674,7 +674,7 @@ namespace IS4.Sona.Compiler.States
             if(first)
             {
                 first = false;
-                Out.WriteOperatorName("seq");
+                Out.WriteCoreOperator("seq");
                 Out.Write("{ ");
             }
             else

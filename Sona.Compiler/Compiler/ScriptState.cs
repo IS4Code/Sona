@@ -12,7 +12,7 @@ namespace IS4.Sona.Compiler
         public ScriptEnvironment Environment { get; private set; } = null!;
         public ScriptState? Parent { get; private set; }
 
-        protected SourceWriter Out => Environment.Output;
+        protected ISourceWriter Out => Environment.Output;
 
         public int StateLevel { get; private set; }
 
