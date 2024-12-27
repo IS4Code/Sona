@@ -40,7 +40,7 @@ let rec g() = {emptyBody}")]
         [DataRow("function f(a;) end", $"let rec f(a)() = {emptyBody}")]
         [DataRow("function f() return end", $"let rec f() = {emptyBody}")]
         [DataRow("function f() return 0 end", @"let rec f() = begin
- 0
+ (0)
 end")]
         [TestMethod]
         public void Functions(string source, string? expected)
