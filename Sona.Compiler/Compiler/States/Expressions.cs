@@ -74,7 +74,7 @@ namespace IS4.Sona.Compiler.States
         {
             if(IsLiteral)
             {
-                Out.WriteOperator('+');
+                Out.WriteOperator("+\"\"+");
             }
             else
             {
