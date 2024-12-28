@@ -784,7 +784,8 @@ callArguments:
   recordConstructor |
   sequenceConstructor |
   string |
-  interpolatedString;
+  interpolatedString |
+  verbatimInterpolatedString;
 
 callArgList:
   callArgTuple (';' callArgTuple)*;

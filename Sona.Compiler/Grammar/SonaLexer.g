@@ -242,7 +242,7 @@ Verbatim_INTERP_PART:
 VerbatimInterpolatedString_OPENB: OPENB -> type(OPENB), pushMode(Interpolation);
 VerbatimInterpolatedString_PERCENT: PERCENT -> type(PERCENT);
 
-Verbatim_END_INTERPOLATED_STRING: '"' -> popMode;
+Verbatim_END_INTERPOLATED_STRING: '"' -> type(END_INTERPOLATED_STRING), popMode;
 
 mode Interpolation;
 
@@ -256,6 +256,10 @@ Interpolation_INT: INT -> type(INT);
 Interpolation_FLOAT: FLOAT -> type(FLOAT);
 Interpolation_EXP: EXP -> type(EXP);
 Interpolation_HEX: HEX -> type(HEX);
+Interpolation_NORMAL_STRING: NORMAL_STRING -> type(NORMAL_STRING);
+Interpolation_VERBATIM_STRING: VERBATIM_STRING -> type(VERBATIM_STRING);
+Interpolation_BEGIN_INTERPOLATED_STRING: BEGIN_INTERPOLATED_STRING -> type(BEGIN_INTERPOLATED_STRING), pushMode(InterpolatedString);
+Interpolation_BEGIN_VERBATIM_INTERPOLATED_STRING: BEGIN_VERBATIM_INTERPOLATED_STRING -> type(BEGIN_VERBATIM_INTERPOLATED_STRING), pushMode(VerbatimInterpolatedString);
 Interpolation_CHAR_STRING: CHAR_STRING -> type(CHAR_STRING);
 
 Interpolation_COMMENT: COMMENT -> skip;

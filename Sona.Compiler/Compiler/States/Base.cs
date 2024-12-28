@@ -68,15 +68,34 @@ namespace IS4.Sona.Compiler
 
         public override void EnterInterpolatedString(InterpolatedStringContext context)
         {
-            EnterState<InterpolatedString>().EnterInterpolatedString(context);
+            if(FindScope<IExecutionScope>()?.IsLiteral ?? false)
+            {
+                EnterState<LiteralNormalInterpolatedString>().EnterInterpolatedString(context);
+            }
+            else
+            {
+                EnterState<InterpolatedString>().EnterInterpolatedString(context);
+            }
         }
 
         public override void EnterVerbatimInterpolatedString(VerbatimInterpolatedStringContext context)
         {
-            EnterState<InterpolatedString>().EnterVerbatimInterpolatedString(context);
+            if(FindScope<IExecutionScope>()?.IsLiteral ?? false)
+            {
+                EnterState<LiteralVerbatimInterpolatedString>().EnterVerbatimInterpolatedString(context);
+            }
+            else
+            {
+                EnterState<InterpolatedString>().EnterVerbatimInterpolatedString(context);
+            }
         }
 
         public override void ExitInterpolatedString(InterpolatedStringContext context)
+        {
+
+        }
+
+        public override void ExitVerbatimInterpolatedString(VerbatimInterpolatedStringContext context)
         {
 
         }
