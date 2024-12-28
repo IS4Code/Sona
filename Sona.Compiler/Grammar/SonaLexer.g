@@ -246,11 +246,28 @@ Verbatim_END_INTERPOLATED_STRING: '"' -> type(END_INTERPOLATED_STRING), popMode;
 
 mode Interpolation;
 
-INTERP_FORMAT:
-  ':' ~('}')*;
+// Not valid in non-string format.
+fragment INTERP_NON_DELIMITER:
+  ~([{}()"'\][\\]);
+fragment INTERP_NON_DELIMITER_WHITESPACE:
+  ~([{}()"'\][\\] | ' ' | '\t' | '\u000C' | '\r' | '\n');
+fragment INTERP_NON_DELIMITER_ALPHA:
+  ~([{}()"'\][\\] | [a-zA-Z]);
+
+// Covers F# format specifiers but permits errors to leave to F# to diagnose.
+INTERP_CHECKED_FORMAT:
+  ':' [-+0 #]* ([1-9][0-9]*)? ('.' INTERP_NON_DELIMITER_ALPHA*)? [a-zA-Z];
+
+// Anything else that contains a non-whitespace character.
+INTERP_UNCHECKED_FORMAT:
+  ':' INTERP_NON_DELIMITER* INTERP_NON_DELIMITER_WHITESPACE INTERP_NON_DELIMITER*;
+
+// Parsed as a string.
+INTERP_UNCHECKED_FORMAT_STRING:
+  ':' WHITESPACE* (NORMAL_STRING | VERBATIM_STRING | CHAR_STRING) WHITESPACE*;
 
 INTERP_ALIGNMENT:
-  ',' WHITESPACE* INT WHITESPACE*;
+  ',' WHITESPACE* ('+' | '-')? INT WHITESPACE*;
 
 Interpolation_INT: INT -> type(INT);
 Interpolation_FLOAT: FLOAT -> type(FLOAT);

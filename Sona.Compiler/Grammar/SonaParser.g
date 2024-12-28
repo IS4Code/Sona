@@ -833,10 +833,12 @@ interpStrComponent:
 interpStrPart: INTERP_PART;
 interpStrPercent: '%';
 interpStrAlignment: INTERP_ALIGNMENT;
-interpStrFormat: INTERP_FORMAT;
+interpStrCheckedFormat: INTERP_CHECKED_FORMAT;
+interpStrUncheckedFormat: INTERP_UNCHECKED_FORMAT;
+interpStrUncheckedFormatString: INTERP_UNCHECKED_FORMAT_STRING;
 
 interpStrExpression:
-  '{' expression interpStrAlignment? interpStrFormat? '}';
+  '{' expression ((interpStrAlignment? (interpStrUncheckedFormat | interpStrUncheckedFormatString)?) | interpStrCheckedFormat) '}';
 
 /* Operators */
 

@@ -29,9 +29,9 @@ namespace IS4.Sona.Compiler.Tools
             FSharpLexer.Tokenize(
                 text,
                 FSharpFunc<FSharpToken, Unit>.FromConverter(tok => {
-                    if(token != null || !tok.IsStringLiteral)
+                    if(token != null || (!tok.IsStringLiteral && !tok.Kind.IsChar))
                     {
-                        throw new ArgumentException("Argument does not contain a single string literal.", nameof(str));
+                        throw new ArgumentException("Argument does not contain a single string or character literal.", nameof(str));
                     }
                     token = tok;
                     return null!;
@@ -50,8 +50,16 @@ namespace IS4.Sona.Compiler.Tools
             }
             const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.GetProperty;
             var parserToken = tok.GetType().InvokeMember("tok", flags, null, tok, null)!;
-            var tuple = (ITuple)parserToken.GetType().InvokeMember("Item", flags, null, parserToken, null)!;
-            return (string)tuple[0]!;
+            var item = parserToken.GetType().InvokeMember("Item", flags, null, parserToken, null)!;
+            switch(item)
+            {
+                case char c:
+                    return c.ToString();
+                case ITuple t:
+                    return (string)t[0]!;
+                default:
+                    throw new ArgumentException("Argument is not a recognized literal.", nameof(str));
+            }
         }
     }
 }

@@ -8,12 +8,14 @@ namespace IS4.Sona.Compiler.States
     internal sealed class InterpolatedString : NodeState
     {
         readonly List<string> parts = new();
+        string? fillName;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             parts.Clear();
+            fillName = null;
         }
 
         protected override void UpdateOnToken(IToken token)
@@ -84,6 +86,7 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterInterpStrAlignment(InterpStrAlignmentContext context)
         {
+            AddFill();
             Environment.EnableParseTree();
         }
 
@@ -99,32 +102,18 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
-        public override void EnterInterpStrFormat(InterpStrFormatContext context)
+        public override void EnterInterpStrUncheckedFormat(InterpStrUncheckedFormatContext context)
         {
+            AddFill();
             Environment.EnableParseTree();
         }
 
-        public override void ExitInterpStrFormat(InterpStrFormatContext context)
+        public override void ExitInterpStrUncheckedFormat(InterpStrUncheckedFormatContext context)
         {
             try
             {
                 var text = context.GetText().Substring(1);
-                if(Syntax.IsValidIdentifierName(text))
-                {
-                    // Add as-is
-                    parts.Add(":");
-                    parts.Add(text);
-                    return;
-                }
-                if(!Syntax.IsValidEnclosedIdentifierName(text))
-                {
-                    // Cannot be enclosed
-                    Error($"The format '{text}' cannot be syntactically represented.");
-                    return;
-                }
-                parts.Add(":``");
-                parts.Add(text);
-                parts.Add("``");
+                AddUncheckedFormat(text);
             }
             finally
             {
@@ -132,30 +121,101 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
+        public override void EnterInterpStrUncheckedFormatString(InterpStrUncheckedFormatStringContext context)
+        {
+            AddFill();
+            Environment.EnableParseTree();
+        }
+
+        public override void ExitInterpStrUncheckedFormatString(InterpStrUncheckedFormatStringContext context)
+        {
+            try
+            {
+                var text = context.GetText().Substring(1);
+                AddUncheckedFormat(Syntax.GetStringLiteralValue(text));
+            }
+            finally
+            {
+                Environment.DisableParseTree();
+            }
+        }
+
+        public override void EnterInterpStrCheckedFormat(InterpStrCheckedFormatContext context)
+        {
+            Environment.EnableParseTree();
+        }
+
+        public override void ExitInterpStrCheckedFormat(InterpStrCheckedFormatContext context)
+        {
+            try
+            {
+                var text = context.GetText().Substring(1);
+                parts.Add("%");
+                parts.Add(text);
+                AddFill();
+            }
+            finally
+            {
+                Environment.DisableParseTree();
+            }
+        }
+
+        private void AddUncheckedFormat(string text)
+        {
+            if(text.IndexOf(')') != -1)
+            {
+                Error("The ')' character cannot be represented in a format string.");
+            }
+            if(Syntax.IsValidIdentifierName(text))
+            {
+                // Add as-is
+                parts.Add(":");
+                parts.Add(text);
+                return;
+            }
+            if(!Syntax.IsValidEnclosedIdentifierName(text))
+            {
+                // Cannot be enclosed
+                Error($"The format '{text}' cannot be syntactically represented.");
+                return;
+            }
+            parts.Add(":``");
+            parts.Add(text);
+            parts.Add("``");
+        }
+
+        private void AddFill()
+        {
+            if(fillName is not null)
+            {
+                parts.Add("{");
+                if(Syntax.IsValidIdentifierName(fillName))
+                {
+                    parts.Add(fillName);
+                }
+                else
+                {
+                    parts.Add("``");
+                    parts.Add(fillName);
+                    parts.Add("``");
+                }
+                fillName = null;
+            }
+        }
+
         public override void EnterInterpStrExpression(InterpStrExpressionContext context)
         {
             // let valI = ...
-            var name = Out.CreateTemporaryIdentifier();
+            fillName = Out.CreateTemporaryIdentifier();
             Out.Write("let ");
-            Out.WriteIdentifier(name);
+            Out.WriteIdentifier(fillName);
             Out.WriteOperator('=');
-
-            parts.Add("{");
-            if(Syntax.IsValidIdentifierName(name))
-            {
-                parts.Add(name);
-            }
-            else
-            {
-                parts.Add("``");
-                parts.Add(name);
-                parts.Add("``");
-            }
-            parts.Add("}");
         }
 
         public override void ExitInterpStrExpression(InterpStrExpressionContext context)
         {
+            AddFill();
+            parts.Add("}");
             Out.Write(" in ");
         }
 
@@ -241,12 +301,32 @@ namespace IS4.Sona.Compiler.States
 
         }
 
-        public sealed override void EnterInterpStrFormat(InterpStrFormatContext context)
+        public sealed override void EnterInterpStrUncheckedFormat(InterpStrUncheckedFormatContext context)
         {
             Error("The format cannot be specified in a literal interpolated string expression.");
         }
 
-        public sealed override void ExitInterpStrFormat(InterpStrFormatContext context)
+        public sealed override void ExitInterpStrUncheckedFormat(InterpStrUncheckedFormatContext context)
+        {
+
+        }
+
+        public sealed override void EnterInterpStrUncheckedFormatString(InterpStrUncheckedFormatStringContext context)
+        {
+            Error("The format cannot be specified in a literal interpolated string expression.");
+        }
+
+        public sealed override void ExitInterpStrUncheckedFormatString(InterpStrUncheckedFormatStringContext context)
+        {
+
+        }
+
+        public sealed override void EnterInterpStrCheckedFormat(InterpStrCheckedFormatContext context)
+        {
+            Error("The format cannot be specified in a literal interpolated string expression.");
+        }
+
+        public sealed override void ExitInterpStrCheckedFormat(InterpStrCheckedFormatContext context)
         {
 
         }
