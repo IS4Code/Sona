@@ -109,6 +109,8 @@ WHILE: 'while';
 WHILE_TRUE_DO: 'while' IGNORE ('true' | '(' IGNORE 'true' IGNORE ')') IGNORE 'do';
 FOR: 'for';
 IN: 'in';
+REPEAT: 'repeat';
+UNTIL: 'until';
 
 SEMICOLON: ';';
 EQ: '==';
@@ -307,6 +309,8 @@ Interpolation_WHILE: WHILE -> type(WHILE);
 Interpolation_WHILE_TRUE_DO: WHILE_TRUE_DO -> type(WHILE_TRUE_DO);
 Interpolation_FOR: FOR -> type(FOR);
 Interpolation_IN: IN -> type(IN);
+Interpolation_REPEAT: REPEAT -> type(REPEAT);
+Interpolation_UNTIL: UNTIL -> type(UNTIL);
 
 Interpolation_SEMICOLON: SEMICOLON -> type(SEMICOLON);
 Interpolation_EQ: EQ -> type(EQ);

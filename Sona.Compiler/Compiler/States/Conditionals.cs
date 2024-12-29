@@ -749,6 +749,61 @@ namespace IS4.Sona.Compiler.States
             OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
             ExitState().ExitWhileStatementConditional(context);
         }
+
+        public override void EnterRepeatStatementFree(RepeatStatementFreeContext context)
+        {
+            OnEnterInner(StatementFlags.OpenPath);
+        }
+
+        public override void ExitRepeatStatementFree(RepeatStatementFreeContext context)
+        {
+            OnExitInner(StatementFlags.OpenPath);
+            ExitState().ExitRepeatStatementFree(context);
+        }
+
+        public override void EnterRepeatStatementFreeInterrupted(RepeatStatementFreeInterruptedContext context)
+        {
+            OnEnterInner(StatementFlags.OpenPath);
+        }
+
+        public override void ExitRepeatStatementFreeInterrupted(RepeatStatementFreeInterruptedContext context)
+        {
+            OnExitInner(StatementFlags.OpenPath);
+            ExitState().ExitRepeatStatementFreeInterrupted(context);
+        }
+
+        public override void EnterRepeatStatementTerminating(RepeatStatementTerminatingContext context)
+        {
+            OnEnterInner(StatementFlags.Terminating);
+        }
+
+        public override void ExitRepeatStatementTerminating(RepeatStatementTerminatingContext context)
+        {
+            OnExitInner(StatementFlags.Terminating);
+            ExitState().ExitRepeatStatementTerminating(context);
+        }
+
+        public override void EnterRepeatStatementReturningTrail(RepeatStatementReturningTrailContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+        }
+
+        public override void ExitRepeatStatementReturningTrail(RepeatStatementReturningTrailContext context)
+        {
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            ExitState().ExitRepeatStatementReturningTrail(context);
+        }
+
+        public override void EnterRepeatStatementConditional(RepeatStatementConditionalContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+        }
+
+        public override void ExitRepeatStatementConditional(RepeatStatementConditionalContext context)
+        {
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            ExitState().ExitRepeatStatementConditional(context);
+        }
         #endregion
     }
 
@@ -919,6 +974,13 @@ namespace IS4.Sona.Compiler.States
 
         public string? InterruptingVariable { get; private set; }
 
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            InterruptingVariable = null;
+        }
+
         public abstract override void EnterWhile(WhileContext context);
         public abstract override void EnterWhileTrue(WhileTrueContext context);
 
@@ -942,7 +1004,7 @@ namespace IS4.Sona.Compiler.States
             Out.Write(")do ");
         }
 
-        protected override void OnEnterBlock(StatementFlags flags)
+        protected sealed override void OnEnterBlock(StatementFlags flags)
         {
             base.OnEnterBlock(flags);
             if((flags & StatementFlags.InterruptPath) != 0)
@@ -978,7 +1040,7 @@ namespace IS4.Sona.Compiler.States
     /// <summary>
     /// <c>while</c> with no trailing statements (free or ignored).
     /// </summary>
-    internal class WhileStatementNoTrail : IfStatement
+    internal class WhileStatementNoTrail : WhileStatement
     {
         protected override void OnEnter(StatementFlags flags)
         {
@@ -1095,6 +1157,187 @@ namespace IS4.Sona.Compiler.States
     }
 
     internal sealed class WhileStatementControl : WhileStatementTrailInterrupted, IReturnScope
+    {
+        string? IReturnScope.ReturnVariable => ScopeReturnVariable;
+        string? IReturnScope.ReturningVariable => ScopeReturningVariable;
+    }
+
+    internal abstract class RepeatStatement : ControlStatement, IInterruptibleScope
+    {
+        InterruptFlags IInterruptibleScope.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
+
+        public string? InterruptingVariable { get; private set; }
+
+        public string? ContinuingVariable { get; private set; }
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            InterruptingVariable = null;
+            ContinuingVariable = null;
+        }
+
+        public abstract override void EnterUntil(UntilContext context);
+
+        public sealed override void ExitUntil(UntilContext context)
+        {
+            Out.ExitScope();
+            Out.Write(_end_);
+        }
+
+        public sealed override void EnterExpression(ExpressionContext context)
+        {
+            Out.WriteIdentifier(ContinuingVariable ?? Error("COMPILER ERROR: `repeat` used without a condition variable."));
+            Out.WriteOperator("<-");
+            Out.WriteCoreOperator("not");
+            Out.Write('(');
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public sealed override void ExitExpression(ExpressionContext context)
+        {
+            Out.Write(')');
+            Out.WriteLine();
+        }
+
+        protected sealed override void OnEnterBlock(StatementFlags flags)
+        {
+            ContinuingVariable = Out.CreateTemporaryIdentifier();
+            // var continuing = true
+            Out.Write("let mutable ");
+            Out.WriteIdentifier(ContinuingVariable);
+            Out.WriteOperator('=');
+            Out.WriteLine("true");
+
+            Out.Write("while ");
+            Out.WriteIdentifier(ContinuingVariable);
+            Out.Write(" do ");
+
+            base.OnEnterBlock(flags);
+
+            if((flags & StatementFlags.InterruptPath) != 0)
+            {
+                InterruptingVariable = Out.CreateTemporaryIdentifier();
+                // var interrupting = false
+                Out.Write("let mutable ");
+                Out.WriteIdentifier(InterruptingVariable);
+                Out.WriteOperator('=');
+                Out.WriteLine("false");
+            }
+        }
+
+        protected sealed override void OnExitBlock(StatementFlags flags)
+        {
+            // Exited in ExitUntil
+        }
+
+        public virtual void WriteBreak(bool hasExpression)
+        {
+            if(hasExpression)
+            {
+                Error("`break` in a `repeat` statement does not take an expression.");
+            }
+            Error("COMPILER ERROR: `break` used in a wrong version of `repeat`.");
+        }
+
+        public virtual void WriteContinue(bool hasExpression)
+        {
+            if(hasExpression)
+            {
+                Error("`break` in a `repeat` statement does not take an expression.");
+            }
+            Error("COMPILER ERROR: `continue` used in a wrong version of `repeat`.");
+        }
+    }
+
+    /// <summary>
+    /// <c>repeat</c> with no trailing statements (free or ignored).
+    /// </summary>
+    internal class RepeatStatementNoTrail : RepeatStatement
+    {
+        protected override void OnEnter(StatementFlags flags)
+        {
+            if((flags & StatementFlags.OpenPath) == 0)
+            {
+                // Not open, there will be ignored statements
+                Out.Write("if true then ");
+                Out.WriteLine(_begin_);
+                Out.EnterScope();
+                return;
+            }
+            base.OnEnter(flags);
+        }
+
+        protected override void OnExit(StatementFlags flags)
+        {
+            if(flags == StatementFlags.Terminating)
+            {
+                // Return any value
+                Out.WriteLine();
+                Out.WriteCoreOperator("Unchecked");
+                Out.Write(".defaultof<_>");
+            }
+            if((flags & StatementFlags.OpenPath) == 0)
+            {
+                // Exit for ignored statements
+                Out.ExitScope();
+                Out.WriteLine();
+                Out.Write(_end_);
+                return;
+            }
+            base.OnEnter(flags);
+        }
+
+        public override void EnterUntil(UntilContext context)
+        {
+
+        }
+    }
+
+    internal abstract class RepeatStatementTrailInterrupted : RepeatStatement
+    {
+        public sealed override void EnterUntil(UntilContext context)
+        {
+            Out.Write("if ");
+            Out.WriteIdentifier(ContinuingVariable ?? Error("COMPILER ERROR: `repeat` used without a condition variable."));
+            Out.Write(" then ");
+        }
+
+        public sealed override void WriteBreak(bool hasExpression)
+        {
+            if(hasExpression)
+            {
+                base.WriteBreak(hasExpression);
+                return;
+            }
+            Out.WriteIdentifier(ContinuingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to."));
+            Out.WriteOperator("<-");
+            Out.WriteLine("false");
+            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to."));
+            Out.WriteOperator("<-");
+            Out.Write("true");
+        }
+
+        public sealed override void WriteContinue(bool hasExpression)
+        {
+            if(hasExpression)
+            {
+                base.WriteContinue(hasExpression);
+                return;
+            }
+            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `continue` used without a variable to assign to."));
+            Out.WriteOperator("<-");
+            Out.Write("true");
+        }
+    }
+
+    internal sealed class RepeatStatementFreeInterrupted : RepeatStatementTrailInterrupted
+    {
+
+    }
+
+    internal sealed class RepeatStatementControl : RepeatStatementTrailInterrupted, IReturnScope
     {
         string? IReturnScope.ReturnVariable => ScopeReturnVariable;
         string? IReturnScope.ReturningVariable => ScopeReturningVariable;

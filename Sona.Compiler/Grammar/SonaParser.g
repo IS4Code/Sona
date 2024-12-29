@@ -137,7 +137,9 @@ statement:
   ifStatementFree |
   doStatementFree |
   whileStatementFree |
-  whileStatementFreeInterrupted;
+  whileStatementFreeInterrupted |
+  repeatStatementFree |
+  repeatStatementFreeInterrupted;
 
 // A statement that must be located at the end of a block and stops its execution
 closingStatement:
@@ -168,7 +170,8 @@ returningStatement:
   ifStatementReturning |
   ifStatementReturningTrailFromElse |
   ifStatementReturningTrail |
-  whileStatementReturningTrail;
+  whileStatementReturningTrail |
+  repeatStatementReturningTrail;
 
 // A statement that has interrupting paths and all other paths are terminating
 interruptingStatement:
@@ -188,14 +191,16 @@ interruptibleStatement:
 conditionalStatement:
   doStatementConditional |
   ifStatementConditional |
-  whileStatementConditional;
+  whileStatementConditional |
+  repeatStatementConditional;
 
 // A statement that only has terminating paths
 terminatingStatement:
   throwStatement |
   doStatementTerminating |
   ifStatementTerminating |
-  whileStatementTerminating;
+  whileStatementTerminating |
+  repeatStatementTerminating;
 
 // `do`
 
@@ -484,6 +489,7 @@ whileStatementFreeInterrupted:
   (whileTrue | while) (interruptingBlock | interruptibleBlock) 'end';
 
 whileStatementTerminating:
+  // Body either throws or keeps looping forever
   whileTrue freeBlock 'end' ignoredTrail;
 
 /*
@@ -499,8 +505,37 @@ whileStatementReturningTrail:
   (whileTrue | while) (returningBlock | conditionalBlock) 'end' closingTrail;
 
 whileStatementConditional:
-  // Body is returning or conditional, trail is open or conditional
+  // Body is returning or conditional, trail is open, interruptible, or conditional
   (whileTrue | while) (returningBlock | conditionalBlock) 'end' (openTrail | interruptibleTrail | conditionalTrail);
+
+until:
+  'until' expression;
+
+repeatStatementFree:
+  'repeat' freeBlock until;
+
+repeatStatementFreeInterrupted:
+  // Body may interrupt
+  'repeat' (interruptingBlock | interruptibleBlock) until;
+
+repeatStatementTerminating:
+  // Body always throws and condition is never checked
+  'repeat' terminatingBlock until ignoredTrail;
+
+/*
+// Same issue as with returning `while true do`.
+repeatStatementReturning:
+  // Body may returns, trail is ignored
+  'repeat' returningBlock until ignoredTrail;
+*/
+
+repeatStatementReturningTrail:
+  // Body is returning or conditional, but the trail is closing
+  'repeat' (returningBlock | conditionalBlock) until closingTrail;
+
+repeatStatementConditional:
+  // Body is returning or conditional, trail is open, interruptible, or conditional
+  'repeat' (returningBlock | conditionalBlock) until (openTrail | interruptibleTrail | conditionalTrail);
 
 topLevelStatement:
   importStatement |
