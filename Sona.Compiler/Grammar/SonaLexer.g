@@ -85,6 +85,9 @@ BEGIN_TARGETED_LOCAL_ATTRIBUTE:
 BEGIN_TARGETED_GLOBAL_ATTRIBUTE:
   '#' ATTR_TARGET_GLOBAL ATTR_TARGET_SEPARATOR -> mode(Directive);
 
+BEGIN_INLINE_SOURCE:
+  '#inline' LINE_WHITESPACE -> mode(InlineDirective);
+
 LITERAL_NAME:
   '@' NAME;
 
@@ -178,6 +181,30 @@ Directive_LINE_COMMENT: LINE_COMMENT -> skip;
 Directive_WHITESPACE: (WHITESPACE | NEWLINE_ESCAPE) -> type(WHITESPACE);
 
 Directive_LITERAL_NAME: LITERAL_NAME -> type(LITERAL_NAME);
+
+Directive_RETURN: RETURN -> type(RETURN);
+Directive_BREAK: BREAK -> type(BREAK);
+Directive_CONTINUE: CONTINUE -> type(CONTINUE);
+Directive_THROW: THROW -> type(THROW);
+Directive_LET: LET -> type(LET);
+Directive_VAR: VAR -> type(VAR);
+Directive_CONST: CONST -> type(CONST);
+Directive_FUNCTION: FUNCTION -> type(FUNCTION);
+Directive_IMPORT: IMPORT -> type(IMPORT);
+Directive_INCLUDE: INCLUDE -> type(INCLUDE);
+Directive_REQUIRE: REQUIRE -> type(REQUIRE);
+Directive_END: END -> type(END);
+Directive_IF: IF -> type(IF);
+Directive_THEN: THEN -> type(THEN);
+Directive_ELSE: ELSE -> type(ELSE);
+Directive_ELSEIF: ELSEIF -> type(ELSEIF);
+Directive_DO: DO -> type(DO);
+Directive_WHILE: WHILE -> type(WHILE);
+Directive_WHILE_TRUE_DO: WHILE_TRUE_DO -> type(WHILE_TRUE_DO);
+Directive_FOR: FOR -> type(FOR);
+Directive_IN: IN -> type(IN);
+Directive_REPEAT: REPEAT -> type(REPEAT);
+Directive_UNTIL: UNTIL -> type(UNTIL);
 
 Directive_SEMICOLON: SEMICOLON -> type(SEMICOLON);
 Directive_EQ: EQ -> type(EQ);
@@ -358,4 +385,173 @@ Interpolation_NAME: NAME -> type(NAME);
 
 mode Empty;
 
-Empty_REST: (~('\u0000')+ | '\u0000'+) -> skip;
+ERROR: (~('\u0000')+ | '\u0000'+);
+
+mode InlineDirective;
+
+InlineDirective_NORMAL_STRING: NORMAL_STRING -> type(NORMAL_STRING), mode(FS);
+InlineDirective_VERBATIM_STRING: VERBATIM_STRING -> type(VERBATIM_STRING), mode(FS);
+
+InlineDirective_COMMENT: COMMENT -> skip;
+InlineDirective_DOC_COMMENT: DOC_COMMENT -> channel(Documentation);
+InlineDirective_LINE_COMMENT: LINE_COMMENT -> skip;
+InlineDirective_WHITESPACE: (WHITESPACE | NEWLINE_ESCAPE) -> type(WHITESPACE);
+
+mode FS;
+
+/* F# lite mode */
+
+fragment FS_ESCAPE:
+  '\\' .;
+
+// Special-handled tokens that do not form delimiters in code and comments
+fragment FS_TOKEN:
+  '(*)' |
+  '@"' ('""' | ~('"'))* '"' |
+  '"""' (~'"' | '"' ~'"' | '""' ~'"')* '"""' |
+  '"' (FS_ESCAPE | ~["\\])* '"' |
+  '\'' '\\'? ["{}] '\'';
+
+FS_BEGIN_TRIPLE_INTERPOLATED_STRING_N:
+  '$$$$"""' -> type(ERROR);
+ 
+FS_BEGIN_TRIPLE_INTERPOLATED_STRING_3:
+  '$$$"""' -> type(FS_PART), pushMode(FSTripleInterpolatedString3);
+ 
+FS_BEGIN_TRIPLE_INTERPOLATED_STRING_2:
+  '$$"""' -> type(FS_PART), pushMode(FSTripleInterpolatedString2);
+ 
+FS_BEGIN_TRIPLE_INTERPOLATED_STRING_1:
+  '$"""' -> type(FS_PART), pushMode(FSTripleInterpolatedString1);
+
+FS_BEGIN_INTERPOLATED_STRING:
+  '$"' -> type(FS_PART), pushMode(FSInterpolatedString);
+
+FS_BEGIN_VERBATIM_INTERPOLATED_STRING:
+  ('$@' | '@$') '"' -> type(FS_PART), pushMode(FSVerbatimInterpolatedString);
+
+// Parts of regular source code
+FS_PART:
+  FS_TOKEN |
+  '//' ~[\n\r]* |
+  '``' (~[`\r\n] | '`' ~[`\r\n])* '``' |
+  ~[("'@$/` \r\n{}]+ |
+  ~[ \r\n{}];
+
+FS_WHITESPACE:
+  ' '+;
+
+END_INLINE_SOURCE:
+  EOL '#endinline' ' '? -> mode(Directive);
+
+FS_DIRECTIVE:
+  EOL '#' ('endinline' ~[ \r\n])?;
+
+FS_EOL:
+  EOL;
+
+FS_BEGIN_BLOCK_COMMENT:
+  '(*' -> type(FS_PART), pushMode(FSComment);
+
+mode FSComment;
+
+FS_END_BLOCK_COMMENT:
+  '*)' -> type(FS_PART), popMode;
+
+FSComment_PART:
+  (FS_TOKEN | ~[("'@*]+ | .) -> type(FS_PART);
+
+FSComment_BEGIN_BLOCK_COMMENT:
+  FS_BEGIN_BLOCK_COMMENT -> type(FS_PART), pushMode(FSComment);
+
+mode FSInterpolatedString;
+
+FSInterpolatedString_PART:
+  (('{{' | '\\' ~'{' | ~["{\\])+ | '\\') -> type(FS_PART);
+
+FS_END_INTERPOLATED_STRING:
+  '"' -> type(FS_PART), popMode;
+
+FS_BEGIN_INTERPOLATION:
+  OPENB -> type(FS_PART), pushMode(FSInterpolation);
+
+mode FSVerbatimInterpolatedString;
+
+FSVerbatimInterpolatedString_PART:
+  ('{{' | '""' | ["{])+ -> type(FS_PART);
+
+FSVerbatim_END_INTERPOLATED_STRING:
+  '"' -> type(FS_PART), popMode;
+
+FSVerbatim_BEGIN_INTERPOLATION:
+  OPENB -> type(FS_PART), pushMode(FSInterpolation);
+
+mode FSTripleInterpolatedString1;
+
+FSTripleInterpolatedString_PART_1:
+  ('{{' | '"' ~["{] | '""' ~["{] | ["{])+ -> type(FS_PART);
+
+FSTriple_END_INTERPOLATED_STRING_1:
+  '"""' -> type(FS_PART), popMode;
+
+FSTriple_BEGIN_INTERPOLATION_1:
+  ('"' '"'?)? '{' -> type(FS_PART), pushMode(FSInterpolation);
+
+mode FSTripleInterpolatedString2;
+
+FSTripleInterpolatedString_PART_2:
+  (('"' ~["{] | '""' ~["{] | ["{])+ | '{') -> type(FS_PART);
+
+FSTriple_END_INTERPOLATED_STRING_2:
+  '"""' -> type(FS_PART), popMode;
+
+FSTriple_BEGIN_INTERPOLATION_2:
+  ('"' '"'?)? '{{' '{'* -> type(FS_PART), pushMode(FSInterpolation), pushMode(FSInterpolation);
+
+mode FSTripleInterpolatedString3;
+// $$$$""" not supported
+
+FSTripleInterpolatedString_PART_3:
+  (('"' ~["{] | '""' ~["{] | ["{])+ | '{' '{'?) -> type(FS_PART);
+
+FSTriple_END_INTERPOLATED_STRING_3:
+  '"""' -> type(FS_PART), popMode;
+
+FSTriple_BEGIN_INTERPOLATION_3:
+  ('"' '"'?)? '{{{' '{'* -> type(FS_PART), pushMode(FSInterpolation), pushMode(FSInterpolation), pushMode(FSInterpolation);
+
+mode FSInterpolation;
+
+FSInterpolation_OPENB:
+  OPENB -> type(FS_PART), pushMode(FSInterpolation);
+
+FSInterpolation_CLOSEB:
+  CLOSEB -> type(FS_PART), popMode;
+
+FSInterpolation_BEGIN_TRIPLE_INTERPOLATED_STRING_N:
+  FS_BEGIN_TRIPLE_INTERPOLATED_STRING_N -> type(FS_BEGIN_TRIPLE_INTERPOLATED_STRING_N);
+ 
+FSInterpolation_BEGIN_TRIPLE_INTERPOLATED_STRING_3:
+  FS_BEGIN_TRIPLE_INTERPOLATED_STRING_3 -> type(FS_PART), pushMode(FSTripleInterpolatedString3);
+ 
+FSInterpolation_BEGIN_TRIPLE_INTERPOLATED_STRING_2:
+  FS_BEGIN_TRIPLE_INTERPOLATED_STRING_2 -> type(FS_PART), pushMode(FSTripleInterpolatedString2);
+ 
+FSInterpolation_BEGIN_TRIPLE_INTERPOLATED_STRING_1:
+  FS_BEGIN_TRIPLE_INTERPOLATED_STRING_1 -> type(FS_PART), pushMode(FSTripleInterpolatedString1);
+
+FSInterpolation_BEGIN_INTERPOLATED_STRING:
+  FS_BEGIN_INTERPOLATED_STRING -> type(FS_PART), pushMode(FSInterpolatedString);
+
+FSInterpolation_BEGIN_VERBATIM_INTERPOLATED_STRING:
+  FS_BEGIN_VERBATIM_INTERPOLATED_STRING -> type(FS_PART), pushMode(FSVerbatimInterpolatedString);
+
+FSInterpolation_PART: FS_PART -> type(FS_PART);
+FSInterpolation_WHITESPACE: FS_WHITESPACE -> type(FS_WHITESPACE);
+FSInterpolation_END_INLINE_SOURCE: END_INLINE_SOURCE -> type(ERROR);
+FSInterpolation_DIRECTIVE: FS_DIRECTIVE -> type(FS_DIRECTIVE);
+
+FSInterpolation_EOL: FS_EOL -> type(FS_EOL);
+
+FSInterpolation_BEGIN_BLOCK_COMMENT:
+  FS_BEGIN_BLOCK_COMMENT -> type(FS_PART), pushMode(FSComment);

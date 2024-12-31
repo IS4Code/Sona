@@ -134,6 +134,7 @@ statement:
   variableDecl |
   multiFuncDecl |
   assignmentOrCall |
+  inlineSourceFree |
   ifStatementFree |
   doStatementFree |
   whileStatementFree |
@@ -166,6 +167,7 @@ throwStatement:
 // A statement that has a returning path and all other paths are closing
 returningStatement:
   returnStatement |
+  inlineSourceReturning |
   doStatementReturning |
   ifStatementReturning |
   ifStatementReturningTrailFromElse |
@@ -197,6 +199,7 @@ conditionalStatement:
 // A statement that only has terminating paths
 terminatingStatement:
   throwStatement |
+  inlineSourceTerminating |
   doStatementTerminating |
   ifStatementTerminating |
   whileStatementTerminating |
@@ -874,6 +877,37 @@ interpStrUncheckedFormatString: INTERP_UNCHECKED_FORMAT_STRING;
 
 interpStrExpression:
   '{' expression ((interpStrAlignment? (interpStrUncheckedFormat | interpStrUncheckedFormatString)?) | interpStrCheckedFormat) '}';
+
+/* Inline F# */
+
+inlineSourceFree:
+  BEGIN_INLINE_SOURCE WHITESPACE* string FS_WHITESPACE* inlineSourcePart* inlineSourceLine* END_INLINE_SOURCE WHITESPACE* END_DIRECTIVE;
+
+inlineSourceReturning:
+  BEGIN_INLINE_SOURCE WHITESPACE* string FS_WHITESPACE* inlineSourcePart* inlineSourceLine* END_INLINE_SOURCE WHITESPACE* 'return' WHITESPACE* END_DIRECTIVE;
+
+inlineSourceTerminating:
+  BEGIN_INLINE_SOURCE WHITESPACE* string FS_WHITESPACE* inlineSourcePart* inlineSourceLine* END_INLINE_SOURCE WHITESPACE* 'throw' WHITESPACE* END_DIRECTIVE;
+
+inlineSourceLine:
+  inlineSourceDirective inlineSourcePart* |
+  inlineSourceIndentation inlineSourceToken inlineSourcePart* |
+  inlineSourceEmptyLine;
+
+inlineSourceDirective:
+  FS_DIRECTIVE;
+
+inlineSourceIndentation:
+  FS_EOL FS_WHITESPACE*;
+
+inlineSourcePart:
+  FS_PART | FS_WHITESPACE;
+
+inlineSourceToken:
+  FS_PART;
+
+inlineSourceEmptyLine:
+  FS_EOL FS_WHITESPACE*;
 
 /* Operators */
 
