@@ -1,4 +1,5 @@
 ﻿using Antlr4.Runtime;
+using Antlr4.Runtime.Tree;
 using IS4.Sona.Compiler.Tools;
 using static IS4.Sona.Grammar.SonaParser;
 
@@ -71,106 +72,170 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
+        public override void EnterInlineSourceNewLine(InlineSourceNewLineContext context)
+        {
+
+        }
+
+        public override void ExitInlineSourceNewLine(InlineSourceNewLineContext context)
+        {
+            Out.WriteLine();
+        }
+
         public override void EnterInlineSourceIndentation(InlineSourceIndentationContext context)
         {
-            Environment.EnableParseTree();
+
         }
 
         public override void ExitInlineSourceIndentation(InlineSourceIndentationContext context)
         {
-            Out.WriteLine();
-            try
+            var indent = context.Stop.StopIndex - context.Start.StartIndex + 1;
+            if(baseIndent is { } previousIndent)
             {
-                var text = context.GetText();
-                int indent = 0;
-                int spaceAt = text.IndexOf(' ');
-                if(spaceAt != -1)
+                indent -= previousIndent;
+                if(indent < 0)
                 {
-                    indent = text.Length - spaceAt;
-                }
-                if(baseIndent is { } previousIndent)
-                {
-                    indent -= previousIndent;
-                    if(indent < 0)
-                    {
-                        indent = 0;
-                    }
-                }
-                else
-                {
-                    baseIndent = indent;
+                    Error($"Line token is placed {-indent} characters before indent level.");
                     indent = 0;
                 }
-                if(indent > 0)
-                {
-                    Out.Write(new string(' ', indent));
-                }
             }
-            finally
+            else
             {
-                Environment.DisableParseTree();
+                baseIndent = indent;
+                indent = 0;
             }
+            Out.WriteSpace(indent);
         }
 
         public override void EnterInlineSourceToken(InlineSourceTokenContext context)
         {
-            Environment.EnableParseTree();
+            EnterState<Write>().EnterInlineSourceToken(context);
         }
 
         public override void ExitInlineSourceToken(InlineSourceTokenContext context)
         {
-            try
-            {
-                Out.Write(context.GetText());
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+
         }
 
         public override void EnterInlineSourcePart(InlineSourcePartContext context)
         {
-            Environment.EnableParseTree();
+            EnterState<Write>().EnterInlineSourcePart(context);
         }
 
         public override void ExitInlineSourcePart(InlineSourcePartContext context)
         {
-            try
-            {
-                Out.Write(context.GetText());
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+
         }
 
         public override void EnterInlineSourceDirective(InlineSourceDirectiveContext context)
         {
-            Environment.EnableParseTree();
+            EnterState<Write>().EnterInlineSourceDirective(context);
         }
 
         public override void ExitInlineSourceDirective(InlineSourceDirectiveContext context)
         {
-            try
-            {
-                Out.Write(context.GetText());
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+
         }
 
-        public override void EnterInlineSourceEmptyLine(InlineSourceEmptyLineContext context)
+        public override void EnterInlineSourceWhitespace(InlineSourceWhitespaceContext context)
+        {
+            EnterState<Write>().EnterInlineSourceWhitespace(context);
+        }
+
+        public override void ExitInlineSourceWhitespace(InlineSourceWhitespaceContext context)
         {
 
         }
 
-        public override void ExitInlineSourceEmptyLine(InlineSourceEmptyLineContext context)
+        public override void EnterInlineSourceLineCutComment(InlineSourceLineCutCommentContext context)
         {
-            Out.WriteLine();
+            EnterState<Ignore>().EnterInlineSourceLineCutComment(context);
+        }
+
+        public override void ExitInlineSourceLineCutComment(InlineSourceLineCutCommentContext context)
+        {
+
+        }
+
+        sealed class Ignore : NodeState
+        {
+            protected override void UpdateOnToken(IToken token)
+            {
+
+            }
+
+            public override void EnterInlineSourceLineCutComment(InlineSourceLineCutCommentContext context)
+            {
+
+            }
+
+            public override void ExitInlineSourceLineCutComment(InlineSourceLineCutCommentContext context)
+            {
+                ExitState().ExitInlineSourceLineCutComment(context);
+            }
+
+            public override void EnterInlineSourceIndentation(InlineSourceIndentationContext context)
+            {
+
+            }
+
+            public override void ExitInlineSourceIndentation(InlineSourceIndentationContext context)
+            {
+                ExitState().ExitInlineSourceIndentation(context);
+            }
+        }
+
+        sealed class Write : NodeState
+        {
+            protected override void UpdateOnToken(IToken token)
+            {
+
+            }
+
+            public override void VisitTerminal(ITerminalNode node)
+            {
+                Out.Write(node.Symbol.Text);
+            }
+
+            public override void EnterInlineSourceToken(InlineSourceTokenContext context)
+            {
+
+            }
+
+            public override void ExitInlineSourceToken(InlineSourceTokenContext context)
+            {
+                ExitState().ExitInlineSourceToken(context);
+            }
+
+            public override void EnterInlineSourcePart(InlineSourcePartContext context)
+            {
+
+            }
+
+            public override void ExitInlineSourcePart(InlineSourcePartContext context)
+            {
+                ExitState().ExitInlineSourcePart(context);
+            }
+
+            public override void EnterInlineSourceDirective(InlineSourceDirectiveContext context)
+            {
+
+            }
+
+            public override void ExitInlineSourceDirective(InlineSourceDirectiveContext context)
+            {
+                ExitState().ExitInlineSourceDirective(context);
+            }
+
+            public override void EnterInlineSourceWhitespace(InlineSourceWhitespaceContext context)
+            {
+
+            }
+
+            public override void ExitInlineSourceWhitespace(InlineSourceWhitespaceContext context)
+            {
+                ExitState().ExitInlineSourceWhitespace(context);
+            }
         }
     }
 }

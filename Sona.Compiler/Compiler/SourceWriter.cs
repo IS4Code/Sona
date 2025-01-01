@@ -43,6 +43,55 @@ namespace IS4.Sona.Compiler
             writer.Write('.');
             writer.WriteIdentifier(op);
         }
+
+        static readonly string space32 = new string(' ', 32);
+        static readonly string space16 = new string(' ', 16);
+        static readonly string space8 = new string(' ', 8);
+        static readonly string space4 = new string(' ', 4);
+        static readonly string space2 = new string(' ', 2);
+        public static void WriteSpace(this ISourceWriter writer, int length)
+        {
+            if(length == 0)
+            {
+                return;
+            }
+            while(length > 32)
+            {
+                writer.Write(space32);
+                length -= 32;
+            }
+            while(length > 16)
+            {
+                writer.Write(space16);
+                length -= 16;
+            }
+            while(length > 8)
+            {
+                writer.Write(space8);
+                length -= 8;
+            }
+            while(length > 4)
+            {
+                writer.Write(space4);
+                length -= 4;
+            }
+            while(length > 2)
+            {
+                writer.Write(space2);
+                length -= 2;
+            }
+            switch(length)
+            {
+                case 0:
+                    return;
+                case 1:
+                    writer.Write(' ');
+                    return;
+                default:
+                    writer.Write(new string(' ', length));
+                    return;
+            }
+        }
     }
 
     internal sealed class SourceWriter : IndentedTextWriter, ISourceWriter

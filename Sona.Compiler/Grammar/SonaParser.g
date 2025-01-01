@@ -881,33 +881,54 @@ interpStrExpression:
 /* Inline F# */
 
 inlineSourceFree:
-  BEGIN_INLINE_SOURCE WHITESPACE* string FS_WHITESPACE* inlineSourcePart* inlineSourceLine* END_INLINE_SOURCE WHITESPACE* END_DIRECTIVE;
+  BEGIN_INLINE_SOURCE WHITESPACE* string inlineSourceFirstLine inlineSourceLine*
+  END_INLINE_SOURCE WHITESPACE* END_DIRECTIVE;
 
 inlineSourceReturning:
-  BEGIN_INLINE_SOURCE WHITESPACE* string FS_WHITESPACE* inlineSourcePart* inlineSourceLine* END_INLINE_SOURCE WHITESPACE* 'return' WHITESPACE* END_DIRECTIVE;
+  BEGIN_INLINE_SOURCE WHITESPACE* string inlineSourceFirstLine inlineSourceLine*
+  END_INLINE_SOURCE WHITESPACE* 'return' WHITESPACE* END_DIRECTIVE;
 
 inlineSourceTerminating:
-  BEGIN_INLINE_SOURCE WHITESPACE* string FS_WHITESPACE* inlineSourcePart* inlineSourceLine* END_INLINE_SOURCE WHITESPACE* 'throw' WHITESPACE* END_DIRECTIVE;
+  BEGIN_INLINE_SOURCE WHITESPACE* string inlineSourceFirstLine inlineSourceLine*
+  END_INLINE_SOURCE WHITESPACE* 'throw' WHITESPACE* END_DIRECTIVE;
+
+inlineSourceFirstLine:
+  // Skip any whitespace before indented token
+  ((FS_WHITESPACE | FS_COMMENT | FS_BEGIN_BLOCK_COMMENT | FS_END_BLOCK_COMMENT)* inlineSourceToken inlineSourcePart*)? inlineSourceWhitespace* inlineSourceLineCutComment?;
 
 inlineSourceLine:
-  inlineSourceDirective inlineSourcePart* |
-  inlineSourceIndentation inlineSourceToken inlineSourcePart* |
-  inlineSourceEmptyLine;
+  (
+    // Directive includes newline
+    inlineSourceDirective inlineSourcePart* |
+    inlineSourceNewLine (inlineSourceIndentation inlineSourceToken inlineSourcePart*)?
+  ) inlineSourceWhitespace* inlineSourceLineCutComment?;
 
-inlineSourceDirective:
-  FS_DIRECTIVE;
+inlineSourceNewLine:
+  FS_EOL;
 
 inlineSourceIndentation:
-  FS_EOL FS_WHITESPACE*;
-
-inlineSourcePart:
-  FS_PART | FS_WHITESPACE;
+  (FS_WHITESPACE | FS_COMMENT | FS_BEGIN_BLOCK_COMMENT | FS_END_BLOCK_COMMENT)*;
 
 inlineSourceToken:
   FS_PART;
 
-inlineSourceEmptyLine:
-  FS_EOL FS_WHITESPACE*;
+inlineSourcePart:
+  FS_PART | FS_WHITESPACE | inlineSourceLineComment;
+
+inlineSourceDirective:
+  FS_DIRECTIVE;
+
+inlineSourceLineComment:
+  FS_COMMENT | FS_BEGIN_BLOCK_COMMENT inlineSourceLineComment* FS_END_BLOCK_COMMENT; 
+
+inlineSourceBlockComment:
+  FS_BEGIN_BLOCK_COMMENT (FS_COMMENT | FS_EOL | inlineSourceBlockComment)* FS_END_BLOCK_COMMENT;
+
+inlineSourceLineCutComment:
+  FS_BEGIN_BLOCK_COMMENT inlineSourceWhitespace* inlineSourceLineCutComment?;
+
+inlineSourceWhitespace:
+  FS_WHITESPACE | FS_COMMENT | inlineSourceBlockComment;
 
 /* Operators */
 

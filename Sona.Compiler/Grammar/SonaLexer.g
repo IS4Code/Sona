@@ -433,10 +433,12 @@ FS_BEGIN_VERBATIM_INTERPOLATED_STRING:
 // Parts of regular source code
 FS_PART:
   FS_TOKEN |
-  '//' ~[\n\r]* |
   '``' (~[`\r\n] | '`' ~[`\r\n])* '``' |
   ~[("'@$/` \r\n{}]+ |
-  ~[ \r\n{}];
+  ~[ \r\n];
+
+FS_COMMENT:
+  '//' ~[\n\r]*;
 
 FS_WHITESPACE:
   ' '+;
@@ -451,18 +453,21 @@ FS_EOL:
   EOL;
 
 FS_BEGIN_BLOCK_COMMENT:
-  '(*' -> type(FS_PART), pushMode(FSComment);
+  '(*' -> pushMode(FSComment);
 
 mode FSComment;
 
 FS_END_BLOCK_COMMENT:
-  '*)' -> type(FS_PART), popMode;
+  '*)' -> popMode;
 
 FSComment_PART:
-  (FS_TOKEN | ~[("'@*]+ | .) -> type(FS_PART);
+  (FS_TOKEN | ~[("'@*\r\n]+ | ~[\r\n]) -> type(FS_COMMENT);
+
+FSComment_EOL:
+  FS_EOL -> type(FS_EOL);
 
 FSComment_BEGIN_BLOCK_COMMENT:
-  FS_BEGIN_BLOCK_COMMENT -> type(FS_PART), pushMode(FSComment);
+  FS_BEGIN_BLOCK_COMMENT -> pushMode(FSComment);
 
 mode FSInterpolatedString;
 
