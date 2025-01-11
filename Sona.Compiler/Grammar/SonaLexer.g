@@ -277,26 +277,97 @@ mode Interpolation;
 
 // Not valid in non-string format.
 fragment INTERP_NON_DELIMITER:
-  ~([{}()"'\][\\]);
+  ~([{}()"'\][\\\r\n]);
 fragment INTERP_NON_DELIMITER_WHITESPACE:
-  ~([{}()"'\][\\] | ' ' | '\t' | '\u000C' | '\r' | '\n');
+  ~([{}()"'\][\\\r\n] | ' ' | '\t' | '\u000C');
 fragment INTERP_NON_DELIMITER_ALPHA:
-  ~([{}()"'\][\\] | [a-zA-Z]);
+  ~([{}()"'\][\\\r\n] | [a-zA-Z]);
+fragment INTERP_NON_DELIMITER_WHITESPACE_ALPHA:
+  ~([{}()"'\][\\\r\n] | ' ' | '\t' | '\u000C' | [a-zA-Z_]);
+fragment INTERP_NON_DELIMITER_WHITESPACE_ALPHANUMERIC:
+  ~([{}()"'\][\\\r\n] | ' ' | '\t' | '\u000C' | [a-zA-Z_] | [0-9]);
 
-// Covers F# format specifiers but permits errors to leave to F# to diagnose.
-INTERP_CHECKED_FORMAT:
-  ':' [-+0 #]* ([1-9][0-9]*)? ('.' INTERP_NON_DELIMITER_ALPHA*)? [a-zA-Z];
+// F# format specifiers with at least one optional component used.
+INTERP_FORMAT_GENERAL:
+  ':'
+  (
+    GENERAL_FLAGS GENERAL_WIDTH? GENERAL_PRECISION? |
+    GENERAL_WIDTH GENERAL_PRECISION? |
+    GENERAL_PRECISION
+  )
+  [a-zA-Z] -> mode(InterpolationEnd);
 
-// Anything else that contains a non-whitespace character.
-INTERP_UNCHECKED_FORMAT:
-  ':' INTERP_NON_DELIMITER* INTERP_NON_DELIMITER_WHITESPACE INTERP_NON_DELIMITER*;
+fragment GENERAL_FLAGS:
+  [-+0 #]+;
 
-// Parsed as a string.
-INTERP_UNCHECKED_FORMAT_STRING:
-  ':' WHITESPACE* (NORMAL_STRING | VERBATIM_STRING | CHAR_STRING) WHITESPACE*;
+fragment GENERAL_WIDTH:
+  [1-9][0-9]*;
+
+fragment GENERAL_PRECISION:
+  '.' INTERP_NON_DELIMITER_ALPHA*;
+
+// A valid string (must be a single letter).
+INTERP_FORMAT_CUSTOM:
+  ':' WHITESPACE* (NORMAL_STRING | VERBATIM_STRING);
+  
+// A valid character (must be a letter).
+INTERP_FORMAT_STANDARD:
+  ':' WHITESPACE* CHAR_STRING;
+
+INTERP_FORMAT_NUMBER:
+  ':' (STANDARD_NUM_FORMAT | CUSTOM_NUM_FORMAT) -> mode(InterpolationEnd);
+
+INTERP_FORMAT_COMPONENTS:
+  COLON -> skip, mode(InterpolationComponents);
+
+fragment STANDARD_NUM_FORMAT:
+  [bBcCdDeEfFgGnNpPrRxX] '0'* [1-9]? [0-9];
+
+fragment CUSTOM_NUM_FORMAT:
+  CUSTOM_NUM_SECTION (';' CUSTOM_NUM_SECTION (';' CUSTOM_NUM_SECTION)?)?;
+
+fragment CUSTOM_NUM_LITERAL:
+  '\\' ('\\' | INTERP_NON_DELIMITER) | LINE_WHITESPACE | [-+];
+
+fragment CUSTOM_NUM_SECTION:
+  CUSTOM_NUM_LITERAL* (
+    ([%\u2030] CUSTOM_NUM_LITERAL*)? CUSTOM_NUM_DIGITS |
+    CUSTOM_NUM_DIGITS CUSTOM_NUM_LITERAL* [%\u2030]
+  ) CUSTOM_NUM_LITERAL*;
+
+fragment CUSTOM_NUM_DIGITS:
+  // Preceding # groups
+  (('#' CUSTOM_NUM_LITERAL*)+ ',' CUSTOM_NUM_LITERAL*)*
+  (
+    // Preceding mixed or 0 groups
+    (('#' CUSTOM_NUM_LITERAL*)+ ('0' CUSTOM_NUM_LITERAL*)+ ',' CUSTOM_NUM_LITERAL*)?
+    (('0' CUSTOM_NUM_LITERAL*)+ ',' CUSTOM_NUM_LITERAL*)*
+    // Unit digit
+    '0' | '#'
+  )
+  (
+    // Decimal point
+    CUSTOM_NUM_LITERAL* ','*
+    (
+      ',' |
+      '.'
+      // Decimal digits
+      CUSTOM_NUM_LITERAL*
+      (
+        // Tenth digit
+        '#' | '0'
+        // 0 decimal digits
+        (CUSTOM_NUM_LITERAL* '0')*
+      )
+      // # decimal digits
+      (CUSTOM_NUM_LITERAL* '#')*
+    )
+  )?
+  // Exponent
+  (CUSTOM_NUM_LITERAL* [eE] [-+]? '0'+)?;
 
 INTERP_ALIGNMENT:
-  ',' WHITESPACE* ('+' | '-')? INT WHITESPACE*;
+  ',' WHITESPACE* ('+' | '-')? INT;
 
 Interpolation_INT: INT -> type(INT);
 Interpolation_FLOAT: FLOAT -> type(FLOAT);
@@ -382,6 +453,29 @@ Interpolation_BIT_NOT: BIT_NOT -> type(BIT_NOT);
 Interpolation_DOT: DOT -> type(DOT);
 
 Interpolation_NAME: NAME -> type(NAME);
+
+mode InterpolationComponents;
+
+INTERP_COMPONENTS_PART_SHORT:
+  [a-zA-Z];
+
+INTERP_COMPONENTS_PART_LONG:
+  '\\' ('\\' | INTERP_NON_DELIMITER) |
+  '%' [a-zA-Z] | COLON | DIVIDE |
+  'a'+ | 'b'+ | 'c'+ | 'd'+ | 'e'+ | 'f'+ | 'g'+ |
+  'h'+ | 'i'+ | 'j'+ | 'k'+ | 'l'+ | 'm'+ | 'n'+ |
+  'o'+ | 'p'+ | 'q'+ | 'r'+ | 's'+ | 't'+ | 'u'+ |
+  'v'+ | 'w'+ | 'x'+ | 'y'+ | 'z'+ |
+  'A'+ | 'B'+ | 'C'+ | 'D'+ | 'E'+ | 'F'+ | 'G'+ |
+  'H'+ | 'I'+ | 'J'+ | 'K'+ | 'L'+ | 'M'+ | 'N'+ |
+  'O'+ | 'P'+ | 'Q'+ | 'R'+ | 'S'+ | 'T'+ | 'U'+ |
+  'V'+ | 'W'+ | 'X'+ | 'Y'+ | 'Z'+;
+
+InterpolationComponents_CLOSEB: CLOSEB -> type(CLOSEB), popMode;
+
+mode InterpolationEnd;
+
+InterpolationEnd_CLOSEB: CLOSEB -> type(CLOSEB), popMode;
 
 mode Empty;
 

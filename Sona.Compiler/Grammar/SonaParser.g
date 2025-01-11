@@ -871,12 +871,16 @@ interpStrComponent:
 interpStrPart: INTERP_PART;
 interpStrPercent: '%';
 interpStrAlignment: INTERP_ALIGNMENT;
-interpStrCheckedFormat: INTERP_CHECKED_FORMAT;
-interpStrUncheckedFormat: INTERP_UNCHECKED_FORMAT;
-interpStrUncheckedFormatString: INTERP_UNCHECKED_FORMAT_STRING;
+interpStrGeneralFormat: INTERP_FORMAT_GENERAL | INTERP_COMPONENTS_PART_SHORT;
+interpStrStandardFormat: INTERP_FORMAT_STANDARD;
+interpStrCustomFormat: INTERP_FORMAT_CUSTOM;
+interpStrNumberFormat: INTERP_FORMAT_NUMBER;
+interpStrComponentFormat:
+  INTERP_COMPONENTS_PART_LONG (INTERP_COMPONENTS_PART_SHORT | INTERP_COMPONENTS_PART_LONG)* |
+  INTERP_COMPONENTS_PART_SHORT (INTERP_COMPONENTS_PART_SHORT | INTERP_COMPONENTS_PART_LONG)+;
 
 interpStrExpression:
-  '{' expression ((interpStrAlignment? (interpStrUncheckedFormat | interpStrUncheckedFormatString)?) | interpStrCheckedFormat) '}';
+  '{' expression ((interpStrAlignment? (interpStrStandardFormat | interpStrCustomFormat | interpStrNumberFormat | interpStrComponentFormat)?) | interpStrGeneralFormat) '}';
 
 /* Inline F# */
 

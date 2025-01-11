@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
 using Antlr4.Runtime;
+using Antlr4.Runtime.Tree;
 using IS4.Sona.Compiler.Tools;
 using static IS4.Sona.Grammar.SonaParser;
 
@@ -102,54 +105,16 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
-        public override void EnterInterpStrUncheckedFormat(InterpStrUncheckedFormatContext context)
-        {
-            AddFill();
-            Environment.EnableParseTree();
-        }
-
-        public override void ExitInterpStrUncheckedFormat(InterpStrUncheckedFormatContext context)
-        {
-            try
-            {
-                var text = context.GetText().Substring(1);
-                AddUncheckedFormat(text);
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
-        }
-
-        public override void EnterInterpStrUncheckedFormatString(InterpStrUncheckedFormatStringContext context)
-        {
-            AddFill();
-            Environment.EnableParseTree();
-        }
-
-        public override void ExitInterpStrUncheckedFormatString(InterpStrUncheckedFormatStringContext context)
-        {
-            try
-            {
-                var text = context.GetText().Substring(1);
-                AddUncheckedFormat(Syntax.GetStringLiteralValue(text));
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
-        }
-
-        public override void EnterInterpStrCheckedFormat(InterpStrCheckedFormatContext context)
+        public sealed override void EnterInterpStrGeneralFormat(InterpStrGeneralFormatContext context)
         {
             Environment.EnableParseTree();
         }
 
-        public override void ExitInterpStrCheckedFormat(InterpStrCheckedFormatContext context)
+        public sealed override void ExitInterpStrGeneralFormat(InterpStrGeneralFormatContext context)
         {
             try
             {
-                var text = context.GetText().Substring(1);
+                var text = context.GetText().TrimStart(':');
                 parts.Add("%");
                 parts.Add(text);
                 AddFill();
@@ -158,6 +123,88 @@ namespace IS4.Sona.Compiler.States
             {
                 Environment.DisableParseTree();
             }
+        }
+
+        public sealed override void EnterInterpStrStandardFormat(InterpStrStandardFormatContext context)
+        {
+            AddFill();
+            Environment.EnableParseTree();
+        }
+
+        public sealed override void ExitInterpStrStandardFormat(InterpStrStandardFormatContext context)
+        {
+            try
+            {
+                var text = context.GetText().TrimStart(':');
+                if(text.Length == 1 && !Char.IsLetter(text[0]))
+                {
+                    Error("Standard format specifiers are expressed as a single letter.");
+                }
+                AddUncheckedFormat(Syntax.GetStringLiteralValue(text));
+            }
+            finally
+            {
+                Environment.DisableParseTree();
+            }
+        }
+
+        public sealed override void EnterInterpStrCustomFormat(InterpStrCustomFormatContext context)
+        {
+            AddFill();
+            Environment.EnableParseTree();
+        }
+
+        public sealed override void ExitInterpStrCustomFormat(InterpStrCustomFormatContext context)
+        {
+            try
+            {
+                var text = context.GetText().TrimStart(':');
+                if(text.Length == 1 && Char.IsLetter(text[0]))
+                {
+                    Error("Custom format specifiers cannot be expressed as a single letter. Use the format-specific method (such as preceding the character with '%') to express it.");
+                }
+                AddUncheckedFormat(Syntax.GetStringLiteralValue(text));
+            }
+            finally
+            {
+                Environment.DisableParseTree();
+            }
+        }
+
+        public sealed override void EnterInterpStrNumberFormat(InterpStrNumberFormatContext context)
+        {
+            AddFill();
+            Environment.EnableParseTree();
+        }
+
+        public sealed override void ExitInterpStrNumberFormat(InterpStrNumberFormatContext context)
+        {
+            try
+            {
+                var text = context.GetText().TrimStart(':');
+                AddUncheckedFormat(text);
+            }
+            finally
+            {
+                Environment.DisableParseTree();
+            }
+        }
+
+        public sealed override void EnterInterpStrComponentFormat(InterpStrComponentFormatContext context)
+        {
+            AddFill();
+            EnterState<Components>().EnterInterpStrComponentFormat(context);
+            base.EnterInterpStrComponentFormat(context);
+        }
+
+        public sealed override void ExitInterpStrComponentFormat(InterpStrComponentFormatContext context)
+        {
+
+        }
+
+        public void ExitInterpStrComponentFormat(InterpStrComponentFormatContext context, string format)
+        {
+            AddUncheckedFormat(format);
         }
 
         private void AddUncheckedFormat(string text)
@@ -227,6 +274,33 @@ namespace IS4.Sona.Compiler.States
         public override void ExitExpression(ExpressionContext context)
         {
 
+        }
+
+        sealed class Components : NodeState
+        {
+            StringBuilder text = new();
+
+            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+            {
+                base.Initialize(environment, parent);
+
+                text.Clear();
+            }
+
+            public sealed override void EnterInterpStrComponentFormat(InterpStrComponentFormatContext context)
+            {
+
+            }
+
+            public sealed override void ExitInterpStrComponentFormat(InterpStrComponentFormatContext context)
+            {
+                ((InterpolatedString)ExitState()).ExitInterpStrComponentFormat(context, text.ToString());
+            }
+
+            public override void VisitTerminal(ITerminalNode node)
+            {
+                text.Append(node.Symbol.Text);
+            }
         }
     }
 
@@ -301,32 +375,57 @@ namespace IS4.Sona.Compiler.States
 
         }
 
-        public sealed override void EnterInterpStrUncheckedFormat(InterpStrUncheckedFormatContext context)
+        private void FormatError()
         {
             Error("The format cannot be specified in a literal interpolated string expression.");
         }
 
-        public sealed override void ExitInterpStrUncheckedFormat(InterpStrUncheckedFormatContext context)
+        public sealed override void EnterInterpStrGeneralFormat(InterpStrGeneralFormatContext context)
+        {
+            FormatError();
+        }
+
+        public sealed override void ExitInterpStrGeneralFormat(InterpStrGeneralFormatContext context)
         {
 
         }
 
-        public sealed override void EnterInterpStrUncheckedFormatString(InterpStrUncheckedFormatStringContext context)
+        public sealed override void EnterInterpStrStandardFormat(InterpStrStandardFormatContext context)
         {
-            Error("The format cannot be specified in a literal interpolated string expression.");
+            FormatError();
         }
 
-        public sealed override void ExitInterpStrUncheckedFormatString(InterpStrUncheckedFormatStringContext context)
+        public sealed override void ExitInterpStrStandardFormat(InterpStrStandardFormatContext context)
         {
 
         }
 
-        public sealed override void EnterInterpStrCheckedFormat(InterpStrCheckedFormatContext context)
+        public sealed override void EnterInterpStrCustomFormat(InterpStrCustomFormatContext context)
         {
-            Error("The format cannot be specified in a literal interpolated string expression.");
+            FormatError();
         }
 
-        public sealed override void ExitInterpStrCheckedFormat(InterpStrCheckedFormatContext context)
+        public sealed override void ExitInterpStrCustomFormat(InterpStrCustomFormatContext context)
+        {
+
+        }
+
+        public sealed override void EnterInterpStrNumberFormat(InterpStrNumberFormatContext context)
+        {
+            FormatError();
+        }
+
+        public sealed override void ExitInterpStrNumberFormat(InterpStrNumberFormatContext context)
+        {
+
+        }
+
+        public sealed override void EnterInterpStrComponentFormat(InterpStrComponentFormatContext context)
+        {
+            FormatError();
+        }
+
+        public sealed override void ExitInterpStrComponentFormat(InterpStrComponentFormatContext context)
         {
 
         }
