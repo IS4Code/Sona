@@ -69,13 +69,84 @@ type StringExtensions private () =
 type RangeExtensions private () =
   [<Extension>] static member inline ``..``(this, other) = (..) this other
 
+[<Extension>]
 type ExceptionExtensions private () =
   [<Extension>] static member inline ``throw()``(this) = raise this
 
 [<Extension>]
-type SequenceExtensions private () =
-  [<Extension>] static member inline ``..``(this, other) = Seq.append this other
+type DisposableClassExtensions private () =
+  [<Extension>]
+  static member inline ``dispose()``(this: ^T
+    when ^T : not struct) =
+    match box this with
+    | :? IDisposable as d -> d.Dispose()
+    | _ -> ()
 
+[<Extension>]
+type NonDisposableExtensions internal () =
+  [<Extension>]
+  static member inline ``dispose()``(this: ^T
+    when ^T : struct) = ()
+
+[<Extension>]
+type DisposableValueExtensions private () =
+  inherit NonDisposableExtensions()
+  [<Extension>]
+  static member inline ``dispose()``(this: ^T
+    when ^T : struct
+    and ^T :> IDisposable) =
+    this.Dispose()
+
+[<Extension>]
+type EnumerableExtensions internal () =
+  [<Extension>]
+  static member inline ``each()``(this: _ seq) = this.GetEnumerator()
+  [<Extension>]
+  static member inline ``each()``(this: System.Collections.IEnumerable) = this.GetEnumerator()
+
+[<Extension>]
+type SequenceExtensions internal () =
+  inherit EnumerableExtensions()
+  [<Extension>]
+  static member inline ``..``(this, other) = Seq.append this other
+  [<Extension>]
+  static member inline ``each()``(this: ^T
+    when ^T : (member GetEnumerator: unit -> ^U)
+    and ^U : (member MoveNext: unit -> bool)
+    and ^U : (member Current: _)) =
+    this.GetEnumerator()
+
+type ``array enumerator``<'T> = struct
+    val mutable Array: 'T[]
+    val mutable Position: int
+    
+    static member inline make(arr: 'T[]) =
+        let mutable r = Unchecked.defaultof<``array enumerator``<'T>>
+        r.Array <- arr
+        r.Position <- -1
+        r
+
+    member inline this.MoveNext() =
+        this.Position <- this.Position + 1
+        this.Position < this.Array.Length
+
+    member inline this.Current = this.Array[this.Position];
+
+    member inline _.``dispose()``() = ()
+
+    interface System.Collections.Generic.IEnumerator<'T> with
+        member this.MoveNext() = this.MoveNext()
+        member this.Reset() = this.Position <- -1
+        member this.Current: 'T = this.Current
+        member this.Current: obj = this.Current
+        member _.Dispose() = ()
+end
+
+[<Extension>]
+type ArrayExtensions private () =
+  [<Extension>]
+  static member inline ``each()``(this: ^T array) = ``array enumerator``<^T>.make(this)
+  
 [<Extension>]
 type NullExtensions private () =
   [<Extension>]
@@ -239,3 +310,27 @@ type NullableExtensions private () =
   static member inline ``??``(this: Nullable<^T>, [<InlineIfLambda>]alternative: unit -> Nullable<^T>): ^T voption =
     if this.HasValue then this.GetValueOrDefault() |> ValueSome
     else alternative() |> ValueOption.ofNullable
+
+[<Extension>]
+type NumberFormatExtensions private () =
+  [<Extension>]
+  static member inline ``{}``(this: NumberFormat, value: number<_>) = value
+ 
+[<Extension>]
+type TimeFormatExtensions private () =
+  [<Extension>]
+  static member inline ``{}``(this: TimeFormat, value: time<_>) = value
+ 
+[<Extension>]
+type DateFormatExtensions private () =
+  [<Extension>]
+  static member inline ``{}``(this: DateFormat, value: date<_>) = value
+
+[<Extension>]
+type TimeSpanFormatExtensions private () =
+  [<Extension>]
+  static member inline ``{}``(this: TimeFormat, value: timespan<_>) = value
+  [<Extension>]
+  static member inline ``{}``(this: DayTimeFormat, value: timespan<_>) = value
+  [<Extension>]
+  static member inline ``{}``(this: DayFormat, value: timespan<_>) = value
