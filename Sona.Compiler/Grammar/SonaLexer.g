@@ -112,6 +112,7 @@ WHILE: 'while';
 WHILE_TRUE_DO: 'while' IGNORE ('true' | '(' IGNORE 'true' IGNORE ')') IGNORE 'do';
 FOR: 'for';
 IN: 'in';
+BY: 'by';
 REPEAT: 'repeat';
 UNTIL: 'until';
 
@@ -203,6 +204,7 @@ Directive_WHILE: WHILE -> type(WHILE);
 Directive_WHILE_TRUE_DO: WHILE_TRUE_DO -> type(WHILE_TRUE_DO);
 Directive_FOR: FOR -> type(FOR);
 Directive_IN: IN -> type(IN);
+Directive_BY: BY -> type(BY);
 Directive_REPEAT: REPEAT -> type(REPEAT);
 Directive_UNTIL: UNTIL -> type(UNTIL);
 
@@ -407,6 +409,7 @@ Interpolation_WHILE: WHILE -> type(WHILE);
 Interpolation_WHILE_TRUE_DO: WHILE_TRUE_DO -> type(WHILE_TRUE_DO);
 Interpolation_FOR: FOR -> type(FOR);
 Interpolation_IN: IN -> type(IN);
+Interpolation_BY: BY -> type(BY);
 Interpolation_REPEAT: REPEAT -> type(REPEAT);
 Interpolation_UNTIL: UNTIL -> type(UNTIL);
 

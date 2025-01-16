@@ -103,6 +103,11 @@ namespace IS4.Sona.Compiler
             throw new Exception(message);
         }
 
+        protected ISourceCapture ErrorCapture(string message)
+        {
+            throw new Exception(message);
+        }
+
         class Empty : ScriptState
         {
             public static readonly Empty Instance = new();

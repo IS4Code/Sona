@@ -29,6 +29,14 @@ namespace IS4.Sona.Compiler
         void UpdateLine(IToken token);
         void EnterScope();
         void ExitScope();
+
+        ISourceCapture StartCapture();
+        void StopCapture(ISourceCapture capture);
+    }
+
+    internal interface ISourceCapture
+    {
+        void Play(ISourceWriter writer);
     }
 
     internal static class SourceWriterExtensions
@@ -100,6 +108,10 @@ namespace IS4.Sona.Compiler
 
         public bool AdjustLines { get; set; } = true;
 
+        readonly List<Capture> captures = new();
+
+        bool Recording => captures.Count > 0;
+
         int tmpIdIndex;
 
         public SourceWriter(TextWriter writer) : base(new LineCountingTextWriter(writer), " ")
@@ -107,9 +119,30 @@ namespace IS4.Sona.Compiler
 
         }
 
+        void Record(Action<SourceWriter> action, bool idempotent = false)
+        {
+            foreach(var capture in captures)
+            {
+                if(idempotent && capture.Count is > 0 and var count && capture[count - 1].Method.Equals(action.Method))
+                {
+                    capture[count - 1] = action;
+                }
+                else
+                {
+                    capture.Add(action);
+                }
+            }
+        }
+
         IToken? expectedNextLineToken;
         public void UpdateLine(IToken token)
         {
+            if(Recording)
+            {
+                Record(x => x.UpdateLine(token), true);
+                return;
+            }
+
             expectedNextLineToken = null;
 
             if(!AdjustLines)
@@ -173,8 +206,58 @@ namespace IS4.Sona.Compiler
             return "_ " + Interlocked.Increment(ref tmpIdIndex);
         }
 
+        void ISourceWriter.Write(string text)
+        {
+            if(Recording)
+            {
+                Record(x => ((ISourceWriter)x).Write(text));
+                return;
+            }
+
+            Write(text);
+        }
+
+        void ISourceWriter.Write(char value)
+        {
+            if(Recording)
+            {
+                Record(x => ((ISourceWriter)x).Write(value));
+                return;
+            }
+
+            Write(value);
+        }
+
+        void ISourceWriter.WriteLine()
+        {
+            if(Recording)
+            {
+                Record(x => ((ISourceWriter)x).WriteLine());
+                return;
+            }
+
+            WriteLine();
+        }
+
+        void ISourceWriter.WriteLine(string text)
+        {
+            if(Recording)
+            {
+                Record(x => ((ISourceWriter)x).WriteLine(text));
+                return;
+            }
+
+            WriteLine(text);
+        }
+
         public void WriteIdentifier(string name)
         {
+            if(Recording)
+            {
+                Record(x => x.WriteIdentifier(name));
+                return;
+            }
+
             if(Syntax.IsValidIdentifierName(name))
             {
                 // Write as-is
@@ -193,6 +276,12 @@ namespace IS4.Sona.Compiler
 
         public void WriteOperator(string op)
         {
+            if(Recording)
+            {
+                Record(x => x.WriteOperator(op));
+                return;
+            }
+
             Write(" ");
             Write(op);
             Write(" ");
@@ -200,6 +289,12 @@ namespace IS4.Sona.Compiler
 
         public void WriteOperator(char op)
         {
+            if(Recording)
+            {
+                Record(x => x.WriteOperator(op));
+                return;
+            }
+
             Write(" ");
             Write(op);
             Write(" ");
@@ -207,18 +302,36 @@ namespace IS4.Sona.Compiler
 
         public void WriteLeftOperator(string op)
         {
+            if(Recording)
+            {
+                Record(x => x.WriteLeftOperator(op));
+                return;
+            }
+
             Write(" ");
             Write(op);
         }
 
         public void WriteLeftOperator(char op)
         {
+            if(Recording)
+            {
+                Record(x => x.WriteLeftOperator(op));
+                return;
+            }
+
             Write(" ");
             Write(op);
         }
 
         public void WriteNamespacedName(string ns, string name)
         {
+            if(Recording)
+            {
+                Record(x => x.WriteNamespacedName(ns, name));
+                return;
+            }
+
             Write("global.");
             Write(ns);
             Write('.');
@@ -228,6 +341,12 @@ namespace IS4.Sona.Compiler
         readonly Stack<(int from, int to)> scopeRestore = new();
         public void EnterScope()
         {
+            if(Recording)
+            {
+                Record(x => x.EnterScope());
+                return;
+            }
+
             int pos = InnerWriter.LinePosition;
             if(pos > Indent)
             {
@@ -242,6 +361,12 @@ namespace IS4.Sona.Compiler
 
         public void ExitScope()
         {
+            if(Recording)
+            {
+                Record(x => x.ExitScope());
+                return;
+            }
+
             if(scopeRestore.TryPeek(out var restore) && restore.from == Indent)
             {
                 Indent = scopeRestore.Pop().to;
@@ -249,6 +374,36 @@ namespace IS4.Sona.Compiler
             else
             {
                 Indent--;
+            }
+        }
+
+        public ISourceCapture StartCapture()
+        {
+            var capture = new Capture();
+            captures.Add(capture);
+            return capture;
+        }
+
+        public void StopCapture(ISourceCapture capture)
+        {
+            if(capture is Capture capture2)
+            {
+                captures.Remove(capture2);
+            }
+        }
+
+        sealed class Capture : List<Action<SourceWriter>>, ISourceCapture
+        {
+            public void Play(ISourceWriter writer)
+            {
+                if(writer is not SourceWriter parentWriter)
+                {
+                    throw new ArgumentException("Argument must be the same object that created this instance.", nameof(writer));
+                }
+                foreach(var action in this)
+                {
+                    action(parentWriter);
+                }
             }
         }
 

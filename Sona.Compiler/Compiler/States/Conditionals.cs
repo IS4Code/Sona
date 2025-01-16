@@ -1,4 +1,6 @@
-﻿using static IS4.Sona.Grammar.SonaParser;
+﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using static IS4.Sona.Grammar.SonaParser;
 
 namespace IS4.Sona.Compiler.States
 {
@@ -804,6 +806,50 @@ namespace IS4.Sona.Compiler.States
             OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
             ExitState().ExitRepeatStatementConditional(context);
         }
+
+        public override void EnterForStatementFree(ForStatementFreeContext context)
+        {
+            OnEnterInner(StatementFlags.OpenPath);
+        }
+
+        public override void ExitForStatementFree(ForStatementFreeContext context)
+        {
+            OnExitInner(StatementFlags.OpenPath);
+            ExitState().ExitForStatementFree(context);
+        }
+
+        public override void EnterForStatementFreeInterrupted(ForStatementFreeInterruptedContext context)
+        {
+            OnEnterInner(StatementFlags.OpenPath);
+        }
+
+        public override void ExitForStatementFreeInterrupted(ForStatementFreeInterruptedContext context)
+        {
+            OnExitInner(StatementFlags.OpenPath);
+            ExitState().ExitForStatementFreeInterrupted(context);
+        }
+
+        public override void EnterForStatementReturningTrail(ForStatementReturningTrailContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+        }
+
+        public override void ExitForStatementReturningTrail(ForStatementReturningTrailContext context)
+        {
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            ExitState().ExitForStatementReturningTrail(context);
+        }
+
+        public override void EnterForStatementConditional(ForStatementConditionalContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+        }
+
+        public override void ExitForStatementConditional(ForStatementConditionalContext context)
+        {
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            ExitState().ExitForStatementConditional(context);
+        }
         #endregion
     }
 
@@ -1338,6 +1384,624 @@ namespace IS4.Sona.Compiler.States
     }
 
     internal sealed class RepeatStatementControl : RepeatStatementTrailInterrupted, IReturnScope
+    {
+        string? IReturnScope.ReturnVariable => ScopeReturnVariable;
+        string? IReturnScope.ReturningVariable => ScopeReturningVariable;
+    }
+
+    internal abstract class ForStatement : ControlStatement, IInterruptibleScope
+    {
+        InterruptFlags IInterruptibleScope.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
+
+        public string? InterruptingVariable { get; private set; }
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            InterruptingVariable = null;
+        }
+
+        public sealed override void EnterFor(ForContext context)
+        {
+
+        }
+
+        public abstract override void ExitFor(ForContext context);
+
+        public abstract override void EnterForSimple(ForSimpleContext context);
+
+        public sealed override void EnterForSimpleStep(ForSimpleStepContext context)
+        {
+            Error("`for` statement cannot use `by` with a non-range sequence.");
+        }
+
+        public abstract override void EnterForRange(ForRangeContext context);
+        public abstract override void EnterForRangeStep(ForRangeStepContext context);
+        public abstract override void EnterForRangePrimitiveStep(ForRangePrimitiveStepContext context);
+        
+        public override void ExitForSimple(ForSimpleContext context)
+        {
+
+        }
+
+        public sealed override void ExitForSimpleStep(ForSimpleStepContext context)
+        {
+
+        }
+
+        public override void ExitForRange(ForRangeContext context)
+        {
+
+        }
+
+        public override void ExitForRangeStep(ForRangeStepContext context)
+        {
+
+        }
+
+        public override void ExitForRangePrimitiveStep(ForRangePrimitiveStepContext context)
+        {
+
+        }
+
+        public abstract override void EnterExpression(ExpressionContext context);
+        public abstract override void ExitExpression(ExpressionContext context);
+        public abstract override void EnterForRangeExpression(ForRangeExpressionContext context);
+        public abstract override void ExitForRangeExpression(ForRangeExpressionContext context);
+        public abstract override void EnterPrimitiveExpr(PrimitiveExprContext context);
+        public abstract override void ExitPrimitiveExpr(PrimitiveExprContext context);
+
+        private protected const string captureError = "COMPILER ERROR: `for` without captured declaration.";
+
+        public sealed override void EnterDeclaration(DeclarationContext context)
+        {
+            EnterState<DeclarationState>().EnterDeclaration(context);
+        }
+
+        public abstract override void ExitDeclaration(DeclarationContext context);
+
+        protected override void OnEnterBlock(StatementFlags flags)
+        {
+            base.OnEnterBlock(flags);
+            if((flags & StatementFlags.InterruptPath) != 0)
+            {
+                InterruptingVariable = Out.CreateTemporaryIdentifier();
+                // var interrupting = false
+                Out.Write("let mutable ");
+                Out.WriteIdentifier(InterruptingVariable);
+                Out.WriteOperator('=');
+                Out.WriteLine("false");
+            }
+        }
+
+        public virtual void WriteBreak(bool hasExpression)
+        {
+            if(hasExpression)
+            {
+                Error("`break` in a `for` statement does not take an expression.");
+            }
+            Error("COMPILER ERROR: `break` used in a wrong version of `for`.");
+        }
+
+        public virtual void WriteContinue(bool hasExpression)
+        {
+            if(hasExpression)
+            {
+                Error("`break` in a `for` statement does not take an expression.");
+            }
+            Error("COMPILER ERROR: `continue` used in a wrong version of `for`.");
+        }
+
+        protected sealed class PrimitiveExprState : ExpressionState
+        {
+            public override void EnterPrimitiveExpr(PrimitiveExprContext context)
+            {
+                base.EnterPrimitiveExpr(context);
+            }
+
+            public override void ExitPrimitiveExpr(PrimitiveExprContext context)
+            {
+                base.ExitPrimitiveExpr(context);
+                ExitState().ExitPrimitiveExpr(context);
+            }
+        }
+
+        protected sealed class ForRangeExprState : ExpressionState
+        {
+            public override void EnterForRangeExpression(ForRangeExpressionContext context)
+            {
+
+            }
+
+            public override void ExitForRangeExpression(ForRangeExpressionContext context)
+            {
+                ExitState().ExitForRangeExpression(context);
+            }
+        }
+    }
+
+    /// <summary>
+    /// <c>for</c> with no trailing statements (free or ignored).
+    /// </summary>
+    internal class ForStatementNoTrail : ForStatement
+    {
+        protected override void OnEnter(StatementFlags flags)
+        {
+            if((flags & StatementFlags.OpenPath) == 0)
+            {
+                // Not open, there will be ignored statements
+                Out.Write("if true then ");
+                Out.WriteLine(_begin_);
+                Out.EnterScope();
+                return;
+            }
+            base.OnEnter(flags);
+        }
+
+        protected override void OnExit(StatementFlags flags)
+        {
+            if(flags == StatementFlags.Terminating)
+            {
+                // Return any value
+                Out.WriteLine();
+                Out.WriteCoreOperator("Unchecked");
+                Out.Write(".defaultof<_>");
+            }
+            if((flags & StatementFlags.OpenPath) == 0)
+            {
+                // Exit for ignored statements
+                Out.ExitScope();
+                Out.WriteLine();
+                Out.Write(_end_);
+                return;
+            }
+            base.OnEnter(flags);
+        }
+
+        public override void EnterForSimple(ForSimpleContext context)
+        {
+            Out.Write("for ");
+        }
+
+        public override void EnterForRange(ForRangeContext context)
+        {
+            EnterState<Range>().EnterForRange(context);
+        }
+
+        public override void EnterForRangeStep(ForRangeStepContext context)
+        {
+            EnterState<RangeStep>().EnterForRangeStep(context);
+        }
+
+        public override void EnterForRangePrimitiveStep(ForRangePrimitiveStepContext context)
+        {
+            EnterState<RangePrimitiveStep>().EnterForRangePrimitiveStep(context);
+        }
+
+        public sealed override void ExitDeclaration(DeclarationContext context)
+        {
+            Out.Write(" in(");
+        }
+
+        public override void ExitFor(ForContext context)
+        {
+            Out.Write(")do ");
+        }
+
+        public override void EnterExpression(ExpressionContext context)
+        {
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public override void ExitExpression(ExpressionContext context)
+        {
+
+        }
+
+        public override void EnterForRangeExpression(ForRangeExpressionContext context)
+        {
+            EnterState<ForRangeExprState>().EnterForRangeExpression(context);
+        }
+
+        public override void ExitForRangeExpression(ForRangeExpressionContext context)
+        {
+
+        }
+
+        public override void EnterPrimitiveExpr(PrimitiveExprContext context)
+        {
+            EnterState<PrimitiveExprState>().EnterPrimitiveExpr(context);
+        }
+
+        public override void ExitPrimitiveExpr(PrimitiveExprContext context)
+        {
+
+        }
+
+        sealed class Range : ForStatementNoTrail
+        {
+            bool first;
+
+            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+            {
+                base.Initialize(environment, parent);
+
+                first = true;
+            }
+
+            public override void EnterForRange(ForRangeContext context)
+            {
+                Out.Write("for ");
+            }
+
+            public override void ExitForRange(ForRangeContext context)
+            {
+                ExitState().ExitForRange(context);
+            }
+
+            public override void ExitForRangeExpression(ForRangeExpressionContext context)
+            {
+                base.ExitForRangeExpression(context);
+                if(first)
+                {
+                    Out.Write(')');
+                    Out.WriteOperator("..");
+                    Out.Write('(');
+                    first = false;
+                }
+            }
+        }
+
+        sealed class RangeStep : ForStatementNoTrail
+        {
+            ISourceCapture? capture;
+            bool first;
+            readonly List<string> parts = new();
+
+            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+            {
+                base.Initialize(environment, parent);
+
+                capture = null;
+                first = true;
+                parts.Clear();
+            }
+
+            public override void EnterForRangeStep(ForRangeStepContext context)
+            {
+                capture = Out.StartCapture();
+                Out.Write("for ");
+            }
+
+            public override void ExitForRangeStep(ForRangeStepContext context)
+            {
+                (capture ?? ErrorCapture(captureError)).Play(Out);
+                Out.WriteIdentifier(parts[0]);
+                Out.Write(')');
+                Out.WriteOperator("..");
+                Out.WriteIdentifier(parts[2]);
+                Out.WriteOperator("..");
+                Out.Write('(');
+                Out.WriteIdentifier(parts[1]);
+                ExitState().ExitForRangeStep(context);
+            }
+
+            public override void EnterForRangeExpression(ForRangeExpressionContext context)
+            {
+                if(first)
+                {
+                    Out.StopCapture(capture ?? ErrorCapture(captureError));
+                }
+                var name = Out.CreateTemporaryIdentifier();
+                parts.Add(name);
+                Out.Write("let ");
+                Out.WriteIdentifier(name);
+                Out.WriteOperator('=');
+                base.EnterForRangeExpression(context);
+            }
+
+            public override void ExitForRangeExpression(ForRangeExpressionContext context)
+            {
+                base.ExitForRangeExpression(context);
+                first = false;
+                Out.WriteLine();
+            }
+
+            public override void EnterExpression(ExpressionContext context)
+            {
+                var name = Out.CreateTemporaryIdentifier();
+                parts.Add(name);
+                Out.Write("let ");
+                Out.WriteIdentifier(name);
+                Out.WriteOperator('=');
+                base.EnterExpression(context);
+            }
+
+            public override void ExitExpression(ExpressionContext context)
+            {
+                base.ExitExpression(context);
+                Out.WriteLine();
+            }
+        }
+
+        sealed class RangePrimitiveStep : ForStatementNoTrail
+        {
+            ISourceCapture? leftCapture;
+            ISourceCapture? rightCapture;
+            bool first;
+
+            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+            {
+                base.Initialize(environment, parent);
+
+                leftCapture = null;
+                rightCapture = null;
+                first = true;
+            }
+
+            public override void EnterForRangePrimitiveStep(ForRangePrimitiveStepContext context)
+            {
+                leftCapture = Out.StartCapture();
+                Out.Write("for ");
+            }
+
+            public override void ExitForRangePrimitiveStep(ForRangePrimitiveStepContext context)
+            {
+                ExitState().ExitForRangePrimitiveStep(context);
+            }
+
+            public override void EnterForRangeExpression(ForRangeExpressionContext context)
+            {
+                if(!first)
+                {
+                    rightCapture = Out.StartCapture();
+                }
+                base.EnterForRangeExpression(context);
+            }
+
+            public override void ExitForRangeExpression(ForRangeExpressionContext context)
+            {
+                base.ExitForRangeExpression(context);
+                if(first)
+                {
+                    first = false;
+                    Out.StopCapture(leftCapture ?? ErrorCapture(captureError));
+                }
+            }
+
+            public override void EnterPrimitiveExpr(PrimitiveExprContext context)
+            {
+                Out.StopCapture(rightCapture ?? ErrorCapture(captureError));
+                (leftCapture ?? ErrorCapture(captureError)).Play(Out);
+                Out.Write(')');
+                Out.WriteOperator("..");
+                Out.Write('(');
+                base.EnterPrimitiveExpr(context);
+            }
+
+            public override void ExitPrimitiveExpr(PrimitiveExprContext context)
+            {
+                base.ExitPrimitiveExpr(context);
+                Out.Write(')');
+                Out.WriteOperator("..");
+                Out.Write('(');
+                (rightCapture ?? ErrorCapture(captureError)).Play(Out);
+            }
+        }
+    }
+
+    internal class ForStatementTrailInterrupted : ForStatement
+    {
+        string? continuingVariable;
+        string? enumeratorVariable;
+        ISourceCapture? declarationCapture;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            continuingVariable = null;
+            enumeratorVariable = null;
+            declarationCapture = null;
+        }
+
+        protected override void OnEnter(StatementFlags flags)
+        {
+            continuingVariable = Out.CreateTemporaryIdentifier();
+            // var continuing = true
+            Out.Write("let mutable ");
+            Out.WriteIdentifier(continuingVariable);
+            Out.WriteOperator('=');
+            Out.WriteLine("true");
+            base.OnEnter(flags);
+
+            enumeratorVariable = Out.CreateTemporaryIdentifier();
+            // var enumerator = ...
+            Out.Write("let mutable ");
+            Out.WriteIdentifier(enumeratorVariable);
+            Out.WriteOperator('=');
+        }
+        
+        public sealed override void EnterForSimple(ForSimpleContext context)
+        {
+            declarationCapture = Out.StartCapture();
+        }
+
+        public sealed override void EnterForRange(ForRangeContext context)
+        {
+            Out.Write("((..)");
+            declarationCapture = Out.StartCapture();
+        }
+
+        private void EnterForRangeStep()
+        {
+            var start = Out.CreateTemporaryIdentifier();
+            var step = Out.CreateTemporaryIdentifier();
+            var end = Out.CreateTemporaryIdentifier();
+            // ((fun start end step -> (.. ..)start step end)
+            Out.Write("((fun ");
+            Out.WriteIdentifier(start);
+            Out.Write(' ');
+            Out.WriteIdentifier(end);
+            Out.Write(' ');
+            Out.WriteIdentifier(step);
+            Out.WriteOperator("->");
+            Out.Write("(.. ..)");
+            Out.WriteIdentifier(start);
+            Out.Write(' ');
+            Out.WriteIdentifier(step);
+            Out.Write(' ');
+            Out.WriteIdentifier(end);
+            Out.Write(')');
+            declarationCapture = Out.StartCapture();
+        }
+
+        public sealed override void EnterForRangeStep(ForRangeStepContext context)
+        {
+            EnterForRangeStep();
+        }
+
+        public sealed override void EnterForRangePrimitiveStep(ForRangePrimitiveStepContext context)
+        {
+            EnterForRangeStep();
+        }
+
+        public sealed override void ExitDeclaration(DeclarationContext context)
+        {
+            Out.StopCapture(declarationCapture ?? ErrorCapture(captureError));
+        }
+
+        public override void ExitForSimple(ForSimpleContext context)
+        {
+            base.ExitForSimple(context);
+        }
+
+        public override void ExitForRange(ForRangeContext context)
+        {
+            base.ExitForRange(context);
+            Out.Write(')');
+        }
+
+        public override void ExitForRangeStep(ForRangeStepContext context)
+        {
+            base.ExitForRangeStep(context);
+            Out.Write(')');
+        }
+
+        public override void ExitForRangePrimitiveStep(ForRangePrimitiveStepContext context)
+        {
+            base.ExitForRangePrimitiveStep(context);
+            Out.Write(')');
+        }
+
+        const string enumeratorError = "COMPILER ERROR: `for` without enumerator variable.";
+
+        public sealed override void ExitFor(ForContext context)
+        {
+            Out.WriteSpecialMember("each()");
+            Out.WriteLine(".GetEnumerator()");
+            Out.WriteLine("try");
+            Out.EnterScope();
+            Out.Write("while ");
+            Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `for` used without a condition variable."));
+            Out.WriteOperator("&&");
+            Out.WriteIdentifier(enumeratorVariable ?? Error(enumeratorError));
+            Out.Write(".MoveNext() do ");
+        }
+
+        protected override void OnEnterBlock(StatementFlags flags)
+        {
+            base.OnEnterBlock(flags);
+
+            Out.Write("let ");
+            (declarationCapture ?? ErrorCapture(captureError)).Play(Out);
+            Out.WriteOperator('=');
+            Out.WriteIdentifier(enumeratorVariable ?? Error(enumeratorError));
+            Out.WriteLine(".Current");
+        }
+
+        protected sealed override void OnExit(StatementFlags flags)
+        {
+            Out.ExitScope();
+            Out.WriteLine();
+            Out.Write("finally ");
+            Out.WriteNamespacedName("Sona.Runtime.SequenceHelpers", "DisposeEnumerator");
+            Out.Write('(');
+            Out.WriteNamespacedName("Sona.Runtime.SequenceHelpers", "Marker");
+            Out.Write(',');
+            Out.WriteIdentifier(enumeratorVariable ?? Error(enumeratorError));
+            Out.Write(")");
+            base.OnExit(flags);
+        }
+
+        public sealed override void EnterExpression(ExpressionContext context)
+        {
+            Out.Write('(');
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public sealed override void ExitExpression(ExpressionContext context)
+        {
+            Out.Write(')');
+        }
+
+        public sealed override void EnterForRangeExpression(ForRangeExpressionContext context)
+        {
+            Out.Write('(');
+            EnterState<ForRangeExprState>().EnterForRangeExpression(context);
+        }
+
+        public sealed override void ExitForRangeExpression(ForRangeExpressionContext context)
+        {
+            Out.Write(')');
+        }
+
+        public sealed override void EnterPrimitiveExpr(PrimitiveExprContext context)
+        {
+            Out.Write('(');
+            EnterState<PrimitiveExprState>().EnterPrimitiveExpr(context);
+        }
+
+        public sealed override void ExitPrimitiveExpr(PrimitiveExprContext context)
+        {
+            Out.Write(')');
+        }
+
+        public sealed override void WriteBreak(bool hasExpression)
+        {
+            if(hasExpression)
+            {
+                base.WriteBreak(hasExpression);
+                return;
+            }
+            Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to."));
+            Out.WriteOperator("<-");
+            Out.WriteLine("false");
+            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to."));
+            Out.WriteOperator("<-");
+            Out.Write("true");
+        }
+
+        public sealed override void WriteContinue(bool hasExpression)
+        {
+            if(hasExpression)
+            {
+                base.WriteContinue(hasExpression);
+                return;
+            }
+            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `continue` used without a variable to assign to."));
+            Out.WriteOperator("<-");
+            Out.Write("true");
+        }
+    }
+
+    internal sealed class ForStatementFreeInterrupted : ForStatementTrailInterrupted
+    {
+
+    }
+
+    internal sealed class ForStatementControl : ForStatementTrailInterrupted, IReturnScope
     {
         string? IReturnScope.ReturnVariable => ScopeReturnVariable;
         string? IReturnScope.ReturningVariable => ScopeReturningVariable;

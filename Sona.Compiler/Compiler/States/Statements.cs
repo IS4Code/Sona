@@ -213,6 +213,26 @@ namespace IS4.Sona.Compiler.States
             EnterState<RepeatStatementControl>().EnterRepeatStatementConditional(context);
         }
 
+        public sealed override void EnterForStatementFree(ForStatementFreeContext context)
+        {
+            EnterState<ForStatementNoTrail>().EnterForStatementFree(context);
+        }
+
+        public sealed override void EnterForStatementFreeInterrupted(ForStatementFreeInterruptedContext context)
+        {
+            EnterState<ForStatementFreeInterrupted>().EnterForStatementFreeInterrupted(context);
+        }
+
+        public sealed override void EnterForStatementReturningTrail(ForStatementReturningTrailContext context)
+        {
+            EnterState<ForStatementControl>().EnterForStatementReturningTrail(context);
+        }
+
+        public sealed override void EnterForStatementConditional(ForStatementConditionalContext context)
+        {
+            EnterState<ForStatementControl>().EnterForStatementConditional(context);
+        }
+
         public sealed override void EnterInlineSourceFree(InlineSourceFreeContext context)
         {
             EnterState<InlineSource>().EnterInlineSourceFree(context);

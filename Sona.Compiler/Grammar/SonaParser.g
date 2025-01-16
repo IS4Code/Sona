@@ -140,7 +140,9 @@ statement:
   whileStatementFree |
   whileStatementFreeInterrupted |
   repeatStatementFree |
-  repeatStatementFreeInterrupted;
+  repeatStatementFreeInterrupted |
+  forStatementFree |
+  forStatementFreeInterrupted;
 
 // A statement that must be located at the end of a block and stops its execution
 closingStatement:
@@ -173,7 +175,8 @@ returningStatement:
   ifStatementReturningTrailFromElse |
   ifStatementReturningTrail |
   whileStatementReturningTrail |
-  repeatStatementReturningTrail;
+  repeatStatementReturningTrail |
+  forStatementReturningTrail;
 
 // A statement that has interrupting paths and all other paths are terminating
 interruptingStatement:
@@ -194,7 +197,8 @@ conditionalStatement:
   doStatementConditional |
   ifStatementConditional |
   whileStatementConditional |
-  repeatStatementConditional;
+  repeatStatementConditional |
+  forStatementConditional;
 
 // A statement that only has terminating paths
 terminatingStatement:
@@ -491,6 +495,8 @@ whileStatementFreeInterrupted:
   // Body may interrupt
   (whileTrue | while) (interruptingBlock | interruptibleBlock) 'end';
 
+// `while true do` with interrupting body could be terminating too,
+// but we would need to guarantee that only `continue` appears.
 whileStatementTerminating:
   // Body either throws or keeps looping forever
   whileTrue freeBlock 'end' ignoredTrail;
@@ -524,6 +530,51 @@ repeatStatementFreeInterrupted:
 repeatStatementTerminating:
   // Body always throws and condition is never checked
   'repeat' terminatingBlock until ignoredTrail;
+
+for:
+  // Step is a primitive expression - can be evaluated out of order
+  forRangePrimitiveStep |
+  // Step is provided
+  forRangeStep |
+  // Step is not provided
+  forRange |
+  // Arbitrary collection with step (error for now)
+  forSimpleStep |
+  // Arbitrary collection
+  forSimple;
+
+forSimple:
+  'for' declaration 'in' forRangeExpression 'do';
+
+forSimpleStep:
+  'for' declaration 'in' forRangeExpression 'by' expression 'do';
+
+forRange:
+  'for' declaration 'in' forRangeExpression '..' forRangeExpression 'do';
+
+forRangeStep:
+  'for' declaration 'in' forRangeExpression '..' forRangeExpression 'by' expression 'do';
+
+forRangePrimitiveStep:
+  'for' declaration 'in' forRangeExpression '..' forRangeExpression 'by' primitiveExpr 'do';
+
+forRangeExpression:
+  concatExpr_Inner;
+
+forStatementFree:
+  for freeBlock 'end';
+
+forStatementFreeInterrupted:
+  // Body may interrupt
+  for (interruptingBlock | interruptibleBlock) 'end';
+
+forStatementReturningTrail:
+  // Body is returning or conditional, but the trail is closing
+  for (returningBlock | conditionalBlock) 'end' closingTrail;
+
+forStatementConditional:
+  // Body is returning or conditional, trail is open, interruptible, or conditional
+  for (returningBlock | conditionalBlock) 'end' (openTrail | interruptibleTrail | conditionalTrail);
 
 /*
 // Same issue as with returning `while true do`.
