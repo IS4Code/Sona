@@ -91,6 +91,9 @@ BEGIN_INLINE_SOURCE:
 LITERAL_NAME:
   '@' NAME;
 
+fragment TRUE_EXPR:
+  'true' | '(' IGNORE TRUE_EXPR IGNORE ')';
+
 RETURN: 'return';
 BREAK: 'break';
 CONTINUE: 'continue';
@@ -109,7 +112,7 @@ ELSE: 'else';
 ELSEIF: 'elseif';
 DO: 'do';
 WHILE: 'while';
-WHILE_TRUE_DO: 'while' IGNORE ('true' | '(' IGNORE 'true' IGNORE ')') IGNORE 'do';
+WHILE_TRUE_DO: 'while' IGNORE TRUE_EXPR IGNORE 'do';
 FOR: 'for';
 IN: 'in';
 BY: 'by';
