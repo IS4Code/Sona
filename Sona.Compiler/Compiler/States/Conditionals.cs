@@ -1900,7 +1900,7 @@ namespace IS4.Sona.Compiler.States
         public sealed override void ExitFor(ForContext context)
         {
             Out.WriteSpecialMember("each()");
-            Out.WriteLine(".GetEnumerator()");
+            Out.WriteLine("().GetEnumerator()");
             Out.WriteLine("try");
             Out.EnterScope();
             Out.Write("while ");
