@@ -531,6 +531,21 @@ repeatStatementTerminating:
   // Body always throws and condition is never checked
   'repeat' terminatingBlock until ignoredTrail;
 
+/*
+// Same issue as with returning `while true do`.
+repeatStatementReturning:
+  // Body may returns, trail is ignored
+  'repeat' returningBlock until ignoredTrail;
+*/
+
+repeatStatementReturningTrail:
+  // Body is returning or conditional, but the trail is closing
+  'repeat' (returningBlock | conditionalBlock) until closingTrail;
+
+repeatStatementConditional:
+  // Body is returning or conditional, trail is open, interruptible, or conditional
+  'repeat' (returningBlock | conditionalBlock) until (openTrail | interruptibleTrail | conditionalTrail);
+
 for:
   // Step is a primitive expression - can be evaluated out of order
   forRangePrimitiveStep |
@@ -575,21 +590,6 @@ forStatementReturningTrail:
 forStatementConditional:
   // Body is returning or conditional, trail is open, interruptible, or conditional
   for (returningBlock | conditionalBlock) 'end' (openTrail | interruptibleTrail | conditionalTrail);
-
-/*
-// Same issue as with returning `while true do`.
-repeatStatementReturning:
-  // Body may returns, trail is ignored
-  'repeat' returningBlock until ignoredTrail;
-*/
-
-repeatStatementReturningTrail:
-  // Body is returning or conditional, but the trail is closing
-  'repeat' (returningBlock | conditionalBlock) until closingTrail;
-
-repeatStatementConditional:
-  // Body is returning or conditional, trail is open, interruptible, or conditional
-  'repeat' (returningBlock | conditionalBlock) until (openTrail | interruptibleTrail | conditionalTrail);
 
 topLevelStatement:
   importStatement |
