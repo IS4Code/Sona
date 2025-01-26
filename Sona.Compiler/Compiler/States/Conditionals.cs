@@ -1837,8 +1837,8 @@ namespace IS4.Sona.Compiler.States
         private void EnterForRangeStep()
         {
             var start = Out.CreateTemporaryIdentifier();
-            var step = Out.CreateTemporaryIdentifier();
             var end = Out.CreateTemporaryIdentifier();
+            var step = Out.CreateTemporaryIdentifier();
             // ((fun start end step -> (.. ..)start step end)
             Out.Write("((fun ");
             Out.WriteIdentifier(start);
