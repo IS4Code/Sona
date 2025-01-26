@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Antlr4.Runtime;
 using IS4.Sona.Compiler;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -12,6 +15,10 @@ namespace IS4.Sona.Tests
         protected virtual bool GenerateLineNumbers => false;
 
         static readonly char[] newlineChars = Environment.NewLine.ToCharArray();
+
+        private protected const string not = "global.Microsoft.FSharp.Core.Operators.``not``";
+        private protected const string cat = ".``..``";
+        private protected const string each = ".``each()``";
 
         private string? CompileToSource(string source, bool exception)
         {
@@ -32,8 +39,31 @@ namespace IS4.Sona.Tests
             }
         }
 
+        static readonly Regex placeholderRegex = new(@"<\$([^<>$]+)\$>", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+        [return: NotNullIfNotNull(nameof(str))]
+        private string? ReplacePlaceholders(string? str)
+        {
+            if(str is null)
+            {
+                return null;
+            }
+            var dict = new Dictionary<string, string>();
+            int count = 0;
+            return placeholderRegex.Replace(str, m => {
+                var name = m.Groups[1].Value;
+                if(dict.TryGetValue(name, out var id))
+                {
+                    return id;
+                }
+                dict[name] = id = $"``_ {++count}``";
+                return id;
+            });
+        }
+
         protected void AssertStatementEquivalence(string source, string? expected)
         {
+            expected = ReplacePlaceholders(expected);
             if(expected != null)
             {
                 expected = expected + Environment.NewLine + "()";
@@ -44,6 +74,7 @@ namespace IS4.Sona.Tests
 
         protected void AssertBlockEquivalence(string source, string? expected)
         {
+            expected = ReplacePlaceholders(expected);
             var actual = CompileToSource(source, expected == null);
             Assert.AreEqual(expected, actual);
 
@@ -64,6 +95,7 @@ end
 
         protected void AssertExpressionEquivalence(string source, string? expected)
         {
+            expected = ReplacePlaceholders(expected);
             source = "return " + source + ";";
             if(expected != null)
             {

@@ -50,8 +50,6 @@ namespace IS4.Sona.Tests
             AssertExpressionEquivalence(source, expected);
         }
 
-        const string not = "global.Microsoft.FSharp.Core.Operators.``not``";
-
         [DataRow("a and b", "a && b")]
         [DataRow("a and b and c", "a && b && c")]
         [DataRow("a or b", "a || b")]
@@ -95,7 +93,6 @@ namespace IS4.Sona.Tests
             AssertExpressionEquivalence(source, expected);
         }
 
-        const string cat = ".``..``";
         const string and = ".``&``";
         const string or = ".``|``";
         const string xor = ".``^``";
