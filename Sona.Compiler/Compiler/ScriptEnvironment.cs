@@ -2,7 +2,7 @@
 
 namespace IS4.Sona.Compiler
 {
-    internal record class ScriptEnvironment(Parser Parser, ISourceWriter Output)
+    internal record class ScriptEnvironment(Parser Parser, ISourceWriter Output, LexerContext ChannelContext)
     {
         public string Begin => "begin";
         public string End => "end";

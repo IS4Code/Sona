@@ -98,6 +98,13 @@ namespace IS4.Sona.Compiler
             }
         }
 
+        public override void VisitTerminal(ITerminalNode node)
+        {
+            base.VisitTerminal(node);
+
+            Environment.ChannelContext.OnParserToken(node.Symbol);
+        }
+
         protected string Error(string message)
         {
             throw new Exception(message);

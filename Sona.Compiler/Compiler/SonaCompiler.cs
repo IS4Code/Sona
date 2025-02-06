@@ -21,7 +21,7 @@ namespace IS4.Sona.Compiler
     {
         public bool AdjustLines { get; set; } = true;
 
-        public void CompileToSource(AntlrInputStream inputStream, TextWriter output, bool throwOnError = false)
+        public void CompileToSource(ICharStream inputStream, TextWriter output, bool throwOnError = false)
         {
             var errorListener = throwOnError ? new ErrorListener() : null;
 
@@ -34,14 +34,16 @@ namespace IS4.Sona.Compiler
             lexer.Mode(emptyMode);
             lexer.PushMode(defaultMode);
 
-            var tokenStream = new CommonTokenStream(lexer);
+            var channelContext = new LexerContext(lexer);
+
+            var tokenStream = new UnbufferedListenerTokenStream(lexer, channelContext.OnLexerToken);
             var parser = new SonaParser(tokenStream);
             errorListener?.AddTo(parser);
 
             using var writer = new SourceWriter(output);
             writer.AdjustLines = AdjustLines;
 
-            var context = new ScriptEnvironment(parser, writer);
+            var context = new ScriptEnvironment(parser, writer, channelContext);
 
             // Main state to process the chunk
             parser.AddParseListener(new ChunkState(context));
