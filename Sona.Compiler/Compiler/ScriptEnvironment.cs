@@ -7,6 +7,8 @@ namespace IS4.Sona.Compiler
         public string Begin => "begin";
         public string End => "end";
 
+        readonly bool buildParseTreeDefault = Parser.BuildParseTree;
+
         public void EnableParseTree()
         {
             Parser.BuildParseTree = true;
@@ -14,7 +16,7 @@ namespace IS4.Sona.Compiler
 
         public void DisableParseTree()
         {
-            Parser.BuildParseTree = false;
+            Parser.BuildParseTree = buildParseTreeDefault;
         }
     }
 }

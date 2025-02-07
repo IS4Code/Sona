@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -20,6 +21,14 @@ namespace IS4.Sona.Compiler
     public class SonaCompiler
     {
         public bool AdjustLines { get; set; } = true;
+
+        static readonly bool debugging =
+#if DEBUG
+            Debugger.IsAttached
+#else
+            false
+#endif
+            ;
 
         public void CompileToSource(ICharStream inputStream, TextWriter output, bool throwOnError = false)
         {
@@ -43,13 +52,16 @@ namespace IS4.Sona.Compiler
             using var writer = new SourceWriter(output);
             writer.AdjustLines = AdjustLines;
 
+            if(!debugging)
+            {
+                // Parse tree shall be kept only in localized cases
+                parser.BuildParseTree = false;
+            }
+
             var context = new ScriptEnvironment(parser, writer, channelContext);
 
             // Main state to process the chunk
             parser.AddParseListener(new ChunkState(context));
-
-            // Parse tree shall be kept only in localized cases
-            parser.BuildParseTree = false;
 
             parser.chunk();
 
@@ -76,11 +88,19 @@ namespace IS4.Sona.Compiler
             public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
             {
                 HasErrors = true;
+                if(debugging)
+                {
+                    Debugger.Break();
+                }
             }
 
             public void SyntaxError(TextWriter output, IRecognizer recognizer, int offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
             {
                 HasErrors = true;
+                if(debugging)
+                {
+                    Debugger.Break();
+                }
             }
         }
 
