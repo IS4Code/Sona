@@ -27,7 +27,7 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterAssignmentOrValue(AssignmentOrValueContext context)
         {
-            EnterState<AssignmentOrCallState>().EnterAssignmentOrValue(context);
+            EnterState<AssignmentOrValueState>().EnterAssignmentOrValue(context);
         }
 
         public override void EnterFuncExpr(FuncExprContext context)
@@ -243,11 +243,11 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal sealed class AssignmentOrCallState : NodeState
+    internal class AssignmentOrValueState : NodeState
     {
-        public override void ExitAssignmentOrCall(AssignmentOrCallContext context)
+        public override void EnterAssignmentOrValue(AssignmentOrValueContext context)
         {
-            ExitState().ExitAssignmentOrCall(context);
+
         }
 
         public override void ExitAssignmentOrValue(AssignmentOrValueContext context)
@@ -261,6 +261,16 @@ namespace IS4.Sona.Compiler.States
         }
 
         public override void ExitNestedExpr(NestedExprContext context)
+        {
+            Out.Write(')');
+        }
+
+        public override void EnterSimpleExpr(SimpleExprContext context)
+        {
+            Out.Write('(');
+        }
+
+        public override void ExitSimpleExpr(SimpleExprContext context)
         {
             Out.Write(')');
         }
@@ -301,19 +311,60 @@ namespace IS4.Sona.Compiler.States
             EnterState<ExpressionListState>().EnterExprList(context);
         }
 
+        public override void ExitExprList(ExprListContext context)
+        {
+
+        }
+
+        public override void EnterSimpleCallArgument(SimpleCallArgumentContext context)
+        {
+            Out.Write('(');
+            EnterState<SimpleArgumentState>().EnterSimpleCallArgument(context);
+        }
+
+        public override void ExitSimpleCallArgument(SimpleCallArgumentContext context)
+        {
+            Out.Write(')');
+        }
+
         public override void EnterAssignment(AssignmentContext context)
         {
             EnterState<AssignmentState>().EnterAssignment(context);
         }
 
-        public override void EnterAssignmentOrCallSuffix(AssignmentOrCallSuffixContext context)
+        public override void ExitAssignment(AssignmentContext context)
         {
-            EnterState<SuffixState>().EnterAssignmentOrCallSuffix(context);
+
         }
 
-        public override void EnterAssignmentOrValueSuffix(AssignmentOrValueSuffixContext context)
+        public override void EnterIndexAccess(IndexAccessContext context)
         {
-            EnterState<SuffixState>().EnterAssignmentOrValueSuffix(context);
+            Out.Write('[');
+        }
+
+        public override void ExitIndexAccess(IndexAccessContext context)
+        {
+            Out.Write(']');
+        }
+
+        public override void EnterMemberAccess(MemberAccessContext context)
+        {
+            Out.Write('.');
+        }
+
+        public override void EnterDynamicMemberAccess(DynamicMemberAccessContext context)
+        {
+            Out.Write('?');
+        }
+
+        public override void EnterCallArgTuple(CallArgTupleContext context)
+        {
+            Out.Write('(');
+        }
+
+        public override void ExitCallArgTuple(CallArgTupleContext context)
+        {
+            Out.Write(')');
         }
 
         sealed class AssignmentState : NodeState
@@ -334,109 +385,36 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
-        sealed class SuffixState : NodeState
+        sealed class SimpleArgumentState : AssignmentOrValueState
         {
-            public override void ExitAssignmentOrCallSuffix(AssignmentOrCallSuffixContext context)
+            public override void EnterExpression(ExpressionContext context)
             {
-                ExitState().ExitAssignmentOrCallSuffix(context);
+                EnterState<ExpressionState>().EnterExpression(context);
             }
 
-            public override void ExitAssignmentOrValueSuffix(AssignmentOrValueSuffixContext context)
-            {
-                ExitState().ExitAssignmentOrValueSuffix(context);
-            }
-
-            public override void EnterExprList(ExprListContext context)
-            {
-                EnterState<ExpressionListState>().EnterExprList(context);
-            }
-
-            public override void ExitExprList(ExprListContext context)
+            public override void ExitExpression(ExpressionContext context)
             {
 
             }
 
-            public override void EnterString(StringContext context)
+            public override void EnterSimpleCallArgument(SimpleCallArgumentContext context)
             {
-                Out.Write('(');
-                Environment.EnableParseTree();
+
             }
 
-            public override void ExitString(StringContext context)
+            public override void ExitSimpleCallArgument(SimpleCallArgumentContext context)
             {
-                try
-                {
-                    Out.Write(context.GetText());
-                    Out.Write(')');
-                }
-                finally
-                {
-                    Environment.DisableParseTree();
-                }
-            }
-
-            public override void EnterInterpolatedString(InterpolatedStringContext context)
-            {
-                Out.Write('(');
-                base.EnterInterpolatedString(context);
-            }
-
-            public override void ExitInterpolatedString(InterpolatedStringContext context)
-            {
-                base.ExitInterpolatedString(context);
-                Out.Write(')');
-            }
-
-            public override void EnterRecordConstructor(RecordConstructorContext context)
-            {
-                Out.Write('(');
-                EnterState<RecordState>().EnterRecordConstructor(context);
-            }
-
-            public override void ExitRecordConstructor(RecordConstructorContext context)
-            {
-                Out.Write(')');
+                ExitState().ExitSimpleCallArgument(context);
             }
 
             public override void EnterSequenceConstructor(SequenceConstructorContext context)
             {
-                Out.Write('(');
                 EnterState<SequenceState>().EnterSequenceConstructor(context);
             }
 
             public override void ExitSequenceConstructor(SequenceConstructorContext context)
             {
-                Out.Write(')');
-            }
 
-            public override void EnterIndexAccess(IndexAccessContext context)
-            {
-                Out.Write('[');
-            }
-
-            public override void ExitIndexAccess(IndexAccessContext context)
-            {
-                Out.Write(']');
-            }
-
-            public override void EnterMemberAccess(MemberAccessContext context)
-            {
-                Out.Write('.');
-            }
-
-            public override void EnterDynamicMemberAccess(DynamicMemberAccessContext context)
-            {
-                Out.Write('?');
-            }
-
-            public override void EnterCallArgTuple(CallArgTupleContext context)
-            {
-                Out.Write('(');
-            }
-
-            public override void ExitCallArgTuple(CallArgTupleContext context)
-            {
-                Out.Write(')');
             }
         }
     }

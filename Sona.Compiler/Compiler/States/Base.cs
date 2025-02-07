@@ -49,12 +49,46 @@ namespace IS4.Sona.Compiler
 
         }
 
-        public override void EnterPrimitiveExpr(PrimitiveExprContext context)
+        public override void EnterNamedValue(NamedValueContext context)
         {
             Environment.EnableParseTree();
         }
 
-        public override void ExitPrimitiveExpr(PrimitiveExprContext context)
+        public override void ExitNamedValue(NamedValueContext context)
+        {
+            try
+            {
+                Out.Write(context.GetText());
+            }
+            finally
+            {
+                Environment.DisableParseTree();
+            }
+        }
+
+        public override void EnterNumber(NumberContext context)
+        {
+            Environment.EnableParseTree();
+        }
+
+        public override void ExitNumber(NumberContext context)
+        {
+            try
+            {
+                Out.Write(context.GetText());
+            }
+            finally
+            {
+                Environment.DisableParseTree();
+            }
+        }
+
+        public override void EnterString(StringContext context)
+        {
+            Environment.EnableParseTree();
+        }
+
+        public override void ExitString(StringContext context)
         {
             try
             {

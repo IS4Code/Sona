@@ -133,7 +133,7 @@ attrNamedArg:
 statement:
   variableDecl |
   multiFuncDecl |
-  assignmentOrCall |
+  assignmentOrValue |
   inlineSourceFree |
   ifStatementFree |
   doStatementFree |
@@ -625,17 +625,6 @@ stringArg:
   string |
   '(' stringArg ')';
 
-
-assignmentOrCall:
-  name (assignment | assignmentOrCallSuffix) |
-  (nestedExpr | arrayConstructor | recordConstructor | sequenceConstructor) assignmentOrCallSuffix;
-
-assignment:
-  '=' exprList;
-
-assignmentOrCallSuffix:
-  varSuffix* (callArguments+ | varSuffix assignment);
-
 /* Declarations */
 
 variableDecl:
@@ -829,6 +818,12 @@ atomicExpr:
   notExpr |
   unaryOperator atomicExpr;
 
+hashExpr:
+  '#' atomicExpr;
+
+notExpr:
+  '!' atomicExpr;
+
 simpleExpr:
   primitiveExpr |
   interpolatedString |
@@ -838,26 +833,34 @@ nestedExpr:
   '(' exprList ')';
 
 primitiveExpr:
-  'null' | 'false' | 'true' | number | string;
+  namedValue | number | string;
+
+namedValue:
+  'null' | 'false' | 'true';
 
 funcExpr:
   'function' name? funcBody;
 
 assignmentOrValue:
-  name (assignment | assignmentOrValueSuffix) |
-  (nestedExpr | arrayConstructor | recordConstructor | sequenceConstructor) assignmentOrValueSuffix;
+  (
+    name simpleCallArgument? |
+    nestedExpr |
+    arrayConstructor |
+    recordConstructor |
+    sequenceConstructor
+  ) assignmentOrValue_Suffix? |
+  simpleExpr assignmentOrValue_Suffix;
 
-assignmentOrValueSuffix:
-  varSuffix* (callArguments+ | varSuffix assignment)?;
+assignmentOrValue_Suffix:
+  (
+    callArguments |
+    indexAccess |
+    (memberAccess | dynamicMemberAccess) simpleCallArgument?
+  )+
+  assignment? | assignment;
 
-hashExpr:
-  '#' atomicExpr;
-
-notExpr:
-  '!' atomicExpr;
-
-varSuffix:
-  callArguments* (indexAccess | memberAccess | dynamicMemberAccess);
+assignment:
+  '=' exprList;
 
 indexAccess:
   '[' exprList ']';
@@ -869,7 +872,9 @@ dynamicMemberAccess:
   ':' dependentName;
 
 callArguments:
-  '(' callArgList ')' |
+  '(' callArgList ')';
+
+simpleCallArgument:
   recordConstructor |
   sequenceConstructor |
   string |

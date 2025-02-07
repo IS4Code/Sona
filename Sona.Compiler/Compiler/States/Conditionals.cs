@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using static IS4.Sona.Grammar.SonaParser;
 
 namespace IS4.Sona.Compiler.States

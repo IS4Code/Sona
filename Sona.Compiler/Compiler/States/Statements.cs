@@ -68,9 +68,9 @@ namespace IS4.Sona.Compiler.States
             EnterState<NewVariableState>().EnterVariableDecl(context);
         }
 
-        public sealed override void EnterAssignmentOrCall(AssignmentOrCallContext context)
+        public sealed override void EnterAssignmentOrValue(AssignmentOrValueContext context)
         {
-            EnterState<AssignmentOrCallState>().EnterAssignmentOrCall(context);
+            EnterState<AssignmentOrValueState>().EnterAssignmentOrValue(context);
         }
 
         public sealed override void EnterIfStatementFree(IfStatementFreeContext context)
