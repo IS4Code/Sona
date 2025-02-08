@@ -1,7 +1,8 @@
 lexer grammar SonaLexer;
 
 channels {
-  Documentation
+  Documentation,
+  Pragma
 }
 
 fragment LOWERCASE:
@@ -88,12 +89,16 @@ BEGIN_TARGETED_GLOBAL_ATTRIBUTE:
 BEGIN_INLINE_SOURCE:
   '#inline' LINE_WHITESPACE -> mode(InlineDirective);
 
+BEGIN_PRAGMA:
+  '#pragma' LINE_WHITESPACE -> channel(Pragma), mode(PragmaDirective);
+
 LITERAL_NAME:
   '@' NAME;
 
 fragment TRUE_EXPR:
   'true' | '(' IGNORE TRUE_EXPR IGNORE ')';
 
+AS: 'as';
 RETURN: 'return';
 BREAK: 'break';
 CONTINUE: 'continue';
@@ -186,6 +191,7 @@ Directive_WHITESPACE: (WHITESPACE | NEWLINE_ESCAPE) -> type(WHITESPACE);
 
 Directive_LITERAL_NAME: LITERAL_NAME -> type(LITERAL_NAME);
 
+Directive_AS: AS -> type(AS);
 Directive_RETURN: RETURN -> type(RETURN);
 Directive_BREAK: BREAK -> type(BREAK);
 Directive_CONTINUE: CONTINUE -> type(CONTINUE);
@@ -254,6 +260,28 @@ Directive_COLON: COLON -> type(COLON);
 Directive_DOT: DOT -> type(DOT);
 
 Directive_NAME: NAME -> type(NAME);
+
+mode PragmaDirective;
+
+END_PRAGMA:
+  ('#' | EOL | EOF) -> channel(Pragma), mode(DEFAULT_MODE);
+
+PragmaDirective_INT: INT -> type(INT), channel(Pragma);
+PragmaDirective_FLOAT: FLOAT -> type(FLOAT), channel(Pragma);
+PragmaDirective_EXP: EXP -> type(EXP), channel(Pragma);
+PragmaDirective_HEX: HEX -> type(HEX), channel(Pragma);
+PragmaDirective_NORMAL_STRING: NORMAL_STRING -> type(NORMAL_STRING), channel(Pragma);
+PragmaDirective_VERBATIM_STRING: VERBATIM_STRING -> type(VERBATIM_STRING), channel(Pragma);
+PragmaDirective_CHAR_STRING: CHAR_STRING -> type(CHAR_STRING), channel(Pragma);
+
+PragmaDirective_COMMENT: COMMENT -> skip;
+PragmaDirective_DOC_COMMENT: DOC_COMMENT -> channel(Documentation);
+PragmaDirective_LINE_COMMENT: LINE_COMMENT -> skip;
+PragmaDirective_WHITESPACE: (WHITESPACE | NEWLINE_ESCAPE) -> skip;
+
+PragmaDirective_LITERAL_NAME: LITERAL_NAME -> type(LITERAL_NAME), channel(Pragma);
+
+PragmaDirective_NAME: NAME -> type(NAME), channel(Pragma);
 
 mode InterpolatedString;
 
@@ -391,6 +419,8 @@ Interpolation_LINE_COMMENT: LINE_COMMENT -> skip;
 Interpolation_WHITESPACE: WHITESPACE -> skip;
 
 Interpolation_LITERAL_NAME: LITERAL_NAME -> type(LITERAL_NAME);
+
+Interpolation_AS: AS -> type(AS);
 Interpolation_RETURN: RETURN -> type(RETURN);
 Interpolation_BREAK: BREAK -> type(BREAK);
 Interpolation_CONTINUE: CONTINUE -> type(CONTINUE);

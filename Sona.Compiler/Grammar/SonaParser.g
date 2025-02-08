@@ -658,7 +658,7 @@ declList:
   declaration (',' declaration)*;
 
 declaration:
-  localAttrList name (':' type)?;
+  localAttrList name ('as' type)?;
 
 /* Expressions */
 
