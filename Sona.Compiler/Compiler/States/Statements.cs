@@ -68,9 +68,9 @@ namespace IS4.Sona.Compiler.States
             EnterState<NewVariableState>().EnterVariableDecl(context);
         }
 
-        public sealed override void EnterAssignmentOrValue(AssignmentOrValueContext context)
+        public sealed override void EnterMemberOrAssignment(MemberOrAssignmentContext context)
         {
-            EnterState<AssignmentOrValueState>().EnterAssignmentOrValue(context);
+            EnterState<MemberOrAssignmentState>().EnterMemberOrAssignment(context);
         }
 
         public sealed override void EnterIfStatementFree(IfStatementFreeContext context)
@@ -681,6 +681,39 @@ namespace IS4.Sona.Compiler.States
             }
 
             ExitState().ExitContinueStatement(context);
+        }
+    }
+
+    internal sealed class MemberOrAssignmentState : MemberExprState
+    {
+        public override void EnterMemberOrAssignment(MemberOrAssignmentContext context)
+        {
+
+        }
+
+        public override void ExitMemberOrAssignment(MemberOrAssignmentContext context)
+        {
+            ExitState().ExitMemberOrAssignment(context);
+        }
+
+        public override void EnterMemberExpr(MemberExprContext context)
+        {
+            EnterState<MemberExprState>().EnterMemberExpr(context);
+        }
+
+        public override void ExitMemberExpr(MemberExprContext context)
+        {
+
+        }
+
+        public override void EnterAssignment(AssignmentContext context)
+        {
+            Out.WriteOperator("<-");
+        }
+
+        public override void ExitAssignment(AssignmentContext context)
+        {
+
         }
     }
 

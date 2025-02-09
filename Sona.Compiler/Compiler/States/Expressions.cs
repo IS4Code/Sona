@@ -25,9 +25,9 @@ namespace IS4.Sona.Compiler.States
             ExitState().ExitExpression(context);
         }
 
-        public override void EnterAssignmentOrValue(AssignmentOrValueContext context)
+        public override void EnterMemberExpr(MemberExprContext context)
         {
-            EnterState<AssignmentOrValueState>().EnterAssignmentOrValue(context);
+            EnterState<MemberExprState>().EnterMemberExpr(context);
         }
 
         public override void EnterFuncExpr(FuncExprContext context)
@@ -243,16 +243,16 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal class AssignmentOrValueState : NodeState
+    internal class MemberExprState : NodeState
     {
-        public override void EnterAssignmentOrValue(AssignmentOrValueContext context)
+        public override void EnterMemberExpr(MemberExprContext context)
         {
 
         }
 
-        public override void ExitAssignmentOrValue(AssignmentOrValueContext context)
+        public override void ExitMemberExpr(MemberExprContext context)
         {
-            ExitState().ExitAssignmentOrValue(context);
+            ExitState().ExitMemberExpr(context);
         }
 
         public override void EnterNestedExpr(NestedExprContext context)
@@ -316,6 +316,16 @@ namespace IS4.Sona.Compiler.States
 
         }
 
+        public override void EnterExpression(ExpressionContext context)
+        {
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public override void ExitExpression(ExpressionContext context)
+        {
+
+        }
+
         public override void EnterSimpleCallArgument(SimpleCallArgumentContext context)
         {
             Out.Write('(');
@@ -327,12 +337,12 @@ namespace IS4.Sona.Compiler.States
             Out.Write(')');
         }
 
-        public override void EnterAssignment(AssignmentContext context)
+        public override void EnterNestedAssignment(NestedAssignmentContext context)
         {
-            EnterState<AssignmentState>().EnterAssignment(context);
+            EnterState<AssignmentState>().EnterNestedAssignment(context);
         }
 
-        public override void ExitAssignment(AssignmentContext context)
+        public override void ExitNestedAssignment(NestedAssignmentContext context)
         {
 
         }
@@ -367,36 +377,44 @@ namespace IS4.Sona.Compiler.States
             Out.Write(')');
         }
 
-        sealed class AssignmentState : NodeState
+        sealed class AssignmentState : MemberExprState
         {
+            public override void EnterNestedAssignment(NestedAssignmentContext context)
+            {
+                Out.Write('(');
+            }
+
+            public override void ExitNestedAssignment(NestedAssignmentContext context)
+            {
+                Out.Write(')');
+                ExitState().ExitNestedAssignment(context);
+            }
+
+            public override void EnterMemberExpr(MemberExprContext context)
+            {
+                EnterState<MemberExprState>().EnterMemberExpr(context);
+            }
+
+            public override void ExitMemberExpr(MemberExprContext context)
+            {
+
+            }
+
             public override void EnterAssignment(AssignmentContext context)
             {
-                Out.WriteOperator("<-");
+                Out.Write(')');
+                Out.WriteSpecialMember("<-");
+                Out.Write('(');
             }
 
             public override void ExitAssignment(AssignmentContext context)
             {
-                ExitState().ExitAssignment(context);
-            }
 
-            public override void EnterExprList(ExprListContext context)
-            {
-                EnterState<ExpressionListState>().EnterExprList(context);
             }
         }
 
-        sealed class SimpleArgumentState : AssignmentOrValueState
+        sealed class SimpleArgumentState : MemberExprState
         {
-            public override void EnterExpression(ExpressionContext context)
-            {
-                EnterState<ExpressionState>().EnterExpression(context);
-            }
-
-            public override void ExitExpression(ExpressionContext context)
-            {
-
-            }
-
             public override void EnterSimpleCallArgument(SimpleCallArgumentContext context)
             {
 

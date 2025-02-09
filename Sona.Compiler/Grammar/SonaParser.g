@@ -133,7 +133,7 @@ attrNamedArg:
 statement:
   variableDecl |
   multiFuncDecl |
-  assignmentOrValue |
+  memberOrAssignment |
   inlineSourceFree |
   ifStatementFree |
   doStatementFree |
@@ -660,6 +660,9 @@ declList:
 declaration:
   localAttrList name ('as' type)?;
 
+memberOrAssignment:
+  memberExpr assignment?;
+
 /* Expressions */
 
 exprList:
@@ -813,7 +816,7 @@ innerExpr:
 atomicExpr:
   simpleExpr |
   funcExpr |
-  assignmentOrValue |
+  memberExpr |
   hashExpr |
   notExpr |
   unaryOperator atomicExpr;
@@ -830,7 +833,10 @@ simpleExpr:
   verbatimInterpolatedString;
 
 nestedExpr:
-  '(' exprList ')';
+  '(' expression ')';
+
+nestedAssignment:
+  '(' memberExpr assignment ')';
 
 primitiveExpr:
   namedValue | number | string;
@@ -841,26 +847,26 @@ namedValue:
 funcExpr:
   'function' name? funcBody;
 
-assignmentOrValue:
+memberExpr:
   (
     name simpleCallArgument? |
     nestedExpr |
+    nestedAssignment |
     arrayConstructor |
     recordConstructor |
     sequenceConstructor
-  ) assignmentOrValue_Suffix? |
-  simpleExpr assignmentOrValue_Suffix;
+  ) memberExpr_Suffix? |
+  simpleExpr memberExpr_Suffix;
 
-assignmentOrValue_Suffix:
+memberExpr_Suffix:
   (
     callArguments |
     indexAccess |
     (memberAccess | dynamicMemberAccess) simpleCallArgument?
-  )+
-  assignment? | assignment;
+  )+;
 
 assignment:
-  '=' exprList;
+  '=' expression;
 
 indexAccess:
   '[' exprList ']';
