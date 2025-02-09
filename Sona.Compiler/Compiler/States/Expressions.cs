@@ -567,85 +567,175 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal sealed class ArrayState : NodeState
+    internal abstract class CollectionState : NodeState
     {
-        bool first;
-        State state;
+        protected bool IsSimple { get; private set; }
+        protected bool IsEmpty { get; private set; }
 
-        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        protected sealed override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            first = true;
-            state = State.Default;
+            IsEmpty = true;
         }
 
+        public sealed override void EnterSimpleCollectionContents(SimpleCollectionContentsContext context)
+        {
+            IsSimple = true;
+        }
+
+        public sealed override void EnterComplexCollectionContents(ComplexCollectionContentsContext context)
+        {
+            IsSimple = false;
+        }
+
+        public sealed override void ExitSimpleCollectionContents(SimpleCollectionContentsContext context)
+        {
+            OnLeave();
+        }
+
+        public sealed override void ExitComplexCollectionContents(ComplexCollectionContentsContext context)
+        {
+            OnLeave();
+        }
+
+        protected virtual void OnOperand(bool simple)
+        {
+            if(IsEmpty)
+            {
+                IsEmpty = false;
+                if(IsSimple)
+                {
+                    Out.Write(' ');
+                }
+                else
+                {
+                    Out.WriteLine();
+                    Out.EnterScope();
+                }
+            }
+            else
+            {
+                if(IsSimple)
+                {
+                    Out.Write(';');
+                }
+                else
+                {
+                    Out.WriteLine();
+                }
+            }
+            if(simple && !IsSimple)
+            {
+                // Yield explicitly (there are complex elements)
+                Out.Write("yield ");
+            }
+        }
+
+        void OnLeave()
+        {
+            if(IsSimple)
+            {
+                Out.Write(' ');
+            }
+            else
+            {
+                Out.ExitScope();
+                Out.WriteLine();
+            }
+        }
+
+        public sealed override void EnterSimpleCollectionElement(SimpleCollectionElementContext context)
+        {
+            OnOperand(true);
+        }
+
+        public sealed override void ExitSimpleCollectionElement(SimpleCollectionElementContext context)
+        {
+
+        }
+
+        public sealed override void EnterComplexCollectionElement(ComplexCollectionElementContext context)
+        {
+            OnOperand(false);
+        }
+
+        public sealed override void ExitComplexCollectionElement(ComplexCollectionElementContext context)
+        {
+
+        }
+
+        public sealed override void EnterExpression(ExpressionContext context)
+        {
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public sealed override void ExitExpression(ExpressionContext context)
+        {
+
+        }
+
+        public sealed override void EnterCollectionFieldExpression(CollectionFieldExpressionContext context)
+        {
+            Out.WriteNamespacedName("System.Collections.Generic", "KeyValuePair");
+            Out.Write("<_,_>(");
+        }
+
+        public sealed override void EnterAssignment(AssignmentContext context)
+        {
+            Out.Write(',');
+        }
+
+        public sealed override void ExitAssignment(AssignmentContext context)
+        {
+            
+        }
+
+        public sealed override void ExitCollectionFieldExpression(CollectionFieldExpressionContext context)
+        {
+            Out.Write(')');
+        }
+
+        public sealed override void EnterSpreadExpression(SpreadExpressionContext context)
+        {
+            Out.Write("yield! ");
+            EnterState<SpreadExpression>().EnterSpreadExpression(context);
+        }
+
+        sealed class SpreadExpression : ExpressionState
+        {
+            public override void EnterSpreadExpression(SpreadExpressionContext context)
+            {
+
+            }
+
+            public override void ExitSpreadExpression(SpreadExpressionContext context)
+            {
+                ExitState().ExitSpreadExpression(context);
+            }
+        }
+    }
+
+    internal sealed class ArrayState : CollectionState
+    {
         public override void EnterArrayConstructor(ArrayConstructorContext context)
         {
-            Out.Write("[| ");
+            Out.Write("[|");
         }
 
         public override void ExitArrayConstructor(ArrayConstructorContext context)
         {
-            Out.Write(" |]");
+            if(IsEmpty)
+            {
+                Out.Write(' ');
+            }
+            Out.Write("|]");
             ExitState().ExitArrayConstructor(context);
-        }
-
-        void OnOperand()
-        {
-            if(first)
-            {
-                first = false;
-            }
-            else
-            {
-                Out.Write(';');
-            }
-        }
-
-        public override void EnterExpression(ExpressionContext context)
-        {
-            switch(state)
-            {
-                case State.Default:
-                    OnOperand();
-                    break;
-            }
-            EnterState<ExpressionState>().EnterExpression(context);
-        }
-
-        public override void ExitExpression(ExpressionContext context)
-        {
-            state = State.Default;
-        }
-
-        public override void EnterSpreadExpression(SpreadExpressionContext context)
-        {
-            OnOperand();
-            Out.Write("yield! ");
-            state = State.Spread;
-        }
-
-        enum State
-        {
-            Default,
-            Spread
         }
     }
 
-    internal sealed class SequenceState : NodeState
+    internal sealed class SequenceState : CollectionState
     {
-        bool first;
-        State state;
-
-        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
-        {
-            base.Initialize(environment, parent);
-
-            first = true;
-            state = State.Default;
-        }
-
         public override void EnterSequenceConstructor(SequenceConstructorContext context)
         {
 
@@ -653,83 +743,27 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitSequenceConstructor(SequenceConstructorContext context)
         {
-            if(first)
+            if(IsEmpty)
             {
                 Out.WriteNamespacedName("Microsoft.FSharp.Collections", "Seq");
                 Out.Write(".empty");
             }
             else
             {
-                Out.Write(" }");
+                Out.Write("}");
             }
             ExitState().ExitSequenceConstructor(context);
         }
 
-        void OnOperand()
+        protected override void OnOperand(bool simple)
         {
-            if(first)
+            if(IsEmpty)
             {
-                first = false;
                 Out.WriteCoreOperator("seq");
-                Out.Write("{ ");
+                Out.Write("{");
             }
-            else
-            {
-                Out.Write(';');
-            }
-        }
 
-        public override void EnterExpression(ExpressionContext context)
-        {
-            switch(state)
-            {
-                case State.Key:
-                    Out.Write(',');
-                    break;
-                case State.Default:
-                    OnOperand();
-                    break;
-            }
-            EnterState<ExpressionState>().EnterExpression(context);
-        }
-
-        public override void ExitExpression(ExpressionContext context)
-        {
-            switch(state)
-            {
-                case State.Key:
-                    Out.Write(')');
-                    break;
-            }
-            state = State.Default;
-        }
-
-        public override void EnterExprList(ExprListContext context)
-        {
-            OnOperand();
-            Out.WriteNamespacedName("System.Collections.Generic", "KeyValuePair");
-            Out.Write("<_,_>((");
-            EnterState<ExpressionListState>().EnterExprList(context);
-        }
-
-        public override void ExitExprList(ExprListContext context)
-        {
-            Out.Write(')');
-            state = State.Key;
-        }
-
-        public override void EnterSpreadExpression(SpreadExpressionContext context)
-        {
-            OnOperand();
-            Out.Write("yield! ");
-            state = State.Spread;
-        }
-
-        enum State
-        {
-            Default,
-            Key,
-            Spread
+            base.OnOperand(simple);
         }
     }
 }

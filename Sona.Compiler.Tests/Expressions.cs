@@ -214,19 +214,6 @@ namespace IS4.Sona.Tests
             AssertExpressionEquivalence(source, expected);
         }
 
-        [DataRow("[]", "[|  |]")]
-        [DataRow("[a]", "[| a |]")]
-        [DataRow("[a, b]", "[| a;b |]")]
-        [DataRow("[a, b,]", null)]
-        [DataRow("[a][0]", "[| a |][0]")]
-        [DataRow("[a].b", "[| a |].b")]
-        [DataRow("[a](b)", "[| a |](b)")]
-        [TestMethod]
-        public void Array(string source, string? expected)
-        {
-            AssertExpressionEquivalence(source, expected);
-        }
-
         [DataRow("{a=1}", "{ a = 1 }")]
         [DataRow("{a=1, b=2}", "{ a = 1;b = 2 }")]
         [DataRow("{a=1,}", null)]
@@ -239,17 +226,54 @@ namespace IS4.Sona.Tests
             AssertExpressionEquivalence(source, expected);
         }
 
+        [DataRow("[]", "[| |]")]
+        [DataRow("[,a]", null)]
+        [DataRow("[a]", "[| a |]")]
+        [DataRow("[a, b]", "[| a;b |]")]
+        [DataRow("[a, b,]", null)]
+        [DataRow("[a][0]", "[| a |][0]")]
+        [DataRow("[a].b", "[| a |].b")]
+        [DataRow("[a](b)", "[| a |](b)")]
+        [DataRow("[[a]=b]", $"[| {KeyValuePair}(a,b) |]")]
+        [DataRow("[[a]=b,[c]=d]", $"[| {KeyValuePair}(a,b);{KeyValuePair}(c,d) |]")]
+        [DataRow("[[a,b]=c]", null)]
+        [DataRow("[[a]=b,c]", $"[| {KeyValuePair}(a,b);c |]")]
+        [DataRow("[..a]", @"[|
+ yield! a
+|]")]
+        [DataRow("[a, ..b]", @"[|
+ yield a
+ yield! b
+|]")]
+        [DataRow("[a, ..b,]", null)]
+        [DataRow("[a, ..b..c]", null)]
+        [TestMethod]
+        public void Array(string source, string? expected)
+        {
+            AssertExpressionEquivalence(source, expected);
+        }
+
         [DataRow("{}", $"({Seq}.empty)")]
+        [DataRow("{,a}", null)]
         [DataRow("{a}", $"({seq}{{ a }})")]
         [DataRow("{a, b}", $"({seq}{{ a;b }})")]
         [DataRow("{a, b,}", null)]
         [DataRow("{a}[0]", $"({seq}{{ a }})[0]")]
         [DataRow("{a}.b", $"({seq}{{ a }}).b")]
         [DataRow("{a}(b)", $"({seq}{{ a }})(b)")]
-        [DataRow("{[a]=b}", $"({seq}{{ {KeyValuePair}((a),b) }})")]
-        [DataRow("{[a]=b,[c]=d}", $"({seq}{{ {KeyValuePair}((a),b);{KeyValuePair}((c),d) }})")]
-        [DataRow("{[a,b]=c}", $"({seq}{{ {KeyValuePair}((a,b),c) }})")]
-        [DataRow("{[a]=b,c}", $"({seq}{{ {KeyValuePair}((a),b);c }})")]
+        [DataRow("{[a]=b}", $"({seq}{{ {KeyValuePair}(a,b) }})")]
+        [DataRow("{[a]=b,[c]=d}", $"({seq}{{ {KeyValuePair}(a,b);{KeyValuePair}(c,d) }})")]
+        [DataRow("{[a,b]=c}", null)]
+        [DataRow("{[a]=b,c}", $"({seq}{{ {KeyValuePair}(a,b);c }})")]
+        [DataRow("{..a}", $@"({seq}{{
+ yield! a
+}})")]
+        [DataRow("{a, ..b}", $@"({seq}{{
+ yield a
+ yield! b
+}})")]
+        [DataRow("{a, ..b,}", null)]
+        [DataRow("{a, ..b..c}", null)]
         [TestMethod]
         public void Sequences(string source, string? expected)
         {

@@ -900,22 +900,36 @@ recordField:
   name '=' expression;
 
 arrayConstructor:
-  '[' (arrayElement (',' arrayElement)*)? ']';
-
-arrayElement:
-  spreadExpression |
-  expression;
+  '[' (simpleCollectionContents | complexCollectionContents)? ']';
 
 sequenceConstructor:
-  '{' (sequenceElement (',' sequenceElement)*)? '}';
+  '{' (simpleCollectionContents | complexCollectionContents)? '}';
 
-sequenceElement:
-  '[' exprList ']' '=' expression |
-  spreadExpression |
+simpleCollectionContents:
+  // Each element is one value
+  simpleCollectionElement (',' simpleCollectionElement)*;
+
+complexCollectionContents:
+  // There is a complex element
+  (
+    // At the beginning
+    complexCollectionElement |
+    // In the middle
+    simpleCollectionElement (',' simpleCollectionElement)* ',' complexCollectionElement
+  ) (',' (simpleCollectionElement | complexCollectionElement))*;
+
+simpleCollectionElement:
+  collectionFieldExpression |
   expression;
 
+collectionFieldExpression:
+  '[' expression ']' assignment;
+
+complexCollectionElement:
+  spreadExpression;
+
 spreadExpression:
-  '..' expression;
+  '..' concatExpr_Inner;
 
 /* Interpolated strings */
 
