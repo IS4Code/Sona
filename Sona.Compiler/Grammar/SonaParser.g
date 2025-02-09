@@ -869,7 +869,7 @@ assignment:
   '=' expression;
 
 indexAccess:
-  '[' exprList ']';
+  '[' (exprList | errorMissingExpression) ']';
   
 memberAccess:
   '.' dependentName;
@@ -1013,3 +1013,7 @@ number:
 
 string:
   NORMAL_STRING | VERBATIM_STRING | CHAR_STRING;
+
+/* Error states */
+
+errorMissingExpression:;
