@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IS4.Sona.Tests
 {
@@ -148,6 +147,7 @@ namespace IS4.Sona.Tests
             AssertExpressionEquivalence(source, expected);
         }
 
+        [DataRow("a", "a")]
         [DataRow("a.b", "a.b")]
         [DataRow("a[b]", "a[b]")]
         [DataRow("a[b,]", null)]
@@ -155,14 +155,36 @@ namespace IS4.Sona.Tests
         [DataRow("a[b, c]", "a[b,c]")]
         [DataRow("a[b].c", "a[b].c")]
         [DataRow("()[a]", null)]
+        [DataRow("a()", "a()")]
         [DataRow("(a).b", "(a).b")]
         [DataRow("a:b", "a?b")]
         [DataRow("f(a).b", "f(a).b")]
         [DataRow("f(a)[b, c]", "f(a)[b,c]")]
         [DataRow("a.f(b).c", "a.f(b).c")]
         [DataRow("!(a).f(b)[c, d].e", $"{not}((a).f(b)[c,d].e)")]
+        [DataRow(@"""""[0]", @"("""")[0]")]
+        [DataRow(@""""".ToString()", @"("""").ToString()")]
+        [DataRow("(a)()", "(a)()")]
+        [DataRow("(a, b)()", null)]
         [TestMethod]
         public void MemberAccess(string source, string? expected)
+        {
+            AssertExpressionEquivalence(source, expected);
+        }
+
+        [DataRow("a = 1", null)]
+        [DataRow("a.b = 1", null)]
+        [DataRow("(a = 1)", $"(a){set}(1)")]
+        [DataRow("(a.b = 1)", $"(a.b){set}(1)")]
+        [DataRow("(a[b] = 1)", $"(a[b]){set}(1)")]
+        [DataRow("(a() = 1)", $"(a()){set}(1)")]
+        [DataRow("(a[] = 1)", null)]
+        [DataRow("(a = 1, 2)", null)]
+        [DataRow("(1 = 1)", null)]
+        [DataRow("(a, b = 1)", null)]
+        [DataRow("(+a = 1)", null)]
+        [TestMethod]
+        public void Assignment(string source, string? expected)
         {
             AssertExpressionEquivalence(source, expected);
         }
@@ -179,9 +201,13 @@ namespace IS4.Sona.Tests
         [DataRow("f(;a)", "f()(a)")]
         [DataRow("f(;a;)", "f()(a)()")]
         [DataRow(@"f""x""", @"f(""x"")")]
+        [DataRow(@"f""x"" ""y""", null)]
         [DataRow("f{a=1}", "f({ a = 1 })")]
         [DataRow("f{a}", $"f({seq}{{ a }})")]
         [DataRow("f{}", $"f({Seq}.empty)")]
+        [DataRow("f{}{}", null)]
+        [DataRow("0()", "(0)()")]
+        [DataRow(@"""""()", @"("""")()")]
         [TestMethod]
         public void FunctionCall(string source, string? expected)
         {

@@ -10,6 +10,7 @@ namespace IS4.Sona.Tests
         [DataRow("let v", null)]
         [DataRow("let val=0", "let ``val`` = 0")]
         [DataRow("let @var=0", "let var = 0")]
+        [DataRow("let @function=0", "let ``function`` = 0")]
         [TestMethod]
         public void Variables(string source, string? expected)
         {
@@ -77,7 +78,7 @@ let v = 0")]
         [DataRow($"#:X 1 (x)#{funcSource}", $"let rec [<X(1,(x))>]{funcExpected}")]
         [DataRow($"#:X 1 x=2#{funcSource}", $"let rec [<X(1,x = 2)>]{funcExpected}")]
         [DataRow($"#:X 1 x = 2#{funcSource}", $"let rec [<X(1,x = 2)>]{funcExpected}")]
-        [DataRow($"#:X 1 (x = 2)#{funcSource}", $"let rec [<X(1,(x <- 2))>]{funcExpected}")]
+        [DataRow($"#:X 1 (x = 2)#{funcSource}", $"let rec [<X(1,(x){set}(2))>]{funcExpected}")]
         [DataRow($@"#:X (1
 ) 2#{funcSource}", $"let rec [<X((1),2)>]{funcExpected}")]
         [DataRow($@"#:X (1

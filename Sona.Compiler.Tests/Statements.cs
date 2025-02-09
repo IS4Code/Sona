@@ -48,6 +48,21 @@ open B")]
             AssertStatementEquivalence(source, expected);
         }
 
+        [DataRow("a = b", "a <- b")]
+        [DataRow("a() = b", "a() <- b")]
+        [DataRow("a[] = b", null)]
+        [DataRow(@""""" = b", null)]
+        [DataRow("1 = b", null)]
+        [DataRow("1() = b", "(1)() <- b")]
+        [DataRow("1.a = c", "(1).a <- c")]
+        [DataRow("a.b = c", "a.b <- c")]
+        [DataRow("a = b, c", null)]
+        [TestMethod]
+        public void Assignment(string source, string? expected)
+        {
+            AssertStatementEquivalence(source, expected);
+        }
+
         const string ignore = "global.Microsoft.FSharp.Core.Operators.ignore";
         const string @throw = "``throw()``()";
         const string @default = "global.Microsoft.FSharp.Core.Operators.Unchecked.defaultof<_>";

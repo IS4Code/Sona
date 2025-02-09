@@ -19,6 +19,7 @@ namespace IS4.Sona.Tests
         private protected const string not = "global.Microsoft.FSharp.Core.Operators.``not``";
         private protected const string cat = ".``..``";
         private protected const string each = ".``each()``";
+        private protected const string set = ".``<-``";
 
         private string? CompileToSource(string source, bool exception)
         {
