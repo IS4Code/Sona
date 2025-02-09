@@ -572,10 +572,20 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal abstract class CollectionState : NodeState
+    internal abstract class CollectionState : NodeState, IComputationContext
     {
         protected bool IsSimple { get; private set; }
         protected bool IsEmpty { get; private set; }
+
+        public string? BuilderVariable => null;
+
+        public bool IsCollection => true;
+
+        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
+
+        string? IInterruptibleStatementContext.InterruptingVariable => null;
+
+        bool IStatementContext.TrailAllowed => false;
 
         protected sealed override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -717,6 +727,39 @@ namespace IS4.Sona.Compiler.States
             public override void ExitSpreadExpression(SpreadExpressionContext context)
             {
                 ExitState().ExitSpreadExpression(context);
+            }
+        }
+
+        public sealed override void EnterExpressionStatement(ExpressionStatementContext context)
+        {
+            EnterState<ExpressionStatement>().EnterExpressionStatement(context);
+        }
+
+        public sealed override void ExitExpressionStatement(ExpressionStatementContext context)
+        {
+
+        }
+
+        void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
+        {
+            Error("`break` must be used in a statement that supports it.");
+        }
+
+        void IInterruptibleStatementContext.WriteContinue(bool hasExpression)
+        {
+            Error("`continue` must be used in a statement that supports it.");
+        }
+
+        sealed class ExpressionStatement : BlockState
+        {
+            public override void EnterExpressionStatement(ExpressionStatementContext context)
+            {
+
+            }
+
+            public override void ExitExpressionStatement(ExpressionStatementContext context)
+            {
+                ExitState()!.ExitExpressionStatement(context);
             }
         }
     }

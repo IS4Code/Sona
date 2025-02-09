@@ -3,154 +3,178 @@ using static IS4.Sona.Grammar.SonaParser;
 
 namespace IS4.Sona.Compiler.States
 {
-    internal sealed class TrailingStatements : BlockState
+    internal abstract class ControlStatement : NodeState, IStatementContext
     {
-        bool first;
-        IFunctionContext? scope;
-
-        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        sealed class TrailingStatements : BlockState
         {
-            base.Initialize(environment, parent);
+            bool first;
+            IFunctionContext? scope;
+            bool? statementsAllowed;
 
-            first = true;
-            scope = null;
-        }
+            bool StatementsAllowed => statementsAllowed ??= (Parent!.FindContext<IStatementContext>()?.TrailAllowed ?? true);
 
-        public override void EnterIgnoredTrail(IgnoredTrailContext context)
-        {
-            scope = FindContext<IFunctionContext>();
-
-            Out.WriteCoreOperator("ignore");
-            Out.Write(" ");
-            scope?.WriteBegin();
-        }
-
-        void OnExitTrail()
-        {
-            if(!first)
+            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
             {
+                base.Initialize(environment, parent);
+
+                first = true;
+                scope = null;
+                statementsAllowed = null;
+            }
+
+            public override void EnterIgnoredTrail(IgnoredTrailContext context)
+            {
+                scope = FindContext<IFunctionContext>();
+
+                Out.WriteCoreOperator("ignore");
+                Out.Write(" ");
+                scope?.WriteBegin();
+            }
+
+            void OnExitTrail()
+            {
+                if(!first)
+                {
+                    Out.WriteLine();
+                }
+            }
+
+            public override void ExitIgnoredTrail(IgnoredTrailContext context)
+            {
+                OnExitTrail();
+                scope?.WriteEnd();
                 Out.WriteLine();
+                ExitState()?.ExitIgnoredTrail(context);
             }
-        }
 
-        public override void ExitIgnoredTrail(IgnoredTrailContext context)
-        {
-            OnExitTrail();
-            scope?.WriteEnd();
-            Out.WriteLine();
-            ExitState()?.ExitIgnoredTrail(context);
-        }
-
-        #region Trail types
-        public sealed override void EnterOpenTrail(OpenTrailContext context)
-        {
-
-        }
-
-        public sealed override void ExitOpenTrail(OpenTrailContext context)
-        {
-            OnExitTrail();
-            ExitState()?.ExitOpenTrail(context);
-        }
-
-        public sealed override void EnterReturningTrail(ReturningTrailContext context)
-        {
-
-        }
-
-        public sealed override void ExitReturningTrail(ReturningTrailContext context)
-        {
-            OnExitTrail();
-            ExitState()?.ExitReturningTrail(context);
-        }
-
-        public sealed override void EnterTerminatingTrail(TerminatingTrailContext context)
-        {
-
-        }
-
-        public sealed override void ExitTerminatingTrail(TerminatingTrailContext context)
-        {
-            OnExitTrail();
-            ExitState()?.ExitTerminatingTrail(context);
-        }
-
-        public sealed override void EnterInterruptingTrail(InterruptingTrailContext context)
-        {
-
-        }
-
-        public sealed override void ExitInterruptingTrail(InterruptingTrailContext context)
-        {
-            OnExitTrail();
-            ExitState()?.ExitInterruptingTrail(context);
-        }
-
-        public sealed override void EnterClosingTrail(ClosingTrailContext context)
-        {
-
-        }
-
-        public sealed override void ExitClosingTrail(ClosingTrailContext context)
-        {
-            OnExitTrail();
-            ExitState()?.ExitClosingTrail(context);
-        }
-
-        public sealed override void EnterConditionalTrail(ConditionalTrailContext context)
-        {
-
-        }
-
-        public sealed override void ExitConditionalTrail(ConditionalTrailContext context)
-        {
-            OnExitTrail();
-            ExitState()?.ExitConditionalTrail(context);
-        }
-
-        public sealed override void EnterInterruptibleTrail(InterruptibleTrailContext context)
-        {
-
-        }
-
-        public sealed override void ExitInterruptibleTrail(InterruptibleTrailContext context)
-        {
-            OnExitTrail();
-            ExitState()?.ExitInterruptibleTrail(context);
-        }
-
-        public sealed override void EnterFullTrail(FullTrailContext context)
-        {
-
-        }
-
-        public sealed override void ExitFullTrail(FullTrailContext context)
-        {
-            OnExitTrail();
-            ExitState()?.ExitFullTrail(context);
-        }
-        #endregion
-
-        protected override void OnEnterStatement(StatementFlags flags)
-        {
-            if(first)
+            #region Trail types
+            public sealed override void EnterOpenTrail(OpenTrailContext context)
             {
-                first = false;
-            }
-            else
-            {
-                Out.WriteLine();
-            }
-        }
 
-        protected override void OnExitStatement(StatementFlags flags)
-        {
+            }
+
+            public sealed override void ExitOpenTrail(OpenTrailContext context)
+            {
+                OnExitTrail();
+                ExitState()?.ExitOpenTrail(context);
+            }
+
+            public sealed override void EnterReturningTrail(ReturningTrailContext context)
+            {
+
+            }
+
+            public sealed override void ExitReturningTrail(ReturningTrailContext context)
+            {
+                OnExitTrail();
+                ExitState()?.ExitReturningTrail(context);
+            }
+
+            public sealed override void EnterTerminatingTrail(TerminatingTrailContext context)
+            {
+
+            }
+
+            public sealed override void ExitTerminatingTrail(TerminatingTrailContext context)
+            {
+                OnExitTrail();
+                ExitState()?.ExitTerminatingTrail(context);
+            }
+
+            public sealed override void EnterInterruptingTrail(InterruptingTrailContext context)
+            {
+
+            }
+
+            public sealed override void ExitInterruptingTrail(InterruptingTrailContext context)
+            {
+                OnExitTrail();
+                ExitState()?.ExitInterruptingTrail(context);
+            }
+
+            public sealed override void EnterClosingTrail(ClosingTrailContext context)
+            {
+
+            }
+
+            public sealed override void ExitClosingTrail(ClosingTrailContext context)
+            {
+                OnExitTrail();
+                ExitState()?.ExitClosingTrail(context);
+            }
+
+            public sealed override void EnterConditionalTrail(ConditionalTrailContext context)
+            {
+
+            }
+
+            public sealed override void ExitConditionalTrail(ConditionalTrailContext context)
+            {
+                OnExitTrail();
+                ExitState()?.ExitConditionalTrail(context);
+            }
+
+            public sealed override void EnterInterruptibleTrail(InterruptibleTrailContext context)
+            {
+
+            }
+
+            public sealed override void ExitInterruptibleTrail(InterruptibleTrailContext context)
+            {
+                OnExitTrail();
+                ExitState()?.ExitInterruptibleTrail(context);
+            }
+
+            public sealed override void EnterFullTrail(FullTrailContext context)
+            {
+
+            }
+
+            public sealed override void ExitFullTrail(FullTrailContext context)
+            {
+                OnExitTrail();
+                ExitState()?.ExitFullTrail(context);
+            }
+            #endregion
+
+            protected override void OnEnterStatement(StatementFlags flags)
+            {
+                if(!StatementsAllowed)
+                {
+                    Error("A statement is not allowed in this context.");
+                }
+                if(first)
+                {
+                    first = false;
+                }
+                else
+                {
+                    Out.WriteLine();
+                }
+            }
+
+            protected override void OnExitStatement(StatementFlags flags)
+            {
             
-        }
-    }
+            }
 
-    internal abstract class ControlStatement : NodeState
-    {
+            public override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
+            {
+                if(StatementsAllowed)
+                {
+                    base.EnterImplicitReturnStatement(context);
+                }
+            }
+
+            public override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
+            {
+                if(StatementsAllowed)
+                {
+                    base.ExitImplicitReturnStatement(context);
+                }
+            }
+        }
+
 #nullable disable
         protected string ReturnVariable { get; private set; }
         protected string ReturningVariable { get; private set; }
@@ -164,6 +188,8 @@ namespace IS4.Sona.Compiler.States
         // Nested returns will be stored here
         protected string? ScopeReturnVariable => ReturnVariable ?? OriginalReturnVariable;
         protected string? ScopeReturningVariable => ReturningVariable ?? OriginalReturningVariable;
+
+        bool IStatementContext.TrailAllowed => true;
 
         StatementFlags enterFlags;
         bool exited;
@@ -391,6 +417,21 @@ namespace IS4.Sona.Compiler.States
             Out.WriteLine(".defaultof<_>");
             Out.ExitScope();
             Out.Write("end");
+        }
+
+        public sealed override void EnterIgnoredEmptyTrail(IgnoredEmptyTrailContext context)
+        {
+            OnExitInner(enterFlags);
+            Out.WriteLine();
+            Out.Write("else ");
+            Out.WriteCoreOperator("Unchecked");
+            Out.Write(".defaultof<_>");
+            // Possible to elide even further if empty trail is predicted
+        }
+
+        public sealed override void ExitIgnoredEmptyTrail(IgnoredEmptyTrailContext context)
+        {
+
         }
 
         protected virtual void OnEnterTrail(StatementFlags flags)

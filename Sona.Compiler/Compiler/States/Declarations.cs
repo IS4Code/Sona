@@ -46,6 +46,14 @@ namespace IS4.Sona.Compiler.States
 
         bool IExpressionContext.IsLiteral => false;
 
+        bool IFunctionContext.IsOptionalReturn => false;
+
+        string? IComputationContext.BuilderVariable => null;
+
+        bool IComputationContext.IsCollection => false;
+
+        bool IStatementContext.TrailAllowed => true;
+
         public override void ExitFuncDecl(FuncDeclContext context)
         {
             ExitState().ExitFuncDecl(context);

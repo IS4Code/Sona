@@ -85,7 +85,7 @@ namespace IS4.Sona.Compiler
             StateLevel = 0;
         }
 
-        protected T? FindContext<T>() where T : class
+        protected internal T? FindContext<T>() where T : class
         {
             switch(Parent)
             {

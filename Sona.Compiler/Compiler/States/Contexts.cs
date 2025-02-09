@@ -4,7 +4,7 @@ namespace IS4.Sona.Compiler.States
 {
     internal interface IStatementContext
     {
-
+        bool TrailAllowed { get; }
     }
 
     internal interface IReturnableStatementContext : IStatementContext
@@ -13,10 +13,17 @@ namespace IS4.Sona.Compiler.States
         string? ReturningVariable { get; }
     }
 
-    internal interface IFunctionContext : IReturnableStatementContext, IInterruptibleStatementContext, IStatementContext, IExpressionContext
+    internal interface IFunctionContext : IReturnableStatementContext, IInterruptibleStatementContext, IStatementContext, IComputationContext, IExpressionContext
     {
+        bool IsOptionalReturn { get; }
         void WriteBegin();
         void WriteEnd();
+    }
+
+    internal interface IComputationContext : IInterruptibleStatementContext, IStatementContext
+    {
+        bool IsCollection { get; }
+        string? BuilderVariable { get; }
     }
 
     internal interface IExpressionContext

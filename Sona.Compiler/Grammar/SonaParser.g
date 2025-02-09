@@ -80,6 +80,10 @@ ignoredBlock:
 ignoredTrail:
   (';'? statement)*? (';'? (closingStatement | interruptibleStatement | conditionalStatement) | implicitReturnStatement);
 
+// Same but empty
+ignoredEmptyBlock:;
+ignoredEmptyTrail:;
+
 name:
   NAME | LITERAL_NAME;
 
@@ -209,17 +213,45 @@ terminatingStatement:
   whileStatementTerminating |
   repeatStatementTerminating;
 
+// A statement that can be used in special expressions
+// This includes all statements that contain blocks,
+// but do no have any requirements on their trails.
+expressionStatement:
+  doStatementTerminating |
+  doStatementFree |
+  doStatementInterrupting |
+  doStatementInterruptible |
+  doStatementReturning |
+  doStatementConditional |
+  ifStatementTerminating |
+  ifStatementFree |
+  ifStatementInterrupting |
+  ifStatementInterruptible |
+  ifStatementReturning |
+  ifStatementConditional |
+  whileStatementTerminating |
+  whileStatementFree |
+  whileStatementFreeInterrupted |
+  whileStatementConditional |
+  repeatStatementTerminating |
+  repeatStatementFree |
+  repeatStatementFreeInterrupted |
+  repeatStatementConditional |
+  forStatementFree |
+  forStatementFreeInterrupted |
+  forStatementConditional;
+
 // `do`
 
 doStatementFree:
   'do' freeBlock 'end';
 
 doStatementTerminating:
-  'do' terminatingBlock 'end' ignoredTrail;
+  'do' terminatingBlock 'end' (ignoredEmptyTrail | ignoredTrail);
 
 doStatementInterrupting:
   // Body interrupts, trail is ignored
-  'do' interruptingBlock 'end' ignoredTrail;
+  'do' interruptingBlock 'end' (ignoredEmptyTrail | ignoredTrail);
 
 doStatementInterruptingTrail:
   // Body is interruptible but trail terminates or interrupts
@@ -231,7 +263,7 @@ doStatementInterruptible:
 
 doStatementReturning:
   // Body returns, trail is ignored
-  'do' returningBlock 'end' ignoredTrail |
+  'do' returningBlock 'end' (ignoredEmptyTrail | ignoredTrail) |
   // Body is interruptible but trail returns
   'do' interruptibleBlock 'end' returningTrail |
   // Body is conditional but trail closes
@@ -926,7 +958,8 @@ collectionFieldExpression:
   '[' expression ']' assignment;
 
 complexCollectionElement:
-  spreadExpression;
+  spreadExpression |
+  expressionStatement;
 
 spreadExpression:
   '..' concatExpr_Inner;

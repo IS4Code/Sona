@@ -15,8 +15,10 @@ namespace IS4.Sona.Compiler.States
         InterruptPath = 8
     }
 
-    internal class BlockState : ScriptState
+    internal class BlockState : ScriptState, IStatementContext
     {
+        bool IStatementContext.TrailAllowed => true;
+
         public sealed override void EnterMultiFuncDecl(MultiFuncDeclContext context)
         {
             EnterState<MultiFunctionState>().EnterMultiFuncDecl(context);
@@ -32,13 +34,13 @@ namespace IS4.Sona.Compiler.States
             Out.WriteLine();
         }
 
-        public sealed override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
+        public override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
         {
             OnEnterStatement(StatementFlags.None);
             Out.Write("()");
         }
 
-        public sealed override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
+        public override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
         {
             OnExitStatement(StatementFlags.None);
         }
@@ -407,6 +409,12 @@ namespace IS4.Sona.Compiler.States
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
 
+        bool IFunctionContext.IsOptionalReturn => false;
+
+        bool IComputationContext.IsCollection => false;
+
+        string? IComputationContext.BuilderVariable => null;
+
         public ChunkState(ScriptEnvironment environment)
         {
             Initialize(environment, null);
@@ -479,6 +487,14 @@ namespace IS4.Sona.Compiler.States
             }
             Out.Write('(');
             base.EnterExprList(context);
+        }
+
+        public override void EnterReturnStatement(ReturnStatementContext context)
+        {
+            if(FindContext<IComputationContext>() is { IsCollection: true, BuilderVariable: null })
+            {
+                Error("`return` is not allowed in a collection without a builder.");
+            }
         }
 
         public override void ExitReturnStatement(ReturnStatementContext context)

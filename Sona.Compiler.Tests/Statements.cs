@@ -312,8 +312,13 @@ end
         [DataRow("do return a end", $@"if true then begin
  (a)
 end
+else {@default}")]
+        [DataRow("do return a end f(b)", $@"if true then begin
+ (a)
+end
 else begin
  {ignore} begin
+  f(b)
   ()
  end
  {@default}
@@ -321,8 +326,13 @@ end")]
         [DataRow("do throw a end", $@"if true then begin
  (a).{@throw}
 end
+else {@default}")]
+        [DataRow("do throw a end f(b)", $@"if true then begin
+ (a).{@throw}
+end
 else begin
  {ignore} begin
+  f(b)
   ()
  end
  {@default}
