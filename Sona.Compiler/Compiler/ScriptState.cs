@@ -85,7 +85,7 @@ namespace IS4.Sona.Compiler
             StateLevel = 0;
         }
 
-        protected T? FindScope<T>() where T : class
+        protected T? FindContext<T>() where T : class
         {
             switch(Parent)
             {
@@ -94,7 +94,7 @@ namespace IS4.Sona.Compiler
                 case T result:
                     return result;
                 default:
-                    return Parent.FindScope<T>();
+                    return Parent.FindContext<T>();
             }
         }
 

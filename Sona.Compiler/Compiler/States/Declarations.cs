@@ -34,15 +34,17 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal sealed class FunctionDeclState : NodeState, IReturnScope, IInterruptibleScope, IFunctionScope
+    internal sealed class FunctionDeclState : NodeState, IFunctionContext
     {
         // Establish a scope to return from
-        string? IReturnScope.ReturnVariable => null;
-        string? IReturnScope.ReturningVariable => null;
+        string? IReturnableStatementContext.ReturnVariable => null;
+        string? IReturnableStatementContext.ReturningVariable => null;
 
-        InterruptFlags IInterruptibleScope.Flags => InterruptFlags.None;
+        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
 
-        string? IInterruptibleScope.InterruptingVariable => null;
+        string? IInterruptibleStatementContext.InterruptingVariable => null;
+
+        bool IExpressionContext.IsLiteral => false;
 
         public override void ExitFuncDecl(FuncDeclContext context)
         {
@@ -68,24 +70,24 @@ namespace IS4.Sona.Compiler.States
             Out.Write("end");
         }
 
-        void IFunctionScope.WriteBegin()
+        void IFunctionContext.WriteBegin()
         {
             Out.WriteLine("begin");
             Out.EnterScope();
         }
 
-        void IFunctionScope.WriteEnd()
+        void IFunctionContext.WriteEnd()
         {
             Out.ExitScope();
             Out.Write("end");
         }
 
-        void IInterruptibleScope.WriteBreak(bool hasExpression)
+        void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
         {
             Error("`break` must be used in a statement that supports it.");
         }
 
-        void IInterruptibleScope.WriteContinue(bool hasExpression)
+        void IInterruptibleStatementContext.WriteContinue(bool hasExpression)
         {
             Error("`continue` must be used in a statement that supports it.");
         }
@@ -133,20 +135,19 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal sealed class NewVariableState : NodeState, IExecutionScope
+    internal sealed class NewVariableState : NodeState, IExpressionContext
     {
         bool first;
-        bool isliteral;
+        bool? isliteral;
 
-        bool IExecutionScope.IsLiteral => isliteral || (FindScope<IExecutionScope>()?.IsLiteral ?? false);
-        bool IExecutionScope.IsInline => false;
-
+        bool IExpressionContext.IsLiteral => isliteral ??= (FindContext<IExpressionContext>()?.IsLiteral ?? false);
+        
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             first = false;
-            isliteral = false;
+            isliteral = null;
         }
 
         public override void EnterVariableDecl(VariableDeclContext context)

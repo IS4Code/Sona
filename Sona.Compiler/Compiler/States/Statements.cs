@@ -106,7 +106,7 @@ namespace IS4.Sona.Compiler.States
         public sealed override void EnterIfStatementReturningTrailFromElse(IfStatementReturningTrailFromElseContext context)
         {
             IfStatement state;
-            if(FindScope<IInterruptibleScope>()?.Flags is null or 0)
+            if(FindContext<IInterruptibleStatementContext>()?.Flags is null or 0)
             {
                 state = EnterState<IfStatementTrailFromElse>();
             }
@@ -396,17 +396,16 @@ namespace IS4.Sona.Compiler.States
         #endregion
     }
 
-    internal sealed class ChunkState : BlockState, IReturnScope, IFunctionScope, IExecutionScope, IInterruptibleScope
+    internal sealed class ChunkState : BlockState, IFunctionContext
     {
         // Main block return is currently ignored
-        string? IReturnScope.ReturnVariable => null;
-        string? IReturnScope.ReturningVariable => null;
-        bool IExecutionScope.IsLiteral => false;
-        bool IExecutionScope.IsInline => false;
+        string? IReturnableStatementContext.ReturnVariable => null;
+        string? IReturnableStatementContext.ReturningVariable => null;
+        bool IExpressionContext.IsLiteral => false;
 
-        InterruptFlags IInterruptibleScope.Flags => InterruptFlags.None;
+        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
 
-        string? IInterruptibleScope.InterruptingVariable => null;
+        string? IInterruptibleStatementContext.InterruptingVariable => null;
 
         public ChunkState(ScriptEnvironment environment)
         {
@@ -418,24 +417,24 @@ namespace IS4.Sona.Compiler.States
 
         }
 
-        void IFunctionScope.WriteBegin()
+        void IFunctionContext.WriteBegin()
         {
             Out.WriteLine("begin");
             Out.EnterScope();
         }
 
-        void IFunctionScope.WriteEnd()
+        void IFunctionContext.WriteEnd()
         {
             Out.ExitScope();
             Out.Write("end");
         }
 
-        void IInterruptibleScope.WriteBreak(bool hasExpression)
+        void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
         {
             Error("`break` must be used in a statement that supports it.");
         }
 
-        void IInterruptibleScope.WriteContinue(bool hasExpression)
+        void IInterruptibleStatementContext.WriteContinue(bool hasExpression)
         {
             Error("`continue` must be used in a statement that supports it.");
         }
@@ -461,13 +460,13 @@ namespace IS4.Sona.Compiler.States
 
     internal sealed class ReturnState : ArgumentStatementState
     {
-        IReturnScope? returnScope;
+        IReturnableStatementContext? returnScope;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            returnScope = FindScope<IReturnScope>();
+            returnScope = FindContext<IReturnableStatementContext>();
         }
 
         public override void EnterExprList(ExprListContext context)
@@ -509,7 +508,7 @@ namespace IS4.Sona.Compiler.States
                 Out.Write("true");
             }
 
-            var interruptScope = FindScope<IInterruptibleScope>();
+            var interruptScope = FindContext<IInterruptibleStatementContext>();
             if(interruptScope != null && (interruptScope.Flags & InterruptFlags.CanBreak) == 0)
             {
                 // No need for break
@@ -564,13 +563,13 @@ namespace IS4.Sona.Compiler.States
 
     internal sealed class BreakState : ArgumentStatementState
     {
-        IInterruptibleScope? scope;
+        IInterruptibleStatementContext? scope;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            scope = FindScope<IInterruptibleScope>();
+            scope = FindContext<IInterruptibleStatementContext>();
             if(scope != null && (scope.Flags & InterruptFlags.CanBreak) == 0)
             {
                 scope = null;
@@ -625,13 +624,13 @@ namespace IS4.Sona.Compiler.States
 
     internal sealed class ContinueState : ArgumentStatementState
     {
-        IInterruptibleScope? scope;
+        IInterruptibleStatementContext? scope;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            scope = FindScope<IInterruptibleScope>();
+            scope = FindContext<IInterruptibleStatementContext>();
             if(scope != null && (scope.Flags & InterruptFlags.CanContinue) == 0)
             {
                 scope = null;

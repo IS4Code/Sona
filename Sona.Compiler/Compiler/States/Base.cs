@@ -100,9 +100,11 @@ namespace IS4.Sona.Compiler
             }
         }
 
+        protected virtual IExpressionContext? GetExpressionContext() => FindContext<IExpressionContext>();
+
         public override void EnterInterpolatedString(InterpolatedStringContext context)
         {
-            if(FindScope<IExecutionScope>()?.IsLiteral ?? false)
+            if(GetExpressionContext()?.IsLiteral ?? false)
             {
                 EnterState<LiteralNormalInterpolatedString>().EnterInterpolatedString(context);
             }
@@ -114,7 +116,7 @@ namespace IS4.Sona.Compiler
 
         public override void EnterVerbatimInterpolatedString(VerbatimInterpolatedStringContext context)
         {
-            if(FindScope<IExecutionScope>()?.IsLiteral ?? false)
+            if(GetExpressionContext()?.IsLiteral ?? false)
             {
                 EnterState<LiteralVerbatimInterpolatedString>().EnterVerbatimInterpolatedString(context);
             }

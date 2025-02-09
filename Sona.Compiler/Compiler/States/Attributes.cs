@@ -2,14 +2,13 @@
 
 namespace IS4.Sona.Compiler.States
 {
-    internal sealed class AttributeState : NodeState, IExecutionScope
+    internal sealed class AttributeState : NodeState, IExpressionContext
     {
         bool firstGroup;
         bool firstArgument;
         bool isNamed;
 
-        bool IExecutionScope.IsLiteral => true;
-        bool IExecutionScope.IsInline => false;
+        bool IExpressionContext.IsLiteral => true;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {

@@ -4,15 +4,20 @@ namespace IS4.Sona.Compiler.States
 {
     internal class ExpressionState : NodeState
     {
-        IExecutionScope? scope;
+        IExpressionContext? scope;
 
-        protected bool IsLiteral => (scope ??= FindScope<IExecutionScope>())?.IsLiteral ?? false;
+        protected bool IsLiteral => GetExpressionContext()?.IsLiteral ?? false;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             scope = null;
+        }
+
+        protected sealed override IExpressionContext? GetExpressionContext()
+        {
+            return scope ??= FindContext<IExpressionContext>();
         }
 
         public override void EnterExpression(ExpressionContext context)

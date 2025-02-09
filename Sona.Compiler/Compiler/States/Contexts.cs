@@ -2,25 +2,29 @@
 
 namespace IS4.Sona.Compiler.States
 {
-    internal interface IReturnScope
+    internal interface IStatementContext
+    {
+
+    }
+
+    internal interface IReturnableStatementContext : IStatementContext
     {
         string? ReturnVariable { get; }
         string? ReturningVariable { get; }
     }
 
-    internal interface IFunctionScope
+    internal interface IFunctionContext : IReturnableStatementContext, IInterruptibleStatementContext, IStatementContext, IExpressionContext
     {
         void WriteBegin();
         void WriteEnd();
     }
 
-    internal interface IExecutionScope
+    internal interface IExpressionContext
     {
         bool IsLiteral { get; }
-        bool IsInline { get; }
     }
 
-    internal interface IBindingScope
+    internal interface IBindingContext
     {
         void Add(string name);
         bool Contains(string name);
@@ -34,7 +38,7 @@ namespace IS4.Sona.Compiler.States
         CanContinue = 2
     }
 
-    internal interface IInterruptibleScope
+    internal interface IInterruptibleStatementContext : IStatementContext
     {
         InterruptFlags Flags { get; }
 

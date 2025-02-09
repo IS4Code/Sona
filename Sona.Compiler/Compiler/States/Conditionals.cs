@@ -6,7 +6,7 @@ namespace IS4.Sona.Compiler.States
     internal sealed class TrailingStatements : BlockState
     {
         bool first;
-        IFunctionScope? scope;
+        IFunctionContext? scope;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -18,7 +18,7 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterIgnoredTrail(IgnoredTrailContext context)
         {
-            scope = FindScope<IFunctionScope>();
+            scope = FindContext<IFunctionContext>();
 
             Out.WriteCoreOperator("ignore");
             Out.Write(" ");
@@ -155,8 +155,8 @@ namespace IS4.Sona.Compiler.States
         protected string ReturnVariable { get; private set; }
         protected string ReturningVariable { get; private set; }
 #nullable restore
-        IReturnScope? returnScope;
-        IInterruptibleScope? interruptScope;
+        IReturnableStatementContext? returnScope;
+        IInterruptibleStatementContext? interruptScope;
 
         protected string? OriginalReturnVariable => returnScope?.ReturnVariable;
         protected string? OriginalReturningVariable => returnScope?.ReturningVariable;
@@ -175,8 +175,8 @@ namespace IS4.Sona.Compiler.States
             enterFlags = StatementFlags.None;
             exited = false;
 
-            returnScope = FindScope<IReturnScope>();
-            interruptScope = FindScope<IInterruptibleScope>();
+            returnScope = FindContext<IReturnableStatementContext>();
+            interruptScope = FindContext<IInterruptibleStatementContext>();
             if(interruptScope?.Flags == 0)
             {
                 interruptScope = null;
@@ -498,7 +498,7 @@ namespace IS4.Sona.Compiler.States
         
         private void OnEnterInner(StatementFlags flags)
         {
-            if(this is IReturnScope)
+            if(this is IReturnableStatementContext)
             {
                 flags |= StatementFlags.OpenPath;
             }
@@ -508,7 +508,7 @@ namespace IS4.Sona.Compiler.States
 
         private void OnExitInner(StatementFlags flags)
         {
-            if(this is IReturnScope)
+            if(this is IReturnableStatementContext)
             {
                 flags |= StatementFlags.OpenPath;
             }
@@ -982,10 +982,10 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal sealed class IfStatementControl : IfStatement, IReturnScope
+    internal sealed class IfStatementControl : IfStatement, IReturnableStatementContext
     {
-        string? IReturnScope.ReturnVariable => ScopeReturnVariable;
-        string? IReturnScope.ReturningVariable => ScopeReturningVariable;
+        string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
+        string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
     }
 
     internal abstract class DoStatement : ControlStatement
@@ -1007,15 +1007,15 @@ namespace IS4.Sona.Compiler.States
 
     }
 
-    internal sealed class DoStatementControl : DoStatement, IReturnScope
+    internal sealed class DoStatementControl : DoStatement, IReturnableStatementContext
     {
-        string? IReturnScope.ReturnVariable => ScopeReturnVariable;
-        string? IReturnScope.ReturningVariable => ScopeReturningVariable;
+        string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
+        string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
     }
 
-    internal abstract class WhileStatement : ControlStatement, IInterruptibleScope
+    internal abstract class WhileStatement : ControlStatement, IInterruptibleStatementContext
     {
-        InterruptFlags IInterruptibleScope.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
+        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
 
         public string? InterruptingVariable { get; private set; }
 
@@ -1201,15 +1201,15 @@ namespace IS4.Sona.Compiler.States
 
     }
 
-    internal sealed class WhileStatementControl : WhileStatementTrailInterrupted, IReturnScope
+    internal sealed class WhileStatementControl : WhileStatementTrailInterrupted, IReturnableStatementContext
     {
-        string? IReturnScope.ReturnVariable => ScopeReturnVariable;
-        string? IReturnScope.ReturningVariable => ScopeReturningVariable;
+        string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
+        string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
     }
 
-    internal abstract class RepeatStatement : ControlStatement, IInterruptibleScope
+    internal abstract class RepeatStatement : ControlStatement, IInterruptibleStatementContext
     {
-        InterruptFlags IInterruptibleScope.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
+        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
 
         public string? InterruptingVariable { get; private set; }
 
@@ -1382,15 +1382,15 @@ namespace IS4.Sona.Compiler.States
 
     }
 
-    internal sealed class RepeatStatementControl : RepeatStatementTrailInterrupted, IReturnScope
+    internal sealed class RepeatStatementControl : RepeatStatementTrailInterrupted, IReturnableStatementContext
     {
-        string? IReturnScope.ReturnVariable => ScopeReturnVariable;
-        string? IReturnScope.ReturningVariable => ScopeReturningVariable;
+        string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
+        string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
     }
 
-    internal abstract class ForStatement : ControlStatement, IInterruptibleScope
+    internal abstract class ForStatement : ControlStatement, IInterruptibleStatementContext
     {
-        InterruptFlags IInterruptibleScope.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
+        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
 
         public string? InterruptingVariable { get; private set; }
 
@@ -2000,9 +2000,9 @@ namespace IS4.Sona.Compiler.States
 
     }
 
-    internal sealed class ForStatementControl : ForStatementTrailInterrupted, IReturnScope
+    internal sealed class ForStatementControl : ForStatementTrailInterrupted, IReturnableStatementContext
     {
-        string? IReturnScope.ReturnVariable => ScopeReturnVariable;
-        string? IReturnScope.ReturningVariable => ScopeReturningVariable;
+        string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
+        string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
     }
 }
