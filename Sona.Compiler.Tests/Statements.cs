@@ -210,7 +210,7 @@ end")]
  (b)
 end
 else begin
- do begin
+ if true then begin
   ()
  end
  (c)
@@ -219,7 +219,7 @@ end")]
  (b)
 end
 else begin
- do begin
+ if true then begin
   f(c)
   ()
  end
@@ -232,7 +232,7 @@ elif(c)then begin
  (d)
 end
 else begin
- do begin
+ if true then begin
   ()
  end
  (e)

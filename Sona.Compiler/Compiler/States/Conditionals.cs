@@ -998,7 +998,7 @@ namespace IS4.Sona.Compiler.States
             {
                 Out.WriteLine(_begin_);
                 Out.EnterScope();
-                Out.Write("do ");
+                Out.Write("if true then ");
             }
             base.OnEnterBlock(flags);
         }
