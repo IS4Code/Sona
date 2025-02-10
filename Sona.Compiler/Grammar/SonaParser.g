@@ -87,17 +87,14 @@ ignoredEmptyTrail:;
 name:
   NAME | LITERAL_NAME;
 
-dependentName:
-  NAME | LITERAL_NAME | anyKeyword;
+memberName:
+  MEMBER_NAME;
 
-anyKeyword:
-  'function' | 'return' | 'break' | 'and' | 'or' | 'not' | 'const' |
-  'let' | 'var' | 'end' | 'throw' | 'import' | 'include' | 'require' |
-  'if' | 'then' | 'else' | 'elseif' | 'do' | 'while' | 'for' | 'in' |
-  'continue';
+dynamicMemberName:
+  DYNAMIC_MEMBER_NAME;
 
 compoundName:
-  name ('.' dependentName)*;
+  name ('.' name | memberName)*;
 
 type:
   NAME;
@@ -904,10 +901,10 @@ indexAccess:
   '[' (exprList | errorMissingExpression) ']';
   
 memberAccess:
-  '.' dependentName;
+  '.' name | memberName;
 
 dynamicMemberAccess:
-  ':' dependentName;
+  ':' name | dynamicMemberName;
 
 callArguments:
   '(' callArgList ')';

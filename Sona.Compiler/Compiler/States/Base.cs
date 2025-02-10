@@ -22,16 +22,33 @@ namespace IS4.Sona.Compiler
             }
         }
 
-        public override void EnterDependentName(DependentNameContext context)
+        public override void EnterMemberName(MemberNameContext context)
         {
             Environment.EnableParseTree();
         }
 
-        public override void ExitDependentName(DependentNameContext context)
+        public override void ExitMemberName(MemberNameContext context)
         {
             try
             {
-                Out.WriteIdentifier(context.GetText().TrimStart('@'));
+                Out.WriteIdentifier(context.GetText().Substring(1));
+            }
+            finally
+            {
+                Environment.DisableParseTree();
+            }
+        }
+
+        public override void EnterDynamicMemberName(DynamicMemberNameContext context)
+        {
+            Environment.EnableParseTree();
+        }
+
+        public override void ExitDynamicMemberName(DynamicMemberNameContext context)
+        {
+            try
+            {
+                Out.WriteIdentifier(context.GetText().Substring(1));
             }
             finally
             {
@@ -269,10 +286,10 @@ namespace IS4.Sona.Compiler
                 base.EnterName(context);
             }
 
-            public override void EnterDependentName(DependentNameContext context)
+            public override void EnterMemberName(MemberNameContext context)
             {
                 OnName();
-                base.EnterDependentName(context);
+                base.EnterMemberName(context);
             }
         }
     }

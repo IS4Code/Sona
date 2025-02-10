@@ -95,6 +95,12 @@ BEGIN_PRAGMA:
 LITERAL_NAME:
   '@' NAME;
 
+MEMBER_NAME:
+  '.' NAME;
+
+DYNAMIC_MEMBER_NAME:
+  ':' NAME;
+
 fragment TRUE_EXPR:
   'true' | '(' IGNORE TRUE_EXPR IGNORE ')';
 
@@ -190,6 +196,8 @@ Directive_LINE_COMMENT: LINE_COMMENT -> skip;
 Directive_WHITESPACE: (WHITESPACE | NEWLINE_ESCAPE) -> type(WHITESPACE);
 
 Directive_LITERAL_NAME: LITERAL_NAME -> type(LITERAL_NAME);
+Directive_MEMBER_NAME: MEMBER_NAME -> type(MEMBER_NAME);
+Directive_DYNAMIC_MEMBER_NAME: DYNAMIC_MEMBER_NAME -> type(DYNAMIC_MEMBER_NAME);
 
 Directive_AS: AS -> type(AS);
 Directive_RETURN: RETURN -> type(RETURN);
@@ -419,6 +427,8 @@ Interpolation_LINE_COMMENT: LINE_COMMENT -> skip;
 Interpolation_WHITESPACE: WHITESPACE -> skip;
 
 Interpolation_LITERAL_NAME: LITERAL_NAME -> type(LITERAL_NAME);
+Interpolation_MEMBER_NAME: MEMBER_NAME -> type(MEMBER_NAME);
+Interpolation_DYNAMIC_MEMBER_NAME: DYNAMIC_MEMBER_NAME -> type(DYNAMIC_MEMBER_NAME);
 
 Interpolation_AS: AS -> type(AS);
 Interpolation_RETURN: RETURN -> type(RETURN);
