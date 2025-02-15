@@ -845,6 +845,7 @@ innerExpr:
 atomicExpr:
   simpleExpr |
   funcExpr |
+  inlineExpr |
   memberExpr |
   hashExpr |
   notExpr |
@@ -875,6 +876,9 @@ namedValue:
 
 funcExpr:
   'function' name? funcBody;
+
+inlineExpr:
+  'inline' expressionStatement;
 
 memberExpr:
   (

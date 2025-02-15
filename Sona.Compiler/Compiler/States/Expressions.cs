@@ -40,6 +40,11 @@ namespace IS4.Sona.Compiler.States
             EnterState<FunctionExprState>().EnterFuncExpr(context);
         }
 
+        public override void EnterInlineExpr(InlineExprContext context)
+        {
+            EnterState<InlineStatementState>().EnterInlineExpr(context);
+        }
+
         public override void EnterNegatedExpr(NegatedExprContext context)
         {
             EnterState<NegatedExpression>().EnterNegatedExpr(context);
@@ -572,20 +577,69 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal abstract class CollectionState : NodeState, IComputationContext
+    internal abstract class IsolatedState : NodeState, IFunctionContext
     {
-        protected bool IsSimple { get; private set; }
-        protected bool IsEmpty { get; private set; }
+        IExpressionContext? scope;
 
-        public string? BuilderVariable => null;
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
 
-        public bool IsCollection => true;
+            scope = null;
+        }
+
+        public abstract bool IsCollection { get; }
+
+        public virtual string? BuilderVariable => null;
+
+        public virtual bool TrailAllowed => false;
 
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
 
-        bool IStatementContext.TrailAllowed => false;
+        bool IFunctionContext.IsOptionalReturn => false;
+
+        string? IReturnableStatementContext.ReturnVariable => null;
+
+        string? IReturnableStatementContext.ReturningVariable => null;
+
+        bool IExpressionContext.IsLiteral => GetExpressionContext()?.IsLiteral ?? false;
+
+        protected sealed override IExpressionContext? GetExpressionContext()
+        {
+            return scope ??= FindContext<IExpressionContext>();
+        }
+
+        void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
+        {
+            Error("`break` must be used in a statement that supports it.");
+        }
+
+        void IInterruptibleStatementContext.WriteContinue(bool hasExpression)
+        {
+            Error("`continue` must be used in a statement that supports it.");
+        }
+
+        void IFunctionContext.WriteBegin()
+        {
+            Out.WriteLine("begin");
+            Out.EnterScope();
+        }
+
+        void IFunctionContext.WriteEnd()
+        {
+            Out.ExitScope();
+            Out.Write("end");
+        }
+    }
+
+    internal abstract class CollectionState : IsolatedState
+    {
+        protected bool IsSimple { get; private set; }
+        protected bool IsEmpty { get; private set; }
+
+        public sealed override bool IsCollection => true;
 
         protected sealed override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -732,35 +786,25 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterExpressionStatement(ExpressionStatementContext context)
         {
-            EnterState<ExpressionStatement>().EnterExpressionStatement(context);
+            EnterState<ExpressionStatementState>().EnterExpressionStatement(context);
         }
 
         public sealed override void ExitExpressionStatement(ExpressionStatementContext context)
         {
 
         }
+    }
 
-        void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
+    internal sealed class ExpressionStatementState : BlockState
+    {
+        public override void EnterExpressionStatement(ExpressionStatementContext context)
         {
-            Error("`break` must be used in a statement that supports it.");
+
         }
 
-        void IInterruptibleStatementContext.WriteContinue(bool hasExpression)
+        public override void ExitExpressionStatement(ExpressionStatementContext context)
         {
-            Error("`continue` must be used in a statement that supports it.");
-        }
-
-        sealed class ExpressionStatement : BlockState
-        {
-            public override void EnterExpressionStatement(ExpressionStatementContext context)
-            {
-
-            }
-
-            public override void ExitExpressionStatement(ExpressionStatementContext context)
-            {
-                ExitState()!.ExitExpressionStatement(context);
-            }
+            ExitState()!.ExitExpressionStatement(context);
         }
     }
 
@@ -812,6 +856,35 @@ namespace IS4.Sona.Compiler.States
             }
 
             base.OnOperand(simple);
+        }
+    }
+
+    internal sealed class InlineStatementState : IsolatedState
+    {
+        public override bool IsCollection => false;
+
+        public override void EnterInlineExpr(InlineExprContext context)
+        {
+            Out.WriteLine("(");
+            Out.EnterScope();
+        }
+
+        public override void ExitInlineExpr(InlineExprContext context)
+        {
+            Out.WriteLine();
+            Out.ExitScope();
+            Out.Write(")");
+            ExitState().ExitInlineExpr(context);
+        }
+
+        public sealed override void EnterExpressionStatement(ExpressionStatementContext context)
+        {
+            EnterState<ExpressionStatementState>().EnterExpressionStatement(context);
+        }
+
+        public sealed override void ExitExpressionStatement(ExpressionStatementContext context)
+        {
+
         }
     }
 }
