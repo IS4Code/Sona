@@ -307,13 +307,12 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterSequenceConstructor(SequenceConstructorContext context)
         {
-            Out.Write('(');
             EnterState<SequenceState>().EnterSequenceConstructor(context);
         }
 
         public override void ExitSequenceConstructor(SequenceConstructorContext context)
         {
-            Out.Write(')');
+
         }
 
         public override void EnterExprList(ExprListContext context)
@@ -680,7 +679,6 @@ namespace IS4.Sona.Compiler.States
                 else
                 {
                     Out.WriteLine();
-                    Out.EnterScope();
                 }
             }
             else
@@ -709,7 +707,6 @@ namespace IS4.Sona.Compiler.States
             }
             else
             {
-                Out.ExitScope();
                 Out.WriteLine();
             }
         }
@@ -812,6 +809,7 @@ namespace IS4.Sona.Compiler.States
     {
         public override void EnterArrayConstructor(ArrayConstructorContext context)
         {
+            Out.EnterNestedScope();
             Out.Write("[|");
         }
 
@@ -821,6 +819,7 @@ namespace IS4.Sona.Compiler.States
             {
                 Out.Write(' ');
             }
+            Out.ExitNestedScope();
             Out.Write("|]");
             ExitState().ExitArrayConstructor(context);
         }
@@ -842,7 +841,9 @@ namespace IS4.Sona.Compiler.States
             }
             else
             {
-                Out.Write("}");
+                Out.ExitNestedScope();
+                Out.Write('}');
+                Out.Write(')');
             }
             ExitState().ExitSequenceConstructor(context);
         }
@@ -851,8 +852,10 @@ namespace IS4.Sona.Compiler.States
         {
             if(IsEmpty)
             {
+                Out.EnterNestedScope();
+                Out.Write('(');
                 Out.WriteCoreOperator("seq");
-                Out.Write("{");
+                Out.Write('{');
             }
 
             base.OnOperand(simple);
@@ -865,14 +868,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterInlineExpr(InlineExprContext context)
         {
+            Out.EnterNestedScope();
             Out.WriteLine("(");
-            Out.EnterScope();
         }
 
         public override void ExitInlineExpr(InlineExprContext context)
         {
             Out.WriteLine();
-            Out.ExitScope();
+            Out.ExitNestedScope();
             Out.Write(")");
             ExitState().ExitInlineExpr(context);
         }

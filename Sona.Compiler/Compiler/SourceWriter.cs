@@ -29,6 +29,8 @@ namespace IS4.Sona.Compiler
         void UpdateLine(IToken token);
         void EnterScope();
         void ExitScope();
+        void EnterNestedScope();
+        void ExitNestedScope();
 
         ISourceCapture StartCapture();
         void StopCapture(ISourceCapture capture);
@@ -350,8 +352,9 @@ namespace IS4.Sona.Compiler
             int pos = InnerWriter.LinePosition;
             if(pos > Indent)
             {
-                scopeRestore.Push((pos, Indent));
-                Indent = pos;
+                throw new InvalidOperationException("The writer is not located at the beginning of a line.");
+                //scopeRestore.Push((pos, Indent));
+                //Indent = pos;
             }
             else
             {
@@ -369,12 +372,55 @@ namespace IS4.Sona.Compiler
 
             if(scopeRestore.TryPeek(out var restore) && restore.from == Indent)
             {
-                Indent = scopeRestore.Pop().to;
+                throw NestedScopeError();
+                //Indent = scopeRestore.Pop().to;
             }
             else
             {
                 Indent--;
             }
+        }
+
+        public void EnterNestedScope()
+        {
+            if(Recording)
+            {
+                Record(x => x.EnterNestedScope());
+                return;
+            }
+
+            int pos = InnerWriter.LinePosition;
+            scopeRestore.Push((pos, Indent));
+            Indent++;
+            scopeRestore.Push((Indent, pos));
+        }
+
+        public void ExitNestedScope()
+        {
+            if(Recording)
+            {
+                Record(x => x.ExitNestedScope());
+                return;
+            }
+
+            if(!(scopeRestore.TryPeek(out var restore) && restore.from == Indent))
+            {
+                throw NestedScopeError();
+            }
+            var newIndent = scopeRestore.Pop().to;
+            if(!(scopeRestore.TryPeek(out restore) && restore.from == newIndent))
+            {
+                scopeRestore.Push((Indent, newIndent));
+                throw NestedScopeError();
+            }
+            Indent = newIndent;
+            OutputTabs();
+            Indent = scopeRestore.Pop().to;
+        }
+
+        Exception NestedScopeError()
+        {
+            return new InvalidOperationException($"{nameof(ExitNestedScope)} must be used to exit a scope entered with {nameof(EnterNestedScope)}.");
         }
 
         public ISourceCapture StartCapture()
