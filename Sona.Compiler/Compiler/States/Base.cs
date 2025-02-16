@@ -117,6 +117,36 @@ namespace IS4.Sona.Compiler
             }
         }
 
+        public override void EnterArrayConstructor(ArrayConstructorContext context)
+        {
+            EnterState<ArrayState>().EnterArrayConstructor(context);
+        }
+
+        public override void ExitArrayConstructor(ArrayConstructorContext context)
+        {
+
+        }
+
+        public override void EnterRecordConstructor(RecordConstructorContext context)
+        {
+            EnterState<RecordState>().EnterRecordConstructor(context);
+        }
+
+        public override void ExitRecordConstructor(RecordConstructorContext context)
+        {
+
+        }
+
+        public override void EnterSequenceConstructor(SequenceConstructorContext context)
+        {
+            EnterState<SequenceState>().EnterSequenceConstructor(context);
+        }
+
+        public override void ExitSequenceConstructor(SequenceConstructorContext context)
+        {
+
+        }
+
         protected virtual IExpressionContext? GetExpressionContext() => FindContext<IExpressionContext>();
 
         public override void EnterInterpolatedString(InterpolatedStringContext context)

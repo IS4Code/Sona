@@ -844,6 +844,7 @@ innerExpr:
 
 atomicExpr:
   simpleExpr |
+  constructExpr |
   funcExpr |
   inlineExpr |
   memberExpr |
@@ -880,22 +881,27 @@ funcExpr:
 inlineExpr:
   'inline' expressionStatement;
 
+constructExpr:
+  arrayConstructor |
+  recordConstructor |
+  sequenceConstructor;
+
 memberExpr:
   (
-    name simpleCallArgument? |
+    name simpleCallArgument?? |
     nestedExpr |
-    nestedAssignment |
-    arrayConstructor |
-    recordConstructor |
-    sequenceConstructor
+    nestedAssignment
   ) memberExpr_Suffix? |
-  simpleExpr memberExpr_Suffix;
+  (
+    simpleExpr |
+    constructExpr
+  ) memberExpr_Suffix;
 
 memberExpr_Suffix:
   (
     callArguments |
     indexAccess |
-    (memberAccess | dynamicMemberAccess) simpleCallArgument?
+    (memberAccess | dynamicMemberAccess) simpleCallArgument??
   )+;
 
 assignment:
@@ -914,8 +920,7 @@ callArguments:
   '(' callArgList ')';
 
 simpleCallArgument:
-  recordConstructor |
-  sequenceConstructor |
+  constructExpr |
   string |
   interpolatedString |
   verbatimInterpolatedString;

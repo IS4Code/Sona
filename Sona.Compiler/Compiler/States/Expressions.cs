@@ -285,36 +285,6 @@ namespace IS4.Sona.Compiler.States
             Out.Write(')');
         }
 
-        public override void EnterArrayConstructor(ArrayConstructorContext context)
-        {
-            EnterState<ArrayState>().EnterArrayConstructor(context);
-        }
-
-        public override void ExitArrayConstructor(ArrayConstructorContext context)
-        {
-
-        }
-
-        public override void EnterRecordConstructor(RecordConstructorContext context)
-        {
-            EnterState<RecordState>().EnterRecordConstructor(context);
-        }
-
-        public override void ExitRecordConstructor(RecordConstructorContext context)
-        {
-
-        }
-
-        public override void EnterSequenceConstructor(SequenceConstructorContext context)
-        {
-            EnterState<SequenceState>().EnterSequenceConstructor(context);
-        }
-
-        public override void ExitSequenceConstructor(SequenceConstructorContext context)
-        {
-
-        }
-
         public override void EnterExprList(ExprListContext context)
         {
             EnterState<ExpressionListState>().EnterExprList(context);
@@ -432,16 +402,6 @@ namespace IS4.Sona.Compiler.States
             public override void ExitSimpleCallArgument(SimpleCallArgumentContext context)
             {
                 ExitState().ExitSimpleCallArgument(context);
-            }
-
-            public override void EnterSequenceConstructor(SequenceConstructorContext context)
-            {
-                EnterState<SequenceState>().EnterSequenceConstructor(context);
-            }
-
-            public override void ExitSequenceConstructor(SequenceConstructorContext context)
-            {
-
             }
         }
     }
