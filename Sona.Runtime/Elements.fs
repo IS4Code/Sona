@@ -18,7 +18,7 @@ type DateFormat = DateFormat
 [<Struct>]
 type DateTimeFormat = DateTimeFormat
 
-type number<^T
+type ``trait number``<^T
   when ^T : comparison
   and ^T : equality
   and ^T : (static member ( + ): ^T -> ^T -> ^T)
@@ -30,7 +30,7 @@ type number<^T
   > = ^T
 
 // DateTime(Offset), DateOnly
-type date<^T
+type ``trait date``<^T
   when ^T : comparison
   and ^T : equality
   and ^T : (member Year: int)
@@ -41,7 +41,7 @@ type date<^T
   > = ^T
 
 // DateTime(Offset), TimeOnly
-type time<^T
+type ``trait time``<^T
   when ^T : comparison
   and ^T : equality
   and ^T : (member Hour: int)
@@ -53,7 +53,7 @@ type time<^T
   > = ^T
 
 // DateTime(Offset)
-type datetime<^T
+type ``trait datetime``<^T
   when ^T : comparison
   and ^T : equality
   
@@ -69,10 +69,10 @@ type datetime<^T
   and ^T : (member Millisecond: int)
   and ^T : (member Microsecond: int)
   and ^T : (member Nanosecond: int)
-  > = date<time<^T>>
+  > = ``trait date``<``trait time``<^T>>
 
 // TimeSpan
-type timespan<^T
+type ``trait timespan``<^T
   when ^T : comparison
   and ^T : equality
   and ^T : (member Days: int)
@@ -84,15 +84,30 @@ type timespan<^T
   and ^T : (member Nanoseconds: int)
   > = ^T
 
-type datespan<^T
+type ``trait datespan``<^T
   when ^T : comparison
   and ^T : equality
   and ^T : (member Years: int)
   and ^T : (member Months: int)
   > = ^T
 
-type iterable<^T, ^U, ^V
-  when ^T : (member GetEnumerator: unit -> ^U)
-  and ^U : (member MoveNext: unit -> bool)
-  and ^U : (member Current: ^V)
+type ``trait iterable``<^T when ^T :> System.Collections.IEnumerable> = ^T
+type ``trait iterable``<^T, ^Element when ^T :> System.Collections.Generic.IEnumerable<^Element>> = ^T
+type ``trait iterable``<^T, ^Element, ^Enumerator
+  when ^T : (member GetEnumerator: unit -> ^Enumerator)
+  and ^Enumerator : (member MoveNext: unit -> bool)
+  and ^Enumerator : (member Current: ^Element)
   > = ^T
+
+type ``trait class``<^T when ^T : not struct> = ^T
+type ``trait struct``<^T when ^T : struct> = ^T
+type ``trait delegate``<^T when ^T :> System.Delegate> = ^T
+type ``trait delegate``<^T, ^TArgs when ^T : delegate<^TArgs, unit>> = ^T
+type ``trait delegate``<^T, ^TArgs, ^TResult when ^T : delegate<^TArgs, ^TResult>> = ^T
+
+type ``trait enum``<^T when ^T : struct and ^T :> System.Enum> = ^T
+type ``trait enum``<^T, ^TBase when ^T : enum<^TBase>> = ^T
+
+type ``trait comparison``<^T when ^T : comparison> = ^T
+type ``trait equality``<^T when ^T : equality> = ^T
+type ``trait unmanaged``<^T when ^T : unmanaged> = ^T
