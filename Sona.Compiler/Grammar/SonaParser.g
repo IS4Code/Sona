@@ -3,7 +3,9 @@ options {
   tokenVocab = SonaLexer;
 }
 
-/* Blocks */
+/* ----------------- */
+/* Blocks and trails */
+/* ----------------- */
 
 // The whole program
 chunk:
@@ -84,6 +86,10 @@ ignoredTrail:
 ignoredEmptyBlock:;
 ignoredEmptyTrail:;
 
+/* ----------- */
+/* Identifiers */
+/* ----------- */
+
 name:
   NAME | LITERAL_NAME;
 
@@ -96,10 +102,16 @@ dynamicMemberName:
 compoundName:
   name ('.' name | memberName)*;
 
+/* ----- */
+/* Types */
+/* ----- */
+
 type:
   NAME;
 
+/* ---------- */
 /* Attributes */
+/* ---------- */
 
 localAttrList:
   localAttribute*;
@@ -128,7 +140,9 @@ attrPosArg:
 attrNamedArg:
   name WHITESPACE* '=' WHITESPACE* atomicExpr;
 
-/* Statements */
+/* ------------------ */
+/* General statements */
+/* ------------------ */
 
 // Plain statement, allowed anywhere
 statement:
@@ -237,6 +251,10 @@ expressionStatement:
   forStatementFree |
   forStatementFreeInterrupted |
   forStatementConditional;
+
+/* ---------------- */
+/* Block statements */
+/* ---------------- */
 
 // `do`
 
@@ -511,6 +529,8 @@ ifStatementConditional:
   // `if` branch is interruptible, other are non-returning, but the trail is conditional
   if interruptibleBlock (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? 'end' conditionalTrail;
 
+// `while`
+
 while:
   'while' expression 'do';
 
@@ -546,6 +566,8 @@ whileStatementConditional:
   // Body is returning or conditional, trail is open, interruptible, or conditional
   (whileTrue | while) (returningBlock | conditionalBlock) 'end' (openTrail | interruptibleTrail | conditionalTrail);
 
+// `repeat`
+
 until:
   'until' expression;
 
@@ -574,6 +596,8 @@ repeatStatementReturningTrail:
 repeatStatementConditional:
   // Body is returning or conditional, trail is open, interruptible, or conditional
   'repeat' (returningBlock | conditionalBlock) until (openTrail | interruptibleTrail | conditionalTrail);
+
+// `for`
 
 for:
   // Step is a primitive expression - can be evaluated out of order
@@ -620,6 +644,10 @@ forStatementConditional:
   // Body is returning or conditional, trail is open, interruptible, or conditional
   for (returningBlock | conditionalBlock) 'end' (openTrail | interruptibleTrail | conditionalTrail);
 
+/* -------------------- */
+/* Top-level statements */
+/* -------------------- */
+
 topLevelStatement:
   importStatement |
   importTypeStatement |
@@ -654,7 +682,9 @@ stringArg:
   string |
   '(' stringArg ')';
 
-/* Declarations */
+/* ---------------------------- */
+/* Declarations and assignments */
+/* ---------------------------- */
 
 variableDecl:
   localAttrList (letDecl | varDecl | constDecl);
@@ -692,7 +722,12 @@ declaration:
 memberOrAssignment:
   memberExpr assignment?;
 
+assignment:
+  '=' expression;
+
+/* ----------- */
 /* Expressions */
+/* ----------- */
 
 exprList:
   expression (',' expression)*;
@@ -886,6 +921,8 @@ constructExpr:
   recordConstructor |
   sequenceConstructor;
 
+// Member access
+
 memberExpr:
   (
     name simpleCallArgument?? |
@@ -904,9 +941,6 @@ memberExpr_Suffix:
     (memberAccess | dynamicMemberAccess) simpleCallArgument??
   )+;
 
-assignment:
-  '=' expression;
-
 indexAccess:
   '[' (exprList | errorMissingExpression) ']';
   
@@ -915,6 +949,8 @@ memberAccess:
 
 dynamicMemberAccess:
   ':' name | dynamicMemberName;
+
+// Function calls
 
 callArguments:
   '(' callArgList ')';
@@ -930,6 +966,8 @@ callArgList:
 
 callArgTuple:
   exprList?;
+
+// Records and collections
 
 recordConstructor:
   '{' recordField (',' recordField)* '}';
@@ -970,7 +1008,9 @@ complexCollectionElement:
 spreadExpression:
   '..' concatExpr_Inner;
 
+/* -------------------- */
 /* Interpolated strings */
+/* -------------------- */
 
 interpolatedString:
   BEGIN_INTERPOLATED_STRING interpStrComponent* END_INTERPOLATED_STRING;
@@ -997,7 +1037,9 @@ interpStrComponentFormat:
 interpStrExpression:
   '{' expression ((interpStrAlignment? (interpStrStandardFormat | interpStrCustomFormat | interpStrNumberFormat | interpStrComponentFormat)?) | interpStrGeneralFormat) '}';
 
-/* Inline F# */
+/* ---------------- */
+/* Inline F# source */
+/* ---------------- */
 
 inlineSourceFree:
   BEGIN_INLINE_SOURCE WHITESPACE* string inlineSourceFirstLine inlineSourceLine*
@@ -1049,7 +1091,9 @@ inlineSourceLineCutComment:
 inlineSourceWhitespace:
   FS_WHITESPACE | FS_COMMENT | inlineSourceBlockComment;
 
+/* --------- */
 /* Operators */
+/* --------- */
 
 innerBinaryOperator:
   '+' | '-' | '*' | '/' | '%';
@@ -1061,12 +1105,18 @@ outerBinaryOperator:
 unaryOperator:
   '+' | '-' | '~';
 
+/* ---------- */
+/* Primitives */
+/* ---------- */
+
 number:
   INT | FLOAT | EXP | HEX;
 
 string:
   NORMAL_STRING | VERBATIM_STRING | CHAR_STRING;
 
+/* ------------ */
 /* Error states */
+/* ------------ */
 
 errorMissingExpression:;
