@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>IS4.Sona.Compiler.Grammar.Generator</RootNamespace>
+    <LangVersion>10.0</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sona.Compiler\Sona.Compiler.csproj" />
+    <ProjectReference Include="..\Sona.Runtime\Sona.Runtime.fsproj" />
+  </ItemGroup>
+
+</Project>
