@@ -8,15 +8,22 @@ namespace IS4.Sona.Compiler
         public string End => "end";
 
         readonly bool buildParseTreeDefault = Parser.BuildParseTree;
+        int buildParseTreeLevel = 0;
 
         public void EnableParseTree()
         {
-            Parser.BuildParseTree = true;
+            if(++buildParseTreeLevel >= 1)
+            {
+                Parser.BuildParseTree = true;
+            }
         }
 
         public void DisableParseTree()
         {
-            Parser.BuildParseTree = buildParseTreeDefault;
+            if(--buildParseTreeLevel <= 0)
+            {
+                Parser.BuildParseTree = buildParseTreeDefault;
+            }
         }
     }
 }
