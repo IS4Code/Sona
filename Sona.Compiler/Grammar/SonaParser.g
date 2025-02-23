@@ -644,6 +644,86 @@ forStatementConditional:
   // Body is returning or conditional, trail is open, interruptible, or conditional
   for (returningBlock | conditionalBlock) 'end' (openTrail | interruptibleTrail | conditionalTrail);
 
+// `switch`
+
+switch:
+  'switch' expression;
+
+case:
+  'case' pattern whenClause? 'do';
+
+whenClause:
+  'when' expression;
+
+// Free-standing (may throw from all branches but this is not preferred).
+// Presence of at least one case/else is ensured in code.
+switchStatementFree:
+  switch (case freeBlock)* (else freeBlock)? 'end';
+
+// Free-standing (may interrupt in all branches but this is not preferred)
+switchStatementFreeInterrupted:
+  switch (case freeBlock)* (
+    // `case` must interrupt
+    case (interruptingBlock | interruptibleBlock) (case (freeBlock | interruptingBlock | interruptibleBlock))* (else (freeBlock | interruptingBlock | interruptibleBlock))? |
+    // `else` must interrupt
+    else (interruptingBlock | interruptibleBlock)
+  ) 'end';
+
+switchStatementTerminating:
+  // At least one branch must handle the value
+  switch (case terminatingBlock)* (else terminatingBlock)? 'end' ignoredTrail;
+
+// An "interrupted" branch means another must be entered, so such a branch
+// does not affect the statement's category.
+switchStatementTerminatingInterrupted:
+  switch (case terminatingBlock)* (
+    // `case` interrupts, the rest terminates or interrupts
+    case interruptingBlock (case (terminatingBlock | interruptingBlock))* (else (terminatingBlock | interruptingBlock))? |
+    // `else` interrupts
+    else interruptingBlock
+  ) 'end' ignoredTrail;
+
+switchStatementReturning:
+  switch (case (terminatingBlock | interruptingBlock))* (
+    // `case` is returning, the rest is closing
+    case returningBlock (case closingBlock)* (else closingBlock)? |
+    // `else` is returning
+    else returningBlock
+    // Trail is ignored
+  ) ignoredTrail;
+
+switchStatementReturningTrail:
+  switch (case (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (
+    // `case` is returning or conditional, others are anything
+    case (returningBlock | conditionalBlock) (case fullBlock)* (else fullBlock)? |
+    // `else` is returning or conditional
+    else (returningBlock | conditionalBlock)
+    // But the trail is closing
+  ) 'end' closingTrail;
+
+switchStatementConditional:
+  switch (case (terminatingBlock | interruptingBlock))* (
+    // `case` is returning... (find open path)
+    case returningBlock (case closingBlock)* (
+      // `case` is open or conditional, other are anything
+      case (openBlock | interruptibleBlock | conditionalBlock) (case fullBlock)* (else fullBlock)? |
+      // `else` is open or conditional
+      (else (openBlock | interruptibleBlock | conditionalBlock))?
+    ) |
+    // `case` is open... (find returning path)
+    case (openBlock | interruptibleBlock) (case (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (
+      // `case` is returning or conditional, other are anything
+      case (returningBlock | conditionalBlock) (case fullBlock)* (else fullBlock)? |
+      // `else` is returning or conditional
+      else (returningBlock | conditionalBlock)
+    ) |
+    // `case` is conditional, other are anything
+    case conditionalBlock (case fullBlock)* (else fullBlock)? |
+    // `else` is conditional
+    else conditionalBlock
+    // Trail is open or interruptible or conditional
+  ) 'end' (openTrail | interruptibleTrail | conditionalTrail);
+
 /* -------------------- */
 /* Top-level statements */
 /* -------------------- */
@@ -724,6 +804,13 @@ memberOrAssignment:
 
 assignment:
   '=' expression;
+
+/* -------- */
+/* Patterns */
+/* -------- */
+
+pattern:
+  primitiveExpr;
 
 /* ----------- */
 /* Expressions */
