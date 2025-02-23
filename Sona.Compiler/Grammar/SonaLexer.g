@@ -47,6 +47,14 @@ BEGIN_VERBATIM_INTERPOLATED_STRING:
 CHAR_STRING:
   '\'' (ESCAPE | ~('\\' | '\'' | '\r' | '\n'))* '\'';
 
+INT_SUFFIX: INT NAME;
+FLOAT_SUFFIX: FLOAT NAME;
+EXP_SUFFIX: EXP NAME;
+HEX_SUFFIX: HEX NAME;
+NORMAL_STRING_SUFFIX: NORMAL_STRING NAME;
+VERBATIM_STRING_SUFFIX: VERBATIM_STRING NAME;
+CHAR_STRING_SUFFIX: CHAR_STRING NAME;
+
 COMMENT:
   '/*' .*? '*/' -> skip;
 
@@ -200,6 +208,8 @@ WIDEN: 'widen';
 WITH: 'with';
 YIELD: 'yield';
 
+UNDERSCORE: '_';
+
 SEMICOLON: ';';
 EQ: '==';
 NEQ: '!=';
@@ -253,6 +263,13 @@ Directive_HEX: HEX -> type(HEX);
 Directive_NORMAL_STRING: NORMAL_STRING -> type(NORMAL_STRING);
 Directive_VERBATIM_STRING: VERBATIM_STRING -> type(VERBATIM_STRING);
 Directive_CHAR_STRING: CHAR_STRING -> type(CHAR_STRING);
+Directive_INT_SUFFIX: INT_SUFFIX -> type(INT_SUFFIX);
+Directive_FLOAT_SUFFIX: FLOAT_SUFFIX -> type(FLOAT_SUFFIX);
+Directive_EXP_SUFFIX: EXP_SUFFIX -> type(EXP_SUFFIX);
+Directive_HEX_SUFFIX: HEX_SUFFIX -> type(HEX_SUFFIX);
+Directive_NORMAL_STRING_SUFFIX: NORMAL_STRING_SUFFIX -> type(NORMAL_STRING_SUFFIX);
+Directive_VERBATIM_STRING_SUFFIX: VERBATIM_STRING_SUFFIX -> type(VERBATIM_STRING_SUFFIX);
+Directive_CHAR_STRING_SUFFIX: CHAR_STRING_SUFFIX -> type(CHAR_STRING_SUFFIX);
 
 Directive_COMMENT: COMMENT -> skip;
 Directive_DOC_COMMENT: DOC_COMMENT -> channel(Documentation);
@@ -359,6 +376,8 @@ Directive_WIDEN: WIDEN -> type(WIDEN);
 Directive_WITH: WITH -> type(WITH);
 Directive_YIELD: YIELD -> type(YIELD);
 
+Directive_UNDERSCORE: UNDERSCORE -> type(UNDERSCORE);
+
 Directive_SEMICOLON: SEMICOLON -> type(SEMICOLON);
 Directive_EQ: EQ -> type(EQ);
 Directive_NEQ: NEQ -> type(NEQ);
@@ -431,6 +450,7 @@ InterpolatedString_OPENB: OPENB -> type(OPENB), pushMode(Interpolation);
 InterpolatedString_PERCENT: ('\\%' | PERCENT) -> type(PERCENT);
 
 END_INTERPOLATED_STRING: '"' -> popMode;
+END_INTERPOLATED_STRING_SUFFIX: END_INTERPOLATED_STRING NAME -> popMode;
 
 mode VerbatimInterpolatedString;
 
@@ -440,7 +460,8 @@ Verbatim_INTERP_PART:
 VerbatimInterpolatedString_OPENB: OPENB -> type(OPENB), pushMode(Interpolation);
 VerbatimInterpolatedString_PERCENT: PERCENT -> type(PERCENT);
 
-Verbatim_END_INTERPOLATED_STRING: '"' -> type(END_INTERPOLATED_STRING), popMode;
+Verbatim_END_INTERPOLATED_STRING: END_INTERPOLATED_STRING -> type(END_INTERPOLATED_STRING), popMode;
+Verbatim_END_INTERPOLATED_STRING_SUFFIX: END_INTERPOLATED_STRING_SUFFIX -> type(END_INTERPOLATED_STRING_SUFFIX), popMode;
 
 mode Interpolation;
 
@@ -547,6 +568,13 @@ Interpolation_VERBATIM_STRING: VERBATIM_STRING -> type(VERBATIM_STRING);
 Interpolation_BEGIN_INTERPOLATED_STRING: BEGIN_INTERPOLATED_STRING -> type(BEGIN_INTERPOLATED_STRING), pushMode(InterpolatedString);
 Interpolation_BEGIN_VERBATIM_INTERPOLATED_STRING: BEGIN_VERBATIM_INTERPOLATED_STRING -> type(BEGIN_VERBATIM_INTERPOLATED_STRING), pushMode(VerbatimInterpolatedString);
 Interpolation_CHAR_STRING: CHAR_STRING -> type(CHAR_STRING);
+Interpolation_INT_SUFFIX: INT_SUFFIX -> type(INT_SUFFIX);
+Interpolation_FLOAT_SUFFIX: FLOAT_SUFFIX -> type(FLOAT_SUFFIX);
+Interpolation_EXP_SUFFIX: EXP_SUFFIX -> type(EXP_SUFFIX);
+Interpolation_HEX_SUFFIX: HEX_SUFFIX -> type(HEX_SUFFIX);
+Interpolation_NORMAL_STRING_SUFFIX: NORMAL_STRING_SUFFIX -> type(NORMAL_STRING_SUFFIX);
+Interpolation_VERBATIM_STRING_SUFFIX: VERBATIM_STRING_SUFFIX -> type(VERBATIM_STRING_SUFFIX);
+Interpolation_CHAR_STRING_SUFFIX: CHAR_STRING_SUFFIX -> type(CHAR_STRING_SUFFIX);
 
 Interpolation_COMMENT: COMMENT -> skip;
 Interpolation_DOC_COMMENT: DOC_COMMENT -> channel(Documentation);
@@ -653,6 +681,8 @@ Interpolation_WHILE_TRUE_DO: WHILE_TRUE_DO -> type(WHILE_TRUE_DO);
 Interpolation_WIDEN: WIDEN -> type(WIDEN);
 Interpolation_WITH: WITH -> type(WITH);
 Interpolation_YIELD: YIELD -> type(YIELD);
+
+Interpolation_UNDERSCORE: UNDERSCORE -> type(UNDERSCORE);
 
 Interpolation_SEMICOLON: SEMICOLON -> type(SEMICOLON);
 Interpolation_EQ: EQ -> type(EQ);

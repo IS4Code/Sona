@@ -91,7 +91,7 @@ ignoredEmptyTrail:;
 /* ----------- */
 
 name:
-  NAME | LITERAL_NAME;
+  NAME | LITERAL_NAME | errorUnderscoreReserved;
 
 memberName:
   MEMBER_NAME;
@@ -1100,10 +1100,10 @@ spreadExpression:
 /* -------------------- */
 
 interpolatedString:
-  BEGIN_INTERPOLATED_STRING interpStrComponent* END_INTERPOLATED_STRING;
+  BEGIN_INTERPOLATED_STRING interpStrComponent* (END_INTERPOLATED_STRING | errorUnsupportedEndInterpolatedStringSuffix);
 
 verbatimInterpolatedString:
-  BEGIN_VERBATIM_INTERPOLATED_STRING interpStrComponent* END_INTERPOLATED_STRING;
+  BEGIN_VERBATIM_INTERPOLATED_STRING interpStrComponent* (END_INTERPOLATED_STRING | errorUnsupportedEndInterpolatedStringSuffix);
 
 interpStrComponent:
   interpStrPart |
@@ -1197,13 +1197,25 @@ unaryOperator:
 /* ---------- */
 
 number:
-  INT | FLOAT | EXP | HEX;
+  INT | FLOAT | EXP | HEX | errorUnsupportedNumberSuffix;
 
 string:
-  NORMAL_STRING | VERBATIM_STRING | CHAR_STRING;
+  NORMAL_STRING | VERBATIM_STRING | CHAR_STRING | errorUnsupportedStringSuffix;
 
 /* ------------ */
 /* Error states */
 /* ------------ */
 
 errorMissingExpression:;
+
+errorUnsupportedNumberSuffix:
+  INT_SUFFIX | FLOAT_SUFFIX | EXP_SUFFIX | HEX_SUFFIX;
+
+errorUnsupportedStringSuffix:
+  NORMAL_STRING_SUFFIX | VERBATIM_STRING_SUFFIX | CHAR_STRING_SUFFIX;
+
+errorUnsupportedEndInterpolatedStringSuffix:
+  END_INTERPOLATED_STRING_SUFFIX;
+
+errorUnderscoreReserved:
+  UNDERSCORE;
