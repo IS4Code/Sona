@@ -465,7 +465,7 @@ ifStatementConditional:
       elseif (openBlock | conditionalBlock) (elseif fullBlock)* (else fullBlock)? |
       // `else` branch is open or conditional
       (else (openBlock | conditionalBlock))?
-    )
+    ) |
     // `elseif` branch is open... (find returning path)
     elseif openBlock (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (
       // `elseif` branch is returning or conditional, other are anything
