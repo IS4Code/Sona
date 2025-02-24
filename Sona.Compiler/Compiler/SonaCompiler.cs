@@ -34,13 +34,8 @@ namespace IS4.Sona.Compiler
         {
             var errorListener = throwOnError ? new ErrorListener() : null;
 
-            var lexer = new SonaLexer(inputStream);
+            var lexer = GetLexer(inputStream);
             errorListener?.AddTo(lexer);
-
-            // Add empty mode below, to handle close parenthesis
-            int defaultMode = lexer.CurrentMode;
-            lexer.Mode(SonaLexer.Empty);
-            lexer.PushMode(defaultMode);
 
             var channelContext = new LexerContext(lexer);
 
@@ -68,6 +63,19 @@ namespace IS4.Sona.Compiler
             {
                 throw new ArgumentException("The input is syntactically invalid.", nameof(inputStream));
             }
+        }
+
+        [CLSCompliant(false)]
+        public SonaLexer GetLexer(ICharStream inputStream)
+        {
+            var lexer = new SonaLexer(inputStream);
+
+            // Add empty mode below, to handle close parenthesis
+            int defaultMode = lexer.CurrentMode;
+            lexer.Mode(SonaLexer.Empty);
+            lexer.PushMode(defaultMode);
+
+            return lexer;
         }
 
         sealed class ErrorListener : IAntlrErrorListener<IToken>, IAntlrErrorListener<int>

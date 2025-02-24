@@ -32,10 +32,10 @@ namespace IS4.Sona.Compiler.Gui
         private void InitializeComponent()
         {
             codeSplit = new SplitContainer();
-            sonaText = new TextBox();
+            sonaRichText = new DoubleBufferedRichTextBox();
             splitContainer1 = new SplitContainer();
-            messageBox = new TextBox();
             resultRichText = new DoubleBufferedRichTextBox();
+            messageBox = new TextBox();
             ((System.ComponentModel.ISupportInitialize)codeSplit).BeginInit();
             codeSplit.Panel1.SuspendLayout();
             codeSplit.Panel2.SuspendLayout();
@@ -54,7 +54,7 @@ namespace IS4.Sona.Compiler.Gui
             // 
             // codeSplit.Panel1
             // 
-            codeSplit.Panel1.Controls.Add(sonaText);
+            codeSplit.Panel1.Controls.Add(sonaRichText);
             // 
             // codeSplit.Panel2
             // 
@@ -63,20 +63,22 @@ namespace IS4.Sona.Compiler.Gui
             codeSplit.SplitterDistance = 400;
             codeSplit.TabIndex = 0;
             // 
-            // sonaText
+            // sonaRichText
             // 
-            sonaText.AcceptsTab = true;
-            sonaText.Dock = DockStyle.Fill;
-            sonaText.Location = new Point(0, 0);
-            sonaText.Multiline = true;
-            sonaText.Name = "sonaText";
-            sonaText.ScrollBars = ScrollBars.Both;
-            sonaText.Size = new Size(400, 450);
-            sonaText.TabIndex = 0;
-            sonaText.WordWrap = false;
-            sonaText.TextChanged += sonaText_TextChanged;
-            sonaText.KeyPress += sonaText_KeyPress;
-            sonaText.PreviewKeyDown += sonaText_PreviewKeyDown;
+            sonaRichText.AcceptsTab = true;
+            sonaRichText.DetectUrls = false;
+            sonaRichText.Dock = DockStyle.Fill;
+            sonaRichText.Location = new Point(0, 0);
+            sonaRichText.Name = "sonaRichText";
+            sonaRichText.Size = new Size(400, 450);
+            sonaRichText.TabIndex = 3;
+            sonaRichText.Text = "";
+            sonaRichText.WordWrap = false;
+            sonaRichText.ContentsResized += sonaRichText_ContentsResized;
+            sonaRichText.SelectionChanged += sonaText_SelectionChanged;
+            sonaRichText.TextChanged += sonaText_TextChanged;
+            sonaRichText.KeyPress += sonaRichText_KeyPress;
+            sonaRichText.PreviewKeyDown += sonaRichText_PreviewKeyDown;
             // 
             // splitContainer1
             // 
@@ -97,17 +99,6 @@ namespace IS4.Sona.Compiler.Gui
             splitContainer1.SplitterDistance = 350;
             splitContainer1.TabIndex = 2;
             // 
-            // messageBox
-            // 
-            messageBox.Dock = DockStyle.Fill;
-            messageBox.Location = new Point(0, 0);
-            messageBox.Multiline = true;
-            messageBox.Name = "messageBox";
-            messageBox.ReadOnly = true;
-            messageBox.ScrollBars = ScrollBars.Both;
-            messageBox.Size = new Size(396, 96);
-            messageBox.TabIndex = 2;
-            // 
             // resultRichText
             // 
             resultRichText.DetectUrls = false;
@@ -119,6 +110,18 @@ namespace IS4.Sona.Compiler.Gui
             resultRichText.TabIndex = 2;
             resultRichText.Text = "";
             resultRichText.WordWrap = false;
+            resultRichText.ContentsResized += resultRichText_ContentsResized;
+            // 
+            // messageBox
+            // 
+            messageBox.Dock = DockStyle.Fill;
+            messageBox.Location = new Point(0, 0);
+            messageBox.Multiline = true;
+            messageBox.Name = "messageBox";
+            messageBox.ReadOnly = true;
+            messageBox.ScrollBars = ScrollBars.Both;
+            messageBox.Size = new Size(396, 96);
+            messageBox.TabIndex = 2;
             // 
             // MainForm
             // 
@@ -129,7 +132,6 @@ namespace IS4.Sona.Compiler.Gui
             Name = "MainForm";
             Text = "Sona";
             codeSplit.Panel1.ResumeLayout(false);
-            codeSplit.Panel1.PerformLayout();
             codeSplit.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)codeSplit).EndInit();
             codeSplit.ResumeLayout(false);
@@ -144,9 +146,9 @@ namespace IS4.Sona.Compiler.Gui
         #endregion
 
         private SplitContainer codeSplit;
-        private TextBox sonaText;
         private SplitContainer splitContainer1;
         private TextBox messageBox;
-        private RichTextBox resultRichText;
+        private DoubleBufferedRichTextBox resultRichText;
+        private DoubleBufferedRichTextBox sonaRichText;
     }
 }

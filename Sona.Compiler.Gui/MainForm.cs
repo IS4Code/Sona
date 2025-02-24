@@ -1,7 +1,9 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -12,6 +14,7 @@ using Antlr4.Runtime;
 using FSharp.Compiler.Syntax;
 using FSharp.Compiler.Text;
 using FSharp.Compiler.Tokenization;
+using IS4.Sona.Grammar;
 using Microsoft.FSharp.Core;
 
 namespace IS4.Sona.Compiler.Gui
@@ -39,7 +42,7 @@ namespace IS4.Sona.Compiler.Gui
                 font.GdiVerticalFont
             );
 
-            sonaText.Font = new Font(
+            sonaRichText.Font = new Font(
                 FontFamily.GenericMonospace,
                 font.SizeInPoints * zoom,
                 font.Style,
@@ -48,9 +51,14 @@ namespace IS4.Sona.Compiler.Gui
                 font.GdiVerticalFont
             );
 
-            resultRichText.BackColor = sonaText.BackColor;
-            resultRichText.ForeColor = sonaText.ForeColor;
-            resultRichText.Font = sonaText.Font;
+            const int measureLength = 3000;
+            const int tabSize = 2;
+            var indentSize = (float)TextRenderer.MeasureText(new string('_', measureLength), sonaRichText.Font).Width / measureLength * tabSize;
+            sonaRichText.SelectionTabs = Enumerable.Range(1, 32).Select(i => (int)Math.Round(i * indentSize)).ToArray();
+
+            resultRichText.BackColor = sonaRichText.BackColor;
+            resultRichText.ForeColor = sonaRichText.ForeColor;
+            resultRichText.Font = sonaRichText.Font;
 
             codeSplit.SplitterWidth *= 2;
 
@@ -79,25 +87,106 @@ namespace IS4.Sona.Compiler.Gui
             }.Start();
         }
 
-        int? moveAfterSpaces;
+        int lastSelectedStart, lastSelectedLength;
+        bool reformatModifiedText;
+
+        static readonly SearchValues<char> surroundReformattingCharacters = SearchValues.Create(new[] { '(', ')', '[', ']', '{', '}', '/', '*', '$', '"', '\'', '\\' });
+        static readonly SearchValues<char> lineReformattingCharacters = SearchValues.Create(new[] { '#' });
+
+        private void sonaText_SelectionChanged(object sender, EventArgs e)
+        {
+            if(sonaRichText.Modified)
+            {
+                // Ignore selection change due to modification
+                return;
+            }
+
+            // Preserve selection
+            lastSelectedStart = sonaRichText.SelectionStart;
+            lastSelectedLength = sonaRichText.SelectionLength;
+
+            int start = Math.Max(lastSelectedStart - 1, 0);
+            int end = Math.Min(lastSelectedStart + lastSelectedLength + 1, sonaRichText.TextLength);
+            var text = sonaRichText.Text;
+            var selectedSpan = text.AsSpan(start, end - start);
+            // Check if selection is near characters that might require reformatting
+            reformatModifiedText = selectedSpan.ContainsAny(surroundReformattingCharacters);
+            if(!reformatModifiedText)
+            {
+                // Get span of the whole line
+                var startLine = sonaRichText.GetLineFromCharIndex(start);
+                var endLine = sonaRichText.GetLineFromCharIndex(end);
+                var lineStart = sonaRichText.GetFirstCharIndexFromLine(startLine);
+                int lineEnd;
+                if(sonaRichText.GetFirstCharIndexFromLine(endLine) == end)
+                {
+                    // Selected up to the next line
+                    lineEnd = end;
+                }
+                else
+                {
+                    // Include the whole next line
+                    lineEnd = sonaRichText.GetFirstCharIndexFromLine(endLine + 1);
+                    if(lineEnd == -1)
+                    {
+                        lineEnd = sonaRichText.TextLength;
+                    }
+                }
+                var lineSpan = text.AsSpan(lineStart, lineEnd - lineStart);
+                // Check if lines contain characters that might require reformatting
+                reformatModifiedText = lineSpan.ContainsAny(lineReformattingCharacters);
+            }
+        }
 
         private async void sonaText_TextChanged(object sender, EventArgs e)
         {
-            if(moveAfterSpaces is int move)
+            var selectedStart = sonaRichText.SelectionStart;
+            var selectedLength = sonaRichText.SelectionLength;
+
+            bool updated = false;
+            sonaRichText.SuspendDrawing();
+            try
             {
-                // Text changed after newline was inserted
-                moveAfterSpaces = null;
-                sonaText.SelectionStart += move;
+                // Select span of what was replaced and extend by 1 character
+                int start = Math.Max(Math.Min(lastSelectedStart - 1, selectedStart - 1), 0);
+                int end = Math.Min(Math.Max(lastSelectedStart + lastSelectedLength + 1, selectedStart + 1), sonaRichText.TextLength);
+
+                sonaRichText.SelectionStart = start;
+                sonaRichText.SelectionLength = end - start;
+
+                // Remove formatting of inserted text
+                sonaRichText.SelectionFont = sonaRichText.Font;
+                sonaRichText.SelectionBackColor = sonaRichText.BackColor;
+                sonaRichText.SelectionColor = sonaRichText.ForeColor;
+                sonaRichText.SelectedText = sonaRichText.SelectedText;
+
+                // Update formatting of input
+                updated = FormatInputText(sonaRichText.Text, start, end);
             }
+            finally
+            {
+                sonaRichText.SelectionStart = selectedStart;
+                sonaRichText.SelectionLength = selectedLength;
+                sonaRichText.SelectionFont = sonaRichText.Font;
+                sonaRichText.ResumeDrawing();
+                if(updated)
+                {
+                    sonaRichText.Update();
+                }
+            }
+
+            // Ignore modifications after selection changed
+            sonaRichText.Modified = false;
+            sonaText_SelectionChanged(sender, e);
 
             // Yield to get latest text in case of replacement
             await Task.Yield();
 
             // Send the text to channel
-            await codeChannel.Writer.WriteAsync(sonaText.Text);
+            await codeChannel.Writer.WriteAsync(sonaRichText.Text);
         }
 
-        private void sonaText_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+        private void sonaRichText_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
         {
             if(e.KeyCode == Keys.Tab)
             {
@@ -106,27 +195,172 @@ namespace IS4.Sona.Compiler.Gui
             }
         }
 
-        static readonly Regex lastLineSpaces = new Regex(@"^( *).*(?-m)$", RegexOptions.CultureInvariant | RegexOptions.Multiline | RegexOptions.Compiled);
+        static readonly Regex lastLineWhitespace = new Regex(@"^([ \t]*).*(?-m)$", RegexOptions.CultureInvariant | RegexOptions.Multiline | RegexOptions.Compiled);
 
-        private void sonaText_KeyPress(object sender, KeyPressEventArgs e)
+        private void sonaRichText_KeyPress(object sender, KeyPressEventArgs e)
         {
-            if(e.KeyChar == '\r')
+            switch(e.KeyChar)
             {
-                var oldText = sonaText.Text;
+                case '\r':
+                {
+                    var oldText = sonaRichText.Text;
 
-                int position = sonaText.SelectionStart;
-                // Find spaces at the last line
-                var spaces = lastLineSpaces.Match(oldText, 0, position).Groups[1].Value;
+                    int position = sonaRichText.SelectionStart;
 
-                sonaText.Text = String.Concat(
-                    oldText.AsSpan(0, position),
-                    spaces.AsSpan(),
-                    oldText.AsSpan(position + sonaText.SelectionLength)
-                );
-                sonaText.SelectionStart = position;
-                // Move on TextChanged
-                moveAfterSpaces = spaces.Length;
+                    // Find whitespace at the last line
+                    var spaces = lastLineWhitespace.Match(oldText, 0, position).Groups[1].Value;
+
+                    // Append whitespace
+                    sonaRichText.SelectedText += spaces;
+                    break;
+                }
+                case '\t':
+                {
+                    e.Handled = true;
+                    int position = sonaRichText.SelectionStart;
+                    int length = sonaRichText.SelectionLength;
+                    switch(ModifierKeys)
+                    {
+                        case 0:
+                        {
+                            // Add tab in front
+                            sonaRichText.SuspendDrawing();
+                            try
+                            {
+                                sonaRichText.SelectionLength = 0;
+                                sonaRichText.SelectedText = "\t";
+                            }
+                            finally
+                            {
+                                sonaRichText.SelectionStart = position + 1;
+                                sonaRichText.SelectionLength = length;
+                                sonaRichText.ResumeDrawing();
+                                sonaRichText.Update();
+                            }
+                            break;
+                        }
+                        case Keys.Shift:
+                        {
+                            if(position == 0)
+                            {
+                                break;
+                            }
+                            if(sonaRichText.Text[position - 1] == '\t')
+                            {
+                                // Remove existing tab
+                                sonaRichText.SuspendDrawing();
+                                try
+                                {
+                                    sonaRichText.SelectionStart = position - 1;
+                                    sonaRichText.SelectionLength = 1;
+                                    sonaRichText.SelectedText = "";
+                                }
+                                finally
+                                {
+                                    sonaRichText.SelectionLength = length;
+                                    sonaRichText.ResumeDrawing();
+                                    sonaRichText.Update();
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    break;
+                }
             }
+        }
+
+        private bool FormatInputText(string input, int affectedStart, int affectedEnd)
+        {
+            if(compiler == null)
+            {
+                return false;
+            }
+
+            bool updated = false;
+
+            var inputStream = new AntlrInputStream(input);
+            var lexer = compiler.GetLexer(inputStream);
+
+            var lastPosition = 0;
+            while(lexer.NextToken() is { Type: not SonaLexer.Eof } token)
+            {
+                // Read token from stream
+                var start = token.StartIndex;
+                var length = token.StopIndex + 1 - start;
+
+                if(start > lastPosition && (reformatModifiedText || (affectedEnd >= lastPosition && affectedStart <= start)))
+                {
+                    // Ignored part after previous token
+                    var ignoreLength = start - lastPosition;
+                    sonaRichText.SelectionStart = lastPosition;
+                    sonaRichText.SelectionLength = ignoreLength;
+                    sonaRichText.SelectionFont = new(sonaRichText.Font, input.AsSpan(lastPosition, ignoreLength).IsWhiteSpace() ? FontStyle.Regular : FontStyle.Italic);
+                    updated = true;
+                }
+
+                lastPosition = start + length;
+
+                if(!reformatModifiedText)
+                {
+                    if(start + length <= affectedStart)
+                    {
+                        continue;
+                    }
+                    if(start >= affectedEnd)
+                    {
+                        continue;
+                    }
+                }
+
+                // Needs reformatting
+                sonaRichText.SelectionStart = start;
+                sonaRichText.SelectionLength = length;
+
+                var text = token.Text;
+                if(token.Type is SonaLexer.FS_BEGIN_BLOCK_COMMENT or SonaLexer.FS_COMMENT or SonaLexer.FS_DIRECTIVE or SonaLexer.FS_END_BLOCK_COMMENT or SonaLexer.FS_EOL or SonaLexer.FS_PART or SonaLexer.FS_WHITESPACE)
+                {
+                    // Inline F#
+                    sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Italic);
+                }
+                else if(token.Type is SonaLexer.ERROR or SonaLexer.UNDERSCORE or SonaLexer.INT_SUFFIX or SonaLexer.FLOAT_SUFFIX or SonaLexer.EXP_SUFFIX or SonaLexer.HEX_SUFFIX or SonaLexer.NORMAL_STRING_SUFFIX or SonaLexer.VERBATIM_STRING_SUFFIX or SonaLexer.CHAR_STRING_SUFFIX or SonaLexer.END_INTERPOLATED_STRING_SUFFIX)
+                {
+                    // Error
+                    sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Italic | FontStyle.Strikeout);
+                }
+                else if(token.Type is SonaLexer.INT or SonaLexer.FLOAT or SonaLexer.EXP or SonaLexer.HEX or SonaLexer.NORMAL_STRING or SonaLexer.VERBATIM_STRING or SonaLexer.CHAR_STRING or SonaLexer.BEGIN_INTERPOLATED_STRING or SonaLexer.BEGIN_VERBATIM_INTERPOLATED_STRING or SonaLexer.INTERP_PART or SonaLexer.END_INTERPOLATED_STRING)
+                {
+                    // Literal
+                    sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Italic);
+                }
+                else if(text.Length > 0 && Char.IsAsciiLetter(text[0]) && token.Type is not SonaLexer.NAME)
+                {
+                    // Keyword
+                    sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Bold);
+                }
+                else if((text.Length > 2 && text[0] == '#' && Char.IsAsciiLetter(text[1])) || token.Type is SonaLexer.END_INLINE_SOURCE or SonaLexer.BEGIN_GENERAL_LOCAL_ATTRIBUTE or SonaLexer.END_DIRECTIVE)
+                {
+                    // Directive
+                    sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Bold | FontStyle.Italic);
+                }
+                else
+                {
+                    // Normal
+                    sonaRichText.SelectionFont = sonaRichText.Font;
+                }
+                updated = true;
+            }
+
+            if(input.Length > lastPosition && (reformatModifiedText || affectedEnd >= lastPosition))
+            {
+                // Ignored part after last token
+                sonaRichText.SelectionStart = lastPosition;
+                sonaRichText.SelectionLength = input.Length - lastPosition;
+                sonaRichText.SelectionFont = new(sonaRichText.Font, input.AsSpan(lastPosition).IsWhiteSpace() ? FontStyle.Regular : FontStyle.Italic);
+                updated = true;
+            }
+
+            return updated;
         }
 
         private void UpdateText()
@@ -228,28 +462,16 @@ namespace IS4.Sona.Compiler.Gui
             }
         }
 
-        static readonly HashSet<FSharpTokenKind> keywordTokens = new()
-        {
-            FSharpTokenKind.OffsideBlockBegin,
-            FSharpTokenKind.OffsideBlockEnd,
-            FSharpTokenKind.OffsideDo,
-            FSharpTokenKind.OffsideDoBang,
-            FSharpTokenKind.OffsideElse,
-            FSharpTokenKind.OffsideEnd,
-            FSharpTokenKind.OffsideFun,
-            FSharpTokenKind.OffsideFunction,
-            FSharpTokenKind.OffsideLazy,
-            FSharpTokenKind.OffsideLet,
-            FSharpTokenKind.OffsideThen,
-            FSharpTokenKind.OffsideWith
-        };
-
         private void SetOutputText(string str)
         {
-            resultRichText.SuspendLayout();
+            var position = resultRichText.SelectionStart;
+            var zoom = resultRichText.ZoomFactor;
+            resultRichText.SuspendDrawing();
             try
             {
                 resultRichText.Clear();
+                resultRichText.ZoomFactor = 1;
+                resultRichText.ZoomFactor = zoom;
                 var text = SourceText.ofString(str);
                 var lastPosition = PositionModule.pos0;
                 FSharpLexer.Tokenize(
@@ -271,7 +493,10 @@ namespace IS4.Sona.Compiler.Gui
                             {
                                 return null!;
                             }
-                            resultRichText.SelectionFont = new(resultRichText.Font, FontStyle.Italic);
+                            if(pretext != ")" && !String.IsNullOrWhiteSpace(pretext))
+                            {
+                                resultRichText.SelectionFont = new(resultRichText.Font, FontStyle.Italic);
+                            }
                             resultRichText.AppendText(pretext);
                             resultRichText.SelectionFont = resultRichText.Font;
                             lastPosition = range.Start;
@@ -298,9 +523,13 @@ namespace IS4.Sona.Compiler.Gui
                         {
                             resultRichText.SelectionFont = new(resultRichText.Font, FontStyle.Bold);
                         }
-                        else if(tok.IsCommentTrivia || tok.IsNumericLiteral || tok.IsStringLiteral || tok.Kind == FSharpTokenKind.KeywordString || tok.Kind == FSharpTokenKind.Char || (tok.Kind == FSharpTokenKind.Identifier && subtext.StartsWith('`')))
+                        else if(tok.IsCommentTrivia || tok.IsNumericLiteral || tok.IsStringLiteral || tok.Kind == FSharpTokenKind.KeywordString || tok.Kind == FSharpTokenKind.Char)
                         {
                             resultRichText.SelectionFont = new(resultRichText.Font, FontStyle.Italic);
+                        }
+                        else if(tok.Kind == FSharpTokenKind.Identifier && subtext.StartsWith('`'))
+                        {
+                            resultRichText.SelectionFont = new(resultRichText.Font, subtext.StartsWith("``_ ") ? FontStyle.Underline | FontStyle.Italic : FontStyle.Italic);
                         }
                         resultRichText.AppendText(subtext);
                         resultRichText.SelectionFont = resultRichText.Font;
@@ -328,8 +557,25 @@ namespace IS4.Sona.Compiler.Gui
             }
             finally
             {
-                resultRichText.ResumeLayout();
+                if(position > resultRichText.TextLength)
+                {
+                    position = resultRichText.TextLength;
+                }
+                resultRichText.SelectionStart = position;
+                resultRichText.ScrollToCaret();
+                resultRichText.ResumeDrawing();
+                resultRichText.Update();
             }
+        }
+
+        private void sonaRichText_ContentsResized(object sender, ContentsResizedEventArgs e)
+        {
+            resultRichText.ZoomFactor = sonaRichText.ZoomFactor;
+        }
+
+        private void resultRichText_ContentsResized(object sender, ContentsResizedEventArgs e)
+        {
+            sonaRichText.ZoomFactor = resultRichText.ZoomFactor;
         }
     }
 }
