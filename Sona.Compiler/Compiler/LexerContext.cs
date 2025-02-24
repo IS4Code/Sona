@@ -14,8 +14,6 @@ namespace IS4.Sona.Compiler
     /// </summary>
     internal sealed class LexerContext
     {
-        readonly int nameType, docCommentType, beginPragmaType, endPragmaType;
-
         record struct ContextRecord(int TokenIndex, ImmutableDictionary<string, ImmutableStack<LexerState>> Context);
 
         readonly Queue<ContextRecord> contexts = new();
@@ -32,11 +30,6 @@ namespace IS4.Sona.Compiler
 
         public LexerContext(SonaLexer lexer)
         {
-            nameType = lexer.GetTokenType("NAME");
-            docCommentType = lexer.GetTokenType("DOC_COMMENT");
-            beginPragmaType = lexer.GetTokenType("BEGIN_PRAGMA");
-            endPragmaType = lexer.GetTokenType("END_PRAGMA");
-
             parserContext = lexerContext = ImmutableDictionary<string, ImmutableStack<LexerState>>.Empty;
         }
 
@@ -47,13 +40,13 @@ namespace IS4.Sona.Compiler
         public void OnLexerToken(IToken token)
         {
             int type = token.Type;
-            if(type == docCommentType)
+            if(type == SonaLexer.DOC_COMMENT)
             {
                 // Comments are recognized everywhere
                 AddComment(token);
                 return;
             }
-            if(state == ParseState.PragmaEnd && type == endPragmaType)
+            if(state == ParseState.PragmaEnd && type == SonaLexer.END_PRAGMA)
             {
                 // End of pragma requested
                 state = ParseState.None;
@@ -68,7 +61,7 @@ namespace IS4.Sona.Compiler
                     state = ParseState.PragmaEnd;
                     currentPragma = null;
                 }
-                if(type == endPragmaType)
+                if(type == SonaLexer.END_PRAGMA)
                 {
                     state = ParseState.None;
                     currentPragma = null;
@@ -79,7 +72,7 @@ namespace IS4.Sona.Compiler
             {
                 case ParseState.None:
                     // Pragma directive
-                    if(type != beginPragmaType)
+                    if(type != SonaLexer.BEGIN_PRAGMA)
                     {
                         break;
                     }
@@ -88,7 +81,7 @@ namespace IS4.Sona.Compiler
                     return;
                 case ParseState.Pragma:
                     // Beginning of pragma - name needed
-                    if(type != nameType)
+                    if(type != SonaLexer.NAME)
                     {
                         break;
                     }

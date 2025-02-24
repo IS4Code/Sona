@@ -38,9 +38,8 @@ namespace IS4.Sona.Compiler
             errorListener?.AddTo(lexer);
 
             // Add empty mode below, to handle close parenthesis
-            int emptyMode = Array.IndexOf(lexer.ModeNames, "Empty");
             int defaultMode = lexer.CurrentMode;
-            lexer.Mode(emptyMode);
+            lexer.Mode(SonaLexer.Empty);
             lexer.PushMode(defaultMode);
 
             var channelContext = new LexerContext(lexer);
