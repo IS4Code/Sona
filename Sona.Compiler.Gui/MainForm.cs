@@ -6,8 +6,13 @@ using System.Runtime.ExceptionServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Channels;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Antlr4.Runtime;
+using FSharp.Compiler.Syntax;
+using FSharp.Compiler.Text;
+using FSharp.Compiler.Tokenization;
+using Microsoft.FSharp.Core;
 
 namespace IS4.Sona.Compiler.Gui
 {
@@ -43,9 +48,9 @@ namespace IS4.Sona.Compiler.Gui
                 font.GdiVerticalFont
             );
 
-            resultText.BackColor = sonaText.BackColor;
-            resultText.ForeColor = sonaText.ForeColor;
-            resultText.Font = sonaText.Font;
+            resultRichText.BackColor = sonaText.BackColor;
+            resultRichText.ForeColor = sonaText.ForeColor;
+            resultRichText.Font = sonaText.Font;
 
             codeSplit.SplitterWidth *= 2;
 
@@ -84,6 +89,9 @@ namespace IS4.Sona.Compiler.Gui
                 moveAfterSpaces = null;
                 sonaText.SelectionStart += move;
             }
+
+            // Yield to get latest text in case of replacement
+            await Task.Yield();
 
             // Send the text to channel
             await codeChannel.Writer.WriteAsync(sonaText.Text);
@@ -167,8 +175,17 @@ namespace IS4.Sona.Compiler.Gui
             }
         }
 
+        (string text, bool latest) latestTuple;
+        bool latestResult;
+
         private bool CompileText(string text, bool latest)
         {
+            var tuple = (text, latest);
+            if(latestTuple == tuple)
+            {
+                return latestResult;
+            }
+
             var inputStream = new AntlrInputStream(text);
 
             var writer = new StringWriter();
@@ -182,13 +199,14 @@ namespace IS4.Sona.Compiler.Gui
                     if(latest)
                     {
                         // Show visible success only on latest code
-                        resultText.Enabled = true;
+                        resultRichText.Enabled = true;
                         messageBox.Text = "";
                     }
-                    resultText.Text = result;
+
+                    SetOutputText(result);
                 });
 
-                return true;
+                return latestResult = true;
             }
             catch(Exception e)
             {
@@ -197,12 +215,120 @@ namespace IS4.Sona.Compiler.Gui
                     // Ignore exceptions from non-recent code
                     var message = e.ToString();
                     Invoke(() => {
-                        resultText.Enabled = false;
+                        resultRichText.Enabled = false;
                         messageBox.Text = e.Message;
                     });
                 }
 
-                return false;
+                return latestResult = false;
+            }
+            finally
+            {
+                latestTuple = tuple;
+            }
+        }
+
+        static readonly HashSet<FSharpTokenKind> keywordTokens = new()
+        {
+            FSharpTokenKind.OffsideBlockBegin,
+            FSharpTokenKind.OffsideBlockEnd,
+            FSharpTokenKind.OffsideDo,
+            FSharpTokenKind.OffsideDoBang,
+            FSharpTokenKind.OffsideElse,
+            FSharpTokenKind.OffsideEnd,
+            FSharpTokenKind.OffsideFun,
+            FSharpTokenKind.OffsideFunction,
+            FSharpTokenKind.OffsideLazy,
+            FSharpTokenKind.OffsideLet,
+            FSharpTokenKind.OffsideThen,
+            FSharpTokenKind.OffsideWith
+        };
+
+        private void SetOutputText(string str)
+        {
+            resultRichText.SuspendLayout();
+            try
+            {
+                resultRichText.Clear();
+                var text = SourceText.ofString(str);
+                var lastPosition = PositionModule.pos0;
+                FSharpLexer.Tokenize(
+                    text,
+                    FSharpFunc<FSharpToken, Unit>.FromConverter(tok => {
+                        var range = tok.Range;
+                        if(range.IsSynthetic || PositionModule.posGeq(lastPosition, range.End))
+                        {
+                            return null!;
+                        }
+                        if(PositionModule.posGt(range.Start, lastPosition))
+                        {
+                            string pretext;
+                            try
+                            {
+                                pretext = text.GetSubTextFromRange(RangeModule.mkRange("", lastPosition, range.Start));
+                            }
+                            catch(ArgumentException)
+                            {
+                                return null!;
+                            }
+                            resultRichText.SelectionFont = new(resultRichText.Font, FontStyle.Italic);
+                            resultRichText.AppendText(pretext);
+                            resultRichText.SelectionFont = resultRichText.Font;
+                            lastPosition = range.Start;
+                        }
+                        string subtext;
+                        try
+                        {
+                            subtext = text.GetSubTextFromRange(range);
+                        }
+                        catch(ArgumentException)
+                        {
+                            return null!;
+                        }
+                        if(tok.Kind == FSharpTokenKind.OffsideBlockBegin && subtext != "begin")
+                        {
+                            return null!;
+                        }
+                        if(tok.Kind == FSharpTokenKind.OffsideBlockEnd && subtext != "end")
+                        {
+                            return null!;
+                        }
+                        lastPosition = range.End;
+                        if(tok.IsKeyword || (subtext.Length > 0 && Char.IsAsciiLetter(subtext[0]) && !PrettyNaming.IsIdentifierName(subtext)))
+                        {
+                            resultRichText.SelectionFont = new(resultRichText.Font, FontStyle.Bold);
+                        }
+                        else if(tok.IsCommentTrivia || tok.IsNumericLiteral || tok.IsStringLiteral || tok.Kind == FSharpTokenKind.KeywordString || tok.Kind == FSharpTokenKind.Char || (tok.Kind == FSharpTokenKind.Identifier && subtext.StartsWith('`')))
+                        {
+                            resultRichText.SelectionFont = new(resultRichText.Font, FontStyle.Italic);
+                        }
+                        resultRichText.AppendText(subtext);
+                        resultRichText.SelectionFont = resultRichText.Font;
+                        return null!;
+                    }),
+                    langVersion: null,
+                    strictIndentation: null,
+                    filePath: null,
+                    conditionalDefines: null,
+                    flags: null,
+                    pathMap: null,
+                    ct: null
+                );
+                var (lastline, lastcol) = text.GetLastCharacterPosition();
+                string lasttext;
+                try
+                {
+                    lasttext = text.GetSubTextFromRange(RangeModule.mkRange("", lastPosition, PositionModule.mkPos(lastline, lastcol)));
+                }
+                catch(ArgumentException)
+                {
+                    return;
+                }
+                resultRichText.AppendText(lasttext);
+            }
+            finally
+            {
+                resultRichText.ResumeLayout();
             }
         }
     }

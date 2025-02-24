@@ -34,8 +34,8 @@ namespace IS4.Sona.Compiler.Gui
             codeSplit = new SplitContainer();
             sonaText = new TextBox();
             splitContainer1 = new SplitContainer();
-            resultText = new TextBox();
             messageBox = new TextBox();
+            resultRichText = new DoubleBufferedRichTextBox();
             ((System.ComponentModel.ISupportInitialize)codeSplit).BeginInit();
             codeSplit.Panel1.SuspendLayout();
             codeSplit.Panel2.SuspendLayout();
@@ -88,7 +88,7 @@ namespace IS4.Sona.Compiler.Gui
             // 
             // splitContainer1.Panel1
             // 
-            splitContainer1.Panel1.Controls.Add(resultText);
+            splitContainer1.Panel1.Controls.Add(resultRichText);
             // 
             // splitContainer1.Panel2
             // 
@@ -96,18 +96,6 @@ namespace IS4.Sona.Compiler.Gui
             splitContainer1.Size = new Size(396, 450);
             splitContainer1.SplitterDistance = 350;
             splitContainer1.TabIndex = 2;
-            // 
-            // resultText
-            // 
-            resultText.Dock = DockStyle.Fill;
-            resultText.Location = new Point(0, 0);
-            resultText.Multiline = true;
-            resultText.Name = "resultText";
-            resultText.ReadOnly = true;
-            resultText.ScrollBars = ScrollBars.Both;
-            resultText.Size = new Size(396, 350);
-            resultText.TabIndex = 1;
-            resultText.WordWrap = false;
             // 
             // messageBox
             // 
@@ -119,6 +107,18 @@ namespace IS4.Sona.Compiler.Gui
             messageBox.ScrollBars = ScrollBars.Both;
             messageBox.Size = new Size(396, 96);
             messageBox.TabIndex = 2;
+            // 
+            // resultRichText
+            // 
+            resultRichText.DetectUrls = false;
+            resultRichText.Dock = DockStyle.Fill;
+            resultRichText.Location = new Point(0, 0);
+            resultRichText.Name = "resultRichText";
+            resultRichText.ReadOnly = true;
+            resultRichText.Size = new Size(396, 350);
+            resultRichText.TabIndex = 2;
+            resultRichText.Text = "";
+            resultRichText.WordWrap = false;
             // 
             // MainForm
             // 
@@ -134,7 +134,6 @@ namespace IS4.Sona.Compiler.Gui
             ((System.ComponentModel.ISupportInitialize)codeSplit).EndInit();
             codeSplit.ResumeLayout(false);
             splitContainer1.Panel1.ResumeLayout(false);
-            splitContainer1.Panel1.PerformLayout();
             splitContainer1.Panel2.ResumeLayout(false);
             splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
@@ -146,8 +145,8 @@ namespace IS4.Sona.Compiler.Gui
 
         private SplitContainer codeSplit;
         private TextBox sonaText;
-        private TextBox resultText;
         private SplitContainer splitContainer1;
         private TextBox messageBox;
+        private RichTextBox resultRichText;
     }
 }
