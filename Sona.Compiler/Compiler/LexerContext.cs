@@ -212,8 +212,12 @@ namespace IS4.Sona.Compiler
 
         private LexerState CreatePragma(string name, IToken token)
         {
-            return new TestPragma(name);
-            //throw new Exception($"'{name}' is not recognized as a valid pragma name.");
+            switch(name)
+            {
+                case "echo":
+                    return new EchoPragma();
+            }
+            throw new Exception($"'{name}' is not recognized as a valid pragma name.");
         }
 
         private void AddComment(IToken token)
@@ -247,24 +251,6 @@ namespace IS4.Sona.Compiler
             var index = token.TokenIndex;
             lexerContext = lexerContext.SetItem(name, stack);
             contexts.Enqueue(new(index, lexerContext));
-        }
-
-        class TestPragma : LexerState
-        {
-            public TestPragma(string name) : base(name)
-            {
-
-            }
-
-            public override LexerState ForkNew(IToken token)
-            {
-                return new TestPragma(Name);
-            }
-
-            public override bool ReceiveToken(IToken token)
-            {
-                return false;
-            }
         }
 
         sealed class DocComment : DocumentationCommentState

@@ -65,6 +65,11 @@ namespace IS4.Sona.Compiler.States
             EnterState<ContinueState>().EnterContinueStatement(context);
         }
 
+        public sealed override void EnterEchoStatement(EchoStatementContext context)
+        {
+            EnterState<EchoState>().EnterEchoStatement(context);
+        }
+
         public sealed override void EnterVariableDecl(VariableDeclContext context)
         {
             EnterState<NewVariableState>().EnterVariableDecl(context);
@@ -73,6 +78,11 @@ namespace IS4.Sona.Compiler.States
         public sealed override void EnterMemberOrAssignment(MemberOrAssignmentContext context)
         {
             EnterState<MemberOrAssignmentState>().EnterMemberOrAssignment(context);
+        }
+
+        public sealed override void EnterMemberDiscard(MemberDiscardContext context)
+        {
+            EnterState<MemberDiscardState>().EnterMemberDiscard(context);
         }
 
         public sealed override void EnterIfStatementFree(IfStatementFreeContext context)
@@ -699,6 +709,36 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
+    internal sealed class EchoState : NodeState
+    {
+        public override void EnterEchoStatement(EchoStatementContext context)
+        {
+            // Update token (VisitTerminal is called after this)
+            LexerContext.OnParserToken(context.Start);
+            var identifier = LexerContext.GetState<EchoPragma>()?.Identifier ?? "printfn";
+
+            Out.WriteNamespacedName("Microsoft.FSharp.Core", "ExtraTopLevelOperators");
+            Out.Write('.');
+            Out.WriteIdentifier(identifier);
+        }
+
+        public override void ExitEchoStatement(EchoStatementContext context)
+        {
+            ExitState().ExitEchoStatement(context);
+        }
+
+        public override void EnterExpression(ExpressionContext context)
+        {
+            Out.Write('(');
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public override void ExitExpression(ExpressionContext context)
+        {
+            Out.Write(')');
+        }
+    }
+
     internal sealed class MemberOrAssignmentState : MemberExprState
     {
         public override void EnterMemberOrAssignment(MemberOrAssignmentContext context)
@@ -727,6 +767,31 @@ namespace IS4.Sona.Compiler.States
         }
 
         public override void ExitAssignment(AssignmentContext context)
+        {
+
+        }
+    }
+
+    internal sealed class MemberDiscardState : MemberExprState
+    {
+        public override void EnterMemberDiscard(MemberDiscardContext context)
+        {
+
+        }
+
+        public override void ExitMemberDiscard(MemberDiscardContext context)
+        {
+            ExitState().ExitMemberDiscard(context);
+        }
+
+        public override void EnterMemberExpr(MemberExprContext context)
+        {
+            Out.Write("let _");
+            Out.WriteOperator('=');
+            EnterState<MemberExprState>().EnterMemberExpr(context);
+        }
+
+        public override void ExitMemberExpr(MemberExprContext context)
         {
 
         }

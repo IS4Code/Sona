@@ -149,6 +149,8 @@ statement:
   variableDecl |
   multiFuncDecl |
   memberOrAssignment |
+  memberDiscard |
+  echoStatement |
   inlineSourceFree |
   ifStatementFree |
   doStatementFree |
@@ -251,6 +253,9 @@ expressionStatement:
   forStatementFree |
   forStatementFreeInterrupted |
   forStatementConditional;
+
+echoStatement:
+  'echo' expression (',' expression)*;
 
 /* ---------------- */
 /* Block statements */
@@ -804,6 +809,9 @@ memberOrAssignment:
 
 assignment:
   '=' expression;
+
+memberDiscard:
+  memberExpr '!';
 
 /* -------- */
 /* Patterns */

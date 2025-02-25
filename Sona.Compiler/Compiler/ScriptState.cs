@@ -13,6 +13,7 @@ namespace IS4.Sona.Compiler
         public ScriptState? Parent { get; private set; }
 
         protected ISourceWriter Out => Environment.Output;
+        protected LexerContext LexerContext => Environment.LexerContext;
 
         public int StateLevel { get; private set; }
 
@@ -102,7 +103,7 @@ namespace IS4.Sona.Compiler
         {
             base.VisitTerminal(node);
 
-            Environment.ChannelContext.OnParserToken(node.Symbol);
+            Environment.LexerContext.OnParserToken(node.Symbol);
         }
 
         protected string Error(string message)
