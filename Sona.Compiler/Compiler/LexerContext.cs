@@ -46,7 +46,7 @@ namespace IS4.Sona.Compiler
                 AddComment(token);
                 return;
             }
-            if(state == ParseState.PragmaEnd && type == SonaLexer.END_PRAGMA)
+            if((state == ParseState.PragmaEnd || pragmaOperation == PragmaOperation.Pop) && type == SonaLexer.END_PRAGMA)
             {
                 // End of pragma requested
                 state = ParseState.None;
