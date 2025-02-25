@@ -60,7 +60,12 @@ namespace IS4.Sona.Compiler.Gui
             resultRichText.ForeColor = sonaRichText.ForeColor;
             resultRichText.Font = sonaRichText.Font;
 
-            codeSplit.SplitterWidth *= 2;
+            codeSplit.SplitterWidth = codeSplit.SplitterWidth * 3 / 2;
+
+            orientationButton.Text = codeSplit.Orientation.ToString();
+            orientationButton.Tag = codeSplit.Orientation;
+
+            zoomButton.Text = $"{sonaRichText.ZoomFactor:P0}";
 
             codeChannel = Channel.CreateUnbounded<string>(new()
             {
@@ -328,7 +333,7 @@ namespace IS4.Sona.Compiler.Gui
                     // Error
                     sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Italic | FontStyle.Strikeout);
                 }
-                else if(token.Type is SonaLexer.INT or SonaLexer.FLOAT or SonaLexer.EXP or SonaLexer.HEX or SonaLexer.NORMAL_STRING or SonaLexer.VERBATIM_STRING or SonaLexer.CHAR_STRING or SonaLexer.BEGIN_INTERPOLATED_STRING or SonaLexer.BEGIN_VERBATIM_INTERPOLATED_STRING or SonaLexer.INTERP_PART or SonaLexer.END_INTERPOLATED_STRING)
+                else if(token.Type is SonaLexer.INT or SonaLexer.FLOAT or SonaLexer.EXP or SonaLexer.HEX or SonaLexer.NORMAL_STRING or SonaLexer.VERBATIM_STRING or SonaLexer.CHAR_STRING or SonaLexer.BEGIN_INTERPOLATED_STRING or SonaLexer.BEGIN_VERBATIM_INTERPOLATED_STRING or SonaLexer.INTERP_PART or SonaLexer.END_INTERPOLATED_STRING or SonaLexer.DOC_COMMENT)
                 {
                     // Literal
                     sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Italic);
@@ -571,11 +576,47 @@ namespace IS4.Sona.Compiler.Gui
         private void sonaRichText_ContentsResized(object sender, ContentsResizedEventArgs e)
         {
             resultRichText.ZoomFactor = sonaRichText.ZoomFactor;
+            zoomButton.Text = $"{sonaRichText.ZoomFactor:P0}";
         }
 
         private void resultRichText_ContentsResized(object sender, ContentsResizedEventArgs e)
         {
             sonaRichText.ZoomFactor = resultRichText.ZoomFactor;
+            zoomButton.Text = $"{resultRichText.ZoomFactor:P0}";
+        }
+
+        private void orientationButton_Click(object sender, EventArgs e)
+        {
+            var distance = codeSplit.SplitterDistance;
+            codeSplit.SuspendDrawing();
+            try
+            {
+                switch((Orientation?)orientationButton.Tag)
+                {
+                    case Orientation.Horizontal:
+                        codeSplit.Orientation = Orientation.Vertical;
+                        codeSplit.SplitterDistance = distance * codeSplit.Width / codeSplit.Height;
+                        break;
+                    case Orientation.Vertical:
+                        codeSplit.Orientation = Orientation.Horizontal;
+                        codeSplit.SplitterDistance = distance * codeSplit.Height / codeSplit.Width;
+                        break;
+                }
+            }
+            finally
+            {
+                codeSplit.ResumeDrawing();
+                codeSplit.Update();
+            }
+            orientationButton.Text = codeSplit.Orientation.ToString();
+            orientationButton.Tag = codeSplit.Orientation;
+        }
+
+        private void zoomButton_Click(object sender, EventArgs e)
+        {
+            sonaRichText.ZoomFactor = 1;
+            resultRichText.ZoomFactor = 1;
+            zoomButton.Text = $"{1:P0}";
         }
     }
 }

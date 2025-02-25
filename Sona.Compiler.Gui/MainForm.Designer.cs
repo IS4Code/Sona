@@ -31,11 +31,16 @@ namespace IS4.Sona.Compiler.Gui
         /// </summary>
         private void InitializeComponent()
         {
+            var resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+            ToolStrip toolStrip;
+            zoomButton = new ToolStripButton();
             codeSplit = new SplitContainer();
             sonaRichText = new DoubleBufferedRichTextBox();
             splitContainer1 = new SplitContainer();
             resultRichText = new DoubleBufferedRichTextBox();
             messageBox = new TextBox();
+            orientationButton = new ToolStripButton();
+            toolStrip = new ToolStrip();
             ((System.ComponentModel.ISupportInitialize)codeSplit).BeginInit();
             codeSplit.Panel1.SuspendLayout();
             codeSplit.Panel2.SuspendLayout();
@@ -44,12 +49,23 @@ namespace IS4.Sona.Compiler.Gui
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
             splitContainer1.SuspendLayout();
+            toolStrip.SuspendLayout();
             SuspendLayout();
+            // 
+            // zoomButton
+            // 
+            zoomButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            zoomButton.Image = (Image)resources.GetObject("zoomButton.Image");
+            zoomButton.ImageTransparentColor = Color.Magenta;
+            zoomButton.Name = "zoomButton";
+            zoomButton.Size = new Size(77, 22);
+            zoomButton.Text = "zoomButton";
+            zoomButton.Click += zoomButton_Click;
             // 
             // codeSplit
             // 
             codeSplit.Dock = DockStyle.Fill;
-            codeSplit.Location = new Point(0, 0);
+            codeSplit.Location = new Point(0, 25);
             codeSplit.Name = "codeSplit";
             // 
             // codeSplit.Panel1
@@ -59,8 +75,8 @@ namespace IS4.Sona.Compiler.Gui
             // codeSplit.Panel2
             // 
             codeSplit.Panel2.Controls.Add(splitContainer1);
-            codeSplit.Size = new Size(800, 450);
-            codeSplit.SplitterDistance = 400;
+            codeSplit.Size = new Size(800, 425);
+            codeSplit.SplitterDistance = 396;
             codeSplit.TabIndex = 0;
             // 
             // sonaRichText
@@ -70,7 +86,7 @@ namespace IS4.Sona.Compiler.Gui
             sonaRichText.Dock = DockStyle.Fill;
             sonaRichText.Location = new Point(0, 0);
             sonaRichText.Name = "sonaRichText";
-            sonaRichText.Size = new Size(400, 450);
+            sonaRichText.Size = new Size(396, 425);
             sonaRichText.TabIndex = 3;
             sonaRichText.Text = "";
             sonaRichText.WordWrap = false;
@@ -95,8 +111,8 @@ namespace IS4.Sona.Compiler.Gui
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(messageBox);
-            splitContainer1.Size = new Size(396, 450);
-            splitContainer1.SplitterDistance = 350;
+            splitContainer1.Size = new Size(400, 425);
+            splitContainer1.SplitterDistance = 325;
             splitContainer1.TabIndex = 2;
             // 
             // resultRichText
@@ -106,7 +122,7 @@ namespace IS4.Sona.Compiler.Gui
             resultRichText.Location = new Point(0, 0);
             resultRichText.Name = "resultRichText";
             resultRichText.ReadOnly = true;
-            resultRichText.Size = new Size(396, 350);
+            resultRichText.Size = new Size(400, 325);
             resultRichText.TabIndex = 2;
             resultRichText.Text = "";
             resultRichText.WordWrap = false;
@@ -120,8 +136,27 @@ namespace IS4.Sona.Compiler.Gui
             messageBox.Name = "messageBox";
             messageBox.ReadOnly = true;
             messageBox.ScrollBars = ScrollBars.Both;
-            messageBox.Size = new Size(396, 96);
+            messageBox.Size = new Size(400, 96);
             messageBox.TabIndex = 2;
+            // 
+            // toolStrip
+            // 
+            toolStrip.Items.AddRange(new ToolStripItem[] { orientationButton, zoomButton });
+            toolStrip.Location = new Point(0, 0);
+            toolStrip.Name = "toolStrip";
+            toolStrip.Size = new Size(800, 25);
+            toolStrip.TabIndex = 2;
+            toolStrip.Text = "toolStrip";
+            // 
+            // orientationButton
+            // 
+            orientationButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            orientationButton.Image = (Image)resources.GetObject("orientationButton.Image");
+            orientationButton.ImageTransparentColor = Color.Magenta;
+            orientationButton.Name = "orientationButton";
+            orientationButton.Size = new Size(105, 22);
+            orientationButton.Text = "orientationButton";
+            orientationButton.Click += orientationButton_Click;
             // 
             // MainForm
             // 
@@ -129,6 +164,7 @@ namespace IS4.Sona.Compiler.Gui
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
             Controls.Add(codeSplit);
+            Controls.Add(toolStrip);
             Name = "MainForm";
             Text = "Sona";
             codeSplit.Panel1.ResumeLayout(false);
@@ -140,7 +176,10 @@ namespace IS4.Sona.Compiler.Gui
             splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
+            toolStrip.ResumeLayout(false);
+            toolStrip.PerformLayout();
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -150,5 +189,8 @@ namespace IS4.Sona.Compiler.Gui
         private TextBox messageBox;
         private DoubleBufferedRichTextBox resultRichText;
         private DoubleBufferedRichTextBox sonaRichText;
+        private ToolStrip toolStrip;
+        private ToolStripButton orientationButton;
+        private ToolStripButton zoomButton;
     }
 }
