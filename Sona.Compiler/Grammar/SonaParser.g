@@ -107,7 +107,7 @@ compoundName:
 /* ----- */
 
 type:
-  NAME;
+  compoundName;
 
 /* ---------- */
 /* Attributes */
@@ -785,7 +785,7 @@ funcDecl:
   localAttrList 'function' name funcBody;
 
 funcBody:
-  '(' paramList ')' valueBlock 'end';
+  '(' paramList ')' ('as' type)? valueBlock 'end';
 
 paramList:
   paramTuple (';' paramTuple)*;

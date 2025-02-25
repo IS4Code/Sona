@@ -64,6 +64,22 @@ namespace IS4.Sona.Compiler.States
             EnterState<ParamListState>().EnterParamList(context);
         }
 
+        public override void ExitParamList(ParamListContext context)
+        {
+
+        }
+
+        public override void EnterType(TypeContext context)
+        {
+            Out.WriteOperator(':');
+            base.EnterType(context);
+        }
+
+        public override void ExitType(TypeContext context)
+        {
+            base.ExitType(context);
+        }
+
         public override void EnterValueBlock(ValueBlockContext context)
         {
             Out.WriteOperator('=');
@@ -219,6 +235,17 @@ namespace IS4.Sona.Compiler.States
         public override void ExitDeclaration(DeclarationContext context)
         {
             ExitState().ExitDeclaration(context);
+        }
+
+        public override void EnterType(TypeContext context)
+        {
+            Out.WriteOperator(':');
+            base.EnterType(context);
+        }
+
+        public override void ExitType(TypeContext context)
+        {
+            base.ExitType(context);
         }
     }
 }

@@ -147,6 +147,16 @@ namespace IS4.Sona.Compiler
 
         }
 
+        public override void EnterType(TypeContext context)
+        {
+            EnterState<TypeState>().EnterType(context);
+        }
+
+        public override void ExitType(TypeContext context)
+        {
+
+        }
+
         protected virtual IExpressionContext? GetExpressionContext() => FindContext<IExpressionContext>();
 
         public override void EnterInterpolatedString(InterpolatedStringContext context)
