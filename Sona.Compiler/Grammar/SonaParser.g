@@ -774,7 +774,7 @@ stringArg:
 /* ---------------------------- */
 
 variableDecl:
-  localAttrList (letDecl | varDecl | constDecl);
+  localAttrList (letDecl | varDecl | constDecl | useDecl | useVarDecl);
 
 letDecl:
   'let' declaration '=' expression;
@@ -784,6 +784,12 @@ varDecl:
 
 constDecl:
   'const' declaration '=' expression;
+
+useDecl:
+  'use' declaration '=' expression;
+
+useVarDecl:
+  'use' 'var' declaration '=' expression;
 
 multiFuncDecl:
   funcDecl+;

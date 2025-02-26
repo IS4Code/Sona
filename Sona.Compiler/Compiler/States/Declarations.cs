@@ -237,6 +237,26 @@ namespace IS4.Sona.Compiler.States
 
         }
 
+        public override void EnterUseDecl(UseDeclContext context)
+        {
+            Out.Write("use ");
+        }
+
+        public override void ExitUseDecl(UseDeclContext context)
+        {
+
+        }
+
+        public override void EnterUseVarDecl(UseVarDeclContext context)
+        {
+            Out.Write("use mutable ");
+        }
+
+        public override void ExitUseVarDecl(UseVarDeclContext context)
+        {
+
+        }
+
         public override void EnterExpression(ExpressionContext context)
         {
             Out.WriteOperator('=');
