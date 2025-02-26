@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
@@ -103,7 +104,90 @@ namespace IS4.Sona.Compiler
         {
             base.VisitTerminal(node);
 
+            var token = node.Symbol;
             Environment.LexerContext.OnParserToken(node.Symbol);
+
+            switch(token.Type)
+            {
+                case SonaLexer.NAME:
+                    ValidateName(token.Text);
+                    break;
+                case SonaLexer.LITERAL_NAME:
+                case SonaLexer.MEMBER_NAME:
+                case SonaLexer.DYNAMIC_MEMBER_NAME:
+                    ValidateName(token.Text.AsSpan(1));
+                    break;
+            }
+        }
+
+        private void ValidateName(ReadOnlySpan<char> span)
+        {
+            if(!IsValidName(span, out var c))
+            {
+                if(c == span[0] || Char.IsWhiteSpace(c))
+                {
+                    Error($"Character '{c}' (\\u{(ushort)c:X4}) is not recognized as valid syntax.");
+                }
+                else
+                {
+                    Error($"Character '{c}' (\\u{(ushort)c:X4}) is not accepted as a part of an identifier.");
+                }
+            }
+        }
+
+        private bool IsValidName(ReadOnlySpan<char> span, out char errorChar)
+        {
+            // Quick scan for non-ASCII characters
+            var nonAsciiCharacter = span.IndexOfAnyInRange('\u0080', '\uFFFF');
+            if(nonAsciiCharacter == -1)
+            {
+                // Already validated by lexer
+                errorChar = default;
+                return true;
+            }
+            char c;
+            if(nonAsciiCharacter == 0)
+            {
+                c = span[0];
+                if(Char.GetUnicodeCategory(c) is not (
+                    UnicodeCategory.UppercaseLetter or
+                    UnicodeCategory.LowercaseLetter or
+                    UnicodeCategory.TitlecaseLetter or
+                    UnicodeCategory.ModifierLetter or
+                    UnicodeCategory.OtherLetter or
+                    UnicodeCategory.LetterNumber
+                ))
+                {
+                    errorChar = c;
+                    return false;
+                }
+                span = span.Slice(1);
+                nonAsciiCharacter = span.IndexOfAnyInRange('\u0080', '\uFFFF');
+            }
+            while(nonAsciiCharacter != -1)
+            {
+                c = span[nonAsciiCharacter];
+                if(Char.GetUnicodeCategory(c) is not (
+                    UnicodeCategory.UppercaseLetter or
+                    UnicodeCategory.LowercaseLetter or
+                    UnicodeCategory.TitlecaseLetter or
+                    UnicodeCategory.ModifierLetter or
+                    UnicodeCategory.OtherLetter or
+                    UnicodeCategory.LetterNumber or
+                    UnicodeCategory.ConnectorPunctuation or
+                    UnicodeCategory.NonSpacingMark or
+                    UnicodeCategory.SpacingCombiningMark or
+                    UnicodeCategory.Format
+                ))
+                {
+                    errorChar = c;
+                    return false;
+                }
+                span = span.Slice(nonAsciiCharacter + 1);
+                nonAsciiCharacter = span.IndexOfAnyInRange('\u0080', '\uFFFF');
+            }
+            errorChar = default;
+            return true;
         }
 
         protected string Error(string message)

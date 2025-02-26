@@ -70,6 +70,9 @@ LINE_COMMENT:
 fragment LINE_WHITESPACE:
   ' ' | '\t' | '\u000C';
 
+fragment UNICODE:
+  [\u00A1-\uFFFF];
+
 WHITESPACE:
   (LINE_WHITESPACE | '\r' | '\n') -> skip;
 
@@ -101,7 +104,7 @@ BEGIN_PRAGMA:
   '#pragma' LINE_WHITESPACE -> channel(Pragma), mode(PragmaDirective);
 
 LITERAL_NAME:
-  '@' NAME;
+  '@' EXTENDED_NAME;
 
 MEMBER_NAME:
   '.' NAME;
@@ -249,7 +252,10 @@ COLON: ':';
 DOT: '.';
 
 NAME:
-  (LOWERCASE | UPPERCASE | '_') (LOWERCASE | UPPERCASE | DIGIT | '_')*;
+  (LOWERCASE | UPPERCASE | '_' | UNICODE) (LOWERCASE | UPPERCASE | DIGIT | '_' | UNICODE)*;
+
+fragment EXTENDED_NAME:
+  (LOWERCASE | UPPERCASE | '_' | UNICODE) (LOWERCASE | UPPERCASE | DIGIT | '_' | '\'' | UNICODE)*;
 
 mode Directive;
 
