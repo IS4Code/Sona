@@ -216,6 +216,10 @@ namespace IS4.Sona.Compiler
             {
                 case "echo":
                     return new EchoPragma();
+                case "record":
+                    return new RecordPragma();
+                case "tuple":
+                    return new TuplePragma();
             }
             throw new Exception($"'{name}' is not recognized as a valid pragma name.");
         }

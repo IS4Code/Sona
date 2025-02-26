@@ -498,13 +498,14 @@ namespace IS4.Sona.Compiler.States
 
     internal sealed class RecordState : NodeState
     {
-        bool first;
+        bool first, isStruct;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             first = true;
+            isStruct = false;
         }
 
         public override void EnterRecordConstructor(RecordConstructorContext context)
@@ -516,6 +517,41 @@ namespace IS4.Sona.Compiler.States
         {
             Out.Write(" }");
             ExitState().ExitRecordConstructor(context);
+        }
+
+        public override void EnterAnonymousRecordConstructor(AnonymousRecordConstructorContext context)
+        {
+            LexerContext.OnParserToken(context.Start);
+            isStruct = LexerContext.GetState<RecordPragma>()?.IsStruct ?? false;
+            Out.Write(isStruct ? "(struct{| " : "{| ");
+        }
+
+        public override void ExitAnonymousRecordConstructor(AnonymousRecordConstructorContext context)
+        {
+            Out.Write(isStruct ? " |})" : " |}");
+            ExitState().ExitAnonymousRecordConstructor(context);
+        }
+
+        public override void EnterAnonymousClassRecordConstructor(AnonymousClassRecordConstructorContext context)
+        {
+            Out.Write("{| ");
+        }
+
+        public override void ExitAnonymousClassRecordConstructor(AnonymousClassRecordConstructorContext context)
+        {
+            Out.Write(" |}");
+            ExitState().ExitAnonymousClassRecordConstructor(context);
+        }
+
+        public override void EnterAnonymousStructRecordConstructor(AnonymousStructRecordConstructorContext context)
+        {
+            Out.Write("(struct{| ");
+        }
+
+        public override void ExitAnonymousStructRecordConstructor(AnonymousStructRecordConstructorContext context)
+        {
+            Out.Write(" |})");
+            ExitState().ExitAnonymousStructRecordConstructor(context);
         }
 
         public override void EnterName(NameContext context)
@@ -534,6 +570,85 @@ namespace IS4.Sona.Compiler.States
         public override void EnterExpression(ExpressionContext context)
         {
             Out.WriteOperator('=');
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public override void ExitExpression(ExpressionContext context)
+        {
+
+        }
+    }
+
+    internal sealed class TupleState : NodeState
+    {
+        bool first, isStruct;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            first = true;
+            isStruct = false;
+        }
+
+        public override void EnterTupleConstructor(TupleConstructorContext context)
+        {
+            LexerContext.OnParserToken(context.Start);
+            isStruct = LexerContext.GetState<TuplePragma>()?.IsStruct ?? true;
+            Out.Write(isStruct ? "(struct(" : "(");
+        }
+
+        public override void ExitTupleConstructor(TupleConstructorContext context)
+        {
+            Out.Write(isStruct ? "))" : ")");
+            ExitState().ExitTupleConstructor(context);
+        }
+
+        public override void EnterExplicitTupleConstructor(ExplicitTupleConstructorContext context)
+        {
+            LexerContext.OnParserToken(context.Start);
+            isStruct = LexerContext.GetState<TuplePragma>()?.IsStruct ?? true;
+            Out.Write(isStruct ? "(struct(" : "(");
+        }
+
+        public override void ExitExplicitTupleConstructor(ExplicitTupleConstructorContext context)
+        {
+            Out.Write(isStruct ? "))" : ")");
+            ExitState().ExitExplicitTupleConstructor(context);
+        }
+
+        public override void EnterClassTupleConstructor(ClassTupleConstructorContext context)
+        {
+            Out.Write("(");
+        }
+
+        public override void ExitClassTupleConstructor(ClassTupleConstructorContext context)
+        {
+            Out.Write(")");
+            ExitState().ExitClassTupleConstructor(context);
+        }
+
+        public override void EnterStructTupleConstructor(StructTupleConstructorContext context)
+        {
+            Out.Write("(struct(");
+        }
+
+        public override void ExitStructTupleConstructor(StructTupleConstructorContext context)
+        {
+            Out.Write("))");
+            ExitState().ExitStructTupleConstructor(context);
+        }
+
+        public override void EnterExpression(ExpressionContext context)
+        {
+            if(first)
+            {
+                first = false;
+            }
+            else
+            {
+                Out.Write(',');
+            }
             EnterState<ExpressionState>().EnterExpression(context);
         }
 

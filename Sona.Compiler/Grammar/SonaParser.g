@@ -1016,7 +1016,14 @@ inlineExpr:
 constructExpr:
   arrayConstructor |
   recordConstructor |
-  sequenceConstructor;
+  anonymousRecordConstructor |
+  anonymousClassRecordConstructor |
+  anonymousStructRecordConstructor |
+  sequenceConstructor |
+  tupleConstructor |
+  explicitTupleConstructor |
+  classTupleConstructor |
+  structTupleConstructor;
 
 // Member access
 
@@ -1064,10 +1071,19 @@ callArgList:
 callArgTuple:
   (expression (',' expression)*)?;
 
-// Records and collections
+// Records, collections, and tuples
 
 recordConstructor:
   '{' recordField (',' recordField)* '}';
+
+anonymousRecordConstructor:
+  '{' 'as' 'new' ';'? recordField (',' recordField)* '}';
+
+anonymousClassRecordConstructor:
+  '{' 'as' 'class' ';'? recordField (',' recordField)* '}';
+
+anonymousStructRecordConstructor:
+  '{' 'as' 'struct' ';'? recordField (',' recordField)* '}';
 
 recordField:
   name '=' expression;
@@ -1101,6 +1117,18 @@ collectionFieldExpression:
 complexCollectionElement:
   spreadExpression |
   expressionStatement;
+
+tupleConstructor:
+  '(' expression ',' expression (',' expression)* ')';
+
+explicitTupleConstructor:
+  '(' 'as' 'new' ';'? expression ',' expression (',' expression)* ')';
+
+classTupleConstructor:
+  '(' 'as' 'class' ';'? expression ',' expression (',' expression)* ')';
+
+structTupleConstructor:
+  '(' 'as' 'struct' ';'? expression ',' expression (',' expression)* ')';
 
 spreadExpression:
   '..' concatExpr_Inner;

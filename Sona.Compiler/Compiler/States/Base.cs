@@ -137,6 +137,76 @@ namespace IS4.Sona.Compiler
 
         }
 
+        public override void EnterAnonymousRecordConstructor(AnonymousRecordConstructorContext context)
+        {
+            EnterState<RecordState>().EnterAnonymousRecordConstructor(context);
+        }
+
+        public override void ExitAnonymousRecordConstructor(AnonymousRecordConstructorContext context)
+        {
+
+        }
+
+        public override void EnterAnonymousClassRecordConstructor(AnonymousClassRecordConstructorContext context)
+        {
+            EnterState<RecordState>().EnterAnonymousClassRecordConstructor(context);
+        }
+
+        public override void ExitAnonymousClassRecordConstructor(AnonymousClassRecordConstructorContext context)
+        {
+
+        }
+
+        public override void EnterAnonymousStructRecordConstructor(AnonymousStructRecordConstructorContext context)
+        {
+            EnterState<RecordState>().EnterAnonymousStructRecordConstructor(context);
+        }
+
+        public override void ExitAnonymousStructRecordConstructor(AnonymousStructRecordConstructorContext context)
+        {
+
+        }
+
+        public override void EnterTupleConstructor(TupleConstructorContext context)
+        {
+            EnterState<TupleState>().EnterTupleConstructor(context);
+        }
+
+        public override void ExitTupleConstructor(TupleConstructorContext context)
+        {
+
+        }
+
+        public override void EnterExplicitTupleConstructor(ExplicitTupleConstructorContext context)
+        {
+            EnterState<TupleState>().EnterExplicitTupleConstructor(context);
+        }
+
+        public override void ExitExplicitTupleConstructor(ExplicitTupleConstructorContext context)
+        {
+
+        }
+
+        public override void EnterClassTupleConstructor(ClassTupleConstructorContext context)
+        {
+            EnterState<TupleState>().EnterClassTupleConstructor(context);
+        }
+
+        public override void ExitClassTupleConstructor(ClassTupleConstructorContext context)
+        {
+
+        }
+
+        public override void EnterStructTupleConstructor(StructTupleConstructorContext context)
+        {
+            EnterState<TupleState>().EnterStructTupleConstructor(context);
+        }
+
+        public override void ExitStructTupleConstructor(StructTupleConstructorContext context)
+        {
+
+        }
+
         public override void EnterSequenceConstructor(SequenceConstructorContext context)
         {
             EnterState<SequenceState>().EnterSequenceConstructor(context);
