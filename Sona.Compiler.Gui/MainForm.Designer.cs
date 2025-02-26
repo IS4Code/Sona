@@ -31,16 +31,18 @@ namespace IS4.Sona.Compiler.Gui
         /// </summary>
         private void InitializeComponent()
         {
-            var resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             ToolStrip toolStrip;
+            var resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+            progressBar = new ToolStripProgressBar();
+            orientationButton = new ToolStripButton();
             zoomButton = new ToolStripButton();
             codeSplit = new SplitContainer();
             sonaRichText = new DoubleBufferedRichTextBox();
             splitContainer1 = new SplitContainer();
             resultRichText = new DoubleBufferedRichTextBox();
             messageBox = new TextBox();
-            orientationButton = new ToolStripButton();
             toolStrip = new ToolStrip();
+            toolStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)codeSplit).BeginInit();
             codeSplit.Panel1.SuspendLayout();
             codeSplit.Panel2.SuspendLayout();
@@ -49,8 +51,34 @@ namespace IS4.Sona.Compiler.Gui
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
             splitContainer1.SuspendLayout();
-            toolStrip.SuspendLayout();
             SuspendLayout();
+            // 
+            // toolStrip
+            // 
+            toolStrip.GripStyle = ToolStripGripStyle.Hidden;
+            toolStrip.Items.AddRange(new ToolStripItem[] { orientationButton, zoomButton, progressBar });
+            toolStrip.Location = new Point(0, 0);
+            toolStrip.Name = "toolStrip";
+            toolStrip.Size = new Size(800, 25);
+            toolStrip.TabIndex = 2;
+            toolStrip.Text = "toolStrip";
+            // 
+            // progressBar
+            // 
+            progressBar.Alignment = ToolStripItemAlignment.Right;
+            progressBar.MarqueeAnimationSpeed = 50;
+            progressBar.Name = "progressBar";
+            progressBar.Size = new Size(100, 22);
+            // 
+            // orientationButton
+            // 
+            orientationButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            orientationButton.Image = (Image)resources.GetObject("orientationButton.Image");
+            orientationButton.ImageTransparentColor = Color.Magenta;
+            orientationButton.Name = "orientationButton";
+            orientationButton.Size = new Size(105, 22);
+            orientationButton.Text = "orientationButton";
+            orientationButton.Click += orientationButton_Click;
             // 
             // zoomButton
             // 
@@ -139,25 +167,6 @@ namespace IS4.Sona.Compiler.Gui
             messageBox.Size = new Size(400, 96);
             messageBox.TabIndex = 2;
             // 
-            // toolStrip
-            // 
-            toolStrip.Items.AddRange(new ToolStripItem[] { orientationButton, zoomButton });
-            toolStrip.Location = new Point(0, 0);
-            toolStrip.Name = "toolStrip";
-            toolStrip.Size = new Size(800, 25);
-            toolStrip.TabIndex = 2;
-            toolStrip.Text = "toolStrip";
-            // 
-            // orientationButton
-            // 
-            orientationButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            orientationButton.Image = (Image)resources.GetObject("orientationButton.Image");
-            orientationButton.ImageTransparentColor = Color.Magenta;
-            orientationButton.Name = "orientationButton";
-            orientationButton.Size = new Size(105, 22);
-            orientationButton.Text = "orientationButton";
-            orientationButton.Click += orientationButton_Click;
-            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -167,6 +176,8 @@ namespace IS4.Sona.Compiler.Gui
             Controls.Add(toolStrip);
             Name = "MainForm";
             Text = "Sona";
+            toolStrip.ResumeLayout(false);
+            toolStrip.PerformLayout();
             codeSplit.Panel1.ResumeLayout(false);
             codeSplit.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)codeSplit).EndInit();
@@ -176,8 +187,6 @@ namespace IS4.Sona.Compiler.Gui
             splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
-            toolStrip.ResumeLayout(false);
-            toolStrip.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -192,5 +201,6 @@ namespace IS4.Sona.Compiler.Gui
         private ToolStrip toolStrip;
         private ToolStripButton orientationButton;
         private ToolStripButton zoomButton;
+        private ToolStripProgressBar progressBar;
     }
 }

@@ -67,6 +67,8 @@ namespace IS4.Sona.Compiler.Gui
 
             zoomButton.Text = $"{sonaRichText.ZoomFactor:P0}";
 
+            progressBar.Size = new(progressBar.Height, progressBar.Height);
+
             codeChannel = Channel.CreateUnbounded<string>(new()
             {
                 SingleReader = true,
@@ -385,6 +387,9 @@ namespace IS4.Sona.Compiler.Gui
                 if(stack.Count == 0)
                 {
                     // Nothing yet and no history to try
+                    Invoke(() => {
+                        progressBar.Style = ProgressBarStyle.Blocks;
+                    });
                     try
                     {
                         // Wait for code
@@ -396,6 +401,10 @@ namespace IS4.Sona.Compiler.Gui
                         // Unwrap exception
                         ExceptionDispatchInfo.Capture(e.InnerException!).Throw();
                     }
+                    Invoke(() => {
+                        progressBar.Style = ProgressBarStyle.Marquee;
+                    });
+
                     while(reader.TryRead(out var last))
                     {
                         // Anything afterwards?
