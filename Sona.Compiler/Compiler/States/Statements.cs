@@ -751,6 +751,16 @@ namespace IS4.Sona.Compiler.States
 
         }
 
+        public override void EnterAltMemberExpr(AltMemberExprContext context)
+        {
+            EnterState<AltMemberExprState>().EnterAltMemberExpr(context);
+        }
+
+        public override void ExitAltMemberExpr(AltMemberExprContext context)
+        {
+
+        }
+
         public override void EnterAssignment(AssignmentContext context)
         {
             Out.WriteOperator("<-");
@@ -782,6 +792,18 @@ namespace IS4.Sona.Compiler.States
         }
 
         public override void ExitMemberExpr(MemberExprContext context)
+        {
+
+        }
+
+        public override void EnterAltMemberExpr(AltMemberExprContext context)
+        {
+            Out.Write("let _");
+            Out.WriteOperator('=');
+            EnterState<AltMemberExprState>().EnterAltMemberExpr(context);
+        }
+
+        public override void ExitAltMemberExpr(AltMemberExprContext context)
         {
 
         }

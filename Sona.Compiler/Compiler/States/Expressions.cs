@@ -1,4 +1,5 @@
-﻿using static IS4.Sona.Grammar.SonaParser;
+﻿using System.Collections.Generic;
+using static IS4.Sona.Grammar.SonaParser;
 
 namespace IS4.Sona.Compiler.States
 {
@@ -33,6 +34,11 @@ namespace IS4.Sona.Compiler.States
         public override void EnterMemberExpr(MemberExprContext context)
         {
             EnterState<MemberExprState>().EnterMemberExpr(context);
+        }
+
+        public override void EnterAltMemberExpr(AltMemberExprContext context)
+        {
+            EnterState<AltMemberExprState>().EnterAltMemberExpr(context);
         }
 
         public override void EnterFuncExpr(FuncExprContext context)
@@ -235,22 +241,22 @@ namespace IS4.Sona.Compiler.States
             ExitState().ExitMemberExpr(context);
         }
 
-        public override void EnterNestedExpr(NestedExprContext context)
+        public sealed override void EnterNestedExpr(NestedExprContext context)
         {
             Out.Write('(');
         }
 
-        public override void ExitNestedExpr(NestedExprContext context)
+        public sealed override void ExitNestedExpr(NestedExprContext context)
         {
             Out.Write(')');
         }
 
-        public override void EnterSimpleExpr(SimpleExprContext context)
+        public sealed override void EnterSimpleExpr(SimpleExprContext context)
         {
             Out.Write('(');
         }
 
-        public override void ExitSimpleExpr(SimpleExprContext context)
+        public sealed override void ExitSimpleExpr(SimpleExprContext context)
         {
             Out.Write(')');
         }
@@ -301,9 +307,19 @@ namespace IS4.Sona.Compiler.States
             Out.Write('.');
         }
 
+        public sealed override void ExitMemberAccess(MemberAccessContext context)
+        {
+
+        }
+
         public override void EnterDynamicMemberAccess(DynamicMemberAccessContext context)
         {
             Out.Write('?');
+        }
+
+        public sealed override void ExitDynamicMemberAccess(DynamicMemberAccessContext context)
+        {
+
         }
 
         public override void EnterCallArgTuple(CallArgTupleContext context)
@@ -335,6 +351,16 @@ namespace IS4.Sona.Compiler.States
             }
 
             public override void ExitMemberExpr(MemberExprContext context)
+            {
+
+            }
+
+            public override void EnterAltMemberExpr(AltMemberExprContext context)
+            {
+                EnterState<AltMemberExprState>().EnterAltMemberExpr(context);
+            }
+
+            public override void ExitAltMemberExpr(AltMemberExprContext context)
             {
 
             }
@@ -408,6 +434,238 @@ namespace IS4.Sona.Compiler.States
                 {
                     Out.Write(',');
                 }
+                base.EnterExpression(context);
+            }
+        }
+    }
+
+    internal class AltMemberExprState : MemberExprState
+    {
+        bool lambdaOpen;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            lambdaOpen = false;
+        }
+
+        public override void EnterAltMemberExpr(AltMemberExprContext context)
+        {
+            Out.Write('(');
+        }
+
+        public override void ExitAltMemberExpr(AltMemberExprContext context)
+        {
+            CloseLambda();
+            Out.Write(')');
+            ExitState().ExitAltMemberExpr(context);
+        }
+
+        private void OpenLambda()
+        {
+            if(lambdaOpen)
+            {
+                return;
+            }
+            Out.WriteOperator("|>");
+            var arg = Out.CreateTemporaryIdentifier();
+            Out.Write("(fun ");
+            Out.WriteIdentifier(arg);
+            Out.WriteOperator("->");
+            Out.WriteIdentifier(arg);
+            lambdaOpen = true;
+        }
+
+        private void CloseLambda()
+        {
+            if(lambdaOpen)
+            {
+                Out.Write(')');
+                lambdaOpen = false;
+            }
+        }
+
+        public override void EnterIndexAccess(IndexAccessContext context)
+        {
+            OpenLambda();
+            base.EnterIndexAccess(context);
+        }
+
+        public override void EnterMemberAccess(MemberAccessContext context)
+        {
+            OpenLambda();
+            base.EnterMemberAccess(context);
+        }
+
+        public override void EnterDynamicMemberAccess(DynamicMemberAccessContext context)
+        {
+            OpenLambda();
+            base.EnterDynamicMemberAccess(context);
+        }
+
+        public override void EnterCallArgTuple(CallArgTupleContext context)
+        {
+            OpenLambda();
+            base.EnterCallArgTuple(context);
+        }
+
+        public override void EnterConstrainedMemberAccess(ConstrainedMemberAccessContext context)
+        {
+            CloseLambda();
+            Out.WriteOperator("|>");
+            EnterState<ConstrainedMemberState>().EnterConstrainedMemberAccess(context);
+        }
+
+        public override void ExitConstrainedMemberAccess(ConstrainedMemberAccessContext context)
+        {
+
+        }
+
+        class ConstrainedMemberState : AltMemberExprState
+        {
+            bool property, first;
+            string? paramName;
+            ISourceCapture? argsCapture;
+            readonly List<int> arities = new();
+
+            string ParamName => paramName ?? Error("COMPILER ERROR: Missing constrained member access parameter name.");
+
+            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+            {
+                base.Initialize(environment, parent);
+
+                property = true;
+                first = true;
+                paramName = null;
+                argsCapture = null;
+                arities.Clear();
+            }
+
+            public override void EnterConstrainedMemberAccess(ConstrainedMemberAccessContext context)
+            {
+                paramName = Out.CreateTemporaryIdentifier();
+                Out.Write("(fun ");
+                Out.WriteIdentifier(paramName);
+                Out.WriteOperator("->");
+                Out.Write("(^");
+                Out.WriteIdentifier(Out.CreateTemporaryIdentifier());
+                Out.WriteOperator(':');
+                Out.Write("(member ");
+            }
+
+            public override void ExitConstrainedMemberAccess(ConstrainedMemberAccessContext context)
+            {
+                if(property)
+                {
+                    Out.WriteOperator(':');
+                    Out.Write("_)");
+                    Out.WriteIdentifier(ParamName);
+                }
+                Out.Write("))");
+                ExitState().ExitConstrainedMemberAccess(context);
+            }
+
+            public override void EnterCallArguments(CallArgumentsContext context)
+            {
+                property = false;
+                Out.WriteOperator(':');
+                argsCapture = Out.StartCapture();
+            }
+
+            public override void ExitCallArguments(CallArgumentsContext context)
+            {
+                var argsCapture = this.argsCapture ?? ErrorCapture("COMPILER ERROR: Missing constraint expression captured state.");
+                Out.StopCapture(argsCapture);
+                if(arities.Count == 0)
+                {
+                    Out.WriteNamespacedName("Microsoft.FSharp.Core", "unit");
+                }
+                else
+                {
+                    bool firstTuple = true;
+                    foreach(var arity in arities)
+                    {
+                        if(firstTuple)
+                        {
+                            firstTuple = false;
+                        }
+                        else
+                        {
+                            Out.WriteOperator("->");
+                        }
+                        if(arity == 0)
+                        {
+                            Out.WriteNamespacedName("Microsoft.FSharp.Core", "unit");
+                        }
+                        else
+                        {
+                            Out.Write('_');
+                            for(int i = 1; i < arity; i++)
+                            {
+                                Out.WriteOperator('*');
+                                Out.Write('_');
+                            }
+                        }
+                    }
+                }
+                Out.WriteOperator("->");
+                Out.Write("_)(");
+                argsCapture.Play(Out);
+                Out.Write(')');
+            }
+
+            public override void EnterCallArgTuple(CallArgTupleContext context)
+            {
+                if(first)
+                {
+                    // May be empty yet
+                    return;
+                }
+                if(arities.Count == 1 && arities[0] == 0)
+                {
+                    // Unit argument
+                    Out.Write(",()");
+                }
+                // Prepare empty arity for the next tuple
+                arities.Add(0);
+            }
+
+            public override void ExitCallArgTuple(CallArgTupleContext context)
+            {
+                if(first)
+                {
+                    // First tuple is empty
+                    Out.WriteIdentifier(ParamName);
+                    first = false;
+                    // Add empty arity
+                    arities.Add(0);
+                }
+                if(arities.Count > 1 && arities[arities.Count - 1] == 0)
+                {
+                    // Unit argument
+                    Out.Write(",()");
+                }
+            }
+
+            public override void EnterExpression(ExpressionContext context)
+            {
+                if(first)
+                {
+                    Out.WriteIdentifier(ParamName);
+
+                    // Prepare first arity
+                    first = false;
+                    arities.Add(1);
+                }
+                else
+                {
+                    ++arities[arities.Count - 1];
+                }
+
+                // Always next expression
+                Out.Write(',');
+
                 base.EnterExpression(context);
             }
         }

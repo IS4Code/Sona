@@ -810,13 +810,13 @@ declaration:
   localAttrList name ('as' type)?;
 
 memberOrAssignment:
-  memberExpr assignment?;
+  (memberExpr | altMemberExpr) assignment?;
 
 assignment:
   '=' expression;
 
 memberDiscard:
-  memberExpr '!';
+  (memberExpr | altMemberExpr) '!';
 
 /* -------- */
 /* Patterns */
@@ -980,6 +980,7 @@ atomicExpr:
   funcExpr |
   inlineExpr |
   memberExpr |
+  altMemberExpr |
   hashExpr |
   notExpr |
   unaryOperator atomicExpr;
@@ -999,7 +1000,7 @@ nestedExpr:
   '(' expression ')';
 
 nestedAssignment:
-  '(' memberExpr assignment ')';
+  '(' (memberExpr | altMemberExpr) assignment ')';
 
 primitiveExpr:
   namedValue | number | string;
@@ -1045,6 +1046,21 @@ memberExpr_Suffix:
     (memberAccess | dynamicMemberAccess) simpleCallArgument??
   )+;
 
+altMemberExpr:
+  (
+    name simpleCallArgument?? |
+    nestedExpr |
+    nestedAssignment
+    simpleExpr |
+    constructExpr
+  ) memberExpr_Suffix? altMemberExpr_Suffix (memberExpr_Suffix altMemberExpr_Suffix)* memberExpr_Suffix?;
+
+altMemberExpr_Suffix:
+  constrainedMemberAccess+;
+
+constrainedMemberAccess:
+  '.' '(' name ')' callArguments?;
+
 indexAccess:
   '[' (expression (',' expression)* | errorMissingExpression) ']';
   
@@ -1052,7 +1068,7 @@ memberAccess:
   '.' name | memberName;
 
 dynamicMemberAccess:
-  ':' name | dynamicMemberName;
+  ':' (name | nestedExpr) | dynamicMemberName;
 
 // Function calls
 
