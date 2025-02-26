@@ -179,6 +179,11 @@ namespace IS4.Sona.Compiler.States
             first = true;
         }
 
+        public override void ExitVariableDecl(VariableDeclContext context)
+        {
+            ExitState().ExitVariableDecl(context);
+        }
+
         public override void EnterDeclaration(DeclarationContext context)
         {
             if(first)
@@ -193,14 +198,29 @@ namespace IS4.Sona.Compiler.States
             EnterState<DeclarationState>().EnterDeclaration(context);
         }
 
+        public override void ExitDeclaration(DeclarationContext context)
+        {
+
+        }
+
         public override void EnterLetDecl(LetDeclContext context)
         {
             Out.Write("let ");
         }
 
+        public override void ExitLetDecl(LetDeclContext context)
+        {
+
+        }
+
         public override void EnterVarDecl(VarDeclContext context)
         {
             Out.Write("let mutable ");
+        }
+
+        public override void ExitVarDecl(VarDeclContext context)
+        {
+
         }
 
         public override void EnterConstDecl(ConstDeclContext context)
@@ -212,15 +232,20 @@ namespace IS4.Sona.Compiler.States
             isliteral = true;
         }
 
-        public override void EnterExprList(ExprListContext context)
+        public override void ExitConstDecl(ConstDeclContext context)
         {
-            Out.WriteOperator('=');
-            EnterState<ExpressionListState>().EnterExprList(context);
+
         }
 
-        public override void ExitVariableDecl(VariableDeclContext context)
+        public override void EnterExpression(ExpressionContext context)
         {
-            ExitState().ExitVariableDecl(context);
+            Out.WriteOperator('=');
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public override void ExitExpression(ExpressionContext context)
+        {
+
         }
 
         public override void ExitLocalAttribute(LocalAttributeContext context)

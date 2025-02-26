@@ -167,21 +167,26 @@ closingStatement:
   interruptingStatement |
   terminatingStatement;
 
+// Special statements
+
+echoStatement:
+  'echo' expression (',' expression)*;
+
 // Simple control statements
 
 implicitReturnStatement:;
 
 returnStatement:
-  'return' (exprList)?;
+  'return' expression?;
 
 breakStatement:
-  'break' (exprList)?;
+  'break' expression?;
 
 continueStatement:
-  'continue' (exprList)?;
+  'continue' expression?;
 
 throwStatement:
-  'throw' (exprList)?;
+  'throw' expression?;
 
 // A statement that has a returning path and all other paths are closing
 returningStatement:
@@ -253,9 +258,6 @@ expressionStatement:
   forStatementFree |
   forStatementFreeInterrupted |
   forStatementConditional;
-
-echoStatement:
-  'echo' expression (',' expression)*;
 
 /* ---------------- */
 /* Block statements */
@@ -775,13 +777,13 @@ variableDecl:
   localAttrList (letDecl | varDecl | constDecl);
 
 letDecl:
-  'let' declList '=' exprList;
+  'let' declaration '=' expression;
 
 varDecl:
-  'var' declList '=' exprList;
+  'var' declaration '=' expression;
 
 constDecl:
-  'const' declList '=' exprList;
+  'const' declaration '=' expression;
 
 multiFuncDecl:
   funcDecl+;
@@ -796,10 +798,7 @@ paramList:
   paramTuple (';' paramTuple)*;
 
 paramTuple:
-  declList?;
-
-declList:
-  declaration (',' declaration)*;
+  (declaration (',' declaration)*)?;
 
 declaration:
   localAttrList name ('as' type)?;
@@ -823,9 +822,6 @@ pattern:
 /* ----------- */
 /* Expressions */
 /* ----------- */
-
-exprList:
-  expression (',' expression)*;
 
 expression:
   negatedExpr |
@@ -1037,7 +1033,7 @@ memberExpr_Suffix:
   )+;
 
 indexAccess:
-  '[' (exprList | errorMissingExpression) ']';
+  '[' (expression (',' expression)* | errorMissingExpression) ']';
   
 memberAccess:
   '.' name | memberName;
@@ -1060,7 +1056,7 @@ callArgList:
   callArgTuple (';' callArgTuple)*;
 
 callArgTuple:
-  exprList?;
+  (expression (',' expression)*)?;
 
 // Records and collections
 

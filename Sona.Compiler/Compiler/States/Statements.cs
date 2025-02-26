@@ -469,10 +469,15 @@ namespace IS4.Sona.Compiler.States
             HasExpression = false;
         }
 
-        public override void EnterExprList(ExprListContext context)
+        public override void EnterExpression(ExpressionContext context)
         {
             HasExpression = true;
-            EnterState<ExpressionListState>().EnterExprList(context);
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public sealed override void ExitExpression(ExpressionContext context)
+        {
+
         }
     }
 
@@ -487,7 +492,7 @@ namespace IS4.Sona.Compiler.States
             returnScope = FindContext<IReturnableStatementContext>();
         }
 
-        public override void EnterExprList(ExprListContext context)
+        public override void EnterExpression(ExpressionContext context)
         {
             if(returnScope?.ReturnVariable is { } result)
             {
@@ -496,7 +501,7 @@ namespace IS4.Sona.Compiler.States
                 Out.WriteOperator("<-");
             }
             Out.Write('(');
-            base.EnterExprList(context);
+            base.EnterExpression(context);
         }
 
         public override void EnterReturnStatement(ReturnStatementContext context)
@@ -553,15 +558,10 @@ namespace IS4.Sona.Compiler.States
 
     internal sealed class ThrowState : ArgumentStatementState
     {
-        public override void EnterExprList(ExprListContext context)
+        public override void EnterExpression(ExpressionContext context)
         {
             Out.Write('(');
-            base.EnterExprList(context);
-        }
-
-        public override void ExitExprList(ExprListContext context)
-        {
-
+            base.EnterExpression(context);
         }
 
         public override void EnterThrowStatement(ThrowStatementContext context)
@@ -602,7 +602,7 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
-        public override void EnterExprList(ExprListContext context)
+        public override void EnterExpression(ExpressionContext context)
         {
             if(scope == null)
             {
@@ -613,12 +613,7 @@ namespace IS4.Sona.Compiler.States
                 scope.WriteBreak(true);
             }
             Out.Write('(');
-            base.EnterExprList(context);
-        }
-
-        public override void ExitExprList(ExprListContext context)
-        {
-
+            base.EnterExpression(context);
         }
 
         public override void EnterBreakStatement(BreakStatementContext context)
@@ -663,7 +658,7 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
-        public override void EnterExprList(ExprListContext context)
+        public override void EnterExpression(ExpressionContext context)
         {
             if(scope == null)
             {
@@ -674,12 +669,7 @@ namespace IS4.Sona.Compiler.States
                 scope.WriteContinue(true);
             }
             Out.Write('(');
-            base.EnterExprList(context);
-        }
-
-        public override void ExitExprList(ExprListContext context)
-        {
-
+            base.EnterExpression(context);
         }
 
         public override void EnterContinueStatement(ContinueStatementContext context)

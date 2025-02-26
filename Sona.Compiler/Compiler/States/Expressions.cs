@@ -223,36 +223,6 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal sealed class ExpressionListState : NodeState
-    {
-        bool first;
-
-        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
-        {
-            base.Initialize(environment, parent);
-
-            first = true;
-        }
-
-        public override void EnterExpression(ExpressionContext context)
-        {
-            if(first)
-            {
-                first = false;
-            }
-            else
-            {
-                Out.Write(',');
-            }
-            EnterState<ExpressionState>().EnterExpression(context);
-        }
-
-        public override void ExitExprList(ExprListContext context)
-        {
-            ExitState().ExitExprList(context);
-        }
-    }
-
     internal class MemberExprState : NodeState
     {
         public override void EnterMemberExpr(MemberExprContext context)
@@ -283,16 +253,6 @@ namespace IS4.Sona.Compiler.States
         public override void ExitSimpleExpr(SimpleExprContext context)
         {
             Out.Write(')');
-        }
-
-        public override void EnterExprList(ExprListContext context)
-        {
-            EnterState<ExpressionListState>().EnterExprList(context);
-        }
-
-        public override void ExitExprList(ExprListContext context)
-        {
-
         }
 
         public override void EnterExpression(ExpressionContext context)
@@ -328,12 +288,12 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterIndexAccess(IndexAccessContext context)
         {
-            Out.Write('[');
+            EnterState<MemberApplicationState>().EnterIndexAccess(context);
         }
 
         public override void ExitIndexAccess(IndexAccessContext context)
         {
-            Out.Write(']');
+
         }
 
         public override void EnterMemberAccess(MemberAccessContext context)
@@ -348,12 +308,12 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterCallArgTuple(CallArgTupleContext context)
         {
-            Out.Write('(');
+            EnterState<MemberApplicationState>().EnterCallArgTuple(context);
         }
 
         public override void ExitCallArgTuple(CallArgTupleContext context)
         {
-            Out.Write(')');
+
         }
 
         sealed class AssignmentState : MemberExprState
@@ -402,6 +362,53 @@ namespace IS4.Sona.Compiler.States
             public override void ExitSimpleCallArgument(SimpleCallArgumentContext context)
             {
                 ExitState().ExitSimpleCallArgument(context);
+            }
+        }
+
+        sealed class MemberApplicationState : MemberExprState
+        {
+            bool first;
+
+            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+            {
+                base.Initialize(environment, parent);
+
+                first = true;
+            }
+
+            public override void EnterCallArgTuple(CallArgTupleContext context)
+            {
+                Out.Write('(');
+            }
+
+            public override void ExitCallArgTuple(CallArgTupleContext context)
+            {
+                Out.Write(')');
+                ExitState().ExitCallArgTuple(context);
+            }
+
+            public override void EnterIndexAccess(IndexAccessContext context)
+            {
+                Out.Write('[');
+            }
+
+            public override void ExitIndexAccess(IndexAccessContext context)
+            {
+                Out.Write(']');
+                ExitState().ExitIndexAccess(context);
+            }
+
+            public override void EnterExpression(ExpressionContext context)
+            {
+                if(first)
+                {
+                    first = false;
+                }
+                else
+                {
+                    Out.Write(',');
+                }
+                base.EnterExpression(context);
             }
         }
     }
