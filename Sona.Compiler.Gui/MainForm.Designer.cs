@@ -33,9 +33,9 @@ namespace IS4.Sona.Compiler.Gui
         {
             ToolStrip toolStrip;
             var resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            progressBar = new ToolStripProgressBar();
             orientationButton = new ToolStripButton();
             zoomButton = new ToolStripButton();
+            progressBar = new ToolStripProgressBar();
             codeSplit = new SplitContainer();
             sonaRichText = new DoubleBufferedRichTextBox();
             splitContainer1 = new SplitContainer();
@@ -59,16 +59,9 @@ namespace IS4.Sona.Compiler.Gui
             toolStrip.Items.AddRange(new ToolStripItem[] { orientationButton, zoomButton, progressBar });
             toolStrip.Location = new Point(0, 0);
             toolStrip.Name = "toolStrip";
-            toolStrip.Size = new Size(800, 25);
+            toolStrip.Size = new Size(817, 25);
             toolStrip.TabIndex = 2;
             toolStrip.Text = "toolStrip";
-            // 
-            // progressBar
-            // 
-            progressBar.Alignment = ToolStripItemAlignment.Right;
-            progressBar.MarqueeAnimationSpeed = 50;
-            progressBar.Name = "progressBar";
-            progressBar.Size = new Size(100, 22);
             // 
             // orientationButton
             // 
@@ -90,11 +83,19 @@ namespace IS4.Sona.Compiler.Gui
             zoomButton.Text = "zoomButton";
             zoomButton.Click += zoomButton_Click;
             // 
+            // progressBar
+            // 
+            progressBar.Alignment = ToolStripItemAlignment.Right;
+            progressBar.MarqueeAnimationSpeed = 50;
+            progressBar.Name = "progressBar";
+            progressBar.Size = new Size(100, 22);
+            // 
             // codeSplit
             // 
             codeSplit.Dock = DockStyle.Fill;
             codeSplit.Location = new Point(0, 25);
             codeSplit.Name = "codeSplit";
+            codeSplit.Orientation = Orientation.Horizontal;
             // 
             // codeSplit.Panel1
             // 
@@ -103,8 +104,8 @@ namespace IS4.Sona.Compiler.Gui
             // codeSplit.Panel2
             // 
             codeSplit.Panel2.Controls.Add(splitContainer1);
-            codeSplit.Size = new Size(800, 425);
-            codeSplit.SplitterDistance = 396;
+            codeSplit.Size = new Size(817, 497);
+            codeSplit.SplitterDistance = 248;
             codeSplit.TabIndex = 0;
             // 
             // sonaRichText
@@ -114,7 +115,7 @@ namespace IS4.Sona.Compiler.Gui
             sonaRichText.Dock = DockStyle.Fill;
             sonaRichText.Location = new Point(0, 0);
             sonaRichText.Name = "sonaRichText";
-            sonaRichText.Size = new Size(396, 425);
+            sonaRichText.Size = new Size(817, 248);
             sonaRichText.TabIndex = 3;
             sonaRichText.Text = "";
             sonaRichText.WordWrap = false;
@@ -139,8 +140,8 @@ namespace IS4.Sona.Compiler.Gui
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(messageBox);
-            splitContainer1.Size = new Size(400, 425);
-            splitContainer1.SplitterDistance = 325;
+            splitContainer1.Size = new Size(817, 245);
+            splitContainer1.SplitterDistance = 181;
             splitContainer1.TabIndex = 2;
             // 
             // resultRichText
@@ -150,7 +151,7 @@ namespace IS4.Sona.Compiler.Gui
             resultRichText.Location = new Point(0, 0);
             resultRichText.Name = "resultRichText";
             resultRichText.ReadOnly = true;
-            resultRichText.Size = new Size(400, 325);
+            resultRichText.Size = new Size(817, 181);
             resultRichText.TabIndex = 2;
             resultRichText.Text = "";
             resultRichText.WordWrap = false;
@@ -164,14 +165,14 @@ namespace IS4.Sona.Compiler.Gui
             messageBox.Name = "messageBox";
             messageBox.ReadOnly = true;
             messageBox.ScrollBars = ScrollBars.Both;
-            messageBox.Size = new Size(400, 96);
+            messageBox.Size = new Size(817, 60);
             messageBox.TabIndex = 2;
             // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(817, 522);
             Controls.Add(codeSplit);
             Controls.Add(toolStrip);
             Name = "MainForm";
