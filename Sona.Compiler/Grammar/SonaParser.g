@@ -148,8 +148,8 @@ attrNamedArg:
 statement:
   variableDecl |
   multiFuncDecl |
-  memberOrAssignment |
   memberDiscard |
+  memberOrAssignment |
   echoStatement |
   inlineSourceFree |
   ifStatementFree |
@@ -810,13 +810,13 @@ declaration:
   localAttrList name ('as' type)?;
 
 memberOrAssignment:
-  (memberExpr | altMemberExpr) assignment?;
+  (altMemberExpr | memberExpr) assignment?;
 
 assignment:
   '=' expression;
 
 memberDiscard:
-  (memberExpr | altMemberExpr) '!';
+  (altMemberExpr | memberExpr) '!';
 
 /* -------- */
 /* Patterns */
@@ -975,12 +975,12 @@ innerExpr:
   atomicExpr (innerBinaryOperator atomicExpr)*;
 
 atomicExpr:
+  altMemberExpr |
+  memberExpr |
   simpleExpr |
   constructExpr |
   funcExpr |
   inlineExpr |
-  memberExpr |
-  altMemberExpr |
   hashExpr |
   notExpr |
   unaryOperator atomicExpr;
@@ -1000,7 +1000,7 @@ nestedExpr:
   '(' expression ')';
 
 nestedAssignment:
-  '(' (memberExpr | altMemberExpr) assignment ')';
+  '(' (altMemberExpr | memberExpr) assignment ')';
 
 primitiveExpr:
   namedValue | number | string;
@@ -1050,7 +1050,7 @@ altMemberExpr:
   (
     name simpleCallArgument?? |
     nestedExpr |
-    nestedAssignment
+    nestedAssignment |
     simpleExpr |
     constructExpr
   ) memberExpr_Suffix? altMemberExpr_Suffix (memberExpr_Suffix altMemberExpr_Suffix)* memberExpr_Suffix?;
