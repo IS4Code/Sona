@@ -322,6 +322,16 @@ namespace IS4.Sona.Compiler.States
 
         }
 
+        public override void EnterDynamicExprMemberAccess(DynamicExprMemberAccessContext context)
+        {
+            Out.Write('?');
+        }
+
+        public sealed override void ExitDynamicExprMemberAccess(DynamicExprMemberAccessContext context)
+        {
+
+        }
+
         public override void EnterCallArgTuple(CallArgTupleContext context)
         {
             EnterState<MemberApplicationState>().EnterCallArgTuple(context);
@@ -502,6 +512,12 @@ namespace IS4.Sona.Compiler.States
         {
             OpenLambda();
             base.EnterDynamicMemberAccess(context);
+        }
+
+        public override void EnterDynamicExprMemberAccess(DynamicExprMemberAccessContext context)
+        {
+            OpenLambda();
+            base.EnterDynamicExprMemberAccess(context);
         }
 
         public override void EnterCallArgTuple(CallArgTupleContext context)

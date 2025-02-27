@@ -1043,7 +1043,8 @@ memberExpr_Suffix:
   (
     callArguments |
     indexAccess |
-    (memberAccess | dynamicMemberAccess) simpleCallArgument??
+    (memberAccess | dynamicMemberAccess) simpleCallArgument?? |
+    dynamicExprMemberAccess
   )+;
 
 altMemberExpr:
@@ -1068,7 +1069,10 @@ memberAccess:
   '.' name | memberName;
 
 dynamicMemberAccess:
-  ':' (name | nestedExpr) | dynamicMemberName;
+  ':' name | dynamicMemberName;
+
+dynamicExprMemberAccess:
+  ':' nestedExpr;
 
 // Function calls
 
