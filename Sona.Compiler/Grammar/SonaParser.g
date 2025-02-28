@@ -798,7 +798,7 @@ funcDecl:
   localAttrList 'function' name funcBody;
 
 funcBody:
-  '(' paramList ')' ('as' type)? valueBlock 'end';
+  '(' paramList ')' ('as' type ';'?)? valueBlock 'end';
 
 paramList:
   paramTuple (';' paramTuple)*;
