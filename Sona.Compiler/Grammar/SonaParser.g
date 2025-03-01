@@ -1255,10 +1255,10 @@ unaryOperator:
 /* ---------- */
 
 number:
-  INT | FLOAT | EXP | HEX | errorUnsupportedNumberSuffix;
+  INT_LITERAL | FLOAT_LITERAL | EXP_LITERAL | HEX_LITERAL | errorUnsupportedNumberSuffix;
 
 string:
-  NORMAL_STRING | VERBATIM_STRING | CHAR_STRING | errorUnsupportedStringSuffix;
+  STRING_LITERAL | VERBATIM_STRING_LITERAL | CHAR_LITERAL | errorUnsupportedStringSuffix;
 
 unit:
   'unit';
@@ -1273,7 +1273,7 @@ errorUnsupportedNumberSuffix:
   INT_SUFFIX | FLOAT_SUFFIX | EXP_SUFFIX | HEX_SUFFIX;
 
 errorUnsupportedStringSuffix:
-  NORMAL_STRING_SUFFIX | VERBATIM_STRING_SUFFIX | CHAR_STRING_SUFFIX;
+  STRING_SUFFIX | VERBATIM_STRING_SUFFIX | CHAR_SUFFIX;
 
 errorUnsupportedEndInterpolatedStringSuffix:
   END_INTERPOLATED_STRING_SUFFIX;
