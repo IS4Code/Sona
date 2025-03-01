@@ -21,16 +21,17 @@ namespace IS4.Sona.Compiler
         private protected string _begin_ => Environment.Begin;
         private protected string _end_ => Environment.End;
 
-        protected virtual void UpdateOnToken(IToken token)
+        protected virtual void OnEnterToken(IToken token)
         {
             Environment.Output.UpdateLine(token);
+            Environment.LexerContext.OnParserToken(token);
         }
 
         public sealed override void EnterEveryRule(ParserRuleContext context)
         {
             if(context.Start is { } start)
             {
-                UpdateOnToken(start);
+                OnEnterToken(start);
             }
             base.EnterEveryRule(context);
             EnterLevel();
@@ -105,7 +106,7 @@ namespace IS4.Sona.Compiler
             base.VisitTerminal(node);
 
             var token = node.Symbol;
-            Environment.LexerContext.OnParserToken(node.Symbol);
+            OnEnterToken(token);
 
             switch(token.Type)
             {

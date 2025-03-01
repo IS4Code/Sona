@@ -21,7 +21,7 @@ namespace IS4.Sona.Compiler.States
             fillName = null;
         }
 
-        protected override void UpdateOnToken(IToken token)
+        protected override void OnEnterToken(IToken token)
         {
             // Do not inform writer about new lines
         }
@@ -306,7 +306,7 @@ namespace IS4.Sona.Compiler.States
 
     internal abstract class LiteralInterpolatedString : NodeState
     {
-        protected sealed override void UpdateOnToken(IToken token)
+        protected sealed override void OnEnterToken(IToken token)
         {
             // Do not inform writer about new lines
         }

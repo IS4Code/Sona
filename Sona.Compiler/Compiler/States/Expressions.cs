@@ -808,7 +808,6 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterAnonymousRecordConstructor(AnonymousRecordConstructorContext context)
         {
-            LexerContext.OnParserToken(context.Start);
             isStruct = LexerContext.GetState<RecordPragma>()?.IsStruct ?? false;
             Out.Write(isStruct ? "(struct{| " : "{| ");
         }
@@ -880,7 +879,6 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterTupleConstructor(TupleConstructorContext context)
         {
-            LexerContext.OnParserToken(context.Start);
             isStruct = LexerContext.GetState<TuplePragma>()?.IsStruct ?? true;
             Out.Write(isStruct ? "(struct(" : "(");
         }
@@ -893,7 +891,6 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterExplicitTupleConstructor(ExplicitTupleConstructorContext context)
         {
-            LexerContext.OnParserToken(context.Start);
             isStruct = LexerContext.GetState<TuplePragma>()?.IsStruct ?? true;
             Out.Write(isStruct ? "(struct(" : "(");
         }

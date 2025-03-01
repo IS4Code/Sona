@@ -16,7 +16,7 @@ namespace IS4.Sona.Compiler.States
             baseIndent = null;
         }
 
-        protected override void UpdateOnToken(IToken token)
+        protected override void OnEnterToken(IToken token)
         {
             // Do not inform writer about new lines
         }
@@ -159,7 +159,7 @@ namespace IS4.Sona.Compiler.States
 
         sealed class Ignore : NodeState
         {
-            protected override void UpdateOnToken(IToken token)
+            protected override void OnEnterToken(IToken token)
             {
 
             }
@@ -187,7 +187,7 @@ namespace IS4.Sona.Compiler.States
 
         sealed class Write : NodeState
         {
-            protected override void UpdateOnToken(IToken token)
+            protected override void OnEnterToken(IToken token)
             {
 
             }

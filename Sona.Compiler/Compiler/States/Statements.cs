@@ -703,8 +703,6 @@ namespace IS4.Sona.Compiler.States
     {
         public override void EnterEchoStatement(EchoStatementContext context)
         {
-            // Update token (VisitTerminal is called after this)
-            LexerContext.OnParserToken(context.Start);
             var identifier = LexerContext.GetState<EchoPragma>()?.Identifier ?? "printfn";
 
             Out.WriteNamespacedName("Microsoft.FSharp.Core", "ExtraTopLevelOperators");
