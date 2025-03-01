@@ -227,6 +227,19 @@ namespace IS4.Sona.Compiler.States
         {
             Out.Write(')');
         }
+
+        public override void EnterUnit(UnitContext context)
+        {
+            Out.Write("(()");
+            Out.WriteOperator(':');
+            Out.WriteNamespacedName("Microsoft.FSharp.Core", "unit");
+            Out.Write(')');
+        }
+
+        public override void ExitUnit(UnitContext context)
+        {
+
+        }
     }
 
     internal class MemberExprState : NodeState

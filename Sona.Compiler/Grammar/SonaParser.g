@@ -107,7 +107,7 @@ compoundName:
 /* ----- */
 
 type:
-  compoundName;
+  compoundName | unit;
 
 /* ---------- */
 /* Attributes */
@@ -1003,7 +1003,7 @@ nestedAssignment:
   '(' (altMemberExpr | memberExpr) assignment ')';
 
 primitiveExpr:
-  namedValue | number | string;
+  namedValue | number | string | unit;
 
 namedValue:
   'null' | 'false' | 'true';
@@ -1259,6 +1259,9 @@ number:
 
 string:
   NORMAL_STRING | VERBATIM_STRING | CHAR_STRING | errorUnsupportedStringSuffix;
+
+unit:
+  'unit';
 
 /* ------------ */
 /* Error states */
