@@ -51,6 +51,16 @@ namespace IS4.Sona.Compiler.States
             EnterState<InlineStatementState>().EnterInlineExpr(context);
         }
 
+        public override void EnterAtomicTypeConvertExpr(AtomicTypeConvertExprContext context)
+        {
+            EnterState<TypeConversionState>().EnterAtomicTypeConvertExpr(context);
+        }
+
+        public override void ExitAtomicTypeConvertExpr(AtomicTypeConvertExprContext context)
+        {
+
+        }
+
         public override void EnterNegatedExpr(NegatedExprContext context)
         {
             EnterState<NegatedExpression>().EnterNegatedExpr(context);
@@ -228,6 +238,29 @@ namespace IS4.Sona.Compiler.States
             Out.Write(')');
         }
 
+        public override void EnterAtomicVoidExpr(AtomicVoidExprContext context)
+        {
+            Out.Write("(let _");
+            Out.WriteOperator('=');
+        }
+
+        public override void ExitAtomicVoidExpr(AtomicVoidExprContext context)
+        {
+            Out.Write(" in ())");
+        }
+
+        public override void EnterAtomicObjectExpr(AtomicObjectExprContext context)
+        {
+            Out.Write('(');
+        }
+
+        public override void ExitAtomicObjectExpr(AtomicObjectExprContext context)
+        {
+            Out.WriteOperator(":>");
+            Out.WriteNamespacedName("Microsoft.FSharp.Core", "objnull");
+            Out.Write(')');
+        }
+
         public override void EnterUnit(UnitContext context)
         {
             Out.Write("(()");
@@ -239,6 +272,33 @@ namespace IS4.Sona.Compiler.States
         public override void ExitUnit(UnitContext context)
         {
 
+        }
+
+        public override void EnterPrimitiveType(PrimitiveTypeContext context)
+        {
+            Environment.EnableParseTree();
+        }
+
+        public override void ExitPrimitiveType(PrimitiveTypeContext context)
+        {
+            try
+            {
+                var text = context.GetText();
+                switch(text)
+                {
+                    case "object":
+                        text = "box";
+                        break;
+                    case "void":
+                        text = "ignore";
+                        break;
+                }
+                Out.WriteCoreOperator(text);
+            }
+            finally
+            {
+                Environment.DisableParseTree();
+            }
         }
     }
 
@@ -303,6 +363,49 @@ namespace IS4.Sona.Compiler.States
         public override void ExitNestedAssignment(NestedAssignmentContext context)
         {
 
+        }
+
+        public override void EnterMemberTypeConstructExpr(MemberTypeConstructExprContext context)
+        {
+            EnterState<TypeConstructionState>().EnterMemberTypeConstructExpr(context);
+        }
+
+        public override void ExitMemberTypeConstructExpr(MemberTypeConstructExprContext context)
+        {
+
+        }
+
+        public override void EnterMemberTypeConvertExpr(MemberTypeConvertExprContext context)
+        {
+            EnterState<TypeConversionState>().EnterMemberTypeConvertExpr(context);
+        }
+
+        public override void ExitMemberTypeConvertExpr(MemberTypeConvertExprContext context)
+        {
+
+        }
+
+        public override void EnterMemberVoidExpr(MemberVoidExprContext context)
+        {
+            Out.Write("(let _");
+            Out.WriteOperator('=');
+        }
+
+        public override void ExitMemberVoidExpr(MemberVoidExprContext context)
+        {
+            Out.Write(" in ())");
+        }
+
+        public override void EnterMemberObjectExpr(MemberObjectExprContext context)
+        {
+            Out.Write('(');
+        }
+
+        public override void ExitMemberObjectExpr(MemberObjectExprContext context)
+        {
+            Out.WriteOperator(":>");
+            Out.WriteNamespacedName("Microsoft.FSharp.Core", "objnull");
+            Out.Write(')');
         }
 
         public override void EnterIndexAccess(IndexAccessContext context)
@@ -1252,6 +1355,61 @@ namespace IS4.Sona.Compiler.States
         }
 
         public sealed override void ExitExpressionStatement(ExpressionStatementContext context)
+        {
+
+        }
+    }
+
+    internal sealed class TypeConstructionState : TypeState
+    {
+        public override void EnterMemberTypeConstructExpr(MemberTypeConstructExprContext context)
+        {
+
+        }
+
+        public override void ExitMemberTypeConstructExpr(MemberTypeConstructExprContext context)
+        {
+            Out.Write("()");
+            ExitState().ExitMemberTypeConstructExpr(context);
+        }
+    }
+
+    internal sealed class TypeConversionState : ExpressionState
+    {
+        public override void EnterMemberTypeConvertExpr(MemberTypeConvertExprContext context)
+        {
+
+        }
+
+        public override void ExitMemberTypeConvertExpr(MemberTypeConvertExprContext context)
+        {
+            Out.Write(')');
+            ExitState().ExitMemberTypeConvertExpr(context);
+        }
+
+        public override void EnterAtomicTypeConvertExpr(AtomicTypeConvertExprContext context)
+        {
+
+        }
+
+        public override void ExitAtomicTypeConvertExpr(AtomicTypeConvertExprContext context)
+        {
+            Out.Write(')');
+            ExitState().ExitAtomicTypeConvertExpr(context);
+        }
+
+        public override void ExitPrimitiveType(PrimitiveTypeContext context)
+        {
+            base.ExitPrimitiveType(context);
+            Out.Write('(');
+        }
+
+        public override void EnterExpression(ExpressionContext context)
+        {
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public override void ExitExpression(ExpressionContext context)
         {
 
         }

@@ -213,6 +213,15 @@ WIDEN: 'widen';
 WITH: 'with';
 YIELD: 'yield';
 
+BOOL: 'bool';
+INT: 'int';
+UINT: 'uint';
+FLOAT: 'float';
+CHAR: 'char';
+STRING: 'string';
+OBJECT: 'object';
+VOID: 'void';
+
 UNDERSCORE: '_';
 
 SEMICOLON: ';';
@@ -385,6 +394,15 @@ Directive_WHILE_TRUE_DO: WHILE_TRUE_DO -> type(WHILE_TRUE_DO);
 Directive_WIDEN: WIDEN -> type(WIDEN);
 Directive_WITH: WITH -> type(WITH);
 Directive_YIELD: YIELD -> type(YIELD);
+
+Directive_BOOL: BOOL -> type(BOOL);
+Directive_INT: INT -> type(INT);
+Directive_UINT: UINT -> type(UINT);
+Directive_FLOAT: FLOAT -> type(FLOAT);
+Directive_CHAR: CHAR -> type(CHAR);
+Directive_STRING: STRING -> type(STRING);
+Directive_OBJECT: OBJECT -> type(OBJECT);
+Directive_VOID: VOID -> type(VOID);
 
 Directive_UNDERSCORE: UNDERSCORE -> type(UNDERSCORE);
 
@@ -693,6 +711,15 @@ Interpolation_WHILE_TRUE_DO: WHILE_TRUE_DO -> type(WHILE_TRUE_DO);
 Interpolation_WIDEN: WIDEN -> type(WIDEN);
 Interpolation_WITH: WITH -> type(WITH);
 Interpolation_YIELD: YIELD -> type(YIELD);
+
+Interpolation_BOOL: BOOL -> type(BOOL);
+Interpolation_INT: INT -> type(INT);
+Interpolation_UINT: UINT -> type(UINT);
+Interpolation_FLOAT: FLOAT -> type(FLOAT);
+Interpolation_CHAR: CHAR -> type(CHAR);
+Interpolation_STRING: STRING -> type(STRING);
+Interpolation_OBJECT: OBJECT -> type(OBJECT);
+Interpolation_VOID: VOID -> type(VOID);
 
 Interpolation_UNDERSCORE: UNDERSCORE -> type(UNDERSCORE);
 

@@ -2,7 +2,7 @@
 
 namespace IS4.Sona.Compiler.States
 {
-    internal sealed class TypeState : NodeState
+    internal class TypeState : NodeState
     {
         public override void EnterType(TypeContext context)
         {
@@ -22,6 +22,33 @@ namespace IS4.Sona.Compiler.States
         public override void ExitUnit(UnitContext context)
         {
 
+        }
+
+        public override void EnterPrimitiveType(PrimitiveTypeContext context)
+        {
+            Environment.EnableParseTree();
+        }
+
+        public override void ExitPrimitiveType(PrimitiveTypeContext context)
+        {
+            try
+            {
+                var text = context.GetText();
+                switch(text)
+                {
+                    case "object":
+                        text = "obj";
+                        break;
+                    case "void":
+                        Out.WriteNamespacedName("System", "Void");
+                        return;
+                }
+                Out.WriteNamespacedName("Microsoft.FSharp.Core", text);
+            }
+            finally
+            {
+                Environment.DisableParseTree();
+            }
         }
     }
 }

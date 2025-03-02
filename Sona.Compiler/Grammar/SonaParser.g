@@ -107,7 +107,11 @@ compoundName:
 /* ----- */
 
 type:
-  compoundName | unit;
+  compoundName | primitiveType | unit;
+
+primitiveType:
+  'bool' | 'int' | 'uint' | 'float' |
+  'char' | 'string' | 'object' | 'void';
 
 /* ---------- */
 /* Attributes */
@@ -983,13 +987,25 @@ atomicExpr:
   inlineExpr |
   hashExpr |
   notExpr |
-  unaryOperator atomicExpr;
+  unaryOperator atomicExpr |
+  atomicVoidExpr |
+  atomicObjectExpr |
+  atomicTypeConvertExpr;
 
 hashExpr:
   '#' atomicExpr;
 
 notExpr:
   '!' atomicExpr;
+
+atomicVoidExpr:
+  'void' atomicExpr;
+
+atomicObjectExpr:
+  'object' atomicExpr;
+
+atomicTypeConvertExpr:
+  primitiveType atomicExpr;
 
 simpleExpr:
   primitiveExpr |
@@ -1029,15 +1045,21 @@ constructExpr:
 // Member access
 
 memberExpr:
-  (
-    name simpleCallArgument?? |
-    nestedExpr |
-    nestedAssignment
-  ) memberExpr_Suffix? |
-  (
-    simpleExpr |
-    constructExpr
-  ) memberExpr_Suffix;
+  memberExpr_Standalone memberExpr_Suffix? |
+  memberExpr_Prefix memberExpr_Suffix;
+
+memberExpr_Standalone:
+  name simpleCallArgument?? |
+  memberTypeConstructExpr |
+  memberVoidExpr |
+  memberObjectExpr |
+  memberTypeConvertExpr |
+  nestedExpr |
+  nestedAssignment;
+
+memberExpr_Prefix:
+  simpleExpr |
+  constructExpr;
 
 memberExpr_Suffix:
   (
@@ -1049,11 +1071,7 @@ memberExpr_Suffix:
 
 altMemberExpr:
   (
-    name simpleCallArgument?? |
-    nestedExpr |
-    nestedAssignment |
-    simpleExpr |
-    constructExpr
+    memberExpr_Standalone | memberExpr_Prefix
   ) memberExpr_Suffix? altMemberExpr_Suffix (memberExpr_Suffix altMemberExpr_Suffix)* memberExpr_Suffix?;
 
 altMemberExpr_Suffix:
@@ -1073,6 +1091,18 @@ dynamicMemberAccess:
 
 dynamicExprMemberAccess:
   ':' nestedExpr;
+
+memberVoidExpr:
+  'void' '(' expression ')';
+
+memberObjectExpr:
+  'object' '(' expression ')';
+
+memberTypeConvertExpr:
+  primitiveType '(' expression ')';
+
+memberTypeConstructExpr:
+  primitiveType '(' ')';
 
 // Function calls
 
