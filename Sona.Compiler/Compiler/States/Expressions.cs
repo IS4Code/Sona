@@ -1362,15 +1362,72 @@ namespace IS4.Sona.Compiler.States
 
     internal sealed class TypeConstructionState : TypeState
     {
+        bool namedArg;
+        bool first;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            namedArg = false;
+            first = true;
+        }
+
         public override void EnterMemberTypeConstructExpr(MemberTypeConstructExprContext context)
         {
-
+            Out.Write("new ");
         }
 
         public override void ExitMemberTypeConstructExpr(MemberTypeConstructExprContext context)
         {
-            Out.Write("()");
+            Out.Write(')');
             ExitState().ExitMemberTypeConstructExpr(context);
+        }
+
+        public override void ExitPrimitiveType(PrimitiveTypeContext context)
+        {
+            base.ExitPrimitiveType(context);
+            Out.Write('(');
+        }
+
+        public override void EnterExpression(ExpressionContext context)
+        {
+            if(namedArg)
+            {
+                Out.WriteOperator('=');
+            }
+            else if(first)
+            {
+                first = false;
+            }
+            else
+            {
+                Out.Write(',');
+            }
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public override void ExitExpression(ExpressionContext context)
+        {
+            namedArg = false;
+        }
+
+        public override void EnterFieldAssignment(FieldAssignmentContext context)
+        {
+            if(first)
+            {
+                first = false;
+            }
+            else
+            {
+                Out.Write(',');
+            }
+            namedArg = true;
+        }
+
+        public override void ExitFieldAssignment(FieldAssignmentContext context)
+        {
+
         }
     }
 

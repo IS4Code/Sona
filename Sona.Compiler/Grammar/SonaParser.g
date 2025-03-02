@@ -1101,8 +1101,12 @@ memberObjectExpr:
 memberTypeConvertExpr:
   primitiveType '(' expression ')';
 
+// Must indicate construction by having no arguments, at least two arguments, or one named argument.
 memberTypeConstructExpr:
-  primitiveType '(' ')';
+  primitiveType '(' ((expression ',' expression | (expression ',')* fieldAssignment) (',' (fieldAssignment | expression))*)? ')';
+
+fieldAssignment:
+  name '=' expression;
 
 // Function calls
 
@@ -1124,19 +1128,16 @@ callArgTuple:
 // Records, collections, and tuples
 
 recordConstructor:
-  '{' recordField (',' recordField)* '}';
+  '{' fieldAssignment (',' fieldAssignment)* '}';
 
 anonymousRecordConstructor:
-  '{' 'as' 'new' ';'? recordField (',' recordField)* '}';
+  '{' 'as' 'new' ';'? fieldAssignment (',' fieldAssignment)* '}';
 
 anonymousClassRecordConstructor:
-  '{' 'as' 'class' ';'? recordField (',' recordField)* '}';
+  '{' 'as' 'class' ';'? fieldAssignment (',' fieldAssignment)* '}';
 
 anonymousStructRecordConstructor:
-  '{' 'as' 'struct' ';'? recordField (',' recordField)* '}';
-
-recordField:
-  name '=' expression;
+  '{' 'as' 'struct' ';'? fieldAssignment (',' fieldAssignment)* '}';
 
 arrayConstructor:
   '[' (simpleCollectionContents | complexCollectionContents)? ']';
