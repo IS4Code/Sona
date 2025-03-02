@@ -1123,7 +1123,7 @@ callArgList:
   callArgTuple (';' callArgTuple)*;
 
 callArgTuple:
-  (expression (',' expression)*)?;
+  ((expression | fieldAssignment) (',' (expression | fieldAssignment))*)?;
 
 // Records, collections, and tuples
 

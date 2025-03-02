@@ -520,11 +520,13 @@ namespace IS4.Sona.Compiler.States
         sealed class MemberApplicationState : MemberExprState
         {
             bool first;
+            bool namedArg;
 
             protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
             {
                 base.Initialize(environment, parent);
 
+                namedArg = false;
                 first = true;
             }
 
@@ -552,7 +554,11 @@ namespace IS4.Sona.Compiler.States
 
             public override void EnterExpression(ExpressionContext context)
             {
-                if(first)
+                if(namedArg)
+                {
+                    Out.WriteOperator('=');
+                }
+                else if(first)
                 {
                     first = false;
                 }
@@ -561,6 +567,29 @@ namespace IS4.Sona.Compiler.States
                     Out.Write(',');
                 }
                 base.EnterExpression(context);
+            }
+
+            public override void ExitExpression(ExpressionContext context)
+            {
+                namedArg = false;
+            }
+
+            public override void EnterFieldAssignment(FieldAssignmentContext context)
+            {
+                if(first)
+                {
+                    first = false;
+                }
+                else
+                {
+                    Out.Write(',');
+                }
+                namedArg = true;
+            }
+
+            public override void ExitFieldAssignment(FieldAssignmentContext context)
+            {
+
             }
         }
     }
@@ -799,6 +828,16 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(',');
 
                 base.EnterExpression(context);
+            }
+
+            public override void EnterFieldAssignment(FieldAssignmentContext context)
+            {
+                Error("A call to a constraint member expression cannot contain named arguments.");
+            }
+
+            public override void ExitFieldAssignment(FieldAssignmentContext context)
+            {
+
             }
         }
     }
