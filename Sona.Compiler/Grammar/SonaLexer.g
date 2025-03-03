@@ -562,44 +562,46 @@ fragment CUSTOM_NUM_FORMAT:
   CUSTOM_NUM_SECTION (';' CUSTOM_NUM_SECTION (';' CUSTOM_NUM_SECTION)?)?;
 
 fragment CUSTOM_NUM_LITERAL:
-  '\\' ('\\' | INTERP_NON_DELIMITER) | LINE_WHITESPACE | [-+];
+  ('\\' ('\\' | INTERP_NON_DELIMITER) | LINE_WHITESPACE | [-+])*;
 
 fragment CUSTOM_NUM_SECTION:
-  CUSTOM_NUM_LITERAL* (
-    ([%\u2030] CUSTOM_NUM_LITERAL*)? CUSTOM_NUM_DIGITS |
-    CUSTOM_NUM_DIGITS CUSTOM_NUM_LITERAL* [%\u2030]
-  ) CUSTOM_NUM_LITERAL*;
+  CUSTOM_NUM_LITERAL (
+    [%\u2030] CUSTOM_NUM_LITERAL CUSTOM_NUM_DIGITS |
+    CUSTOM_NUM_DIGITS (CUSTOM_NUM_LITERAL [%\u2030])?
+  ) CUSTOM_NUM_LITERAL;
 
 fragment CUSTOM_NUM_DIGITS:
   // Preceding # groups
-  (('#' CUSTOM_NUM_LITERAL*)+ ',' CUSTOM_NUM_LITERAL*)*
+  (('#' CUSTOM_NUM_LITERAL)+ ',' CUSTOM_NUM_LITERAL)*
   (
     // Preceding mixed or 0 groups
-    (('#' CUSTOM_NUM_LITERAL*)+ ('0' CUSTOM_NUM_LITERAL*)+ ',' CUSTOM_NUM_LITERAL*)?
-    (('0' CUSTOM_NUM_LITERAL*)+ ',' CUSTOM_NUM_LITERAL*)*
-    // Unit digit
-    '0' | '#'
+    (('#' CUSTOM_NUM_LITERAL)+ ('0' CUSTOM_NUM_LITERAL)+ ',' CUSTOM_NUM_LITERAL)?
+    // Preceding 0 groups
+    (('0' CUSTOM_NUM_LITERAL)+ ',' CUSTOM_NUM_LITERAL)*
+    // Core digits
+    ('0' CUSTOM_NUM_LITERAL)* '0' |
+    ('#' CUSTOM_NUM_LITERAL)* '#' (CUSTOM_NUM_LITERAL ('0' CUSTOM_NUM_LITERAL)* '0')?
   )
   (
     // Decimal point
-    CUSTOM_NUM_LITERAL* ','*
+    CUSTOM_NUM_LITERAL ','*
     (
       ',' |
       '.'
       // Decimal digits
-      CUSTOM_NUM_LITERAL*
+      CUSTOM_NUM_LITERAL
       (
         // Tenth digit
         '#' | '0'
         // 0 decimal digits
-        (CUSTOM_NUM_LITERAL* '0')*
+        (CUSTOM_NUM_LITERAL '0')*
       )
       // # decimal digits
-      (CUSTOM_NUM_LITERAL* '#')*
+      (CUSTOM_NUM_LITERAL '#')*
     )
   )?
   // Exponent
-  (CUSTOM_NUM_LITERAL* [eE] [-+]? '0'+)?;
+  (CUSTOM_NUM_LITERAL [eE] [-+]? '0'+)?;
 
 INTERP_ALIGNMENT:
   ',' WHITESPACE* ('+' | '-')? INT_LITERAL;
