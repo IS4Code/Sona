@@ -626,7 +626,7 @@ Interpolation_WHITESPACE: WHITESPACE -> skip;
 
 Interpolation_LITERAL_NAME: LITERAL_NAME -> type(LITERAL_NAME);
 Interpolation_MEMBER_NAME: MEMBER_NAME -> type(MEMBER_NAME);
-Interpolation_DYNAMIC_MEMBER_NAME: DYNAMIC_MEMBER_NAME -> type(DYNAMIC_MEMBER_NAME);
+// no Interpolation_DYNAMIC_MEMBER_NAME
 
 Interpolation_ABSTRACT: ABSTRACT -> type(ABSTRACT);
 Interpolation_ADD: ADD -> type(ADD);
