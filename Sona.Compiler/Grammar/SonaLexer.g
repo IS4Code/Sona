@@ -444,9 +444,9 @@ PragmaDirective_INT_LITERAL: INT_LITERAL -> type(INT_LITERAL), channel(Pragma);
 PragmaDirective_FLOAT_LITERAL: FLOAT_LITERAL -> type(FLOAT_LITERAL), channel(Pragma);
 PragmaDirective_EXP_LITERAL: EXP_LITERAL -> type(EXP_LITERAL), channel(Pragma);
 PragmaDirective_HEX_LITERAL: HEX_LITERAL -> type(HEX_LITERAL), channel(Pragma);
-PragmaDirective_BEGIN_STRING: BEGIN_STRING -> type(BEGIN_STRING), channel(Pragma), pushMode(Pragma_String);
-PragmaDirective_BEGIN_VERBATIM_STRING: BEGIN_VERBATIM_STRING -> type(BEGIN_VERBATIM_STRING), channel(Pragma), pushMode(Pragma_VerbatimString);
-PragmaDirective_BEGIN_CHAR: BEGIN_CHAR -> type(BEGIN_CHAR), channel(Pragma), pushMode(Pragma_Char);
+PragmaDirective_STRING_LITERAL: STRING_LITERAL -> type(STRING_LITERAL), channel(Pragma);
+PragmaDirective_VERBATIM_STRING_LITERAL: VERBATIM_STRING_LITERAL -> type(VERBATIM_STRING_LITERAL), channel(Pragma);
+PragmaDirective_CHAR_LITERAL: CHAR_LITERAL -> type(CHAR_LITERAL), channel(Pragma);
 
 PragmaDirective_COMMENT: COMMENT -> skip;
 PragmaDirective_DOC_COMMENT: DOC_COMMENT -> channel(Documentation);
@@ -484,31 +484,6 @@ VerbatimString_LITERAL_PART: ('""' | ~'"')+ -> type(LITERAL_PART);
 
 Verbatim_END_STRING: END_STRING -> type(END_STRING), popMode;
 Verbatim_END_STRING_SUFFIX: END_STRING_SUFFIX -> type(END_STRING_SUFFIX), popMode;
-
-mode Pragma_Char;
-
-Pragma_LITERAL_PART: LITERAL_PART -> type(LITERAL_PART), channel(Pragma);
-Pragma_LITERAL_NEWLINE: LITERAL_NEWLINE -> type(LITERAL_NEWLINE), channel(Pragma);
-Pragma_LITERAL_BAD_ESCAPE: LITERAL_BAD_ESCAPE -> type(ERROR), channel(Pragma);
-
-Pragma_END_CHAR: END_CHAR -> type(END_CHAR), channel(Pragma), popMode;
-Pragma_END_CHAR_SUFFIX: END_CHAR_SUFFIX -> type(END_CHAR_SUFFIX), channel(Pragma), popMode;
-
-mode Pragma_String;
-
-Pragma_String_LITERAL_PART: String_LITERAL_PART -> type(LITERAL_PART), channel(Pragma);
-Pragma_String_LITERAL_NEWLINE: String_LITERAL_NEWLINE -> type(LITERAL_NEWLINE), channel(Pragma);
-Pragma_String_LITERAL_BAD_ESCAPE: String_LITERAL_BAD_ESCAPE -> type(ERROR);
-
-Pragma_END_STRING: END_STRING -> type(END_STRING), channel(Pragma), popMode;
-Pragma_END_STRING_SUFFIX: END_STRING NAME -> type(END_STRING_SUFFIX), channel(Pragma), popMode;
-
-mode Pragma_VerbatimString;
-
-Pragma_VerbatimString_LITERAL_PART: VerbatimString_LITERAL_PART -> type(LITERAL_PART), channel(Pragma);
-
-Pragma_Verbatim_END_STRING: Verbatim_END_STRING -> type(END_STRING), channel(Pragma), popMode;
-Pragma_Verbatim_END_STRING_SUFFIX: Verbatim_END_STRING_SUFFIX -> type(END_STRING_SUFFIX), channel(Pragma), popMode;
 
 mode InterpolatedString;
 
