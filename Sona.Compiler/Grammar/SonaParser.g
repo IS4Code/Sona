@@ -1189,17 +1189,17 @@ spreadExpression:
 /* -------------------- */
 
 interpolatedString:
-  BEGIN_INTERPOLATED_STRING interpStrComponent* (END_INTERPOLATED_STRING | errorUnsupportedEndInterpolatedStringSuffix);
+  BEGIN_INTERPOLATED_STRING interpStrComponent* (END_STRING | errorUnsupportedEndStringSuffix);
 
 verbatimInterpolatedString:
-  BEGIN_VERBATIM_INTERPOLATED_STRING interpStrComponent* (END_INTERPOLATED_STRING | errorUnsupportedEndInterpolatedStringSuffix);
+  BEGIN_VERBATIM_INTERPOLATED_STRING interpStrComponent* (END_STRING | errorUnsupportedEndStringSuffix);
 
 interpStrComponent:
   interpStrPart |
   interpStrPercent |
   interpStrExpression;
 
-interpStrPart: INTERP_PART;
+interpStrPart: STRING_PART;
 interpStrPercent: '%';
 interpStrAlignment: INTERP_ALIGNMENT;
 interpStrGeneralFormat: INTERP_FORMAT_GENERAL | INTERP_COMPONENTS_PART_SHORT;
@@ -1289,7 +1289,7 @@ number:
   INT_LITERAL | FLOAT_LITERAL | EXP_LITERAL | HEX_LITERAL | errorUnsupportedNumberSuffix;
 
 string:
-  STRING_LITERAL | VERBATIM_STRING_LITERAL | CHAR_LITERAL | errorUnsupportedStringSuffix;
+  STRING_LITERAL | VERBATIM_STRING_LITERAL | CHAR_LITERAL | BEGIN_CHAR CHAR_PART END_CHAR | (BEGIN_STRING | BEGIN_VERBATIM_STRING) STRING_PART* END_STRING | errorUnsupportedStringSuffix;
 
 unit:
   'unit';
@@ -1304,10 +1304,10 @@ errorUnsupportedNumberSuffix:
   INT_SUFFIX | FLOAT_SUFFIX | EXP_SUFFIX | HEX_SUFFIX;
 
 errorUnsupportedStringSuffix:
-  STRING_SUFFIX | VERBATIM_STRING_SUFFIX | CHAR_SUFFIX;
+  BEGIN_CHAR CHAR_PART END_CHAR_SUFFIX | (BEGIN_STRING | BEGIN_VERBATIM_STRING) STRING_PART* END_STRING_SUFFIX;
 
-errorUnsupportedEndInterpolatedStringSuffix:
-  END_INTERPOLATED_STRING_SUFFIX;
+errorUnsupportedEndStringSuffix:
+  END_STRING_SUFFIX;
 
 errorUnderscoreReserved:
   UNDERSCORE;

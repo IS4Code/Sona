@@ -25,7 +25,7 @@ namespace IS4.Sona.Compiler
             Environment.EnableParseTree();
         }
 
-        public sealed override void EnterErrorUnsupportedEndInterpolatedStringSuffix(ErrorUnsupportedEndInterpolatedStringSuffixContext context)
+        public sealed override void EnterErrorUnsupportedEndStringSuffix(ErrorUnsupportedEndStringSuffixContext context)
         {
             Environment.EnableParseTree();
         }
@@ -64,11 +64,11 @@ namespace IS4.Sona.Compiler
             }
         }
 
-        public sealed override void ExitErrorUnsupportedEndInterpolatedStringSuffix(ErrorUnsupportedEndInterpolatedStringSuffixContext context)
+        public sealed override void ExitErrorUnsupportedEndStringSuffix(ErrorUnsupportedEndStringSuffixContext context)
         {
             try
             {
-                Error($"The literal '{context.GetText()}' has an unsupported suffix.");
+                Error($"Unsupported string suffix '{context.GetText()}'.");
             }
             finally
             {

@@ -462,7 +462,8 @@ mode Char;
 fragment ESCAPE_BASIC:
   '\\' ([abfnrtv\\"'] | DIGIT DIGIT DIGIT | 'x' HEXDIGIT HEXDIGIT | 'u' HEXDIGIT HEXDIGIT HEXDIGIT HEXDIGIT | 'U' HEXDIGIT HEXDIGIT HEXDIGIT HEXDIGIT HEXDIGIT HEXDIGIT HEXDIGIT HEXDIGIT);
 
-LITERAL_PART: ~['\\\r\n] | ESCAPE_BASIC;
+CHAR_PART: ~['\\\r\n] | ESCAPE_BASIC;
+CHAR_BAD_TWO_CHARACTERS: CHAR_PART CHAR_PART -> type(ERROR);
 LITERAL_NEWLINE: EOL;
 LITERAL_BAD_ESCAPE: '\\' . -> type(ERROR);
 
@@ -471,7 +472,7 @@ END_CHAR_SUFFIX: END_CHAR NAME -> popMode;
 
 mode String;
 
-String_LITERAL_PART: LITERAL_PART+ -> type(LITERAL_PART);
+STRING_PART: (~["\\\r\n] | ESCAPE_BASIC)+;
 String_LITERAL_NEWLINE: LITERAL_NEWLINE -> type(LITERAL_NEWLINE);
 String_LITERAL_BAD_ESCAPE: LITERAL_BAD_ESCAPE -> type(ERROR);
 
@@ -480,14 +481,14 @@ END_STRING_SUFFIX: END_STRING NAME -> popMode;
 
 mode VerbatimString;
 
-VerbatimString_LITERAL_PART: ('""' | ~'"')+ -> type(LITERAL_PART);
+Verbatim_STRING_PART: ('""' | ~'"')+ -> type(STRING_PART);
 
 Verbatim_END_STRING: END_STRING -> type(END_STRING), popMode;
 Verbatim_END_STRING_SUFFIX: END_STRING_SUFFIX -> type(END_STRING_SUFFIX), popMode;
 
 mode InterpolatedString;
 
-InterpolatedString_LITERAL_PART: (ESCAPE_BASIC | '{{' | '}}' | ~[\\"{}%\r\n])+ -> type(LITERAL_PART);
+Interpolated_STRING_PART: (ESCAPE_BASIC | '{{' | '}}' | ~[\\"{}%\r\n])+ -> type(STRING_PART);
 InterpolatedString_LITERAL_NEWLINE: LITERAL_NEWLINE -> type(LITERAL_NEWLINE);
 InterpolatedString_LITERAL_BAD_ESCAPE: LITERAL_BAD_ESCAPE -> type(ERROR);
 
@@ -499,7 +500,7 @@ Interpolated_END_STRING_SUFFIX: END_STRING_SUFFIX -> type(END_STRING_SUFFIX), po
 
 mode VerbatimInterpolatedString;
 
-VerbatimInterpolatedString_LITERAL_PART: ('{{' | '}}' | '""' | ~["{}%])+ -> type(LITERAL_PART);
+VerbatimInterpolated_STRING_PART: ('{{' | '}}' | '""' | ~["{}%])+ -> type(STRING_PART);
 
 VerbatimInterpolatedString_OPENB: OPENB -> type(OPENB), pushMode(Interpolation);
 VerbatimInterpolatedString_PERCENT: PERCENT -> type(PERCENT);
@@ -802,13 +803,13 @@ mode Empty;
 ERROR: (~'\u0000'+ | '\u0000'+);
 
 STRING_LITERAL:
-  BEGIN_STRING String_LITERAL_PART* END_STRING;
+  BEGIN_STRING STRING_PART* END_STRING;
 
 VERBATIM_STRING_LITERAL:
-  BEGIN_VERBATIM_STRING VerbatimString_LITERAL_PART* Verbatim_END_STRING;
+  BEGIN_VERBATIM_STRING Verbatim_STRING_PART* Verbatim_END_STRING;
 
 CHAR_LITERAL:
-  BEGIN_CHAR LITERAL_PART END_CHAR;
+  BEGIN_CHAR CHAR_PART END_CHAR;
 
 mode InlineDirective;
 

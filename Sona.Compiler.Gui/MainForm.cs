@@ -330,12 +330,12 @@ namespace IS4.Sona.Compiler.Gui
                     // Inline F#
                     sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Italic);
                 }
-                else if(token.Type is SonaLexer.ERROR or SonaLexer.UNDERSCORE or SonaLexer.INT_SUFFIX or SonaLexer.FLOAT_SUFFIX or SonaLexer.EXP_SUFFIX or SonaLexer.HEX_SUFFIX or SonaLexer.STRING_SUFFIX or SonaLexer.VERBATIM_STRING_SUFFIX or SonaLexer.CHAR_SUFFIX or SonaLexer.END_INTERPOLATED_STRING_SUFFIX)
+                else if(token.Type is SonaLexer.ERROR or SonaLexer.UNDERSCORE or SonaLexer.INT_SUFFIX or SonaLexer.FLOAT_SUFFIX or SonaLexer.EXP_SUFFIX or SonaLexer.HEX_SUFFIX or SonaLexer.END_STRING_SUFFIX or SonaLexer.END_CHAR_SUFFIX)
                 {
                     // Error
                     sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Italic | FontStyle.Strikeout);
                 }
-                else if(token.Type is SonaLexer.INT_LITERAL or SonaLexer.FLOAT_LITERAL or SonaLexer.EXP_LITERAL or SonaLexer.HEX_LITERAL or SonaLexer.STRING_LITERAL or SonaLexer.VERBATIM_STRING_LITERAL or SonaLexer.CHAR_LITERAL or SonaLexer.BEGIN_INTERPOLATED_STRING or SonaLexer.BEGIN_VERBATIM_INTERPOLATED_STRING or SonaLexer.INTERP_PART or SonaLexer.END_INTERPOLATED_STRING or SonaLexer.DOC_COMMENT)
+                else if(token.Type is SonaLexer.INT_LITERAL or SonaLexer.FLOAT_LITERAL or SonaLexer.EXP_LITERAL or SonaLexer.HEX_LITERAL or SonaLexer.STRING_LITERAL or SonaLexer.VERBATIM_STRING_LITERAL or SonaLexer.CHAR_LITERAL or SonaLexer.BEGIN_CHAR or SonaLexer.BEGIN_STRING or SonaLexer.BEGIN_INTERPOLATED_STRING or SonaLexer.BEGIN_VERBATIM_INTERPOLATED_STRING or SonaLexer.CHAR_PART or SonaLexer.STRING_PART or SonaLexer.END_CHAR or SonaLexer.END_STRING or SonaLexer.DOC_COMMENT)
                 {
                     // Literal
                     sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Italic);
