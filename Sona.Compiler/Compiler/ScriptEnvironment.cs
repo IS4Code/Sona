@@ -1,4 +1,6 @@
-﻿using Antlr4.Runtime;
+﻿using System;
+using System.Linq;
+using Antlr4.Runtime;
 
 namespace IS4.Sona.Compiler
 {
@@ -6,6 +8,8 @@ namespace IS4.Sona.Compiler
     {
         public string Begin => "begin";
         public string End => "end";
+
+        public string NewLineSequence { get; } = String.Join("", Environment.NewLine.Select(c => $"\\u{(ushort)c:X4}"));
 
         readonly bool buildParseTreeDefault = Parser.BuildParseTree;
         int buildParseTreeLevel = 0;

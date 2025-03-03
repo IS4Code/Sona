@@ -465,6 +465,7 @@ fragment ESCAPE_BASIC:
 CHAR_PART: ~['\\\r\n] | ESCAPE_BASIC;
 CHAR_BAD_TWO_CHARACTERS: CHAR_PART CHAR_PART -> type(ERROR);
 LITERAL_NEWLINE: EOL;
+LITERAL_ESCAPE_NEWLINE: NEWLINE_ESCAPE;
 LITERAL_BAD_ESCAPE: '\\' . -> type(ERROR);
 
 END_CHAR: '\'' -> popMode;
@@ -474,6 +475,7 @@ mode String;
 
 STRING_PART: (~["\\\r\n] | ESCAPE_BASIC)+;
 String_LITERAL_NEWLINE: LITERAL_NEWLINE -> type(LITERAL_NEWLINE);
+String_LITERAL_ESCAPE_NEWLINE: LITERAL_ESCAPE_NEWLINE -> type(LITERAL_ESCAPE_NEWLINE);
 String_LITERAL_BAD_ESCAPE: LITERAL_BAD_ESCAPE -> type(ERROR);
 
 END_STRING: '"' -> popMode;
@@ -490,6 +492,7 @@ mode InterpolatedString;
 
 Interpolated_STRING_PART: (ESCAPE_BASIC | '{{' | '}}' | ~[\\"{}%\r\n])+ -> type(STRING_PART);
 InterpolatedString_LITERAL_NEWLINE: LITERAL_NEWLINE -> type(LITERAL_NEWLINE);
+InterpolatedString_LITERAL_ESCAPE_NEWLINE: LITERAL_ESCAPE_NEWLINE -> type(LITERAL_ESCAPE_NEWLINE);
 InterpolatedString_LITERAL_BAD_ESCAPE: LITERAL_BAD_ESCAPE -> type(ERROR);
 
 InterpolatedString_OPENB: OPENB -> type(OPENB), pushMode(Interpolation);
@@ -795,6 +798,8 @@ INTERP_COMPONENTS_PART_LONG:
   'V'+ | 'W'+ | 'X'+ | 'Y'+ | 'Z'+;
 
 InterpolationComponents_CLOSEB: CLOSEB -> type(CLOSEB), popMode;
+
+InterpolationComponents_ERROR: . -> type(ERROR);
 
 mode InterpolationEnd;
 

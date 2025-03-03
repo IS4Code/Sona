@@ -4,6 +4,7 @@ using System.Text;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using IS4.Sona.Compiler.Tools;
+using IS4.Sona.Grammar;
 using static IS4.Sona.Grammar.SonaParser;
 
 namespace IS4.Sona.Compiler.States
@@ -60,31 +61,26 @@ namespace IS4.Sona.Compiler.States
             ExitState().ExitVerbatimInterpolatedString(context);
         }
 
-        public override void EnterInterpStrPart(InterpStrPartContext context)
+        public override void VisitTerminal(ITerminalNode node)
         {
-            Environment.EnableParseTree();
-        }
+            base.VisitTerminal(node);
 
-        public override void ExitInterpStrPart(InterpStrPartContext context)
-        {
-            try
+            var token = node.Symbol;
+            switch(token.Type)
             {
-                parts.Add(context.GetText());
+                case SonaLexer.PERCENT:
+                    parts.Add("%%");
+                    break;
+                case SonaLexer.STRING_PART:
+                    parts.Add(token.Text);
+                    break;
+                case SonaLexer.LITERAL_NEWLINE:
+                    parts.Add(Environment.NewLineSequence);
+                    break;
+                case SonaLexer.LITERAL_ESCAPE_NEWLINE:
+                    parts.Add(token.Text.Substring(1));
+                    break;
             }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
-        }
-
-        public override void EnterInterpStrPercent(InterpStrPercentContext context)
-        {
-
-        }
-
-        public override void ExitInterpStrPercent(InterpStrPercentContext context)
-        {
-            parts.Add("%%");
         }
 
         public override void EnterInterpStrAlignment(InterpStrAlignmentContext context)
@@ -338,31 +334,26 @@ namespace IS4.Sona.Compiler.States
             ExitState().ExitVerbatimInterpolatedString(context);
         }
 
-        public sealed override void EnterInterpStrPart(InterpStrPartContext context)
+        public sealed override void VisitTerminal(ITerminalNode node)
         {
-            Environment.EnableParseTree();
-        }
+            base.VisitTerminal(node);
 
-        public sealed override void ExitInterpStrPart(InterpStrPartContext context)
-        {
-            try
+            var token = node.Symbol;
+            switch(token.Type)
             {
-                Out.Write(context.GetText());
+                case SonaLexer.PERCENT:
+                    Out.Write("%");
+                    break;
+                case SonaLexer.STRING_PART:
+                    Out.Write(token.Text);
+                    break;
+                case SonaLexer.LITERAL_NEWLINE:
+                    Out.Write(Environment.NewLineSequence);
+                    break;
+                case SonaLexer.LITERAL_ESCAPE_NEWLINE:
+                    Out.Write(token.Text.Substring(1));
+                    break;
             }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
-        }
-
-        public sealed override void EnterInterpStrPercent(InterpStrPercentContext context)
-        {
-
-        }
-
-        public sealed override void ExitInterpStrPercent(InterpStrPercentContext context)
-        {
-            Out.Write('%');
         }
 
         public sealed override void EnterInterpStrAlignment(InterpStrAlignmentContext context)

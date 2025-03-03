@@ -51,12 +51,12 @@ namespace IS4.Sona.Compiler.States
             ExitState().ExitInlineSourceTerminating(context);
         }
 
-        public override void EnterString(StringContext context)
+        public override void EnterInlineSourceLanguage(InlineSourceLanguageContext context)
         {
             Environment.EnableParseTree();
         }
 
-        public override void ExitString(StringContext context)
+        public override void ExitInlineSourceLanguage(InlineSourceLanguageContext context)
         {
             try
             {

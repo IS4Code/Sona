@@ -1195,12 +1195,12 @@ verbatimInterpolatedString:
   BEGIN_VERBATIM_INTERPOLATED_STRING interpStrComponent* (END_STRING | errorUnsupportedEndStringSuffix);
 
 interpStrComponent:
-  interpStrPart |
-  interpStrPercent |
+  STRING_PART |
+  '%' |
+  LITERAL_NEWLINE |
+  LITERAL_ESCAPE_NEWLINE |
   interpStrExpression;
 
-interpStrPart: STRING_PART;
-interpStrPercent: '%';
 interpStrAlignment: INTERP_ALIGNMENT;
 interpStrGeneralFormat: INTERP_FORMAT_GENERAL | INTERP_COMPONENTS_PART_SHORT;
 interpStrStandardFormat: INTERP_FORMAT_STANDARD;
@@ -1218,16 +1218,19 @@ interpStrExpression:
 /* ---------------- */
 
 inlineSourceFree:
-  BEGIN_INLINE_SOURCE WHITESPACE* string inlineSourceFirstLine inlineSourceLine*
+  BEGIN_INLINE_SOURCE WHITESPACE* inlineSourceLanguage inlineSourceFirstLine inlineSourceLine*
   END_INLINE_SOURCE WHITESPACE* END_DIRECTIVE;
 
 inlineSourceReturning:
-  BEGIN_INLINE_SOURCE WHITESPACE* string inlineSourceFirstLine inlineSourceLine*
+  BEGIN_INLINE_SOURCE WHITESPACE* inlineSourceLanguage inlineSourceFirstLine inlineSourceLine*
   END_INLINE_SOURCE WHITESPACE* 'return' WHITESPACE* END_DIRECTIVE;
 
 inlineSourceTerminating:
-  BEGIN_INLINE_SOURCE WHITESPACE* string inlineSourceFirstLine inlineSourceLine*
+  BEGIN_INLINE_SOURCE WHITESPACE* inlineSourceLanguage inlineSourceFirstLine inlineSourceLine*
   END_INLINE_SOURCE WHITESPACE* 'throw' WHITESPACE* END_DIRECTIVE;
+
+inlineSourceLanguage:
+  STRING_LITERAL | VERBATIM_STRING_LITERAL;
 
 inlineSourceFirstLine:
   // Skip any whitespace before indented token
@@ -1289,7 +1292,7 @@ number:
   INT_LITERAL | FLOAT_LITERAL | EXP_LITERAL | HEX_LITERAL | errorUnsupportedNumberSuffix;
 
 string:
-  STRING_LITERAL | VERBATIM_STRING_LITERAL | CHAR_LITERAL | BEGIN_CHAR CHAR_PART END_CHAR | (BEGIN_STRING | BEGIN_VERBATIM_STRING) STRING_PART* END_STRING | errorUnsupportedStringSuffix;
+  BEGIN_CHAR CHAR_PART END_CHAR | (BEGIN_STRING | BEGIN_VERBATIM_STRING) (STRING_PART | LITERAL_NEWLINE | LITERAL_ESCAPE_NEWLINE)* END_STRING | errorUnsupportedStringSuffix;
 
 unit:
   'unit';

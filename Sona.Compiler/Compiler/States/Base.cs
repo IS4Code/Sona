@@ -1,4 +1,6 @@
-﻿using IS4.Sona.Compiler.States;
+﻿using Antlr4.Runtime.Tree;
+using IS4.Sona.Compiler.States;
+using IS4.Sona.Grammar;
 using static IS4.Sona.Grammar.SonaParser;
 
 namespace IS4.Sona.Compiler
@@ -102,19 +104,12 @@ namespace IS4.Sona.Compiler
 
         public override void EnterString(StringContext context)
         {
-            Environment.EnableParseTree();
+            EnterState<StringState>().EnterString(context);
         }
 
         public override void ExitString(StringContext context)
         {
-            try
-            {
-                Out.Write(context.GetText());
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+
         }
 
         public override void EnterArrayConstructor(ArrayConstructorContext context)
@@ -352,6 +347,50 @@ namespace IS4.Sona.Compiler
         public override void ExitGlobalAttribute(GlobalAttributeContext context)
         {
 
+        }
+
+        sealed class StringState : NodeState
+        {
+            public override void EnterString(StringContext context)
+            {
+
+            }
+
+            public override void ExitString(StringContext context)
+            {
+                ExitState().ExitString(context);
+            }
+
+            public override void VisitTerminal(ITerminalNode node)
+            {
+                base.VisitTerminal(node);
+
+                var token = node.Symbol;
+                switch(token.Type)
+                {
+                    case SonaLexer.BEGIN_STRING:
+                    case SonaLexer.END_STRING:
+                        Out.Write('"');
+                        break;
+                    case SonaLexer.BEGIN_VERBATIM_STRING:
+                        Out.Write("@\"");
+                        break;
+                    case SonaLexer.BEGIN_CHAR:
+                    case SonaLexer.END_CHAR:
+                        Out.Write('\'');
+                        break;
+                    case SonaLexer.CHAR_PART:
+                    case SonaLexer.STRING_PART:
+                        Out.Write(token.Text);
+                        break;
+                    case SonaLexer.LITERAL_NEWLINE:
+                        Out.Write(Environment.NewLineSequence);
+                        break;
+                    case SonaLexer.LITERAL_ESCAPE_NEWLINE:
+                        Out.Write(token.Text.Substring(1));
+                        break;
+                }
+            }
         }
     }
 
