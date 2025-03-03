@@ -28,21 +28,24 @@ namespace IS4.Sona.Tests
         [DataRow("null", "null")]
         [DataRow(@"""abc""", @"""abc""")]
         [DataRow(@"""a\""bc""", @"""a\""bc""")]
-        [DataRow(@"""\*""", @"""\*""")]
+        [DataRow(@"""\*""", null)]
+        [DataRow(@"""\a""", @"""\a""")]
         [DataRow(@"""abc", null)]
-        [DataRow("\"a\rc\"", null)]
-        [DataRow("\"a\nc\"", null)]
-        [DataRow("'abc'", "'abc'")]
+        [DataRow("\"a\\\nc\"", "\"a\nc\"")]
+        [DataRow("\"a\\\r\nc\"", "\"a\r\nc\"")]
+        [DataRow("'a'", "'a'")]
+        [DataRow("'abc'", null)]
         [DataRow("'abc", null)]
         [DataRow("'a\rc'", null)]
         [DataRow("'a\nc'", null)]
-        [DataRow(@"'\*'", @"'\*'")]
+        [DataRow(@"'\*'", null)]
+        [DataRow(@"'\a'", @"'\a'")]
         [DataRow(@"@""abc""", @"@""abc""")]
         [DataRow(@"@""a""""bc""", @"@""a""""bc""")]
         [DataRow(@"@""a\bc""", @"@""a\bc""")]
         [DataRow(@"@""a\""bc""", null)]
-        [DataRow("@\"a\rc\"", "@\"a\rc\"")]
         [DataRow("@\"a\nc\"", "@\"a\nc\"")]
+        [DataRow("@\"a\rc\"", "@\"a\rc\"")]
         [TestMethod]
         public void Primitive(string source, string? expected)
         {
@@ -158,6 +161,10 @@ namespace IS4.Sona.Tests
         [DataRow("a()", "a()")]
         [DataRow("(a).b", "(a).b")]
         [DataRow("a:b", "a?b")]
+        [DataRow("a.and", "a.``and``")]
+        [DataRow("a:and", "a?``and``")]
+        [DataRow("a. and", null)]
+        [DataRow("a: and", null)]
         [DataRow("f(a).b", "f(a).b")]
         [DataRow("f(a)[b, c]", "f(a)[b,c]")]
         [DataRow("a.f(b).c", "a.f(b).c")]
@@ -165,7 +172,7 @@ namespace IS4.Sona.Tests
         [DataRow(@"""""[0]", @"("""")[0]")]
         [DataRow(@""""".ToString()", @"("""").ToString()")]
         [DataRow("(a)()", "(a)()")]
-        [DataRow("(a, b)()", null)]
+        [DataRow("(a, b)()", "(struct(a,b))()")]
         [TestMethod]
         public void MemberAccess(string source, string? expected)
         {
@@ -203,7 +210,7 @@ namespace IS4.Sona.Tests
         [DataRow(@"f""x""", @"f(""x"")")]
         [DataRow(@"f""x"" ""y""", null)]
         [DataRow("f{a=1}", "f({ a = 1 })")]
-        [DataRow("f{a}", $"f({seq}{{ a }})")]
+        [DataRow("f{a}", $"f(({seq}{{ a }}))")]
         [DataRow("f{}", $"f({Seq}.empty)")]
         [DataRow("f{}{}", null)]
         [DataRow("0()", "(0)()")]
@@ -240,11 +247,11 @@ namespace IS4.Sona.Tests
         [DataRow("[[a]=b,c]", $"[| {KeyValuePair}(a,b);c |]")]
         [DataRow("[..a]", @"[|
  yield! a
-|]")]
+ |]")]
         [DataRow("[a, ..b]", @"[|
  yield a
  yield! b
-|]")]
+ |]")]
         [DataRow("[a, ..b,]", null)]
         [DataRow("[a, ..b..c]", null)]
         [TestMethod]
@@ -253,7 +260,7 @@ namespace IS4.Sona.Tests
             AssertExpressionEquivalence(source, expected);
         }
 
-        [DataRow("{}", $"({Seq}.empty)")]
+        [DataRow("{}", $"{Seq}.empty")]
         [DataRow("{,a}", null)]
         [DataRow("{a}", $"({seq}{{ a }})")]
         [DataRow("{a, b}", $"({seq}{{ a;b }})")]
@@ -267,11 +274,11 @@ namespace IS4.Sona.Tests
         [DataRow("{[a]=b,c}", $"({seq}{{ {KeyValuePair}(a,b);c }})")]
         [DataRow("{..a}", $@"({seq}{{
  yield! a
-}})")]
+ }})")]
         [DataRow("{a, ..b}", $@"({seq}{{
  yield a
  yield! b
-}})")]
+ }})")]
         [DataRow("{a, ..b,}", null)]
         [DataRow("{a, ..b..c}", null)]
         [TestMethod]
