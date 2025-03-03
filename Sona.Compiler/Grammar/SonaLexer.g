@@ -56,10 +56,10 @@ fragment EOL:
   '\r'? ('\n' | EOF);
 
 DOC_COMMENT:
-  '///' ~('\n' | '\r')* -> channel(Documentation);
+  '///' ~[\n\r]* -> channel(Documentation);
 
 LINE_COMMENT:
-  '//' ~('\n' | '\r')* -> skip;
+  '//' ~[\n\r]* -> skip;
 
 fragment LINE_WHITESPACE:
   ' ' | '\t' | '\u000C';
@@ -536,15 +536,15 @@ mode Interpolation;
 
 // Not valid in non-string format.
 fragment INTERP_NON_DELIMITER:
-  ~([{}()"'\][\\\r\n]);
+  ~[{}()"'\][\\\r\n];
 fragment INTERP_NON_DELIMITER_WHITESPACE:
-  ~([{}()"'\][\\\r\n] | ' ' | '\t' | '\u000C');
+  ~[{}()"'\][\\\r\n] | ' ' | '\t' | '\u000C';
 fragment INTERP_NON_DELIMITER_ALPHA:
-  ~([{}()"'\][\\\r\n] | [a-zA-Z]);
+  ~[{}()"'\][\\\r\n] | [a-zA-Z];
 fragment INTERP_NON_DELIMITER_WHITESPACE_ALPHA:
-  ~([{}()"'\][\\\r\n] | ' ' | '\t' | '\u000C' | [a-zA-Z_]);
+  ~[{}()"'\][\\\r\n] | ' ' | '\t' | '\u000C' | [a-zA-Z_];
 fragment INTERP_NON_DELIMITER_WHITESPACE_ALPHANUMERIC:
-  ~([{}()"'\][\\\r\n] | ' ' | '\t' | '\u000C' | [a-zA-Z_] | [0-9]);
+  ~[{}()"'\][\\\r\n] | ' ' | '\t' | '\u000C' | [a-zA-Z_] | [0-9];
 
 // F# format specifiers with at least one optional component used.
 INTERP_FORMAT_GENERAL:
@@ -824,7 +824,7 @@ InterpolationEnd_CLOSEB: CLOSEB -> type(CLOSEB), popMode;
 
 mode Empty;
 
-ERROR: (~('\u0000')+ | '\u0000'+);
+ERROR: (~'\u0000'+ | '\u0000'+);
 
 STRING_LITERAL:
   BEGIN_STRING String_LITERAL_PART* END_STRING;
@@ -855,7 +855,7 @@ fragment FS_ESCAPE:
 // Special-handled tokens that do not form delimiters in code and comments
 fragment FS_TOKEN:
   '(*)' |
-  '@"' ('""' | ~('"'))* '"' |
+  '@"' ('""' | ~'"')* '"' |
   '"""' (~'"' | '"' ~'"' | '""' ~'"')* '"""' |
   '"' (FS_ESCAPE | ~["\\])* '"' |
   '\'' '\\'? ["{}] '\'';
