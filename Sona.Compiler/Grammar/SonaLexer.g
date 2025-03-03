@@ -29,14 +29,16 @@ EXP_LITERAL:
 HEX_LITERAL:
   '0x' HEXDIGIT+;
 
-fragment ESCAPE:
-  '\\' ~('\r' | '\n');
+INT_SUFFIX: INT_LITERAL NAME;
+FLOAT_SUFFIX: FLOAT_LITERAL NAME;
+EXP_SUFFIX: EXP_LITERAL NAME;
+HEX_SUFFIX: HEX_LITERAL NAME;
 
-STRING_LITERAL:
-  '"' (ESCAPE | ~('\\' | '"' | '\r' | '\n'))* '"';
+BEGIN_STRING:
+  '"' -> pushMode(String);
 
-VERBATIM_STRING_LITERAL:
-  '@"' ('""' | ~('"'))* '"';
+BEGIN_VERBATIM_STRING:
+  '@"' -> pushMode(VerbatimString);
 
 BEGIN_INTERPOLATED_STRING:
   '$"' -> pushMode(InterpolatedString);
@@ -44,16 +46,8 @@ BEGIN_INTERPOLATED_STRING:
 BEGIN_VERBATIM_INTERPOLATED_STRING:
   ('$@' | '@$') '"' -> pushMode(VerbatimInterpolatedString);
 
-CHAR_LITERAL:
-  '\'' (ESCAPE | ~('\\' | '\'' | '\r' | '\n'))* '\'';
-
-INT_SUFFIX: INT_LITERAL NAME;
-FLOAT_SUFFIX: FLOAT_LITERAL NAME;
-EXP_SUFFIX: EXP_LITERAL NAME;
-HEX_SUFFIX: HEX_LITERAL NAME;
-STRING_SUFFIX: STRING_LITERAL NAME;
-VERBATIM_STRING_SUFFIX: VERBATIM_STRING_LITERAL NAME;
-CHAR_SUFFIX: CHAR_LITERAL NAME;
+BEGIN_CHAR:
+  '\'' -> pushMode(Char);
 
 COMMENT:
   '/*' .*? '*/' -> skip;
@@ -277,16 +271,13 @@ Directive_INT_LITERAL: INT_LITERAL -> type(INT_LITERAL);
 Directive_FLOAT_LITERAL: FLOAT_LITERAL -> type(FLOAT_LITERAL);
 Directive_EXP_LITERAL: EXP_LITERAL -> type(EXP_LITERAL);
 Directive_HEX_LITERAL: HEX_LITERAL -> type(HEX_LITERAL);
-Directive_STRING_LITERAL: STRING_LITERAL -> type(STRING_LITERAL);
-Directive_VERBATIM_STRING_LITERAL: VERBATIM_STRING_LITERAL -> type(VERBATIM_STRING_LITERAL);
-Directive_CHAR_LITERAL: CHAR_LITERAL -> type(CHAR_LITERAL);
 Directive_INT_SUFFIX: INT_SUFFIX -> type(INT_SUFFIX);
 Directive_FLOAT_SUFFIX: FLOAT_SUFFIX -> type(FLOAT_SUFFIX);
 Directive_EXP_SUFFIX: EXP_SUFFIX -> type(EXP_SUFFIX);
 Directive_HEX_SUFFIX: HEX_SUFFIX -> type(HEX_SUFFIX);
-Directive_STRING_SUFFIX: STRING_SUFFIX -> type(STRING_SUFFIX);
-Directive_VERBATIM_STRING_SUFFIX: VERBATIM_STRING_SUFFIX -> type(VERBATIM_STRING_SUFFIX);
-Directive_CHAR_SUFFIX: CHAR_SUFFIX -> type(CHAR_SUFFIX);
+Directive_BEGIN_STRING: BEGIN_STRING -> type(BEGIN_STRING), pushMode(String);
+Directive_BEGIN_VERBATIM_STRING: BEGIN_VERBATIM_STRING -> type(BEGIN_VERBATIM_STRING), pushMode(VerbatimString);
+Directive_BEGIN_CHAR: BEGIN_CHAR -> type(BEGIN_CHAR), pushMode(Char);
 
 Directive_COMMENT: COMMENT -> skip;
 Directive_DOC_COMMENT: DOC_COMMENT -> channel(Documentation);
@@ -453,9 +444,9 @@ PragmaDirective_INT_LITERAL: INT_LITERAL -> type(INT_LITERAL), channel(Pragma);
 PragmaDirective_FLOAT_LITERAL: FLOAT_LITERAL -> type(FLOAT_LITERAL), channel(Pragma);
 PragmaDirective_EXP_LITERAL: EXP_LITERAL -> type(EXP_LITERAL), channel(Pragma);
 PragmaDirective_HEX_LITERAL: HEX_LITERAL -> type(HEX_LITERAL), channel(Pragma);
-PragmaDirective_STRING_LITERAL: STRING_LITERAL -> type(STRING_LITERAL), channel(Pragma);
-PragmaDirective_VERBATIM_STRING_LITERAL: VERBATIM_STRING_LITERAL -> type(VERBATIM_STRING_LITERAL), channel(Pragma);
-PragmaDirective_CHAR_LITERAL: CHAR_LITERAL -> type(CHAR_LITERAL), channel(Pragma);
+PragmaDirective_BEGIN_STRING: BEGIN_STRING -> type(BEGIN_STRING), channel(Pragma), pushMode(Pragma_String);
+PragmaDirective_BEGIN_VERBATIM_STRING: BEGIN_VERBATIM_STRING -> type(BEGIN_VERBATIM_STRING), channel(Pragma), pushMode(Pragma_VerbatimString);
+PragmaDirective_BEGIN_CHAR: BEGIN_CHAR -> type(BEGIN_CHAR), channel(Pragma), pushMode(Pragma_Char);
 
 PragmaDirective_COMMENT: COMMENT -> skip;
 PragmaDirective_DOC_COMMENT: DOC_COMMENT -> channel(Documentation);
@@ -466,30 +457,80 @@ PragmaDirective_LITERAL_NAME: LITERAL_NAME -> type(LITERAL_NAME), channel(Pragma
 
 PragmaDirective_NAME: NAME -> type(NAME), channel(Pragma);
 
+mode Char;
+
+fragment ESCAPE_BASIC:
+  '\\' ([abfnrtv\\"'] | DIGIT DIGIT DIGIT | 'x' HEXDIGIT HEXDIGIT | 'u' HEXDIGIT HEXDIGIT HEXDIGIT HEXDIGIT | 'U' HEXDIGIT HEXDIGIT HEXDIGIT HEXDIGIT HEXDIGIT HEXDIGIT HEXDIGIT HEXDIGIT);
+
+LITERAL_PART: ~['\\\r\n] | ESCAPE_BASIC;
+LITERAL_NEWLINE: EOL;
+LITERAL_BAD_ESCAPE: '\\' . -> type(ERROR);
+
+END_CHAR: '\'' -> popMode;
+END_CHAR_SUFFIX: END_CHAR NAME -> popMode;
+
+mode String;
+
+String_LITERAL_PART: LITERAL_PART+ -> type(LITERAL_PART);
+String_LITERAL_NEWLINE: LITERAL_NEWLINE -> type(LITERAL_NEWLINE);
+String_LITERAL_BAD_ESCAPE: LITERAL_BAD_ESCAPE -> type(ERROR);
+
+END_STRING: '"' -> popMode;
+END_STRING_SUFFIX: END_STRING NAME -> popMode;
+
+mode VerbatimString;
+
+VerbatimString_LITERAL_PART: ('""' | ~'"')+ -> type(LITERAL_PART);
+
+Verbatim_END_STRING: END_STRING -> type(END_STRING), popMode;
+Verbatim_END_STRING_SUFFIX: END_STRING_SUFFIX -> type(END_STRING_SUFFIX), popMode;
+
+mode Pragma_Char;
+
+Pragma_LITERAL_PART: LITERAL_PART -> type(LITERAL_PART), channel(Pragma);
+Pragma_LITERAL_NEWLINE: LITERAL_NEWLINE -> type(LITERAL_NEWLINE), channel(Pragma);
+Pragma_LITERAL_BAD_ESCAPE: LITERAL_BAD_ESCAPE -> type(ERROR), channel(Pragma);
+
+Pragma_END_CHAR: END_CHAR -> type(END_CHAR), channel(Pragma), popMode;
+Pragma_END_CHAR_SUFFIX: END_CHAR_SUFFIX -> type(END_CHAR_SUFFIX), channel(Pragma), popMode;
+
+mode Pragma_String;
+
+Pragma_String_LITERAL_PART: String_LITERAL_PART -> type(LITERAL_PART), channel(Pragma);
+Pragma_String_LITERAL_NEWLINE: String_LITERAL_NEWLINE -> type(LITERAL_NEWLINE), channel(Pragma);
+Pragma_String_LITERAL_BAD_ESCAPE: String_LITERAL_BAD_ESCAPE -> type(ERROR);
+
+Pragma_END_STRING: END_STRING -> type(END_STRING), channel(Pragma), popMode;
+Pragma_END_STRING_SUFFIX: END_STRING NAME -> type(END_STRING_SUFFIX), channel(Pragma), popMode;
+
+mode Pragma_VerbatimString;
+
+Pragma_VerbatimString_LITERAL_PART: VerbatimString_LITERAL_PART -> type(LITERAL_PART), channel(Pragma);
+
+Pragma_Verbatim_END_STRING: Verbatim_END_STRING -> type(END_STRING), channel(Pragma), popMode;
+Pragma_Verbatim_END_STRING_SUFFIX: Verbatim_END_STRING_SUFFIX -> type(END_STRING_SUFFIX), channel(Pragma), popMode;
+
 mode InterpolatedString;
 
-fragment INTERP_ESCAPE:
-  '\\' ~('%' | '{' | '}' | '\r' | '\n');
-
-INTERP_PART:
-  (INTERP_ESCAPE | '{{' | '}}' | ~('\\' | '"' | '{' | '}' | '%' | '\r' | '\n'))+;
+InterpolatedString_LITERAL_PART: (ESCAPE_BASIC | '{{' | '}}' | ~[\\"{}%\r\n])+ -> type(LITERAL_PART);
+InterpolatedString_LITERAL_NEWLINE: LITERAL_NEWLINE -> type(LITERAL_NEWLINE);
+InterpolatedString_LITERAL_BAD_ESCAPE: LITERAL_BAD_ESCAPE -> type(ERROR);
 
 InterpolatedString_OPENB: OPENB -> type(OPENB), pushMode(Interpolation);
-InterpolatedString_PERCENT: ('\\%' | PERCENT) -> type(PERCENT);
+InterpolatedString_PERCENT: PERCENT -> type(PERCENT);
 
-END_INTERPOLATED_STRING: '"' -> popMode;
-END_INTERPOLATED_STRING_SUFFIX: END_INTERPOLATED_STRING NAME -> popMode;
+Interpolated_END_STRING: END_STRING -> type(END_STRING), popMode;
+Interpolated_END_STRING_SUFFIX: END_STRING_SUFFIX -> type(END_STRING_SUFFIX), popMode;
 
 mode VerbatimInterpolatedString;
 
-Verbatim_INTERP_PART:
-  ('{{' | '}}' | '""' | ~('"' | '{' | '}' | '%'))+ -> type(INTERP_PART);
+VerbatimInterpolatedString_LITERAL_PART: ('{{' | '}}' | '""' | ~["{}%])+ -> type(LITERAL_PART);
 
 VerbatimInterpolatedString_OPENB: OPENB -> type(OPENB), pushMode(Interpolation);
 VerbatimInterpolatedString_PERCENT: PERCENT -> type(PERCENT);
 
-Verbatim_END_INTERPOLATED_STRING: END_INTERPOLATED_STRING -> type(END_INTERPOLATED_STRING), popMode;
-Verbatim_END_INTERPOLATED_STRING_SUFFIX: END_INTERPOLATED_STRING_SUFFIX -> type(END_INTERPOLATED_STRING_SUFFIX), popMode;
+VerbatimInterpolated_END_STRING: END_STRING -> type(END_STRING), popMode;
+VerbatimInterpolated_END_STRING_SUFFIX: END_STRING_SUFFIX -> type(END_STRING_SUFFIX), popMode;
 
 mode Interpolation;
 
@@ -524,7 +565,7 @@ fragment GENERAL_WIDTH:
 fragment GENERAL_PRECISION:
   '.' INTERP_NON_DELIMITER_ALPHA*;
 
-// A valid string (must be a single letter).
+// A valid string (must not be a single letter).
 INTERP_FORMAT_CUSTOM:
   ':' WHITESPACE* (STRING_LITERAL | VERBATIM_STRING_LITERAL);
   
@@ -591,18 +632,15 @@ Interpolation_INT_LITERAL: INT_LITERAL -> type(INT_LITERAL);
 Interpolation_FLOAT_LITERAL: FLOAT_LITERAL -> type(FLOAT_LITERAL);
 Interpolation_EXP_LITERAL: EXP_LITERAL -> type(EXP_LITERAL);
 Interpolation_HEX_LITERAL: HEX_LITERAL -> type(HEX_LITERAL);
-Interpolation_STRING_LITERAL: STRING_LITERAL -> type(STRING_LITERAL);
-Interpolation_VERBATIM_STRING_LITERAL: VERBATIM_STRING_LITERAL -> type(VERBATIM_STRING_LITERAL);
-Interpolation_BEGIN_INTERPOLATED_STRING: BEGIN_INTERPOLATED_STRING -> type(BEGIN_INTERPOLATED_STRING), pushMode(InterpolatedString);
-Interpolation_BEGIN_VERBATIM_INTERPOLATED_STRING: BEGIN_VERBATIM_INTERPOLATED_STRING -> type(BEGIN_VERBATIM_INTERPOLATED_STRING), pushMode(VerbatimInterpolatedString);
-Interpolation_CHAR_LITERAL: CHAR_LITERAL -> type(CHAR_LITERAL);
 Interpolation_INT_SUFFIX: INT_SUFFIX -> type(INT_SUFFIX);
 Interpolation_FLOAT_SUFFIX: FLOAT_SUFFIX -> type(FLOAT_SUFFIX);
 Interpolation_EXP_SUFFIX: EXP_SUFFIX -> type(EXP_SUFFIX);
 Interpolation_HEX_SUFFIX: HEX_SUFFIX -> type(HEX_SUFFIX);
-Interpolation_STRING_SUFFIX: STRING_SUFFIX -> type(STRING_SUFFIX);
-Interpolation_VERBATIM_STRING_SUFFIX: VERBATIM_STRING_SUFFIX -> type(VERBATIM_STRING_SUFFIX);
-Interpolation_CHAR_SUFFIX: CHAR_SUFFIX -> type(CHAR_SUFFIX);
+Interpolation_BEGIN_STRING: BEGIN_STRING -> type(BEGIN_STRING), pushMode(String);
+Interpolation_BEGIN_VERBATIM_STRING: BEGIN_VERBATIM_STRING -> type(BEGIN_VERBATIM_STRING), pushMode(VerbatimString);
+Interpolation_BEGIN_INTERPOLATED_STRING: BEGIN_INTERPOLATED_STRING -> type(BEGIN_INTERPOLATED_STRING), pushMode(InterpolatedString);
+Interpolation_BEGIN_VERBATIM_INTERPOLATED_STRING: BEGIN_VERBATIM_INTERPOLATED_STRING -> type(BEGIN_VERBATIM_INTERPOLATED_STRING), pushMode(VerbatimInterpolatedString);
+Interpolation_BEGIN_CHAR: BEGIN_CHAR -> type(BEGIN_CHAR), pushMode(Char);
 
 Interpolation_COMMENT: COMMENT -> skip;
 Interpolation_DOC_COMMENT: DOC_COMMENT -> channel(Documentation);
@@ -787,6 +825,15 @@ InterpolationEnd_CLOSEB: CLOSEB -> type(CLOSEB), popMode;
 mode Empty;
 
 ERROR: (~('\u0000')+ | '\u0000'+);
+
+STRING_LITERAL:
+  BEGIN_STRING String_LITERAL_PART* END_STRING;
+
+VERBATIM_STRING_LITERAL:
+  BEGIN_VERBATIM_STRING VerbatimString_LITERAL_PART* Verbatim_END_STRING;
+
+CHAR_LITERAL:
+  BEGIN_CHAR LITERAL_PART END_CHAR;
 
 mode InlineDirective;
 
