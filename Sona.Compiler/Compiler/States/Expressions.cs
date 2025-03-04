@@ -842,8 +842,26 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal sealed class FunctionExprState : NodeState
+    internal sealed class FunctionExprState : NodeState, IFunctionContext
     {
+        // Establish a scope to return from
+        string? IReturnableStatementContext.ReturnVariable => null;
+        string? IReturnableStatementContext.ReturningVariable => null;
+
+        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
+
+        string? IInterruptibleStatementContext.InterruptingVariable => null;
+
+        bool IExpressionContext.IsLiteral => false;
+
+        bool IFunctionContext.IsOptionalReturn => false;
+
+        string? IComputationContext.BuilderVariable => null;
+
+        bool IComputationContext.IsCollection => false;
+
+        bool IStatementContext.TrailAllowed => true;
+
         string? name;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
@@ -855,10 +873,8 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterName(NameContext context)
         {
-            Out.Write('(');
-            Out.EnterScope();
-
-            Out.Write("let rec ");
+            Out.EnterNestedScope(true);
+            Out.Write("(let rec ");
 
             base.EnterName(context);
         }
@@ -868,6 +884,7 @@ namespace IS4.Sona.Compiler.States
             base.ExitName(context);
 
             name = context.GetText();
+            Out.WriteOperator('=');
         }
 
         public override void EnterFuncExpr(FuncExprContext context)
@@ -884,44 +901,62 @@ namespace IS4.Sona.Compiler.States
         {
             if(name == null)
             {
-                // lambda expression
+                // Scope not entered before
+                Out.EnterNestedScope();
                 Out.Write('(');
-                Out.EnterScope();
-                Out.Write("fun ");
             }
+            Out.Write("fun ");
 
             EnterState<ParamListState>().EnterParamList(context);
         }
 
         public override void EnterValueBlock(ValueBlockContext context)
         {
-            if(name == null)
-            {
-                Out.WriteOperator("->");
-            }
-            else
-            {
-                Out.WriteOperator('=');
-            }
-            Out.WriteLine("begin");
-            Out.EnterScope();
+            Out.WriteOperator("->");
+            Out.EnterNestedScope();
+            Out.WriteLine("(");
             EnterState<BlockState>().EnterValueBlock(context);
         }
 
         public override void ExitValueBlock(ValueBlockContext context)
         {
-            Out.ExitScope();
-            if(name == null)
+            Out.ExitNestedScope();
+            if(name != null)
             {
-                Out.Write("end)");
+                Out.Write(')');
+                Out.WriteLine();
+                Out.ExitNestedScope();
+                Out.Write(" in ");
+                Out.WriteIdentifier(name);
             }
             else
             {
-                Out.Write("end in ");
-                Out.WriteIdentifier(name);
-                Out.Write(")");
+                Out.ExitNestedScope();
+                Out.Write(')');
             }
+            Out.Write(')');
+        }
+
+        void IFunctionContext.WriteBegin()
+        {
+            Out.WriteLine("begin");
+            Out.EnterScope();
+        }
+
+        void IFunctionContext.WriteEnd()
+        {
             Out.ExitScope();
+            Out.Write("end");
+        }
+
+        void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
+        {
+            Error("`break` must be used in a statement that supports it.");
+        }
+
+        void IInterruptibleStatementContext.WriteContinue(bool hasExpression)
+        {
+            Error("`continue` must be used in a statement that supports it.");
         }
     }
 

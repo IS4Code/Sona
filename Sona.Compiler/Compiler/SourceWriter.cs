@@ -29,7 +29,7 @@ namespace IS4.Sona.Compiler
         void UpdateLine(IToken token);
         void EnterScope();
         void ExitScope();
-        void EnterNestedScope();
+        void EnterNestedScope(bool keepLevel = false);
         void ExitNestedScope();
 
         ISourceCapture StartCapture();
@@ -381,17 +381,24 @@ namespace IS4.Sona.Compiler
             }
         }
 
-        public void EnterNestedScope()
+        public void EnterNestedScope(bool keepLevel = false)
         {
             if(Recording)
             {
-                Record(x => x.EnterNestedScope());
+                Record(x => x.EnterNestedScope(keepLevel));
                 return;
             }
 
             int pos = InnerWriter.LinePosition;
             scopeRestore.Push((pos, Indent));
-            Indent++;
+            if(keepLevel)
+            {
+                Indent = pos + 1;
+            }
+            else
+            {
+                Indent++;
+            }
             scopeRestore.Push((Indent, pos));
         }
 
