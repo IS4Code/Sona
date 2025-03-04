@@ -152,6 +152,7 @@ attrNamedArg:
 statement:
   variableDecl |
   multiFuncDecl |
+  inlineFuncDecl |
   memberDiscard |
   memberOrAssignment |
   echoStatement |
@@ -800,6 +801,9 @@ multiFuncDecl:
 
 funcDecl:
   localAttrList 'function' name funcBody;
+
+inlineFuncDecl:
+  localAttrList 'inline' 'function' name funcBody;
 
 funcBody:
   '(' paramList ')' ('as' type ';'?)? valueBlock 'end';

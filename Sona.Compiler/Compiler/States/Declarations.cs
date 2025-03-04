@@ -54,9 +54,24 @@ namespace IS4.Sona.Compiler.States
 
         bool IStatementContext.TrailAllowed => true;
 
+        public override void EnterFuncDecl(FuncDeclContext context)
+        {
+
+        }
+
         public override void ExitFuncDecl(FuncDeclContext context)
         {
             ExitState().ExitFuncDecl(context);
+        }
+
+        public override void EnterInlineFuncDecl(InlineFuncDeclContext context)
+        {
+
+        }
+
+        public override void ExitInlineFuncDecl(InlineFuncDeclContext context)
+        {
+            ExitState().ExitInlineFuncDecl(context);
         }
 
         public override void EnterParamList(ParamListContext context)

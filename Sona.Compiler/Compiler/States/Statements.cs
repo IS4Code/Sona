@@ -24,6 +24,22 @@ namespace IS4.Sona.Compiler.States
             EnterState<MultiFunctionState>().EnterMultiFuncDecl(context);
         }
 
+        public sealed override void ExitMultiFuncDecl(MultiFuncDeclContext context)
+        {
+
+        }
+
+        public sealed override void EnterInlineFuncDecl(InlineFuncDeclContext context)
+        {
+            Out.Write("let inline ");
+            EnterState<FunctionDeclState>().EnterInlineFuncDecl(context);
+        }
+
+        public sealed override void ExitInlineFuncDecl(InlineFuncDeclContext context)
+        {
+
+        }
+
         protected virtual void OnEnterStatement(StatementFlags flags)
         {
 
