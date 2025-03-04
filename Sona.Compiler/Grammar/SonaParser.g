@@ -1059,7 +1059,8 @@ memberExpr_Standalone:
   memberObjectExpr |
   memberTypeConvertExpr |
   nestedExpr |
-  nestedAssignment;
+  nestedAssignment |
+  '(' inlineSourceFree ')';
 
 memberExpr_Prefix:
   simpleExpr |

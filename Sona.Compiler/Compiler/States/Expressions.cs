@@ -324,6 +324,20 @@ namespace IS4.Sona.Compiler.States
             Out.Write(')');
         }
 
+        public sealed override void EnterInlineSourceFree(InlineSourceFreeContext context)
+        {
+            Out.EnterNestedScope();
+            Out.Write('(');
+            EnterState<InlineSource>().EnterInlineSourceFree(context);
+        }
+
+        public sealed override void ExitInlineSourceFree(InlineSourceFreeContext context)
+        {
+            Out.WriteLine();
+            Out.ExitNestedScope();
+            Out.Write(')');
+        }
+
         public sealed override void EnterSimpleExpr(SimpleExprContext context)
         {
             Out.Write('(');
