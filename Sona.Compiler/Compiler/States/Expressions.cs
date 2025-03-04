@@ -86,6 +86,20 @@ namespace IS4.Sona.Compiler.States
             EnterState<LogicFormExpression>().EnterCnfExpr(context);
         }
 
+        public sealed override void EnterInlineSourceFree(InlineSourceFreeContext context)
+        {
+            Out.EnterNestedScope();
+            Out.Write('(');
+            EnterState<InlineSource>().EnterInlineSourceFree(context);
+        }
+
+        public sealed override void ExitInlineSourceFree(InlineSourceFreeContext context)
+        {
+            Out.WriteLine();
+            Out.ExitNestedScope();
+            Out.Write(')');
+        }
+
         public override void EnterConcatExprArg(ConcatExprArgContext context)
         {
             Out.Write('(');
@@ -321,20 +335,6 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitNestedExpr(NestedExprContext context)
         {
-            Out.Write(')');
-        }
-
-        public sealed override void EnterInlineSourceFree(InlineSourceFreeContext context)
-        {
-            Out.EnterNestedScope();
-            Out.Write('(');
-            EnterState<InlineSource>().EnterInlineSourceFree(context);
-        }
-
-        public sealed override void ExitInlineSourceFree(InlineSourceFreeContext context)
-        {
-            Out.WriteLine();
-            Out.ExitNestedScope();
             Out.Write(')');
         }
 

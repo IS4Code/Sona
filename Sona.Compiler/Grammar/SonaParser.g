@@ -844,6 +844,7 @@ expression:
   /* Require parentheses */
   //cnfExpr |
   //dnfExpr |
+  inlineSourceFree |
   outerExpr_Outer;
 
 
@@ -1059,8 +1060,7 @@ memberExpr_Standalone:
   memberObjectExpr |
   memberTypeConvertExpr |
   nestedExpr |
-  nestedAssignment |
-  '(' inlineSourceFree ')';
+  nestedAssignment;
 
 memberExpr_Prefix:
   simpleExpr |
