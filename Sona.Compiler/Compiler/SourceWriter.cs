@@ -389,6 +389,7 @@ namespace IS4.Sona.Compiler
                 return;
             }
 
+            OutputTabs();
             int pos = InnerWriter.LinePosition;
             scopeRestore.Push((pos, Indent));
             if(keepLevel)
