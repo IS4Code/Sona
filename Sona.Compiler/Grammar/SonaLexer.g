@@ -878,7 +878,7 @@ END_INLINE_SOURCE:
   EOL '#endinline' ' '? -> mode(Directive);
 
 FS_DIRECTIVE:
-  EOL '#' ('endinline' ~[ \r\n])?;
+  EOL '#' (LOWERCASE | UPPERCASE | DIGIT | '_' | '\'' | UNICODE)*;
 
 FS_EOL:
   EOL;
