@@ -156,6 +156,7 @@ statement:
   memberDiscard |
   memberOrAssignment |
   echoStatement |
+  yieldStatement |
   inlineSourceFree |
   ifStatementFree |
   doStatementFree |
@@ -184,6 +185,12 @@ implicitReturnStatement:;
 returnStatement:
   'return' expression?;
 
+yieldStatement:
+  'yield' (expression | errorMissingExpression);
+
+yieldBreakStatement:
+  YIELD_BREAK expression?;
+
 breakStatement:
   'break' expression?;
 
@@ -196,6 +203,7 @@ throwStatement:
 // A statement that has a returning path and all other paths are closing
 returningStatement:
   returnStatement |
+  yieldBreakStatement |
   inlineSourceReturning |
   doStatementReturning |
   ifStatementReturning |

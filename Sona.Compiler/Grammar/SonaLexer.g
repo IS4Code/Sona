@@ -206,6 +206,8 @@ WHILE_TRUE_DO: 'while' IGNORE TRUE_EXPR IGNORE 'do';
 WIDEN: 'widen';
 WITH: 'with';
 YIELD: 'yield';
+YIELD_BREAK: 'yield' IGNORE 'break';
+YIELD_RETURN: 'yield' IGNORE 'return';
 
 BOOL: 'bool';
 INT: 'int';
@@ -385,6 +387,8 @@ Directive_WHILE_TRUE_DO: WHILE_TRUE_DO -> type(WHILE_TRUE_DO);
 Directive_WIDEN: WIDEN -> type(WIDEN);
 Directive_WITH: WITH -> type(WITH);
 Directive_YIELD: YIELD -> type(YIELD);
+Directive_YIELD_BREAK: YIELD_BREAK -> type(YIELD_BREAK);
+Directive_YIELD_RETURN: YIELD_RETURN -> type(YIELD_RETURN);
 
 Directive_BOOL: BOOL -> type(BOOL);
 Directive_INT: INT -> type(INT);
@@ -730,6 +734,8 @@ Interpolation_WHILE_TRUE_DO: WHILE_TRUE_DO -> type(WHILE_TRUE_DO);
 Interpolation_WIDEN: WIDEN -> type(WIDEN);
 Interpolation_WITH: WITH -> type(WITH);
 Interpolation_YIELD: YIELD -> type(YIELD);
+Interpolation_YIELD_BREAK: YIELD_BREAK -> type(YIELD_BREAK);
+Interpolation_YIELD_RETURN: YIELD_RETURN -> type(YIELD_RETURN);
 
 Interpolation_BOOL: BOOL -> type(BOOL);
 Interpolation_INT: INT -> type(INT);

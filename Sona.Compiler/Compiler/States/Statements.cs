@@ -86,6 +86,16 @@ namespace IS4.Sona.Compiler.States
             EnterState<EchoState>().EnterEchoStatement(context);
         }
 
+        public sealed override void EnterYieldStatement(YieldStatementContext context)
+        {
+            EnterState<YieldState>().EnterYieldStatement(context);
+        }
+
+        public sealed override void EnterYieldBreakStatement(YieldBreakStatementContext context)
+        {
+            EnterState<YieldBreakState>().EnterYieldBreakStatement(context);
+        }
+
         public sealed override void EnterVariableDecl(VariableDeclContext context)
         {
             EnterState<NewVariableState>().EnterVariableDecl(context);
@@ -497,7 +507,7 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal sealed class ReturnState : ArgumentStatementState
+    internal class ReturnState : ArgumentStatementState
     {
         IReturnableStatementContext? returnScope;
 
@@ -508,7 +518,7 @@ namespace IS4.Sona.Compiler.States
             returnScope = FindContext<IReturnableStatementContext>();
         }
 
-        public override void EnterExpression(ExpressionContext context)
+        public sealed override void EnterExpression(ExpressionContext context)
         {
             if(returnScope?.ReturnVariable is { } result)
             {
@@ -520,7 +530,7 @@ namespace IS4.Sona.Compiler.States
             base.EnterExpression(context);
         }
 
-        public override void EnterReturnStatement(ReturnStatementContext context)
+        public sealed override void EnterReturnStatement(ReturnStatementContext context)
         {
             if(FindContext<IComputationContext>() is { IsCollection: true, BuilderVariable: null })
             {
@@ -528,7 +538,7 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
-        public override void ExitReturnStatement(ReturnStatementContext context)
+        protected virtual void OnExit()
         {
             if(!HasExpression)
             {
@@ -567,7 +577,11 @@ namespace IS4.Sona.Compiler.States
                 Out.WriteLine();
                 interruptScope.WriteBreak(false);
             }
+        }
 
+        public sealed override void ExitReturnStatement(ReturnStatementContext context)
+        {
+            OnExit();
             ExitState().ExitReturnStatement(context);
         }
     }
@@ -740,6 +754,54 @@ namespace IS4.Sona.Compiler.States
         public override void ExitExpression(ExpressionContext context)
         {
             Out.Write(')');
+        }
+    }
+
+    internal sealed class YieldState : NodeState
+    {
+        public override void EnterYieldStatement(YieldStatementContext context)
+        {
+            if(FindContext<IComputationContext>() is not ({ IsCollection: true } or { BuilderVariable: not null }))
+            {
+                Error("`yield` is not allowed outside a collection or computation.");
+            }
+            Out.Write("yield ");
+        }
+
+        public override void ExitYieldStatement(YieldStatementContext context)
+        {
+            ExitState().ExitYieldStatement(context);
+        }
+
+        public override void EnterExpression(ExpressionContext context)
+        {
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public override void ExitExpression(ExpressionContext context)
+        {
+
+        }
+    }
+
+    internal sealed class YieldBreakState : ReturnState
+    {
+        public override void EnterYieldBreakStatement(YieldBreakStatementContext context)
+        {
+            if(FindContext<IComputationContext>() is not ({ IsCollection: true } or { BuilderVariable: not null }))
+            {
+                Error("`yield break` is not allowed outside a collection or computation.");
+            }
+        }
+
+        public override void ExitYieldBreakStatement(YieldBreakStatementContext context)
+        {
+            if(HasExpression)
+            {
+                Error("`yield break` cannot be used with an expression outside of a computation.");
+            }
+            OnExit();
+            ExitState().ExitYieldBreakStatement(context);
         }
     }
 
