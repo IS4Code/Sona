@@ -1349,8 +1349,10 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal sealed class ExpressionStatementState : BlockState
+    internal sealed class ExpressionStatementState : BlockState, IStatementContext
     {
+        bool IStatementContext.TrailAllowed => false;
+
         public override void EnterExpressionStatement(ExpressionStatementContext context)
         {
 
