@@ -204,6 +204,11 @@ namespace IS4.Sona.Compiler.Gui
             Recompile();
         }
 
+        private void adjustLineNumbersButton_CheckedChanged(object sender, EventArgs e)
+        {
+            Recompile();
+        }
+
         private void sonaRichText_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
         {
             if(e.KeyCode == Keys.Tab)
@@ -390,6 +395,8 @@ namespace IS4.Sona.Compiler.Gui
             {
                 bool latest = false;
                 bool showBeginEnd = false;
+                bool adjustLineNumbers = false;
+
                 while(reader.TryRead(out var last))
                 {
                     // Get latest snippets
@@ -416,6 +423,7 @@ namespace IS4.Sona.Compiler.Gui
                     Invoke(() => {
                         progressBar.Style = ProgressBarStyle.Marquee;
                         showBeginEnd = blockDelimitersButton.Checked;
+                        adjustLineNumbers = adjustLineNumbersButton.Checked;
                     });
 
                     while(reader.TryRead(out var last))
@@ -428,7 +436,7 @@ namespace IS4.Sona.Compiler.Gui
 
                 // Stack is non-empty
 
-                if(CompileText(stack.Pop(), latest, showBeginEnd))
+                if(CompileText(stack.Pop(), latest, showBeginEnd, adjustLineNumbers))
                 {
                     // Success - clear history
                     stack.Clear();
@@ -436,12 +444,12 @@ namespace IS4.Sona.Compiler.Gui
             }
         }
 
-        (string text, bool latest, bool showBeginEnd) latestTuple;
+        (string text, bool latest, bool showBeginEnd, bool adjustLineNumbers) latestTuple;
         bool latestResult;
 
-        private bool CompileText(string text, bool latest, bool showBeginEnd)
+        private bool CompileText(string text, bool latest, bool showBeginEnd, bool adjustLineNumbers)
         {
-            var tuple = (text, latest, showBeginEnd);
+            var tuple = (text, latest, showBeginEnd, adjustLineNumbers);
             if(latestTuple == tuple)
             {
                 return latestResult;
@@ -453,6 +461,7 @@ namespace IS4.Sona.Compiler.Gui
             try
             {
                 compiler.ShowBeginEnd = showBeginEnd;
+                compiler.AdjustLines = adjustLineNumbers;
                 compiler.CompileToSource(inputStream, writer, throwOnError: true);
 
                 var result = writer.ToString();

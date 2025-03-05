@@ -42,6 +42,7 @@ namespace IS4.Sona.Compiler.Gui
             splitContainer1 = new SplitContainer();
             resultRichText = new DoubleBufferedRichTextBox();
             messageBox = new TextBox();
+            adjustLineNumbersButton = new ToolStripButton();
             toolStrip = new ToolStrip();
             toolStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)codeSplit).BeginInit();
@@ -57,7 +58,7 @@ namespace IS4.Sona.Compiler.Gui
             // toolStrip
             // 
             toolStrip.GripStyle = ToolStripGripStyle.Hidden;
-            toolStrip.Items.AddRange(new ToolStripItem[] { orientationButton, zoomButton, progressBar, blockDelimitersButton });
+            toolStrip.Items.AddRange(new ToolStripItem[] { orientationButton, zoomButton, progressBar, blockDelimitersButton, adjustLineNumbersButton });
             toolStrip.Location = new Point(0, 0);
             toolStrip.Name = "toolStrip";
             toolStrip.Size = new Size(817, 25);
@@ -180,6 +181,17 @@ namespace IS4.Sona.Compiler.Gui
             messageBox.Size = new Size(817, 60);
             messageBox.TabIndex = 2;
             // 
+            // adjustLineNumbersButton
+            // 
+            adjustLineNumbersButton.CheckOnClick = true;
+            adjustLineNumbersButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            adjustLineNumbersButton.Image = (Image)resources.GetObject("adjustLineNumbersButton.Image");
+            adjustLineNumbersButton.ImageTransparentColor = Color.Magenta;
+            adjustLineNumbersButton.Name = "adjustLineNumbersButton";
+            adjustLineNumbersButton.Size = new Size(150, 22);
+            adjustLineNumbersButton.Text = "Show source line numbers";
+            adjustLineNumbersButton.CheckedChanged += adjustLineNumbersButton_CheckedChanged;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -216,5 +228,6 @@ namespace IS4.Sona.Compiler.Gui
         private ToolStripButton zoomButton;
         private ToolStripProgressBar progressBar;
         private ToolStripButton blockDelimitersButton;
+        private ToolStripButton adjustLineNumbersButton;
     }
 }
