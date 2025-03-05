@@ -474,7 +474,7 @@ namespace IS4.Sona.Compiler.Gui
                         messageBox.Text = "";
                     }
 
-                    SetOutputText(result);
+                    SetOutputText(result, adjustLineNumbers);
                 });
 
                 return latestResult = true;
@@ -499,7 +499,7 @@ namespace IS4.Sona.Compiler.Gui
             }
         }
 
-        private void SetOutputText(string str)
+        private void SetOutputText(string str, bool noHighlighting)
         {
             var position = resultRichText.SelectionStart;
             var zoom = resultRichText.ZoomFactor;
@@ -509,6 +509,11 @@ namespace IS4.Sona.Compiler.Gui
                 resultRichText.Clear();
                 resultRichText.ZoomFactor = 1;
                 resultRichText.ZoomFactor = zoom;
+                if(noHighlighting)
+                {
+                    resultRichText.Text = str;
+                    return;
+                }
                 var text = SourceText.ofString(str);
                 var lastPosition = PositionModule.pos0;
                 FSharpLexer.Tokenize(
