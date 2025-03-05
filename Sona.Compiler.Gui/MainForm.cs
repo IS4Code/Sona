@@ -532,7 +532,14 @@ namespace IS4.Sona.Compiler.Gui
                             }
                             if(pretext != ")" && !String.IsNullOrWhiteSpace(pretext))
                             {
-                                resultRichText.SelectionFont = new(resultRichText.Font, FontStyle.Italic);
+                                if(pretext.Contains("(*begin*)", StringComparison.Ordinal) || pretext.Contains("(*end*)"))
+                                {
+                                    resultRichText.SelectionFont = new(resultRichText.Font, FontStyle.Italic | FontStyle.Bold);
+                                }
+                                else
+                                {
+                                    resultRichText.SelectionFont = new(resultRichText.Font, FontStyle.Italic);
+                                }
                             }
                             resultRichText.AppendText(pretext);
                             resultRichText.SelectionFont = resultRichText.Font;
