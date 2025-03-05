@@ -18,6 +18,8 @@ namespace IS4.Sona.Compiler
 
         public int StateLevel { get; private set; }
 
+        protected virtual bool IgnoreContext => false;
+
         private protected string _begin_ => Environment.Begin;
         private protected string _end_ => Environment.End;
 
@@ -94,6 +96,8 @@ namespace IS4.Sona.Compiler
             {
                 case null:
                     return null;
+                case { IgnoreContext: true }:
+                    goto default;
                 case T result:
                     return result;
                 default:

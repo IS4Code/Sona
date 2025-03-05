@@ -190,6 +190,7 @@ namespace IS4.Sona.Compiler.States
         protected string? ScopeReturningVariable => ReturningVariable ?? OriginalReturningVariable;
 
         bool IStatementContext.TrailAllowed => true;
+        protected override bool IgnoreContext => exited;
 
         StatementFlags enterFlags;
         bool exited;
