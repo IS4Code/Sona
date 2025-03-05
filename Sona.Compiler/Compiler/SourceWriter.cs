@@ -110,6 +110,8 @@ namespace IS4.Sona.Compiler
 
         public bool AdjustLines { get; set; } = true;
 
+        public bool SkipEmptyLines { get; set; } = false;
+
         readonly List<Capture> captures = new();
 
         bool Recording => captures.Count > 0;
@@ -210,6 +212,12 @@ namespace IS4.Sona.Compiler
 
         void ISourceWriter.Write(string text)
         {
+            if(text.Length == 0)
+            {
+                // Nothing to write anyway
+                return;
+            }
+
             if(Recording)
             {
                 Record(x => ((ISourceWriter)x).Write(text));
@@ -238,6 +246,12 @@ namespace IS4.Sona.Compiler
                 return;
             }
 
+            if(SkipEmptyLines && InnerWriter.LinePosition == 0)
+            {
+                // Empty line (or only tabs) - ignore
+                return;
+            }
+
             WriteLine();
         }
 
@@ -246,6 +260,12 @@ namespace IS4.Sona.Compiler
             if(Recording)
             {
                 Record(x => ((ISourceWriter)x).WriteLine(text));
+                return;
+            }
+
+            if(SkipEmptyLines && text.Length == 0 && InnerWriter.LinePosition == 0)
+            {
+                // Empty line (or only tabs) - ignore
                 return;
             }
 

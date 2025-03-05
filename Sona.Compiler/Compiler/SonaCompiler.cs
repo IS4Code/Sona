@@ -21,6 +21,7 @@ namespace IS4.Sona.Compiler
     public class SonaCompiler
     {
         public bool AdjustLines { get; set; } = true;
+        public bool ShowBeginEnd { get; set; } = false;
 
         static readonly bool debugging =
 #if DEBUG
@@ -43,8 +44,11 @@ namespace IS4.Sona.Compiler
             var parser = new SonaParser(tokenStream);
             errorListener?.AddTo(parser);
 
+            bool debugBeginEnd = ShowBeginEnd;
+
             using var writer = new SourceWriter(output);
             writer.AdjustLines = AdjustLines;
+            writer.SkipEmptyLines = !debugBeginEnd;
 
             if(!debugging)
             {
@@ -52,7 +56,7 @@ namespace IS4.Sona.Compiler
                 parser.BuildParseTree = false;
             }
 
-            var context = new ScriptEnvironment(parser, writer, channelContext);
+            var context = new ScriptEnvironment(parser, writer, channelContext, debugBeginEnd ? "(*begin*)" : "", debugBeginEnd ? "(*end*)" : "");
 
             // Main state to process the chunk
             parser.AddParseListener(new ChunkState(context));

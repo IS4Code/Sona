@@ -21,18 +21,21 @@ namespace IS4.Sona.Tests
         private protected const string each = ".``each()``";
         private protected const string set = ".``<-``";
 
+        static readonly Regex beginEndRegex = new Regex(@"\(\*(begin|end)\*\)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
         private string? CompileToSource(string source, bool exception)
         {
             var inputStream = new AntlrInputStream(source);
             var compiler = new SonaCompiler();
             compiler.AdjustLines = GenerateLineNumbers;
+            compiler.ShowBeginEnd = true;
 
             var writer = new StringWriter();
             try
             {
                 compiler.CompileToSource(inputStream, writer, throwOnError: true);
 
-                return writer.ToString().TrimEnd(newlineChars);
+                return beginEndRegex.Replace(writer.ToString().TrimEnd(newlineChars), "$1");
             }
             catch when(exception)
             {

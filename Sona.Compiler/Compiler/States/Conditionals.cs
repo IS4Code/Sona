@@ -417,7 +417,7 @@ namespace IS4.Sona.Compiler.States
             Out.WriteCoreOperator("Unchecked");
             Out.WriteLine(".defaultof<_>");
             Out.ExitScope();
-            Out.Write("end");
+            Out.Write(_end_);
         }
 
         public sealed override void EnterIgnoredEmptyTrail(IgnoredEmptyTrailContext context)

@@ -953,14 +953,14 @@ namespace IS4.Sona.Compiler.States
 
         void IFunctionContext.WriteBegin()
         {
-            Out.WriteLine("begin");
+            Out.WriteLine(_begin_);
             Out.EnterScope();
         }
 
         void IFunctionContext.WriteEnd()
         {
             Out.ExitScope();
-            Out.Write("end");
+            Out.Write(_end_);
         }
 
         void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
@@ -1179,14 +1179,14 @@ namespace IS4.Sona.Compiler.States
 
         void IFunctionContext.WriteBegin()
         {
-            Out.WriteLine("begin");
+            Out.WriteLine(_begin_);
             Out.EnterScope();
         }
 
         void IFunctionContext.WriteEnd()
         {
             Out.ExitScope();
-            Out.Write("end");
+            Out.Write(_end_);
         }
     }
 

@@ -36,6 +36,7 @@ namespace IS4.Sona.Compiler.Gui
             orientationButton = new ToolStripButton();
             zoomButton = new ToolStripButton();
             progressBar = new ToolStripProgressBar();
+            blockDelimitersButton = new ToolStripButton();
             codeSplit = new SplitContainer();
             sonaRichText = new DoubleBufferedRichTextBox();
             splitContainer1 = new SplitContainer();
@@ -56,7 +57,7 @@ namespace IS4.Sona.Compiler.Gui
             // toolStrip
             // 
             toolStrip.GripStyle = ToolStripGripStyle.Hidden;
-            toolStrip.Items.AddRange(new ToolStripItem[] { orientationButton, zoomButton, progressBar });
+            toolStrip.Items.AddRange(new ToolStripItem[] { orientationButton, zoomButton, progressBar, blockDelimitersButton });
             toolStrip.Location = new Point(0, 0);
             toolStrip.Name = "toolStrip";
             toolStrip.Size = new Size(817, 25);
@@ -89,6 +90,17 @@ namespace IS4.Sona.Compiler.Gui
             progressBar.MarqueeAnimationSpeed = 50;
             progressBar.Name = "progressBar";
             progressBar.Size = new Size(100, 22);
+            // 
+            // blockDelimitersButton
+            // 
+            blockDelimitersButton.CheckOnClick = true;
+            blockDelimitersButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            blockDelimitersButton.Image = (Image)resources.GetObject("blockDelimitersButton.Image");
+            blockDelimitersButton.ImageTransparentColor = Color.Magenta;
+            blockDelimitersButton.Name = "blockDelimitersButton";
+            blockDelimitersButton.Size = new Size(127, 22);
+            blockDelimitersButton.Text = "Show block delimiters";
+            blockDelimitersButton.CheckedChanged += blockDelimitersButton_CheckedChanged;
             // 
             // codeSplit
             // 
@@ -203,5 +215,6 @@ namespace IS4.Sona.Compiler.Gui
         private ToolStripButton orientationButton;
         private ToolStripButton zoomButton;
         private ToolStripProgressBar progressBar;
+        private ToolStripButton blockDelimitersButton;
     }
 }

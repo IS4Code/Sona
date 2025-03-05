@@ -189,8 +189,19 @@ namespace IS4.Sona.Compiler.Gui
             // Yield to get latest text in case of replacement
             await Task.Yield();
 
+            // Compile current text
+            Recompile();
+        }
+
+        private async void Recompile()
+        {
             // Send the text to channel
             await codeChannel.Writer.WriteAsync(sonaRichText.Text);
+        }
+
+        private void blockDelimitersButton_CheckedChanged(object sender, EventArgs e)
+        {
+            Recompile();
         }
 
         private void sonaRichText_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
@@ -378,6 +389,7 @@ namespace IS4.Sona.Compiler.Gui
             while(true)
             {
                 bool latest = false;
+                bool showBeginEnd = false;
                 while(reader.TryRead(out var last))
                 {
                     // Get latest snippets
@@ -403,6 +415,7 @@ namespace IS4.Sona.Compiler.Gui
                     }
                     Invoke(() => {
                         progressBar.Style = ProgressBarStyle.Marquee;
+                        showBeginEnd = blockDelimitersButton.Checked;
                     });
 
                     while(reader.TryRead(out var last))
@@ -415,7 +428,7 @@ namespace IS4.Sona.Compiler.Gui
 
                 // Stack is non-empty
 
-                if(CompileText(stack.Pop(), latest))
+                if(CompileText(stack.Pop(), latest, showBeginEnd))
                 {
                     // Success - clear history
                     stack.Clear();
@@ -423,12 +436,12 @@ namespace IS4.Sona.Compiler.Gui
             }
         }
 
-        (string text, bool latest) latestTuple;
+        (string text, bool latest, bool showBeginEnd) latestTuple;
         bool latestResult;
 
-        private bool CompileText(string text, bool latest)
+        private bool CompileText(string text, bool latest, bool showBeginEnd)
         {
-            var tuple = (text, latest);
+            var tuple = (text, latest, showBeginEnd);
             if(latestTuple == tuple)
             {
                 return latestResult;
@@ -439,6 +452,7 @@ namespace IS4.Sona.Compiler.Gui
             var writer = new StringWriter();
             try
             {
+                compiler.ShowBeginEnd = showBeginEnd;
                 compiler.CompileToSource(inputStream, writer, throwOnError: true);
 
                 var result = writer.ToString();

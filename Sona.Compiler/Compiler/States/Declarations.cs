@@ -98,7 +98,7 @@ namespace IS4.Sona.Compiler.States
         public override void EnterValueBlock(ValueBlockContext context)
         {
             Out.WriteOperator('=');
-            Out.WriteLine("begin");
+            Out.WriteLine("(");
             Out.EnterScope();
             EnterState<BlockState>().EnterValueBlock(context);
         }
@@ -106,19 +106,19 @@ namespace IS4.Sona.Compiler.States
         public override void ExitValueBlock(ValueBlockContext context)
         {
             Out.ExitScope();
-            Out.Write("end");
+            Out.Write(')');
         }
 
         void IFunctionContext.WriteBegin()
         {
-            Out.WriteLine("begin");
+            Out.WriteLine(_begin_);
             Out.EnterScope();
         }
 
         void IFunctionContext.WriteEnd()
         {
             Out.ExitScope();
-            Out.Write("end");
+            Out.Write(_end_);
         }
 
         void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
