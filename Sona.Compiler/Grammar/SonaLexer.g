@@ -520,14 +520,8 @@ mode Interpolation;
 // Not valid in non-string format.
 fragment INTERP_NON_DELIMITER:
   ~[{}()"'\][\\\r\n];
-fragment INTERP_NON_DELIMITER_WHITESPACE:
-  ~[{}()"'\][\\\r\n] | ' ' | '\t' | '\u000C';
 fragment INTERP_NON_DELIMITER_ALPHA:
-  ~[{}()"'\][\\\r\n] | [a-zA-Z];
-fragment INTERP_NON_DELIMITER_WHITESPACE_ALPHA:
-  ~[{}()"'\][\\\r\n] | ' ' | '\t' | '\u000C' | [a-zA-Z_];
-fragment INTERP_NON_DELIMITER_WHITESPACE_ALPHANUMERIC:
-  ~[{}()"'\][\\\r\n] | ' ' | '\t' | '\u000C' | [a-zA-Z_] | [0-9];
+  ~[{}()"'\][\\\r\na-zA-Z_];
 
 // F# format specifiers with at least one optional component used.
 INTERP_FORMAT_GENERAL:
@@ -562,6 +556,9 @@ INTERP_FORMAT_NUMBER:
 INTERP_FORMAT_COMPONENTS:
   COLON -> skip, mode(InterpolationComponents);
 
+fragment INTERP_FORMAT_ESCAPE:
+  '\\' ('\\' | INTERP_NON_DELIMITER) | '\'' ~['\\\r\n]* '\'';
+
 fragment STANDARD_NUM_FORMAT:
   [bBcCdDeEfFgGnNpPrRxX] '0'* [1-9]? [0-9];
 
@@ -569,7 +566,7 @@ fragment CUSTOM_NUM_FORMAT:
   CUSTOM_NUM_SECTION (';' CUSTOM_NUM_SECTION (';' CUSTOM_NUM_SECTION)?)?;
 
 fragment CUSTOM_NUM_LITERAL:
-  ('\\' ('\\' | INTERP_NON_DELIMITER) | LINE_WHITESPACE | [-+])*;
+  (INTERP_FORMAT_ESCAPE | LINE_WHITESPACE | [-+])*;
 
 fragment CUSTOM_NUM_SECTION:
   CUSTOM_NUM_LITERAL (
@@ -792,7 +789,7 @@ INTERP_COMPONENTS_PART_SHORT:
   [a-zA-Z];
 
 INTERP_COMPONENTS_PART_LONG:
-  '\\' ('\\' | INTERP_NON_DELIMITER) |
+  INTERP_FORMAT_ESCAPE |
   '%' [a-zA-Z] | COLON | SLASH |
   'a'+ | 'b'+ | 'c'+ | 'd'+ | 'e'+ | 'f'+ | 'g'+ |
   'h'+ | 'i'+ | 'j'+ | 'k'+ | 'l'+ | 'm'+ | 'n'+ |

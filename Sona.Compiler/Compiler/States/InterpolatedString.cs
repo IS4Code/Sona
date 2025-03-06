@@ -341,7 +341,7 @@ namespace IS4.Sona.Compiler.States
 
                 char type = token[0];
 
-                if(type == '\\')
+                if(type is '\\' or '\'')
                 {
                     // Escape characters do not contribute
                     return;
