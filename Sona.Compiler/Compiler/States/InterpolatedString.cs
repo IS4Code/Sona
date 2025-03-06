@@ -132,11 +132,18 @@ namespace IS4.Sona.Compiler.States
             try
             {
                 var text = context.GetText().TrimStart(':');
-                if(text.Length == 1 && !Char.IsLetter(text[0]))
+                var parsedText = Syntax.GetStringLiteralValue(text);
+                if(parsedText.Length == 1 && !Char.IsLetter(parsedText[0]))
                 {
-                    Error("Standard format specifiers are expressed as a single letter.");
+                    var suggestion = parsedText[0] switch
+                    {
+                        '"' => "\"\\\"\"",
+                        '\'' => "\"'\"",
+                        _ => text.Replace('\'', '\"')
+                    };
+                    Error($"Standard format specifiers (as '…') must be a single letter. Use `{suggestion}` if you wish to use a custom format specifier.");
                 }
-                AddUncheckedFormat(Syntax.GetStringLiteralValue(text));
+                AddUncheckedFormat(parsedText);
             }
             finally
             {
@@ -155,11 +162,12 @@ namespace IS4.Sona.Compiler.States
             try
             {
                 var text = context.GetText().TrimStart(':');
-                if(text.Length == 1 && Char.IsLetter(text[0]))
+                var parsedText = Syntax.GetStringLiteralValue(text);
+                if(parsedText.Length == 1 && Char.IsLetter(parsedText[0]))
                 {
-                    Error("Custom format specifiers cannot be expressed as a single letter. Use the format-specific method (such as preceding the character with '%') to express it.");
+                    Error($"Custom format specifiers (as \"…\") are not expressed as a single letter. Use the format-specific method (such as `\"%{parsedText[0]}\"`) to express it, or `'{parsedText[0]}'` if you wanted to use a standard format specifier.\"");
                 }
-                AddUncheckedFormat(Syntax.GetStringLiteralValue(text));
+                AddUncheckedFormat(parsedText);
             }
             finally
             {
