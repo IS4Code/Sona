@@ -170,6 +170,9 @@ namespace IS4.Sona.Compiler.States
         public sealed override void EnterInterpStrNumberFormat(InterpStrNumberFormatContext context)
         {
             AddFill();
+            Out.WriteOperator(':');
+            Out.WriteNamespacedName("Sona.Runtime.Traits", "trait number");
+            Out.Write("<_>");
             Environment.EnableParseTree();
         }
 
@@ -231,6 +234,7 @@ namespace IS4.Sona.Compiler.States
         {
             if(fillName is not null)
             {
+                Out.Write(')');
                 parts.Add("{");
                 if(Syntax.IsValidIdentifierName(fillName))
                 {
@@ -253,6 +257,7 @@ namespace IS4.Sona.Compiler.States
             Out.Write("let ");
             Out.WriteIdentifier(fillName);
             Out.WriteOperator('=');
+            Out.Write('(');
         }
 
         public override void ExitInterpStrExpression(InterpStrExpressionContext context)

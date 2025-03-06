@@ -1,22 +1,4 @@
-﻿namespace Sona.Runtime
-
-type Marker<^T> = struct
-  static member inline Choice(_: Marker<^T>, x: ^T, [<InlineIfLambda>]f1: ^T -> _, [<InlineIfLambda>]f2: _ -> _) = f1 x
-  static member inline Choice(_: Marker<^T>, x: ^a, [<InlineIfLambda>]f1: ^T -> _, [<InlineIfLambda>]f2: ^a -> _) = f2 x
-end
-
-[<Struct>]
-type NumberFormat = NumberFormat
-[<Struct>]
-type TimeFormat = TimeFormat
-[<Struct>]
-type DayTimeFormat = DayTimeFormat
-[<Struct>]
-type DayFormat = DayFormat
-[<Struct>]
-type DateFormat = DateFormat
-[<Struct>]
-type DateTimeFormat = DateTimeFormat
+﻿namespace Sona.Runtime.Traits
 
 type ``trait number``<^T
   when ^T : comparison
@@ -108,6 +90,6 @@ type ``trait delegate``<^T, ^TArgs, ^TResult when ^T : delegate<^TArgs, ^TResult
 type ``trait enum``<^T when ^T : struct and ^T :> System.Enum> = ^T
 type ``trait enum``<^T, ^TBase when ^T : enum<^TBase>> = ^T
 
-type ``trait comparison``<^T when ^T : comparison> = ^T
-type ``trait equality``<^T when ^T : equality> = ^T
+type ``trait comparable``<^T when ^T : comparison> = ^T
+type ``trait equatable``<^T when ^T : equality> = ^T
 type ``trait unmanaged``<^T when ^T : unmanaged> = ^T
