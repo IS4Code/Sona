@@ -557,7 +557,7 @@ INTERP_FORMAT_COMPONENTS:
   COLON -> skip, mode(InterpolationComponents);
 
 fragment INTERP_FORMAT_ESCAPE:
-  '\\' ('\\' | INTERP_NON_DELIMITER) | '\'' ~['\\\r\n]* '\'';
+  '\\' ('\\' | INTERP_NON_DELIMITER) | '\'' ~['\\\r\n]+ '\'';
 
 fragment STANDARD_NUM_FORMAT:
   [bBcCdDeEfFgGnNpPrRxX] '0'* [1-9]? [0-9];
