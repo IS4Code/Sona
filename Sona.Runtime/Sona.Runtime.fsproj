@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <Compile Include="Elements.fs" />
-    <Compile Include="Extensions.fs" />
+    <Compile Include="Helpers.fs" />
     <Compile Include="Attributes.fs" />
     <Compile Include="Operators.fs" />
   </ItemGroup>

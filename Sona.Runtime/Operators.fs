@@ -241,27 +241,3 @@ type NullableExtensions private () =
   static member inline ``??``(this: Nullable<^T>, [<InlineIfLambda>]alternative: unit -> Nullable<^T>): ^T voption =
     if this.HasValue then this.GetValueOrDefault() |> ValueSome
     else alternative() |> ValueOption.ofNullable
-
-[<Extension>]
-type NumberFormatExtensions private () =
-  [<Extension>]
-  static member inline ``{}``(this: NumberFormat, value: ``trait number``<_>) = value
- 
-[<Extension>]
-type TimeFormatExtensions private () =
-  [<Extension>]
-  static member inline ``{}``(this: TimeFormat, value: ``trait time``<_>) = value
- 
-[<Extension>]
-type DateFormatExtensions private () =
-  [<Extension>]
-  static member inline ``{}``(this: DateFormat, value: ``trait date``<_>) = value
-
-[<Extension>]
-type TimeSpanFormatExtensions private () =
-  [<Extension>]
-  static member inline ``{}``(this: TimeFormat, value: ``trait timespan``<_>) = value
-  [<Extension>]
-  static member inline ``{}``(this: DayTimeFormat, value: ``trait timespan``<_>) = value
-  [<Extension>]
-  static member inline ``{}``(this: DayFormat, value: ``trait timespan``<_>) = value

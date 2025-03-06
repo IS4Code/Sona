@@ -280,12 +280,20 @@ namespace IS4.Sona.Compiler.States
         sealed class Components : NodeState
         {
             StringBuilder text = new();
+            State instantState = new State(false), durationState = new State(true);
 
             protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
             {
                 base.Initialize(environment, parent);
 
                 text.Clear();
+                instantState = new(instantState);
+                durationState = new(durationState);
+            }
+
+            protected sealed override void OnEnterToken(IToken token)
+            {
+
             }
 
             public sealed override void EnterInterpStrComponentFormat(InterpStrComponentFormatContext context)
@@ -295,12 +303,261 @@ namespace IS4.Sona.Compiler.States
 
             public sealed override void ExitInterpStrComponentFormat(InterpStrComponentFormatContext context)
             {
+                OnEnd(ref instantState);
+                OnEnd(ref durationState);
+                if((instantState.Traits, durationState.Traits) is (Traits.None, _) or (_, Traits.None) or (Traits.Invalid, Traits.Invalid))
+                {
+                    // If one is None, there was no character that could specify the trait
+                    Error($"The format string '{text}' does not contain any recognized specifiers. To use it without validation, enclose it in quotes.");
+                }
+                else if(instantState.Traits == Traits.Invalid)
+                {
+                    // Duration is valid
+                    Out.WriteOperator(':');
+                    Out.WriteNamespacedName("Sona.Runtime.Traits", "trait " + durationState.TraitName);
+                    Out.Write("<_>");
+                }
+                else if(durationState.Traits == Traits.Invalid)
+                {
+                    // Instant is valid
+                    Out.WriteOperator(':');
+                    Out.WriteNamespacedName("Sona.Runtime.Traits", "trait " + instantState.TraitName);
+                    Out.Write("<_>");
+                }
+                else
+                {
+                    // Both are valid
+                    Out.WriteOperator("|>");
+                    Out.WriteNamespacedName("Sona.Runtime.CompilerServices.Inference", instantState.TraitName + "|" + durationState.TraitName);
+                }
+
                 ((InterpolatedString)ExitState()).ExitInterpStrComponentFormat(context, text.ToString());
             }
 
             public override void VisitTerminal(ITerminalNode node)
             {
-                text.Append(node.Symbol.Text);
+                var token = node.Symbol.Text;
+                text.Append(token);
+
+                char type = token[0];
+
+                if(type == '\\')
+                {
+                    // Escape characters do not contribute
+                    return;
+                }
+                
+                if(type == '%')
+                {
+                    // Singleton - just trim %
+                    type = token[1];
+                    token = token.Substring(1);
+                }
+
+                if(instantState.Traits != Traits.Invalid)
+                {
+                    OnSymbol(type, token, ref instantState);
+                }
+                if(durationState.Traits != Traits.Invalid)
+                {
+                    OnSymbol(type, token, ref durationState);
+                }
+                if(instantState.Traits == Traits.Invalid && durationState.Traits == Traits.Invalid)
+                {
+                    // Last specifier that could be valid
+                    Error($"Format specifier '{token}' is not recognized in this context.");
+                }
+            }
+
+            private void OnSymbol(char type, string symbol, ref State state)
+            {
+                var (traits, maxLength, categoryLengthDivisor, section) = state.GetTypeInfo(ref type);
+                if(symbol.Length > maxLength)
+                {
+                    // Longer than permitted
+                    state.Require(Traits.Invalid);
+                    return;
+                }
+                if(categoryLengthDivisor != 0)
+                {
+                    // Check the category for this specifier (type may be mutated previously)
+                    // The divisor is used for dd/dddd etc. to get the category from length
+                    var category = (type, (symbol.Length - 1) / categoryLengthDivisor);
+                    if(!state.VisitedCategories.Add(category))
+                    {
+                        // Category already visited
+                        state.Require(Traits.Invalid);
+                        return;
+                    }
+                    if(state.RequiredSection != Section.None && section != state.RequiredSection)
+                    {
+                        // A section was required but this is a wrong one
+                        state.Require(Traits.Invalid);
+                        return;
+                    }
+                    // No section required next
+                    state.RequiredSection = Section.None;
+                }
+                else
+                {
+                    // This is a delimiter
+                    if(state.CurrentSection != section)
+                    {
+                        // But in a wrong section
+                        state.Require(Traits.Invalid);
+                        return;
+                    }
+                    if(state.RequiredSection != Section.None)
+                    {
+                        // A section was required from previous delimiter but this is a delimiter too
+                        state.Require(Traits.Invalid);
+                        return;
+                    }
+                    // Require the section to be next
+                    state.RequiredSection = section;
+                }
+                if(section != state.CurrentSection)
+                {
+                    // This changes the section
+                    if(!state.VisitedSections.Add(section))
+                    {
+                        // But the section was already visited once
+                        state.Require(Traits.Invalid);
+                        return;
+                    }
+                    state.CurrentSection = section;
+                }
+                state.Require(traits);
+            }
+
+            private void OnEnd(ref State state)
+            {
+                if(state.VisitedCategories.Count == 0)
+                {
+                    // A letter must be visited
+                    state.Require(Traits.Invalid);
+                    return;
+                }
+                if(state.RequiredSection != Section.None)
+                {
+                    // A section was required to be next
+                    return;
+                }
+            }
+
+            struct State
+            {
+                public Traits Traits;
+                public Section CurrentSection;
+                public Section RequiredSection;
+                public bool IsDuration { get; }
+                public HashSet<(char type, int category)> VisitedCategories { get; }
+                public HashSet<Section> VisitedSections { get; }
+
+                public string TraitName => Traits.ToString().ToLowerInvariant() + (IsDuration ? "span" : "");
+
+                public State(bool isDuration) : this()
+                {
+                    IsDuration = isDuration;
+                    VisitedCategories = new();
+                    VisitedSections = new();
+                }
+
+                public State(State previous) : this()
+                {
+                    IsDuration = previous.IsDuration;
+                    VisitedCategories = previous.VisitedCategories;
+                    VisitedCategories.Clear();
+                    VisitedSections = previous.VisitedSections;
+                    VisitedSections.Clear();
+                }
+
+                public void Require(Traits traits)
+                {
+                    Traits |= traits;
+                }
+
+                public (Traits traits, int maxLength, int categoryLengthDivisor, Section section) GetTypeInfo(ref char type)
+                {
+                    if(IsDuration)
+                    {
+                        switch(type)
+                        {
+                            case 'y':
+                                return (Traits.Date, 8, Int32.MaxValue, Section.Date);
+                            case 'M':
+                                return (Traits.Date, 2, Int32.MaxValue, Section.Date);
+                            case 'd':
+                                return (Traits.Time, 8, Int32.MaxValue, Section.Date);
+                            case 'h':
+                            case 'm':
+                            case 's':
+                                return (Traits.Time, 2, Int32.MaxValue, Section.Time);
+                            case 'f':
+                                return (Traits.Time, 7, Int32.MaxValue, Section.Time);
+                            case 'F':
+                                type = 'f';
+                                goto case 'f';
+                            default:
+                                return (Traits.Invalid, 0, 0, Section.None);
+                        }
+                    }
+                    else
+                    {
+                        switch(type)
+                        {
+                            case 'd':
+                            case 'M':
+                                return (Traits.Date, 4, 2, Section.Date);
+                            case 'y':
+                                return (Traits.Date, 5, Int32.MaxValue, Section.Date);
+                            case 'z':
+                                return (Traits.DateTime, 3, Int32.MaxValue, Section.TimeZone);
+                            case 'H':
+                                type = 'h';
+                                goto case 'h';
+                            case 'h':
+                            case 'm':
+                            case 's':
+                            case 't':
+                                return (Traits.Time, 2, Int32.MaxValue, Section.Time);
+                            case 'g':
+                                return (Traits.Date, 2, Int32.MaxValue, Section.Era);
+                            case 'f':
+                                return (Traits.Time, 7, Int32.MaxValue, Section.Time);
+                            case 'F':
+                                type = 'f';
+                                goto case 'f';
+                            case 'K':
+                                return (Traits.DateTime, 1, Int32.MaxValue, Section.TimeZone);
+                            case ':':
+                                return (Traits.Time, 1, 0, Section.Time);
+                            case '/':
+                                return (Traits.Date, 1, 0, Section.Date);
+                            default:
+                                return (Traits.Invalid, 0, 0, Section.None);
+                        }
+                    }
+                }
+            }
+
+            [Flags]
+            enum Traits
+            {
+                None = 0,
+                Time = 1,
+                Date = 2,
+                DateTime = 3,
+                Invalid = -1
+            }
+
+            enum Section
+            {
+                None,
+                Time,
+                Date,
+                TimeZone,
+                Era
             }
         }
     }

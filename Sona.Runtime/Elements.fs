@@ -1,4 +1,5 @@
 ﻿namespace Sona.Runtime.Traits
+[<AutoOpen(path = "Sona.Runtime.Traits")>]do()
 
 type ``trait number``<^T
   when ^T : comparison
@@ -30,8 +31,6 @@ type ``trait time``<^T
   and ^T : (member Minute: int)
   and ^T : (member Second: int)
   and ^T : (member Millisecond: int)
-  and ^T : (member Microsecond: int)
-  and ^T : (member Nanosecond: int)
   > = ^T
 
 // DateTime(Offset)
@@ -49,8 +48,6 @@ type ``trait datetime``<^T
   and ^T : (member Minute: int)
   and ^T : (member Second: int)
   and ^T : (member Millisecond: int)
-  and ^T : (member Microsecond: int)
-  and ^T : (member Nanosecond: int)
   > = ``trait date``<``trait time``<^T>>
 
 // TimeSpan
@@ -62,8 +59,6 @@ type ``trait timespan``<^T
   and ^T : (member Minutes: int)
   and ^T : (member Seconds: int)
   and ^T : (member Milliseconds: int)
-  and ^T : (member Microseconds: int)
-  and ^T : (member Nanoseconds: int)
   > = ^T
 
 type ``trait datespan``<^T
@@ -72,6 +67,18 @@ type ``trait datespan``<^T
   and ^T : (member Years: int)
   and ^T : (member Months: int)
   > = ^T
+
+type ``trait datetimespan``<^T
+  when ^T : comparison
+  and ^T : equality
+  and ^T : (member Years: int)
+  and ^T : (member Months: int)
+  and ^T : (member Days: int)
+  and ^T : (member Hours: int)
+  and ^T : (member Minutes: int)
+  and ^T : (member Seconds: int)
+  and ^T : (member Milliseconds: int)
+  > = ``trait datespan``<``trait timespan``<^T>>
 
 type ``trait iterable``<^T when ^T :> System.Collections.IEnumerable> = ^T
 type ``trait iterable``<^T, ^Element when ^T :> System.Collections.Generic.IEnumerable<^Element>> = ^T
