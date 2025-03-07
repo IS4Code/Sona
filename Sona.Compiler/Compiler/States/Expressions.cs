@@ -1287,7 +1287,7 @@ namespace IS4.Sona.Compiler.States
                 // First expression in a tuple
                 AppendTuples();
             }
-            Out.Write("struct(");
+            Out.Write('(');
             tupleDepth++;
             EnterState<ExpressionState>().EnterExpression(context);
         }
