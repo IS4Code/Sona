@@ -425,7 +425,7 @@ ifStatementReturning:
     // `else` branch is returning
     else returningBlock
     // Trail is ignored
-  ) ignoredTrail;
+  ) 'end' ignoredTrail;
 
 ifStatementReturningTrailFromElse:
   // `if` branch is returning... (require open `else`)
@@ -725,7 +725,7 @@ switchStatementReturning:
     // `else` is returning
     else returningBlock
     // Trail is ignored
-  ) ignoredTrail;
+  ) 'end' ignoredTrail;
 
 switchStatementReturningTrail:
   switch (case (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (
