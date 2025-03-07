@@ -2155,32 +2155,32 @@ namespace IS4.Sona.Compiler.States
         string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
     }
 
-    internal abstract class SwitchStatement : ControlStatement
+    internal abstract class SwitchStatementBase : ControlStatement
     {
-        protected bool HasElse { get; private set; }
+        protected bool HasBranches { get; private set; }
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            HasElse = false;
+            HasBranches = false;
         }
 
         protected override void OnExit(StatementFlags flags)
         {
+            if(!HasBranches)
+            {
+                Out.WriteLine();
+                Out.Write("| _ when false");
+                Out.WriteOperator("->");
+                Out.WriteCoreOperator("Unchecked");
+                Out.Write(".defaultof<_>");
+            }
             base.OnExit(flags);
-            //Out.ExitScope();
         }
 
-        public sealed override void EnterSwitch(SwitchContext context)
-        {
-            Out.Write("match(");
-        }
-
-        public sealed override void ExitSwitch(SwitchContext context)
-        {
-            Out.Write(")with");
-        }
+        public abstract override void EnterSwitch(SwitchContext context);
+        public abstract override void ExitSwitch(SwitchContext context);
 
         public sealed override void EnterCase(CaseContext context)
         {
@@ -2191,6 +2191,7 @@ namespace IS4.Sona.Compiler.States
         public sealed override void ExitCase(CaseContext context)
         {
             Out.WriteOperator("->");
+            HasBranches = true;
         }
 
         public sealed override void EnterEmptyPattern(EmptyPatternContext context)
@@ -2222,7 +2223,7 @@ namespace IS4.Sona.Compiler.States
         public sealed override void ExitElse(ElseContext context)
         {
             Out.WriteOperator("->");
-            HasElse = true;
+            HasBranches = true;
         }
 
         public sealed override void EnterExpression(ExpressionContext context)
@@ -2236,10 +2237,21 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal abstract class SwitchStatementInterrupted : ControlStatement, IInterruptibleStatementContext
+    internal abstract class SwitchStatement : SwitchStatementBase
     {
-        protected bool HasElse { get; private set; }
+        public sealed override void EnterSwitch(SwitchContext context)
+        {
+            Out.Write("match(");
+        }
 
+        public sealed override void ExitSwitch(SwitchContext context)
+        {
+            Out.Write(")with");
+        }
+    }
+
+    internal abstract class SwitchStatementInterrupted : SwitchStatementBase, IInterruptibleStatementContext
+    {
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.CanContinue;
 
         string? matchingVariable, matchedVariable, interruptingVariable;
@@ -2250,7 +2262,6 @@ namespace IS4.Sona.Compiler.States
         {
             base.Initialize(environment, parent);
 
-            HasElse = false;
             matchingVariable = null;
             matchedVariable = null;
         }
@@ -2302,59 +2313,6 @@ namespace IS4.Sona.Compiler.States
             Out.Write("match ");
             Out.WriteIdentifier(matchedVariable ?? Error("COMPILER ERROR: Matched variable missing"));
             Out.Write(" with");
-        }
-
-        public sealed override void EnterCase(CaseContext context)
-        {
-            Out.WriteLine();
-            Out.Write("| ");
-        }
-
-        public sealed override void EnterEmptyPattern(EmptyPatternContext context)
-        {
-            Out.Write('_');
-        }
-
-        public sealed override void ExitEmptyPattern(EmptyPatternContext context)
-        {
-
-        }
-
-        public sealed override void EnterWhenClause(WhenClauseContext context)
-        {
-            Out.Write(" when(");
-        }
-
-        public sealed override void ExitWhenClause(WhenClauseContext context)
-        {
-            Out.Write(')');
-        }
-
-        public sealed override void ExitCase(CaseContext context)
-        {
-            Out.WriteOperator("->");
-        }
-
-        public sealed override void EnterElse(ElseContext context)
-        {
-            Out.WriteLine();
-            Out.Write("| _");
-        }
-
-        public sealed override void ExitElse(ElseContext context)
-        {
-            Out.WriteOperator("->");
-            HasElse = true;
-        }
-
-        public sealed override void EnterExpression(ExpressionContext context)
-        {
-            EnterState<ExpressionState>().EnterExpression(context);
-        }
-
-        public sealed override void ExitExpression(ExpressionContext context)
-        {
-
         }
 
         void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
