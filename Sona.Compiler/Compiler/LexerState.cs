@@ -1,5 +1,6 @@
 ﻿using System;
 using Antlr4.Runtime;
+using IS4.Sona.Compiler.Tools;
 using IS4.Sona.Grammar;
 
 namespace IS4.Sona.Compiler
@@ -27,6 +28,18 @@ namespace IS4.Sona.Compiler
                     return token.Text.Substring(1);
                 default:
                     throw new ArgumentException($"Token {token} is not an identifier.", nameof(token));
+            }
+        }
+
+        protected string GetString(IToken token)
+        {
+            switch(token.Type)
+            {
+                case SonaLexer.STRING_LITERAL:
+                case SonaLexer.VERBATIM_STRING_LITERAL:
+                    return Syntax.GetStringLiteralValue(token.Text);
+                default:
+                    throw new ArgumentException($"Token {token} does not identify a string.", nameof(token));
             }
         }
     }

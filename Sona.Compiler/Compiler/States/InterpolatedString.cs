@@ -75,7 +75,7 @@ namespace IS4.Sona.Compiler.States
                     parts.Add(token.Text);
                     break;
                 case SonaLexer.LITERAL_NEWLINE:
-                    parts.Add(Environment.NewLineSequence);
+                    parts.Add(LexerContext.GetState<NewlinePragma>()?.NewLineSequence ?? ScriptEnvironment.DefaultNewLineSequence);
                     break;
                 case SonaLexer.LITERAL_ESCAPE_NEWLINE:
                     parts.Add(token.Text.Substring(1));
@@ -618,7 +618,7 @@ namespace IS4.Sona.Compiler.States
                     Out.Write(token.Text);
                     break;
                 case SonaLexer.LITERAL_NEWLINE:
-                    Out.Write(Environment.NewLineSequence);
+                    Out.Write(LexerContext.GetState<NewlinePragma>()?.NewLineSequence ?? ScriptEnvironment.DefaultNewLineSequence);
                     break;
                 case SonaLexer.LITERAL_ESCAPE_NEWLINE:
                     Out.Write(token.Text.Substring(1));

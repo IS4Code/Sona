@@ -394,7 +394,7 @@ namespace IS4.Sona.Compiler
                         Out.Write(token.Text);
                         break;
                     case SonaLexer.LITERAL_NEWLINE:
-                        Out.Write(Environment.NewLineSequence);
+                        Out.Write(LexerContext.GetState<NewlinePragma>()?.NewLineSequence ?? ScriptEnvironment.DefaultNewLineSequence);
                         break;
                     case SonaLexer.LITERAL_ESCAPE_NEWLINE:
                         Out.Write(token.Text.Substring(1));

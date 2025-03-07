@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Antlr4.Runtime;
 
 namespace IS4.Sona.Compiler.States
@@ -77,6 +78,28 @@ namespace IS4.Sona.Compiler.States
         public override LexerState ForkNew(IToken token)
         {
             return new RecordPragma();
+        }
+    }
+
+    [LexerStateName("newline")]
+    internal sealed class NewlinePragma : LexerState
+    {
+        public string NewLineSequence { get; private set; } = ScriptEnvironment.DefaultNewLineSequence;
+
+        public NewlinePragma() : base("newline")
+        {
+
+        }
+
+        public override LexerState ForkNew(IToken token)
+        {
+            return new NewlinePragma();
+        }
+
+        public override bool ReceiveToken(IToken token)
+        {
+            NewLineSequence = String.Join("", GetString(token).Select(c => $"\\u{(ushort)c:X4}"));
+            return false;
         }
     }
 }

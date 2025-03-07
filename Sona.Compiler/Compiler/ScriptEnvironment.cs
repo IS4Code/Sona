@@ -6,7 +6,7 @@ namespace IS4.Sona.Compiler
 {
     internal record class ScriptEnvironment(Parser Parser, ISourceWriter Output, LexerContext LexerContext, string Begin, string End)
     {
-        public string NewLineSequence { get; } = String.Join("", Environment.NewLine.Select(c => $"\\u{(ushort)c:X4}"));
+        public static string DefaultNewLineSequence { get; } = String.Join("", Environment.NewLine.Select(c => $"\\u{(ushort)c:X4}"));
 
         readonly bool buildParseTreeDefault = Parser.BuildParseTree;
         int buildParseTreeLevel = 0;
