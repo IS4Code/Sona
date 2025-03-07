@@ -891,6 +891,83 @@ namespace IS4.Sona.Compiler.States
             OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
             ExitState().ExitForStatementConditional(context);
         }
+
+        public sealed override void EnterSwitchStatementFree(SwitchStatementFreeContext context)
+        {
+            OnEnterInner(StatementFlags.OpenPath);
+        }
+
+        public sealed override void ExitSwitchStatementFree(SwitchStatementFreeContext context)
+        {
+            OnExitInner(StatementFlags.OpenPath);
+            ExitState().ExitSwitchStatementFree(context);
+        }
+
+        public sealed override void EnterSwitchStatementFreeInterrupted(SwitchStatementFreeInterruptedContext context)
+        {
+            OnEnterInner(StatementFlags.OpenPath);
+        }
+
+        public sealed override void ExitSwitchStatementFreeInterrupted(SwitchStatementFreeInterruptedContext context)
+        {
+            OnExitInner(StatementFlags.OpenPath);
+            ExitState().ExitSwitchStatementFreeInterrupted(context);
+        }
+
+        public sealed override void EnterSwitchStatementReturning(SwitchStatementReturningContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+        }
+
+        public sealed override void ExitSwitchStatementReturning(SwitchStatementReturningContext context)
+        {
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            ExitState().ExitSwitchStatementReturning(context);
+        }
+
+        public sealed override void EnterSwitchStatementReturningTrail(SwitchStatementReturningTrailContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+        }
+
+        public sealed override void ExitSwitchStatementReturningTrail(SwitchStatementReturningTrailContext context)
+        {
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            ExitState().ExitSwitchStatementReturningTrail(context);
+        }
+
+        public sealed override void EnterSwitchStatementTerminating(SwitchStatementTerminatingContext context)
+        {
+            OnEnterInner(StatementFlags.Terminating);
+        }
+
+        public sealed override void ExitSwitchStatementTerminating(SwitchStatementTerminatingContext context)
+        {
+            OnExitInner(StatementFlags.Terminating);
+            ExitState().ExitSwitchStatementTerminating(context);
+        }
+
+        public sealed override void EnterSwitchStatementTerminatingInterrupted(SwitchStatementTerminatingInterruptedContext context)
+        {
+            OnEnterInner(StatementFlags.Terminating);
+        }
+
+        public sealed override void ExitSwitchStatementTerminatingInterrupted(SwitchStatementTerminatingInterruptedContext context)
+        {
+            OnExitInner(StatementFlags.Terminating);
+            ExitState().ExitSwitchStatementTerminatingInterrupted(context);
+        }
+
+        public sealed override void EnterSwitchStatementConditional(SwitchStatementConditionalContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+        }
+
+        public sealed override void ExitSwitchStatementConditional(SwitchStatementConditionalContext context)
+        {
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            ExitState().ExitSwitchStatementConditional(context);
+        }
         #endregion
     }
 
@@ -976,7 +1053,7 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(_end_);
                 return;
             }
-            base.OnEnter(flags);
+            base.OnExit(flags);
         }
     }
 
@@ -1122,6 +1199,16 @@ namespace IS4.Sona.Compiler.States
             }
             Error("COMPILER ERROR: `continue` used in a wrong version of `while`.");
         }
+
+        void IInterruptibleStatementContext.WriteAfterBreak()
+        {
+
+        }
+
+        void IInterruptibleStatementContext.WriteAfterContinue()
+        {
+
+        }
     }
 
     /// <summary>
@@ -1159,7 +1246,7 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(_end_);
                 return;
             }
-            base.OnEnter(flags);
+            base.OnExit(flags);
         }
 
         public override void EnterWhile(WhileContext context)
@@ -1336,6 +1423,16 @@ namespace IS4.Sona.Compiler.States
             }
             Error("COMPILER ERROR: `continue` used in a wrong version of `repeat`.");
         }
+
+        void IInterruptibleStatementContext.WriteAfterBreak()
+        {
+
+        }
+
+        void IInterruptibleStatementContext.WriteAfterContinue()
+        {
+
+        }
     }
 
     /// <summary>
@@ -1373,7 +1470,7 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(_end_);
                 return;
             }
-            base.OnEnter(flags);
+            base.OnExit(flags);
         }
 
         public override void EnterUntil(UntilContext context)
@@ -1534,6 +1631,16 @@ namespace IS4.Sona.Compiler.States
             Error("COMPILER ERROR: `continue` used in a wrong version of `for`.");
         }
 
+        void IInterruptibleStatementContext.WriteAfterBreak()
+        {
+
+        }
+
+        void IInterruptibleStatementContext.WriteAfterContinue()
+        {
+
+        }
+
         protected sealed class PrimitiveExprState : ExpressionState
         {
             public override void EnterPrimitiveExpr(PrimitiveExprContext context)
@@ -1597,7 +1704,7 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(_end_);
                 return;
             }
-            base.OnEnter(flags);
+            base.OnExit(flags);
         }
 
         public override void EnterForSimple(ForSimpleContext context)
@@ -2043,6 +2150,324 @@ namespace IS4.Sona.Compiler.States
     }
 
     internal sealed class ForStatementControl : ForStatementTrailInterrupted, IReturnableStatementContext
+    {
+        string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
+        string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
+    }
+
+    internal abstract class SwitchStatement : ControlStatement
+    {
+        protected bool HasElse { get; private set; }
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            HasElse = false;
+        }
+
+        protected override void OnExit(StatementFlags flags)
+        {
+            base.OnExit(flags);
+            //Out.ExitScope();
+        }
+
+        public sealed override void EnterSwitch(SwitchContext context)
+        {
+            Out.Write("match(");
+        }
+
+        public sealed override void ExitSwitch(SwitchContext context)
+        {
+            Out.Write(")with");
+        }
+
+        public sealed override void EnterCase(CaseContext context)
+        {
+            Out.WriteLine();
+            Out.Write("| ");
+        }
+
+        public sealed override void ExitCase(CaseContext context)
+        {
+            Out.WriteOperator("->");
+        }
+
+        public sealed override void EnterEmptyPattern(EmptyPatternContext context)
+        {
+            Out.Write('_');
+        }
+
+        public sealed override void ExitEmptyPattern(EmptyPatternContext context)
+        {
+
+        }
+
+        public sealed override void EnterWhenClause(WhenClauseContext context)
+        {
+            Out.Write(" when(");
+        }
+
+        public sealed override void ExitWhenClause(WhenClauseContext context)
+        {
+            Out.Write(')');
+        }
+
+        public sealed override void EnterElse(ElseContext context)
+        {
+            Out.WriteLine();
+            Out.Write("| _");
+        }
+
+        public sealed override void ExitElse(ElseContext context)
+        {
+            Out.WriteOperator("->");
+            HasElse = true;
+        }
+
+        public sealed override void EnterExpression(ExpressionContext context)
+        {
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public sealed override void ExitExpression(ExpressionContext context)
+        {
+
+        }
+    }
+
+    internal abstract class SwitchStatementInterrupted : ControlStatement, IInterruptibleStatementContext
+    {
+        protected bool HasElse { get; private set; }
+
+        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.CanContinue;
+
+        string? matchingVariable, matchedVariable, interruptingVariable;
+
+        string? IInterruptibleStatementContext.InterruptingVariable => interruptingVariable;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            HasElse = false;
+            matchingVariable = null;
+            matchedVariable = null;
+        }
+
+        protected override void OnExit(StatementFlags flags)
+        {
+            Out.ExitScope();
+            Out.WriteLine();
+            Out.Write(_end_);
+            base.OnExit(flags);
+        }
+
+        public sealed override void EnterSwitch(SwitchContext context)
+        {
+            matchedVariable = Out.CreateTemporaryIdentifier();
+            matchingVariable = Out.CreateTemporaryIdentifier();
+
+            // var matched = <expression>
+            Out.Write("let mutable ");
+            Out.WriteIdentifier(matchedVariable);
+            Out.WriteOperator('=');
+        }
+
+        public sealed override void ExitSwitch(SwitchContext context)
+        {
+            Out.WriteLine();
+            // var matched = <expression>
+            var matchingVariable = this.matchingVariable ?? Error("COMPILER ERROR: Matching variable missing");
+            Out.Write("let mutable ");
+            Out.WriteIdentifier(matchingVariable);
+            Out.WriteOperator('=');
+            Out.WriteLine("true");
+            // while matching do
+            Out.Write("while ");
+            Out.WriteIdentifier(matchingVariable);
+            Out.Write(" do ");
+            Out.WriteLine(_begin_);
+            Out.EnterScope();
+            // matching = false
+            Out.WriteIdentifier(matchingVariable);
+            Out.WriteOperator("<-");
+            Out.WriteLine("false");
+            // var interrupting = false
+            interruptingVariable = Out.CreateTemporaryIdentifier();
+            Out.Write("let mutable ");
+            Out.WriteIdentifier(interruptingVariable);
+            Out.WriteOperator('=');
+            Out.WriteLine("false");
+            Out.Write("match ");
+            Out.WriteIdentifier(matchedVariable ?? Error("COMPILER ERROR: Matched variable missing"));
+            Out.Write(" with");
+        }
+
+        public sealed override void EnterCase(CaseContext context)
+        {
+            Out.WriteLine();
+            Out.Write("| ");
+        }
+
+        public sealed override void EnterEmptyPattern(EmptyPatternContext context)
+        {
+            Out.Write('_');
+        }
+
+        public sealed override void ExitEmptyPattern(EmptyPatternContext context)
+        {
+
+        }
+
+        public sealed override void EnterWhenClause(WhenClauseContext context)
+        {
+            Out.Write(" when(");
+        }
+
+        public sealed override void ExitWhenClause(WhenClauseContext context)
+        {
+            Out.Write(')');
+        }
+
+        public sealed override void ExitCase(CaseContext context)
+        {
+            Out.WriteOperator("->");
+        }
+
+        public sealed override void EnterElse(ElseContext context)
+        {
+            Out.WriteLine();
+            Out.Write("| _");
+        }
+
+        public sealed override void ExitElse(ElseContext context)
+        {
+            Out.WriteOperator("->");
+            HasElse = true;
+        }
+
+        public sealed override void EnterExpression(ExpressionContext context)
+        {
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public sealed override void ExitExpression(ExpressionContext context)
+        {
+
+        }
+
+        void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
+        {
+            Error("COMPILER ERROR: `break` used in `switch`.");
+        }
+
+        void IInterruptibleStatementContext.WriteAfterBreak()
+        {
+
+        }
+
+        void IInterruptibleStatementContext.WriteContinue(bool hasExpression)
+        {
+            if(!hasExpression)
+            {
+                Error("`continue` in a `switch` statement must take an expression.");
+            }
+            Out.WriteIdentifier(matchedVariable ?? Error("COMPILER ERROR: `continue` used without a variable to assign to."));
+            Out.WriteOperator("<-");
+        }
+
+        void IInterruptibleStatementContext.WriteAfterContinue()
+        {
+            Out.WriteLine();
+            Out.WriteIdentifier(matchingVariable ?? Error("COMPILER ERROR: `continue` used without a matching variable."));
+            Out.WriteOperator("<-");
+            Out.WriteLine("true");
+            Out.WriteIdentifier(interruptingVariable ?? Error("COMPILER ERROR: `continue` used without an interrupting variable."));
+            Out.WriteOperator("<-");
+            Out.Write("true");
+        }
+    }
+
+    /// <summary>
+    /// <c>switch</c> with no trailing statements (free or ignored).
+    /// </summary>
+    internal class SwitchStatementNoTrail : SwitchStatement
+    {
+        protected override void OnEnter(StatementFlags flags)
+        {
+            if((flags & StatementFlags.OpenPath) == 0)
+            {
+                // Not open, there will be ignored statements
+                Out.Write("if true then ");
+                Out.WriteLine(_begin_);
+                Out.EnterScope();
+                return;
+            }
+            base.OnEnter(flags);
+        }
+
+        protected override void OnExit(StatementFlags flags)
+        {
+            base.OnExit(flags);
+            if((flags & StatementFlags.OpenPath) == 0)
+            {
+                // Exit for ignored statements
+                Out.ExitScope();
+                Out.WriteLine();
+                Out.Write(_end_);
+            }
+        }
+    }
+
+    /// <summary>
+    /// <c>switch</c> with no trailing statements (free or ignored).
+    /// </summary>
+    internal class SwitchStatementInterruptedNoTrail : SwitchStatementInterrupted
+    {
+        protected override void OnEnter(StatementFlags flags)
+        {
+            if((flags & StatementFlags.OpenPath) == 0)
+            {
+                // Not open, there will be ignored statements
+                Out.Write("if true then ");
+                Out.WriteLine(_begin_);
+                Out.EnterScope();
+                return;
+            }
+            base.OnEnter(flags);
+        }
+
+        protected override void OnExit(StatementFlags flags)
+        {
+            base.OnExit(flags);
+            if((flags & StatementFlags.OpenPath) == 0)
+            {
+                // Exit for ignored statements
+                Out.ExitScope();
+                Out.WriteLine();
+                Out.Write(_end_);
+            }
+        }
+    }
+
+    /// <summary>
+    /// <c>switch</c> with trailing statements.
+    /// </summary>
+    internal sealed class SwitchStatementTrail : SwitchStatement
+    {
+
+    }
+
+    /// <summary>
+    /// <c>switch</c> with trailing statements.
+    /// </summary>
+    internal sealed class SwitchStatementInterruptedTrail : SwitchStatementInterrupted
+    {
+
+    }
+
+    internal sealed class SwitchStatementControl : SwitchStatementInterrupted, IReturnableStatementContext
     {
         string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
         string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;

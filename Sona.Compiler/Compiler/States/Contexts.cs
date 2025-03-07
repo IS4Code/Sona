@@ -52,6 +52,8 @@ namespace IS4.Sona.Compiler.States
         string? InterruptingVariable { get; }
 
         void WriteBreak(bool hasExpression);
+        void WriteAfterBreak();
         void WriteContinue(bool hasExpression);
+        void WriteAfterContinue();
     }
 }

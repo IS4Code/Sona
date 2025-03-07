@@ -130,6 +130,16 @@ namespace IS4.Sona.Compiler.States
         {
             Error("`continue` must be used in a statement that supports it.");
         }
+
+        void IInterruptibleStatementContext.WriteAfterBreak()
+        {
+
+        }
+
+        void IInterruptibleStatementContext.WriteAfterContinue()
+        {
+
+        }
     }
 
     internal sealed class ParamListState : NodeState

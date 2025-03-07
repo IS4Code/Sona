@@ -222,6 +222,16 @@ namespace IS4.Sona.Compiler
 
         }
 
+        public override void EnterPattern(PatternContext context)
+        {
+            EnterState<PatternState>().EnterPattern(context);
+        }
+
+        public override void ExitPattern(PatternContext context)
+        {
+
+        }
+
         protected virtual IExpressionContext? GetExpressionContext() => FindContext<IExpressionContext>();
 
         public override void EnterInterpolatedString(InterpolatedStringContext context)

@@ -165,7 +165,9 @@ statement:
   repeatStatementFree |
   repeatStatementFreeInterrupted |
   forStatementFree |
-  forStatementFreeInterrupted;
+  forStatementFreeInterrupted |
+  switchStatementFree |
+  switchStatementFreeInterrupted;
 
 // A statement that must be located at the end of a block and stops its execution
 closingStatement:
@@ -211,7 +213,9 @@ returningStatement:
   ifStatementReturningTrail |
   whileStatementReturningTrail |
   repeatStatementReturningTrail |
-  forStatementReturningTrail;
+  forStatementReturningTrail |
+  switchStatementReturning |
+  switchStatementReturningTrail;
 
 // A statement that has interrupting paths and all other paths are terminating
 interruptingStatement:
@@ -233,7 +237,8 @@ conditionalStatement:
   ifStatementConditional |
   whileStatementConditional |
   repeatStatementConditional |
-  forStatementConditional;
+  forStatementConditional |
+  switchStatementConditional;
 
 // A statement that only has terminating paths
 terminatingStatement:
@@ -242,7 +247,9 @@ terminatingStatement:
   doStatementTerminating |
   ifStatementTerminating |
   whileStatementTerminating |
-  repeatStatementTerminating;
+  repeatStatementTerminating |
+  switchStatementTerminating |
+  switchStatementTerminatingInterrupted;
 
 // A statement that can be used in special expressions
 // This includes all statements that contain blocks,
@@ -270,7 +277,13 @@ expressionStatement:
   repeatStatementConditional |
   forStatementFree |
   forStatementFreeInterrupted |
-  forStatementConditional;
+  forStatementConditional |
+  switchStatementTerminating |
+  switchStatementTerminatingInterrupted |
+  switchStatementFree |
+  switchStatementFreeInterrupted |
+  switchStatementReturning |
+  switchStatementConditional;
 
 /* ---------------- */
 /* Block statements */
@@ -670,10 +683,12 @@ switch:
   'switch' expression;
 
 case:
-  'case' pattern whenClause? 'do';
+  'case' (pattern whenClause? | emptyPattern whenClause) 'do';
 
 whenClause:
   'when' expression;
+
+emptyPattern:;
 
 // Free-standing (may throw from all branches but this is not preferred).
 // Presence of at least one case/else is ensured in code.
@@ -839,7 +854,11 @@ memberDiscard:
 /* -------- */
 
 pattern:
-  primitiveExpr;
+  primitiveExpr |
+  nestedPattern;
+
+nestedPattern:
+  '(' pattern ')';
 
 /* ----------- */
 /* Expressions */

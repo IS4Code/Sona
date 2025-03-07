@@ -271,6 +271,41 @@ namespace IS4.Sona.Compiler.States
             EnterState<ForStatementControl>().EnterForStatementConditional(context);
         }
 
+        public sealed override void EnterSwitchStatementFree(SwitchStatementFreeContext context)
+        {
+            EnterState<SwitchStatementNoTrail>().EnterSwitchStatementFree(context);
+        }
+
+        public sealed override void EnterSwitchStatementFreeInterrupted(SwitchStatementFreeInterruptedContext context)
+        {
+            EnterState<SwitchStatementInterruptedNoTrail>().EnterSwitchStatementFreeInterrupted(context);
+        }
+
+        public sealed override void EnterSwitchStatementTerminating(SwitchStatementTerminatingContext context)
+        {
+            EnterState<SwitchStatementNoTrail>().EnterSwitchStatementTerminating(context);
+        }
+
+        public sealed override void EnterSwitchStatementTerminatingInterrupted(SwitchStatementTerminatingInterruptedContext context)
+        {
+            EnterState<SwitchStatementInterruptedNoTrail>().EnterSwitchStatementTerminatingInterrupted(context);
+        }
+
+        public sealed override void EnterSwitchStatementReturning(SwitchStatementReturningContext context)
+        {
+            EnterState<SwitchStatementInterruptedNoTrail>().EnterSwitchStatementReturning(context);
+        }
+
+        public sealed override void EnterSwitchStatementReturningTrail(SwitchStatementReturningTrailContext context)
+        {
+            EnterState<SwitchStatementControl>().EnterSwitchStatementReturningTrail(context);
+        }
+
+        public sealed override void EnterSwitchStatementConditional(SwitchStatementConditionalContext context)
+        {
+            EnterState<SwitchStatementControl>().EnterSwitchStatementConditional(context);
+        }
+
         public sealed override void EnterInlineSourceFree(InlineSourceFreeContext context)
         {
             EnterState<InlineSource>().EnterInlineSourceFree(context);
@@ -482,6 +517,16 @@ namespace IS4.Sona.Compiler.States
         {
             Error("`continue` must be used in a statement that supports it.");
         }
+
+        void IInterruptibleStatementContext.WriteAfterBreak()
+        {
+
+        }
+
+        void IInterruptibleStatementContext.WriteAfterContinue()
+        {
+
+        }
     }
 
     internal abstract class ArgumentStatementState : NodeState
@@ -667,6 +712,10 @@ namespace IS4.Sona.Compiler.States
             else
             {
                 Out.Write(")");
+                if(scope != null)
+                {
+                    scope.WriteAfterContinue();
+                }
             }
 
             ExitState().ExitBreakStatement(context);
@@ -723,6 +772,10 @@ namespace IS4.Sona.Compiler.States
             else
             {
                 Out.Write(")");
+                if(scope != null)
+                {
+                    scope.WriteAfterContinue();
+                }
             }
 
             ExitState().ExitContinueStatement(context);

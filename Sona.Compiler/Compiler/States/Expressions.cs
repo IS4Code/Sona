@@ -972,6 +972,16 @@ namespace IS4.Sona.Compiler.States
         {
             Error("`continue` must be used in a statement that supports it.");
         }
+
+        void IInterruptibleStatementContext.WriteAfterBreak()
+        {
+
+        }
+
+        void IInterruptibleStatementContext.WriteAfterContinue()
+        {
+
+        }
     }
 
     internal sealed class RecordState : NodeState
@@ -1175,6 +1185,16 @@ namespace IS4.Sona.Compiler.States
         void IInterruptibleStatementContext.WriteContinue(bool hasExpression)
         {
             Error("`continue` must be used in a statement that supports it.");
+        }
+
+        void IInterruptibleStatementContext.WriteAfterBreak()
+        {
+
+        }
+
+        void IInterruptibleStatementContext.WriteAfterContinue()
+        {
+
         }
 
         void IFunctionContext.WriteBegin()
