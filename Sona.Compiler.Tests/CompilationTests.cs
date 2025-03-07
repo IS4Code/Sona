@@ -88,9 +88,9 @@ namespace IS4.Sona.Tests
             {
                 var indented = String.Join(Environment.NewLine, expected.Split(Environment.NewLine).Select(l => " " + l));
                 expected = expected + Environment.NewLine + "()";
-                expected2 = $@"let rec test() = begin
+                expected2 = $@"let rec test() = (
 {indented}
-end
+)
 ()";
             }
             var actual2 = CompileToSource(source2, expected2 == null);

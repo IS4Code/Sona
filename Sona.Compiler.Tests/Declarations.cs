@@ -17,9 +17,9 @@ namespace IS4.Sona.Tests
             AssertStatementEquivalence(source, expected);
         }
 
-        const string emptyBody = @"begin
+        const string emptyBody = @"(
  ()
-end";
+)";
 
         [DataRow("function f() end", $"let rec f() = {emptyBody}")]
         [DataRow("function val() end", $"let rec ``val``() = {emptyBody}")]
@@ -40,9 +40,9 @@ let rec g() = {emptyBody}")]
         [DataRow("function f(a;b) end", $"let rec f(a)(b) = {emptyBody}")]
         [DataRow("function f(a;) end", $"let rec f(a)() = {emptyBody}")]
         [DataRow("function f() return end", $"let rec f() = {emptyBody}")]
-        [DataRow("function f() return 0 end", @"let rec f() = begin
+        [DataRow("function f() return 0 end", @"let rec f() = (
  (0)
-end")]
+)")]
         [TestMethod]
         public void Functions(string source, string? expected)
         {
