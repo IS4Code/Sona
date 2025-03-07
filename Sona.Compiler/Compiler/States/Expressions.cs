@@ -462,14 +462,29 @@ namespace IS4.Sona.Compiler.States
 
         }
 
-        public override void EnterCallArgTuple(CallArgTupleContext context)
+        public override void EnterSimpleCallArgTuple(SimpleCallArgTupleContext context)
         {
-            EnterState<MemberApplicationState>().EnterCallArgTuple(context);
+            EnterState<MemberApplicationState>().EnterSimpleCallArgTuple(context);
         }
 
-        public override void ExitCallArgTuple(CallArgTupleContext context)
+        public override void ExitSimpleCallArgTuple(SimpleCallArgTupleContext context)
         {
 
+        }
+
+        public override void EnterComplexCallArgTuple(ComplexCallArgTupleContext context)
+        {
+            Out.Write('(');
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples");
+            Out.Write('.');
+            Out.WriteIdentifier("FromTree");
+            Out.Write('(');
+            EnterState<TupleAppendState>().EnterComplexCallArgTuple(context);
+        }
+
+        public override void ExitComplexCallArgTuple(ComplexCallArgTupleContext context)
+        {
+            Out.Write("))");
         }
 
         sealed class AssignmentState : MemberExprState
@@ -544,15 +559,15 @@ namespace IS4.Sona.Compiler.States
                 first = true;
             }
 
-            public override void EnterCallArgTuple(CallArgTupleContext context)
+            public override void EnterSimpleCallArgTuple(SimpleCallArgTupleContext context)
             {
                 Out.Write('(');
             }
 
-            public override void ExitCallArgTuple(CallArgTupleContext context)
+            public override void ExitSimpleCallArgTuple(SimpleCallArgTupleContext context)
             {
                 Out.Write(')');
-                ExitState().ExitCallArgTuple(context);
+                ExitState().ExitSimpleCallArgTuple(context);
             }
 
             public override void EnterIndexAccess(IndexAccessContext context)
@@ -679,10 +694,16 @@ namespace IS4.Sona.Compiler.States
             base.EnterDynamicExprMemberAccess(context);
         }
 
-        public override void EnterCallArgTuple(CallArgTupleContext context)
+        public override void EnterSimpleCallArgTuple(SimpleCallArgTupleContext context)
         {
             OpenLambda();
-            base.EnterCallArgTuple(context);
+            base.EnterSimpleCallArgTuple(context);
+        }
+
+        public override void EnterComplexCallArgTuple(ComplexCallArgTupleContext context)
+        {
+            OpenLambda();
+            base.EnterComplexCallArgTuple(context);
         }
 
         public override void EnterConstrainedMemberAccess(ConstrainedMemberAccessContext context)
@@ -790,7 +811,7 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(')');
             }
 
-            public override void EnterCallArgTuple(CallArgTupleContext context)
+            private void OpenArgTuple()
             {
                 if(first)
                 {
@@ -806,7 +827,7 @@ namespace IS4.Sona.Compiler.States
                 arities.Add(0);
             }
 
-            public override void ExitCallArgTuple(CallArgTupleContext context)
+            private void CloseArgTuple()
             {
                 if(first)
                 {
@@ -821,6 +842,26 @@ namespace IS4.Sona.Compiler.States
                     // Unit argument
                     Out.Write(",()");
                 }
+            }
+
+            public override void EnterSimpleCallArgTuple(SimpleCallArgTupleContext context)
+            {
+                OpenArgTuple();
+            }
+
+            public override void ExitSimpleCallArgTuple(SimpleCallArgTupleContext context)
+            {
+                CloseArgTuple();
+            }
+
+            public override void EnterComplexCallArgTuple(ComplexCallArgTupleContext context)
+            {
+                OpenArgTuple();
+            }
+
+            public override void ExitComplexCallArgTuple(ComplexCallArgTupleContext context)
+            {
+                CloseArgTuple();
             }
 
             public override void EnterExpression(ExpressionContext context)
@@ -842,6 +883,16 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(',');
 
                 base.EnterExpression(context);
+            }
+
+            public override void EnterSpreadExpression(SpreadExpressionContext context)
+            {
+                Error("A call to a constraint member expression cannot contain spread expressions.");
+            }
+
+            public override void ExitSpreadExpression(SpreadExpressionContext context)
+            {
+
             }
 
             public override void EnterFieldAssignment(FieldAssignmentContext context)
@@ -1081,47 +1132,65 @@ namespace IS4.Sona.Compiler.States
         public override void EnterTupleConstructor(TupleConstructorContext context)
         {
             isStruct = LexerContext.GetState<TuplePragma>()?.IsStruct ?? true;
-            Out.Write(isStruct ? "(struct(" : "(");
         }
 
         public override void ExitTupleConstructor(TupleConstructorContext context)
         {
-            Out.Write(isStruct ? "))" : ")");
             ExitState().ExitTupleConstructor(context);
         }
 
         public override void EnterExplicitTupleConstructor(ExplicitTupleConstructorContext context)
         {
             isStruct = LexerContext.GetState<TuplePragma>()?.IsStruct ?? true;
-            Out.Write(isStruct ? "(struct(" : "(");
         }
 
         public override void ExitExplicitTupleConstructor(ExplicitTupleConstructorContext context)
         {
-            Out.Write(isStruct ? "))" : ")");
             ExitState().ExitExplicitTupleConstructor(context);
         }
 
         public override void EnterClassTupleConstructor(ClassTupleConstructorContext context)
         {
-            Out.Write("(");
+
         }
 
         public override void ExitClassTupleConstructor(ClassTupleConstructorContext context)
         {
-            Out.Write(")");
             ExitState().ExitClassTupleConstructor(context);
         }
 
         public override void EnterStructTupleConstructor(StructTupleConstructorContext context)
         {
-            Out.Write("(struct(");
+            isStruct = true;
         }
 
         public override void ExitStructTupleConstructor(StructTupleConstructorContext context)
         {
-            Out.Write("))");
             ExitState().ExitStructTupleConstructor(context);
+        }
+
+        public override void EnterSimpleTupleContents(SimpleTupleContentsContext context)
+        {
+            Out.Write(isStruct ? "(struct(" : "(");
+        }
+
+        public override void ExitSimpleTupleContents(SimpleTupleContentsContext context)
+        {
+            Out.Write(isStruct ? "))" : ")");
+        }
+
+        public override void EnterComplexTupleContents(ComplexTupleContentsContext context)
+        {
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples");
+            Out.Write('.');
+            Out.WriteIdentifier(isStruct ? "FromTreeValue" : "FromTree");
+            Out.Write('(');
+            EnterState<TupleAppendState>().EnterComplexTupleContents(context);
+        }
+
+        public override void ExitComplexTupleContents(ComplexTupleContentsContext context)
+        {
+            Out.Write(')');
         }
 
         public override void EnterExpression(ExpressionContext context)
@@ -1140,6 +1209,131 @@ namespace IS4.Sona.Compiler.States
         public override void ExitExpression(ExpressionContext context)
         {
 
+        }
+    }
+
+    internal sealed class TupleAppendState : NodeState
+    {
+        int tupleDepth;
+        int appendDepth;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            tupleDepth = 0;
+            appendDepth = 0;
+        }
+
+        public override void EnterComplexCallArgTuple(ComplexCallArgTupleContext context)
+        {
+
+        }
+
+        public override void ExitComplexCallArgTuple(ComplexCallArgTupleContext context)
+        {
+            FinishAppends();
+            ExitState().ExitComplexCallArgTuple(context);
+        }
+
+        public override void EnterComplexTupleContents(ComplexTupleContentsContext context)
+        {
+
+        }
+
+        public override void ExitComplexTupleContents(ComplexTupleContentsContext context)
+        {
+            FinishAppends();
+            ExitState().ExitComplexTupleContents(context);
+        }
+
+        private void FinishAppends()
+        {
+            FinishTuple();
+            if(appendDepth != 0)
+            {
+                // Finish all appends (should be always non-zero when exiting)
+                Out.Write("()");
+                Out.Write(new string(')', appendDepth));
+                appendDepth = 0;
+            }
+        }
+
+        private void AppendTuples()
+        {
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples");
+            Out.Write('.');
+            Out.WriteIdentifier("Append");
+            appendDepth++;
+            Out.Write('(');
+        }
+
+        private void FinishTuple()
+        {
+            if(tupleDepth != 0)
+            {
+                // Finish previous tuple
+                Out.Write("()");
+                Out.Write(new string(')', tupleDepth));
+                Out.Write(", ");
+                tupleDepth = 0;
+            }
+        }
+
+        public override void EnterExpression(ExpressionContext context)
+        {
+            if(tupleDepth == 0)
+            {
+                // First expression in a tuple
+                AppendTuples();
+            }
+            Out.Write("struct(");
+            tupleDepth++;
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public override void ExitExpression(ExpressionContext context)
+        {
+            Out.Write(", ");
+        }
+
+        public override void EnterSpreadExpression(SpreadExpressionContext context)
+        {
+            FinishTuple();
+            AppendTuples();
+            EnterState<SpreadExpression>().EnterSpreadExpression(context);
+        }
+
+        public override void ExitSpreadExpression(SpreadExpressionContext context)
+        {
+            Out.Write(", ");
+        }
+
+        public override void EnterFieldAssignment(FieldAssignmentContext context)
+        {
+            Error("Named arguments are not allowed alongside spread expressions.");
+        }
+
+        public override void ExitFieldAssignment(FieldAssignmentContext context)
+        {
+
+        }
+
+        sealed class SpreadExpression : ExpressionState
+        {
+            public override void EnterSpreadExpression(SpreadExpressionContext context)
+            {
+                Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples");
+                Out.Write('.');
+                Out.WriteIdentifier("ToTree");
+                Out.Write('(');
+            }
+
+            public override void ExitSpreadExpression(SpreadExpressionContext context)
+            {
+                Out.Write(')');
+                ExitState().ExitSpreadExpression(context);
+            }
         }
     }
 
@@ -1343,6 +1537,11 @@ namespace IS4.Sona.Compiler.States
         {
             Out.Write("yield! ");
             EnterState<SpreadExpression>().EnterSpreadExpression(context);
+        }
+
+        public sealed override void ExitSpreadExpression(SpreadExpressionContext context)
+        {
+
         }
 
         sealed class SpreadExpression : ExpressionState

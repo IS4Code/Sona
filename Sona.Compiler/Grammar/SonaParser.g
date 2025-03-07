@@ -1152,10 +1152,13 @@ simpleCallArgument:
   verbatimInterpolatedString;
 
 callArgList:
-  callArgTuple (';' callArgTuple)*;
+  (simpleCallArgTuple | complexCallArgTuple) (';' (simpleCallArgTuple | complexCallArgTuple))*;
 
-callArgTuple:
-  ((expression | fieldAssignment) (',' (expression | fieldAssignment))*)?;
+simpleCallArgTuple:
+  ((fieldAssignment | expression) (',' (fieldAssignment | expression))*)?;
+
+complexCallArgTuple:
+  ((fieldAssignment | expression) ',')* spreadExpression (',' (spreadExpression | fieldAssignment | expression))*;
 
 // Records, collections, and tuples
 
@@ -1202,16 +1205,22 @@ complexCollectionElement:
   expressionStatement;
 
 tupleConstructor:
-  '(' expression ',' expression (',' expression)* ')';
+  '(' (simpleTupleContents | complexTupleContents) ')';
 
 explicitTupleConstructor:
-  '(' 'as' 'new' ';'? expression ',' expression (',' expression)* ')';
+  '(' 'as' 'new' ';'? (simpleTupleContents | complexTupleContents) ')';
 
 classTupleConstructor:
-  '(' 'as' 'class' ';'? expression ',' expression (',' expression)* ')';
+  '(' 'as' 'class' ';'? (simpleTupleContents | complexTupleContents) ')';
 
 structTupleConstructor:
-  '(' 'as' 'struct' ';'? expression ',' expression (',' expression)* ')';
+  '(' 'as' 'struct' ';'? (simpleTupleContents | complexTupleContents) ')';
+
+simpleTupleContents:
+  expression (',' expression)+;
+
+complexTupleContents:
+  (expression ',')* spreadExpression (',' (spreadExpression | expression))*;
 
 spreadExpression:
   '..' concatExpr_Inner;
