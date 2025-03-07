@@ -391,11 +391,12 @@ namespace IS4.Sona.Compiler.Gui
             var reader = codeChannel.Reader;
             var stack = new Stack<string>();
 
+            bool showBeginEnd = false;
+            bool adjustLineNumbers = false;
+
             while(true)
             {
                 bool latest = false;
-                bool showBeginEnd = false;
-                bool adjustLineNumbers = false;
 
                 while(reader.TryRead(out var last))
                 {
