@@ -405,8 +405,12 @@ namespace IS4.Sona.Compiler.States
         public sealed override void EnterIgnoredTrail(IgnoredTrailContext context)
         {
             OnExitInner(enterFlags);
-            Out.WriteLine();
-            Out.Write("else ");
+            if((enterFlags & StatementFlags.OpenPath) == 0)
+            {
+                // `if true` was written previously
+                Out.WriteLine();
+                Out.Write("else ");
+            }
             Out.WriteLine(_begin_);
             Out.EnterScope();
             EnterState<TrailingStatements>().EnterIgnoredTrail(context);
@@ -423,8 +427,12 @@ namespace IS4.Sona.Compiler.States
         public sealed override void EnterIgnoredEmptyTrail(IgnoredEmptyTrailContext context)
         {
             OnExitInner(enterFlags);
-            Out.WriteLine();
-            Out.Write("else ");
+            if((enterFlags & StatementFlags.OpenPath) == 0)
+            {
+                // `if true` was written previously
+                Out.WriteLine();
+                Out.Write("else ");
+            }
             Out.WriteCoreOperator("Unchecked");
             Out.Write(".defaultof<_>");
             // Possible to elide even further if empty trail is predicted
@@ -2407,22 +2415,6 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(_end_);
             }
         }
-    }
-
-    /// <summary>
-    /// <c>switch</c> with trailing statements.
-    /// </summary>
-    internal sealed class SwitchStatementTrail : SwitchStatement
-    {
-
-    }
-
-    /// <summary>
-    /// <c>switch</c> with trailing statements.
-    /// </summary>
-    internal sealed class SwitchStatementInterruptedTrail : SwitchStatementInterrupted
-    {
-
     }
 
     internal sealed class SwitchStatementControl : SwitchStatementInterrupted, IReturnableStatementContext

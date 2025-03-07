@@ -293,7 +293,7 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterSwitchStatementReturning(SwitchStatementReturningContext context)
         {
-            EnterState<SwitchStatementInterruptedNoTrail>().EnterSwitchStatementReturning(context);
+            EnterState<SwitchStatementControl>().EnterSwitchStatementReturning(context);
         }
 
         public sealed override void EnterSwitchStatementReturningTrail(SwitchStatementReturningTrailContext context)
