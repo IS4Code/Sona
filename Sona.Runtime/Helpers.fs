@@ -93,3 +93,9 @@ module Inference =
   let inline ``datetime|datespan`` x = ((^self or ^x) : (static member ``datetime|datespan``: ^self * ^x -> ^x) Instance, x)
   let inline ``datetime|datetimespan`` x = ((^self or ^x) : (static member ``datetime|datetimespan``: ^self * ^x -> ^x) Instance, x)
 #warnon "64"
+
+namespace Microsoft.FSharp.Core
+[<AutoOpen>]
+module Operators =
+  [<CompiledName("ToBoolean")>]
+  let inline bool x = (^T : (static member op_Explicit : ^T -> bool) x)
