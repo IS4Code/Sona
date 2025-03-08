@@ -115,7 +115,9 @@ namespace IS4.Sona.Compiler
             }
         }
 
-        public async Task<Assembly> CompileToAssembly(AntlrInputStream inputStream, string fileName, AssemblyLoadContext assemblyLoadContext, CancellationToken cancellationToken = default)
+        static readonly string[] embeddedFiles = { "FSharp.Core.dll", "Sona.Runtime.dll" };
+
+        public async Task CompileToStream(AntlrInputStream inputStream, string fileName, Stream outputStream, bool isExecutable, AssemblyLoadContext assemblyLoadContext, CancellationToken cancellationToken = default)
         {
             string source;
             using(var sourceWriter = new StringWriter())
@@ -125,33 +127,42 @@ namespace IS4.Sona.Compiler
                 source = sourceWriter.ToString();
             }
 
-            // A virtual file (accessed through the local file system) to stand for the source
+            // A virtual file prefix (accessed through the local file system) to stand for in-memory dependencies
             var fsPrefix = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), Path.GetFileNameWithoutExtension(fileName));
             
-            var fs = new LocalFileSystem(fsPrefix);
+            var fs = new LocalFileSystem(fsPrefix, assemblyLoadContext);
             var fsxName = fsPrefix + ".fsx";
             var dllPath = fsPrefix + ".dll";
+            var manifestPath = fsPrefix + ".win32manifest";
 
             fs.InputFiles[fsxName] = source;
+            fs.InputFiles[manifestPath] = defaultWin32Manifest;
+
+            var depsPath = fsPrefix + ".deps";
+            var assembly = typeof(SonaCompiler).Assembly;
+            foreach(var file in embeddedFiles)
+            {
+                var path = Path.Combine(depsPath, file);
+                fs.InputFiles[path] = LocalInputFile.FromEmbeddedFile(assembly, file);
+            }
+
+            fs.OutputFiles[dllPath] = outputStream;
 
             using(var replacedFs = new FileSystemReplacement(fs))
             {
                 var sourceText = SourceText.ofString(source);
 
                 FSharpOption<CancellationToken>? cancelTokenOption = cancellationToken.CanBeCanceled ? cancellationToken : null;
-                var (checker, options) = await GetCheckerAndOptions(fsxName, sourceText, cancelTokenOption);
                 
+                var (checker, options) = await GetCheckerAndOptions(fsxName, sourceText, isExecutable, depsPath, cancelTokenOption);
+
                 var args = new[]
                 {
                     "fsc.exe", // ignored
-                    "--nowin32manifest",
-                    "--reflectionfree",
-                    "--warnon:21,52,1182,3517",
-                    "--checknulls+",
-                    "--preferreduilang:",
-                    "--debug:embedded",
+                    "--win32manifest:" + manifestPath,
                     "--out:" + dllPath
-                }.Concat(options.OtherOptions)
+                }.Concat(embeddedFiles.Select(f => "-r:" + Path.Combine(depsPath, f)))
+                .Concat(options.OtherOptions)
                 .Concat(options.ReferencedProjects.Select(p => p.OutputFile))
                 .Concat(options.SourceFiles)
                 .ToArray();
@@ -166,57 +177,114 @@ namespace IS4.Sona.Compiler
                     throw new SystemException($"The compilation failed with code {exitCode}: " + String.Join(Environment.NewLine, diagnostics.Select(d => d.ToString())));
                 }
             }
+        }
 
-            // Retrieved the compiled file
-            var outFile = fs.OutputFiles[dllPath];
-            if(!outFile.TryGetBuffer(out var outBuffer))
-            {
-                outBuffer = outFile.ToArray();
-            }
-            outFile = new MemoryStream(outBuffer.Array!, outBuffer.Offset, outBuffer.Count, false);
+        public async Task<Stream> CompileToBinary(AntlrInputStream inputStream, string fileName, bool isExecutable, AssemblyLoadContext assemblyLoadContext, CancellationToken cancellationToken = default)
+        {
+            var stream = new BlockBufferStream();
+            await CompileToStream(inputStream, fileName, stream, isExecutable, assemblyLoadContext, cancellationToken: cancellationToken);
+            return stream;
+        }
+
+        public async Task<Assembly> CompileToAssembly(AntlrInputStream inputStream, string fileName, AssemblyLoadContext assemblyLoadContext, CancellationToken cancellationToken = default)
+        {
+            var outFile = await CompileToBinary(inputStream, fileName, false, assemblyLoadContext, cancellationToken: cancellationToken);
             return assemblyLoadContext.LoadFromStream(outFile);
         }
 
-        private async Task<(FSharpChecker, FSharpProjectOptions)> GetCheckerAndOptions(string sourceName, ISourceText sourceText, FSharpOption<CancellationToken>? cancellationToken)
+        static readonly string[] executableFlags = new[] {
+            "--target:exe",
+            "--subsystemversion:6.00",
+            "--platform:x64",
+            "--standalone",
+            "--nointerfacedata",
+        };
+
+        static readonly string[] libraryFlags = new[] {
+            "--nowin32manifest",
+            "--targetprofile:netstandard",
+        };
+
+        static readonly string[] commonFlags = new[] {
+            "--debug:embedded",
+            "--deterministic+",
+
+            "--preferreduilang:en",
+            //"--flaterrors",
+            //"--parallelcompilation",
+
+            "--reflectionfree",
+            "--simpleresolution",
+            "--optimize+",
+
+            "--langversion:latest",
+            "--warnon:21,52,1178,1182,3387,3388,3389,3397,3390,3517,3559",
+            "--warnaserror+:20,25,3517",
+            "--checknulls+",
+        };
+
+        static readonly FSharpOption<string[]> executableCheckerFlags = executableFlags.Concat(commonFlags).ToArray();
+        static readonly FSharpOption<string[]> libraryCheckerFlags = libraryFlags.Concat(commonFlags).ToArray();
+
+        static readonly SemaphoreSlim environmentSemaphore = new SemaphoreSlim(1, 1);
+
+        private async Task<(FSharpChecker, FSharpProjectOptions)> GetCheckerAndOptions(string sourceName, ISourceText sourceText, bool isExecutable, string depsPath, FSharpOption<CancellationToken>? cancellationToken)
         {
             // Does not appear to be used at all
             var documentSource = GetDocumentSource(sourceName, sourceText);
 
-            var checker = FSharpChecker.Create(
-                projectCacheSize: null,
-                keepAssemblyContents: null,
-                keepAllBackgroundResolutions: false,
-                legacyReferenceResolver: null,
-                tryGetMetadataSnapshot: null,
-                suggestNamesForErrors: null,
-                keepAllBackgroundSymbolUses: false,
-                enableBackgroundItemKeyStoreAndSemanticClassification: null,
-                enablePartialTypeChecking: null,
-                parallelReferenceResolution: true,
-                captureIdentifiersWhenParsing: null,
-                documentSource: documentSource,
-                useSyntaxTreeCache: false,
-                useTransparentCompiler: null
-            );
+            await environmentSemaphore.WaitAsync();
+            try
+            {
+                var previousBin = Environment.GetEnvironmentVariable("FSHARP_COMPILER_BIN");
+                Environment.SetEnvironmentVariable("FSHARP_COMPILER_BIN", depsPath);
+                try
+                {
+                    var checker = FSharpChecker.Create(
+                        projectCacheSize: null,
+                        keepAssemblyContents: null,
+                        keepAllBackgroundResolutions: false,
+                        legacyReferenceResolver: null,
+                        tryGetMetadataSnapshot: null,
+                        suggestNamesForErrors: null,
+                        keepAllBackgroundSymbolUses: false,
+                        enableBackgroundItemKeyStoreAndSemanticClassification: null,
+                        enablePartialTypeChecking: null,
+                        parallelReferenceResolution: true,
+                        captureIdentifiersWhenParsing: null,
+                        documentSource: documentSource,
+                        useSyntaxTreeCache: false,
+                        useTransparentCompiler: null
+                    );
 
-            var (options, _) = await FSharpAsync.StartAsTask(checker.GetProjectOptionsFromScript(
-                sourceName,
-                sourceText,
-                previewEnabled: null,
-                loadedTimeStamp: null,
-                otherFlags: null,
-                useFsiAuxLib: false,
-                useSdkRefs: false,
-                assumeDotNetFramework: false,
-                sdkDirOverride: null,
-                optionsStamp: null,
-                userOpName: null
-            ), taskCreationOptions: null, cancellationToken: cancellationToken);
+                    var (options, _) = await FSharpAsync.StartAsTask(checker.GetProjectOptionsFromScript(
+                        sourceName,
+                        sourceText,
+                        previewEnabled: null,
+                        loadedTimeStamp: null,
+                        otherFlags: isExecutable ? executableCheckerFlags : libraryCheckerFlags,
+                        useFsiAuxLib: false,
+                        useSdkRefs: false,
+                        assumeDotNetFramework: isExecutable,
+                        sdkDirOverride: null,
+                        optionsStamp: null,
+                        userOpName: null
+                    ), taskCreationOptions: null, cancellationToken: cancellationToken);
 
-            return (checker, options);
+                    return (checker, options);
+                }
+                finally
+                {
+                    Environment.SetEnvironmentVariable("FSHARP_COMPILER_BIN", previousBin);
+                }
+            }
+            finally
+            {
+                environmentSemaphore.Release();
+            }
         }
 
-        static readonly FSharpAsync<FSharpOption<ISourceText>?> nullSourceTextAync = FSharpAsync.AwaitTask(Task.FromResult<FSharpOption<ISourceText>?>(
+        static readonly FSharpAsync<FSharpOption<ISourceText>?> nullSourceTextAsync = FSharpAsync.AwaitTask(Task.FromResult<FSharpOption<ISourceText>?>(
             null
         ));
         private DocumentSource GetDocumentSource(string name, ISourceText source)
@@ -225,7 +293,7 @@ namespace IS4.Sona.Compiler
                 FSharpOption<ISourceText>.Some(source)
             ));
             var func = FSharpFunc<string, FSharpAsync<FSharpOption<ISourceText>?>>.FromConverter(
-                path => path == name ? sourceAsync : nullSourceTextAync
+                path => path == name ? sourceAsync : nullSourceTextAsync
             );
             return DocumentSource.NewCustom(func);
         }
@@ -253,5 +321,18 @@ namespace IS4.Sona.Compiler
                 }
             }
         }
+
+        const string defaultWin32Manifest = @"<?xml version=""1.0"" encoding=""UTF-8"" standalone=""yes""?>
+<assembly xmlns=""urn:schemas-microsoft-com:asm.v1"" manifestVersion=""1.0"">
+  <assemblyIdentity version=""1.0.0.0"" name=""MyApplication.app""/>
+  <trustInfo xmlns=""urn:schemas-microsoft-com:asm.v2"">
+    <security>
+      <requestedPrivileges xmlns=""urn:schemas-microsoft-com:asm.v3"">
+        <requestedExecutionLevel level=""asInvoker"" uiAccess=""false""/>
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+</assembly>
+";
     }
 }

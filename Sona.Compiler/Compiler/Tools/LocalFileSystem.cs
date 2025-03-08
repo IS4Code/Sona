@@ -2,27 +2,34 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
+using System.Runtime.Loader;
 using FSharp.Compiler.IO;
 using Microsoft.FSharp.Core;
 
 namespace IS4.Sona.Compiler.Tools
 {
-    internal sealed class LocalFileSystem : DefaultFileSystem
+    internal sealed class LocalFileSystem : DefaultFileSystem, IAssemblyLoader
     {
-        readonly ConcurrentDictionary<string, MemoryStream> outputFiles = new();
+        readonly ConcurrentDictionary<string, Stream> outputFiles = new();
         public Dictionary<string, LocalInputFile> InputFiles { get; } = new();
-        public IReadOnlyDictionary<string, MemoryStream> OutputFiles => outputFiles;
+        public IDictionary<string, Stream> OutputFiles => outputFiles;
 
         public string FileNamePrefix { get; }
 
-        public LocalFileSystem(string fileNamePrefix)
+        readonly AssemblyLoadContext assemblyLoadContext;
+
+        public LocalFileSystem(string fileNamePrefix, AssemblyLoadContext assemblyLoadContext)
         {
             FileNamePrefix = fileNamePrefix;
+            this.assemblyLoadContext = assemblyLoadContext;
         }
+
+        public override IAssemblyLoader AssemblyLoader => this;
 
         public override bool FileExistsShim(string fileName)
         {
-            if (fileName.StartsWith(FileNamePrefix, StringComparison.Ordinal))
+            if(fileName.StartsWith(FileNamePrefix, StringComparison.Ordinal))
             {
                 return true;
             }
@@ -31,7 +38,7 @@ namespace IS4.Sona.Compiler.Tools
 
         public override string GetFullPathShim(string fileName)
         {
-            if (fileName.StartsWith(FileNamePrefix, StringComparison.Ordinal))
+            if(fileName.StartsWith(FileNamePrefix, StringComparison.Ordinal))
             {
                 return fileName;
             }
@@ -40,38 +47,67 @@ namespace IS4.Sona.Compiler.Tools
 
         public override Stream OpenFileForReadShim(string filePath, FSharpOption<bool>? useMemoryMappedFile, FSharpOption<bool>? shouldShadowCopy)
         {
-            if (filePath.StartsWith(FileNamePrefix, StringComparison.Ordinal) && InputFiles.TryGetValue(filePath, out var file))
+            if(filePath.StartsWith(FileNamePrefix, StringComparison.Ordinal) && InputFiles.TryGetValue(filePath, out var file))
             {
                 return file.OpenStream();
             }
             return base.OpenFileForReadShim(filePath, useMemoryMappedFile, shouldShadowCopy);
         }
 
-        static readonly Func<string, MemoryStream> createStream = static _ => new MemoryStream();
-        static readonly Func<string, MemoryStream> requireStream = static name =>
+        Assembly IAssemblyLoader.AssemblyLoadFrom(string fileName)
         {
-            throw new InvalidOperationException($"The file '{name}' is not present.");
+            return assemblyLoadContext.LoadFromAssemblyPath(fileName) ?? base.AssemblyLoader.AssemblyLoadFrom(fileName);
+        }
+
+        Assembly IAssemblyLoader.AssemblyLoad(AssemblyName assemblyName)
+        {
+            return assemblyLoadContext.LoadFromAssemblyName(assemblyName) ?? base.AssemblyLoader.AssemblyLoad(assemblyName);
+        }
+
+        static readonly Func<string, Stream> createStream = static _ => new BlockBufferStream();
+        static readonly Func<string, Stream> requireStream = static name =>
+        {
+            throw new IOException($"The file '{name}' is not present.");
         };
-        static readonly Func<string, MemoryStream, MemoryStream> openStream = static (_, existing) =>
+        static readonly Func<string, Stream, Stream> openStream = static (name, existing) =>
         {
-            if (!existing.TryGetBuffer(out var buffer))
+            // Clone the stream to get an independent cursor
+            switch(existing)
             {
-                buffer = existing.ToArray();
+                case MemoryStream memoryStream:
+                    if(!memoryStream.TryGetBuffer(out var buffer))
+                    {
+                        buffer = memoryStream.ToArray();
+                    }
+                    return new MemoryStream(buffer.Array!, buffer.Offset, buffer.Count, true);
+                case BlockBufferStream bufferStream:
+                    return new BlockBufferStream(bufferStream);
+                case FileStream fileStream:
+                    return new NonClosingStream(new FileStream(fileStream.SafeFileHandle, fileStream.CanRead ? fileStream.CanWrite ? FileAccess.ReadWrite : FileAccess.Read : FileAccess.Write));
+                case NonClosingStream wrappedMemoryStream:
+                    return openStream!(name, wrappedMemoryStream.InnerStream);
+                default:
+                    throw new IOException($"The file '{name}' cannot be opened.");
             }
-            return new MemoryStream(buffer.Array!, buffer.Offset, buffer.Count, true);
         };
-        static readonly Func<string, MemoryStream, MemoryStream> appendStream = static (path, existing) =>
+        static readonly Func<string, Stream, Stream> appendStream = static (path, existing) =>
         {
             var stream = openStream(path, existing);
             stream.Position = stream.Length;
             return stream;
         };
+        static readonly Func<string, Stream, Stream> truncateStream = static (path, existing) =>
+        {
+            var stream = openStream(path, existing);
+            stream.SetLength(0);
+            return stream;
+        };
 
         public override Stream OpenFileForWriteShim(string filePath, FSharpOption<FileMode>? fileMode, FSharpOption<FileAccess>? fileAccess, FSharpOption<FileShare>? fileShare)
         {
-            if (filePath.StartsWith(FileNamePrefix, StringComparison.Ordinal))
+            if(filePath.StartsWith(FileNamePrefix, StringComparison.Ordinal))
             {
-                switch (fileMode?.Value)
+                switch(fileMode?.Value)
                 {
                     case FileMode.Open:
                         return outputFiles.AddOrUpdate(
@@ -91,10 +127,14 @@ namespace IS4.Sona.Compiler.Tools
                             createStream,
                             appendStream
                         );
+                    case FileMode.Create:
+                    case FileMode.CreateNew:
+                        return outputFiles.AddOrUpdate(
+                            filePath,
+                            createStream,
+                            truncateStream
+                        );
                 }
-                var stream = new MemoryStream();
-                outputFiles[filePath] = stream;
-                return stream;
             }
             return Stream.Null;
         }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using System.Security.Policy;
 using System.Text;
 
 namespace IS4.Sona.Compiler.Tools
@@ -28,33 +27,9 @@ namespace IS4.Sona.Compiler.Tools
             return new FileInput(fileInfo);
         }
 
-        public static LocalInputFile FromAssembly(Assembly assembly)
+        public static LocalInputFile FromEmbeddedFile(Assembly assembly, string name)
         {
-            ArraySegment<byte> result;
-
-            const BindingFlags invokeFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.InvokeMethod;
-
-            try
-            {
-                result = (byte[])assembly.GetType().InvokeMember("GetRawData", invokeFlags, null, assembly, null)!;
-            }
-            catch
-            {
-                var hash = new Hash(assembly);
-                using(var alg = new RawValueHash())
-                {
-                    hash.GenerateHash(alg);
-                    if(!alg.Stream.TryGetBuffer(out result))
-                    {
-                        result = alg.Stream.ToArray();
-                    }
-                }
-            }
-            if(result.Count == 0)
-            {
-                return FromFile(assembly.Location);
-            }
-            return FromBytes(result);
+            return new EmbeddedInput(assembly, name);
         }
 
         public static implicit operator LocalInputFile(string text)
@@ -75,11 +50,6 @@ namespace IS4.Sona.Compiler.Tools
         public static implicit operator LocalInputFile(FileInfo fileInfo)
         {
             return FromFile(fileInfo);
-        }
-
-        public static implicit operator LocalInputFile(Assembly assembly)
-        {
-            return FromAssembly(assembly);
         }
 
         public abstract Stream OpenStream();
@@ -128,6 +98,23 @@ namespace IS4.Sona.Compiler.Tools
             public override Stream OpenStream()
             {
                 return fileInfo.OpenRead();
+            }
+        }
+
+        sealed class EmbeddedInput : LocalInputFile
+        {
+            readonly Assembly assembly;
+            readonly string name;
+
+            public EmbeddedInput(Assembly assembly, string name)
+            {
+                this.assembly = assembly;
+                this.name = name;
+            }
+
+            public override Stream OpenStream()
+            {
+                return assembly.GetManifestResourceStream(name) ?? throw new IOException("Embedded resource cannot be found.");
             }
         }
     }

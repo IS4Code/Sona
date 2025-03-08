@@ -18,8 +18,17 @@
   <ItemGroup>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.9.2" />
     <PackageReference Include="FSharp.Compiler.Service" Version="43.9.100" />
-    <PackageReference Include="FSharp.Core" Version="9.0.100" />
+    <PackageReference Include="FSharp.Core" Version="9.0.100" GeneratePathProperty="true" />
     <PackageReference Include="System.Security.Permissions" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sona.Runtime\Sona.Runtime.fsproj" ReferenceOutputAssembly="false" Private="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(PkgFSharp_Core)\lib\netstandard2.0\FSharp.Core.dll" LogicalName="FSharp.Core.dll" CopyToOutputDirectory="Never" />
+    <EmbeddedResource Include="..\Sona.Runtime\bin\$(ConfigurationName)\netstandard2.0\Sona.Runtime.dll" LogicalName="Sona.Runtime.dll" CopyToOutputDirectory="Never" />
   </ItemGroup>
 
 </Project>
