@@ -35,36 +35,38 @@ internal class Program
                 {
                     var inputStream = new AntlrInputStream(inputFile);
 
+                    Console.Error.WriteLine("Compiling...");
                     if(args.Length == 2)
                     {
                         var outputPath = args[1];
                         using var outputFile = File.Create(outputPath);
                         await compiler.CompileToStream(inputStream, outputPath, outputFile, true, AssemblyLoadContext.Default);
                         Console.Error.WriteLine("Done! Press any key to retry.");
+                        Console.ReadKey(true);
                         continue;
                     }
                     else
                     {
-                        var assembly = await compiler.CompileToAssembly(inputStream, inputPath, AssemblyLoadContext.Default);
+                        var assembly = await compiler.CompileToAssembly(inputStream, Guid.NewGuid().ToString(), AssemblyLoadContext.Default);
                         entryPoint = assembly.EntryPoint ?? throw new ApplicationException("The generated assembly is missing an entry point.");
-                        Console.Error.WriteLine("Done! Press any key to execute.");
+                        Console.Error.WriteLine("Done!");
                     }
                 }
             }
             catch(Exception e) when(!Debugger.IsAttached)
             {
-                Console.Error.WriteLine(e.Message);
-                continue;
-            }
-            finally
-            {
+                Console.Error.WriteLine("Error:" + e.Message);
+                Console.Error.WriteLine("Press any key to retry.");
                 Console.ReadKey(true);
+                continue;
             }
 
             if(entryPoint.Invoke(null, null) is int exitCode)
             {
                 Environment.Exit(exitCode);
             }
+            Console.Error.WriteLine("Press any key to retry.");
+            Console.ReadKey(true);
         }
     }
 }
