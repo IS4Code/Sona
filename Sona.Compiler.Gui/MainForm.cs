@@ -421,10 +421,9 @@ namespace IS4.Sona.Compiler.Gui
                         // Unwrap exception
                         ExceptionDispatchInfo.Capture(e.InnerException!).Throw();
                     }
-                    Invoke(() => {
+                    (showBeginEnd, adjustLineNumbers) = Invoke(() => {
                         progressBar.Style = ProgressBarStyle.Marquee;
-                        showBeginEnd = blockDelimitersButton.Checked;
-                        adjustLineNumbers = adjustLineNumbersButton.Checked;
+                        return (blockDelimitersButton.Checked, adjustLineNumbersButton.Checked);
                     });
 
                     while(reader.TryRead(out var last))
