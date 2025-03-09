@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.ExceptionServices;
+using System.Runtime.Loader;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Channels;
@@ -77,10 +78,7 @@ namespace IS4.Sona.Compiler.Gui
                 AllowSynchronousContinuations = true
             });
 
-            compiler = new SonaCompiler()
-            {
-                AdjustLines = false
-            };
+            compiler = new SonaCompiler();
         }
 
         protected override void OnLoad(EventArgs e)
@@ -145,8 +143,12 @@ namespace IS4.Sona.Compiler.Gui
             }
         }
 
-        private async void sonaText_TextChanged(object sender, EventArgs e)
+        private void sonaText_TextChanged(object sender, EventArgs e)
         {
+            // Compile current text
+            Recompile();
+
+            // Highlighting
             var selectedStart = sonaRichText.SelectionStart;
             var selectedLength = sonaRichText.SelectionLength;
 
@@ -185,16 +187,13 @@ namespace IS4.Sona.Compiler.Gui
             // Ignore modifications after selection changed
             sonaRichText.Modified = false;
             sonaText_SelectionChanged(sender, e);
-
-            // Yield to get latest text in case of replacement
-            await Task.Yield();
-
-            // Compile current text
-            Recompile();
         }
 
         private async void Recompile()
         {
+            // Yield to get latest text in case of replacement
+            await Task.Yield();
+
             // Send the text to channel
             await codeChannel.Writer.WriteAsync(sonaRichText.Text);
         }
@@ -436,7 +435,16 @@ namespace IS4.Sona.Compiler.Gui
 
                 // Stack is non-empty
 
-                if(CompileText(stack.Pop(), latest, showBeginEnd, adjustLineNumbers))
+                var options = new CompilerOptions
+                (
+                    Target: BinaryTarget.Exe,
+                    Flags: CompilerFlags.Privileged |
+                        (showBeginEnd ? CompilerFlags.DebuggingComments : 0) |
+                        (adjustLineNumbers ? 0 : CompilerFlags.IgnoreLineNumbers),
+                    AssemblyLoadContext: AssemblyLoadContext.Default
+                );
+
+                if(CompileText(stack.Pop(), latest, options))
                 {
                     // Success - clear history
                     stack.Clear();
@@ -444,12 +452,12 @@ namespace IS4.Sona.Compiler.Gui
             }
         }
 
-        (string text, bool latest, bool showBeginEnd, bool adjustLineNumbers) latestTuple;
+        (string text, bool latest, CompilerOptions options) latestTuple;
         bool latestResult;
 
-        private bool CompileText(string text, bool latest, bool showBeginEnd, bool adjustLineNumbers)
+        private bool CompileText(string text, bool latest, CompilerOptions options)
         {
-            var tuple = (text, latest, showBeginEnd, adjustLineNumbers);
+            var tuple = (text, latest, options);
             if(latestTuple == tuple)
             {
                 return latestResult;
@@ -460,9 +468,7 @@ namespace IS4.Sona.Compiler.Gui
             var writer = new StringWriter();
             try
             {
-                compiler.ShowBeginEnd = showBeginEnd;
-                compiler.AdjustLines = adjustLineNumbers;
-                compiler.CompileToSource(inputStream, writer, throwOnError: true);
+                compiler.CompileToSource(inputStream, writer, options);
 
                 var result = writer.ToString();
 
@@ -474,7 +480,7 @@ namespace IS4.Sona.Compiler.Gui
                         messageBox.Text = "";
                     }
 
-                    SetOutputText(result, adjustLineNumbers);
+                    SetOutputText(result, (options.Flags & CompilerFlags.IgnoreLineNumbers) == 0);
                 });
 
                 return latestResult = true;

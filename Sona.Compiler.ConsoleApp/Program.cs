@@ -21,52 +21,114 @@ internal class Program
             return;
         }
 
+        var compiler = new SonaCompiler();
+
+        var options = new CompilerOptions
+        (
+            Target: BinaryTarget.Exe,
+            AssemblyLoadContext: AssemblyLoadContext.Default,
+            Flags: CompilerFlags.Privileged
+        );
+
+        var backColor = Console.BackgroundColor;
+        var textColor = Console.ForegroundColor;
+
         while(true)
         {
-            MethodInfo entryPoint;
+            MethodInfo? entryPoint;
             try
             {
-                var compiler = new SonaCompiler();
-                compiler.AdjustLines = true;
-                compiler.ShowBeginEnd = false;
+                CompilerResult result;
+                bool compileToFile = args.Length == 2;
 
                 var inputPath = args[0];
                 using(var inputFile = File.OpenText(inputPath))
                 {
                     var inputStream = new AntlrInputStream(inputFile);
 
-                    Console.Error.WriteLine("Compiling...");
-                    if(args.Length == 2)
+                    WriteLine(ConsoleColor.Gray, "Compiling...");
+
+                    if(compileToFile)
                     {
                         var outputPath = args[1];
                         using var outputFile = File.Create(outputPath);
-                        await compiler.CompileToStream(inputStream, outputPath, outputFile, true, AssemblyLoadContext.Default);
-                        Console.Error.WriteLine("Done! Press any key to retry.");
-                        Console.ReadKey(true);
-                        continue;
+                        result = await compiler.CompileToStream(inputStream, outputPath, outputFile, options);
                     }
                     else
                     {
-                        var assembly = await compiler.CompileToAssembly(inputStream, Guid.NewGuid().ToString(), AssemblyLoadContext.Default);
-                        entryPoint = assembly.EntryPoint ?? throw new ApplicationException("The generated assembly is missing an entry point.");
-                        Console.Error.WriteLine("Done!");
+                        result = await compiler.CompileToBinary(inputStream, Guid.NewGuid().ToString(), options with { Target = BinaryTarget.Method });
                     }
                 }
+
+                foreach(var diagnostic in result.Diagnostics)
+                {
+#pragma warning disable CS8524
+                    WriteLine(diagnostic.Level switch
+                    {
+                        DiagnosticLevel.Info => ConsoleColor.Cyan,
+                        DiagnosticLevel.Warning => ConsoleColor.Yellow,
+                        DiagnosticLevel.Error => ConsoleColor.Red
+                    }, diagnostic.ToString());
+#pragma warning restore CS8524
+                }
+
+                if(!result.Success)
+                {
+                    WriteLine(ConsoleColor.White, "Compilation unsuccessful! Press any key to retry.");
+                    Console.ReadKey(true);
+                    continue;
+                }
+
+                if(compileToFile)
+                {
+                    WriteLine(ConsoleColor.White, "Done! Press any key to retry.");
+                    Console.ReadKey(true);
+                    continue;
+                }
+
+                entryPoint = result.EntryPoint ?? throw new ApplicationException("The generated assembly is missing an entry point.");
+                WriteLine(ConsoleColor.White, "Done!");
             }
             catch(Exception e) when(!Debugger.IsAttached)
             {
-                Console.Error.WriteLine("Error:" + e.Message);
-                Console.Error.WriteLine("Press any key to retry.");
+                WriteLine(ConsoleColor.Red, "Compiler error:" + e.Message);
+                WriteLine(ConsoleColor.White, "Press any key to retry.");
                 Console.ReadKey(true);
                 continue;
             }
 
-            if(entryPoint.Invoke(null, null) is int exitCode)
+            try
             {
-                Environment.Exit(exitCode);
+                if(entryPoint.Invoke(null, null) is int exitCode)
+                {
+                    Environment.Exit(exitCode);
+                }
             }
-            Console.Error.WriteLine("Press any key to retry.");
+            catch(Exception e)
+            {
+                WriteLine(ConsoleColor.Red, e.ToString());
+            }
+            finally
+            {
+                Console.ForegroundColor = textColor;
+                Console.BackgroundColor = backColor;
+            }
+
+            WriteLine(ConsoleColor.White, "Press any key to retry.");
             Console.ReadKey(true);
+
+            void WriteLine(ConsoleColor color, string text)
+            {
+                Console.ForegroundColor = color;
+                try
+                {
+                    Console.Error.WriteLine(text);
+                }
+                finally
+                {
+                    Console.ForegroundColor = textColor;
+                }
+            }
         }
     }
 }

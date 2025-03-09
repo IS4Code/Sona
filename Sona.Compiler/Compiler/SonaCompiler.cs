@@ -1,9 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.Loader;
 using System.Threading;
 using System.Threading.Tasks;
 using Antlr4.Runtime;
@@ -20,9 +19,6 @@ namespace IS4.Sona.Compiler
 {
     public class SonaCompiler
     {
-        public bool AdjustLines { get; set; } = true;
-        public bool ShowBeginEnd { get; set; } = false;
-
         static readonly bool debugging =
 #if DEBUG
             Debugger.IsAttached
@@ -31,23 +27,27 @@ namespace IS4.Sona.Compiler
 #endif
             ;
 
-        public void CompileToSource(ICharStream inputStream, TextWriter output, bool throwOnError = false)
+        public CompilerResult CompileToSource(ICharStream inputStream, TextWriter output, CompilerOptions options)
         {
-            var errorListener = throwOnError ? new ErrorListener() : null;
+            var result = new CompilerResult(options);
+
+            // Will add diagnostics to result
+            var errorListener = new ErrorListener(result);
 
             var lexer = GetLexer(inputStream);
-            errorListener?.AddTo(lexer);
+            errorListener.AddTo(lexer);
 
-            var channelContext = new LexerContext(lexer);
+            // Store pragmas and other channel-specific entities
+            var lexerContext = new LexerContext(lexer);
 
-            var tokenStream = new UnbufferedListenerTokenStream(lexer, channelContext.OnLexerToken);
+            var tokenStream = new UnbufferedListenerTokenStream(lexer, lexerContext.OnLexerToken);
             var parser = new SonaParser(tokenStream);
-            errorListener?.AddTo(parser);
+            errorListener.AddTo(parser);
 
-            bool debugBeginEnd = ShowBeginEnd;
+            bool debugBeginEnd = (options.Flags & CompilerFlags.DebuggingComments) != 0;
 
             using var writer = new SourceWriter(output);
-            writer.AdjustLines = AdjustLines;
+            writer.AdjustLines = (options.Flags & CompilerFlags.IgnoreLineNumbers) == 0;
             writer.SkipEmptyLines = !debugBeginEnd;
 
             if(!debugging)
@@ -56,17 +56,14 @@ namespace IS4.Sona.Compiler
                 parser.BuildParseTree = false;
             }
 
-            var context = new ScriptEnvironment(parser, writer, channelContext, debugBeginEnd ? "(*begin*)" : "", debugBeginEnd ? "(*end*)" : "");
+            var context = new ScriptEnvironment(parser, writer, lexerContext, debugBeginEnd ? "(*begin*)" : "", debugBeginEnd ? "(*end*)" : "");
 
             // Main state to process the chunk
             parser.AddParseListener(new ChunkState(context));
 
             parser.chunk();
 
-            if(errorListener?.HasErrors ?? false)
-            {
-                throw new ArgumentException("The input is syntactically invalid.", nameof(inputStream));
-            }
+            return result;
         }
 
         [CLSCompliant(false)]
@@ -84,7 +81,12 @@ namespace IS4.Sona.Compiler
 
         sealed class ErrorListener : IAntlrErrorListener<IToken>, IAntlrErrorListener<int>
         {
-            public bool HasErrors { get; private set; }
+            readonly CompilerResult result;
+
+            public ErrorListener(CompilerResult result)
+            {
+                this.result = result;
+            }
 
             public void AddTo<TInterpreter>(Recognizer<IToken, TInterpreter> recognizer) where TInterpreter : Antlr4.Runtime.Atn.ATNSimulator
             {
@@ -98,39 +100,43 @@ namespace IS4.Sona.Compiler
 
             public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
             {
-                HasErrors = true;
                 if(debugging)
                 {
                     Debugger.Break();
                 }
+                result.AddDiagnostic(new(DiagnosticLevel.Error, "PARSER", msg, line, e));
             }
 
             public void SyntaxError(TextWriter output, IRecognizer recognizer, int offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
             {
-                HasErrors = true;
                 if(debugging)
                 {
                     Debugger.Break();
                 }
+                result.AddDiagnostic(new(DiagnosticLevel.Error, "LEXER", msg, line, e));
             }
         }
 
         static readonly string[] embeddedFiles = { "FSharp.Core.dll", "Sona.Runtime.dll" };
 
-        public async Task CompileToStream(AntlrInputStream inputStream, string fileName, Stream outputStream, bool isExecutable, AssemblyLoadContext assemblyLoadContext, CancellationToken cancellationToken = default)
+        public async Task<CompilerResult> CompileToStream(AntlrInputStream inputStream, string fileName, Stream outputStream, CompilerOptions options, CancellationToken cancellationToken = default)
         {
+            CompilerResult result;
+
             string source;
             using(var sourceWriter = new StringWriter())
             {
-                CompileToSource(inputStream, sourceWriter);
+                result = CompileToSource(inputStream, sourceWriter, options);
                 sourceWriter.Flush();
                 source = sourceWriter.ToString();
             }
+            result.IntermediateCode = source;
+            result.Stream = outputStream;
 
             // A virtual file prefix (accessed through the local file system) to stand for in-memory dependencies
             var fsPrefix = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), Path.GetFileNameWithoutExtension(fileName));
             
-            var fs = new LocalFileSystem(fsPrefix, assemblyLoadContext);
+            var fs = new LocalFileSystem(fsPrefix, options.AssemblyLoadContext);
             var fsxName = fsPrefix + ".fsx";
             var dllPath = fsPrefix + ".dll";
             var manifestPath = fsPrefix + ".win32manifest";
@@ -148,54 +154,50 @@ namespace IS4.Sona.Compiler
 
             fs.OutputFiles[dllPath] = outputStream;
 
-            using(var replacedFs = new FileSystemReplacement(fs))
-            {
-                var sourceText = SourceText.ofString(source);
+            using var replacedFs = new FileSystemReplacement(fs);
 
-                FSharpOption<CancellationToken>? cancelTokenOption = cancellationToken.CanBeCanceled ? cancellationToken : null;
+            var sourceText = SourceText.ofString(source);
+
+            FSharpOption<CancellationToken>? cancelTokenOption = cancellationToken.CanBeCanceled ? cancellationToken : null;
                 
-                var (checker, options) = await GetCheckerAndOptions(fsxName, sourceText, isExecutable, depsPath, cancelTokenOption);
+            var (checker, flags) = await GetCheckerAndOptions(fsxName, sourceText, depsPath, manifestPath, options, cancelTokenOption);
 
-                var args = new[]
-                {
-                    "fsc.exe", // ignored
-                    "--win32manifest:" + manifestPath,
-                    "--out:" + dllPath
-                }.Concat(embeddedFiles.Select(f => "-r:" + Path.Combine(depsPath, f)))
-                .Concat(options.OtherOptions)
-                .Concat(options.ReferencedProjects.Select(p => p.OutputFile))
-                .Concat(options.SourceFiles)
-                .ToArray();
+            var args = new[]
+            {
+                "fsc.exe", // ignored
+                "--out:" + dllPath
+            }.Concat(embeddedFiles.Select(f => "-r:" + Path.Combine(depsPath, f)))
+            .Concat(flags.OtherOptions)
+            .Concat(flags.ReferencedProjects.Select(p => p.OutputFile))
+            .Concat(flags.SourceFiles)
+            .ToArray();
 
-                var (diagnostics, exitCode) = await FSharpAsync.StartAsTask(
-                    checker.Compile(args, userOpName: null),
-                    taskCreationOptions: null, cancellationToken: cancelTokenOption
-                );
+            var (diagnostics, exitCode) = await FSharpAsync.StartAsTask(
+                checker.Compile(args, userOpName: null),
+                taskCreationOptions: null, cancellationToken: cancelTokenOption
+            );
 
-                if(exitCode != 0)
-                {
-                    throw new SystemException($"The compilation failed with code {exitCode}: " + String.Join(Environment.NewLine, diagnostics.Select(d => d.ToString())));
-                }
+            result.ExitCode = exitCode;
+            foreach(var diagnostic in diagnostics)
+            {
+                var level =
+                    diagnostic.Severity.IsError ? DiagnosticLevel.Error :
+                    diagnostic.Severity.IsWarning ? DiagnosticLevel.Warning :
+                    DiagnosticLevel.Info;
+
+                result.AddDiagnostic(new(level, diagnostic.ErrorNumberText, diagnostic.Message, diagnostic.StartLine, diagnostic.ExtendedData?.Value));
             }
+
+            return result;
         }
 
-        public async Task<Stream> CompileToBinary(AntlrInputStream inputStream, string fileName, bool isExecutable, AssemblyLoadContext assemblyLoadContext, CancellationToken cancellationToken = default)
+        public Task<CompilerResult> CompileToBinary(AntlrInputStream inputStream, string fileName, CompilerOptions options, CancellationToken cancellationToken = default)
         {
-            var stream = new BlockBufferStream();
-            await CompileToStream(inputStream, fileName, stream, isExecutable, assemblyLoadContext, cancellationToken: cancellationToken);
-            return stream;
-        }
-
-        public async Task<Assembly> CompileToAssembly(AntlrInputStream inputStream, string fileName, AssemblyLoadContext assemblyLoadContext, CancellationToken cancellationToken = default)
-        {
-            var outFile = await CompileToBinary(inputStream, fileName, false, assemblyLoadContext, cancellationToken: cancellationToken);
-            return assemblyLoadContext.LoadFromStream(outFile);
+            return CompileToStream(inputStream, fileName, new BlockBufferStream(), options, cancellationToken: cancellationToken);
         }
 
         static readonly string[] executableFlags = new[] {
-            "--target:exe",
             "--subsystemversion:6.00",
-            "--platform:x64",
             "--standalone",
             "--nointerfacedata",
         };
@@ -208,30 +210,55 @@ namespace IS4.Sona.Compiler
         static readonly string[] commonFlags = new[] {
             "--debug:embedded",
             "--deterministic+",
+            "--platform:anycpu",
 
             "--preferreduilang:en",
             //"--flaterrors",
             //"--parallelcompilation",
 
-            "--reflectionfree",
             "--simpleresolution",
-            "--optimize+",
 
             "--langversion:latest",
             "--warnon:21,52,1178,1182,3387,3388,3389,3397,3390,3517,3559",
-            "--warnaserror+:20,25,3517",
+            "--warnaserror+:20,25,193,3517",
             "--checknulls+",
         };
 
-        static readonly FSharpOption<string[]> executableCheckerFlags = executableFlags.Concat(commonFlags).ToArray();
-        static readonly FSharpOption<string[]> libraryCheckerFlags = libraryFlags.Concat(commonFlags).ToArray();
-
         static readonly SemaphoreSlim environmentSemaphore = new SemaphoreSlim(1, 1);
 
-        private async Task<(FSharpChecker, FSharpProjectOptions)> GetCheckerAndOptions(string sourceName, ISourceText sourceText, bool isExecutable, string depsPath, FSharpOption<CancellationToken>? cancellationToken)
+        private async Task<(FSharpChecker, FSharpProjectOptions)> GetCheckerAndOptions(string sourceName, ISourceText sourceText, string depsPath, string manifestPath, CompilerOptions options, FSharpOption<CancellationToken>? cancellationToken)
         {
             // Does not appear to be used at all
             var documentSource = GetDocumentSource(sourceName, sourceText);
+
+            var allFlags = new List<string>();
+            if(options.Target != BinaryTarget.Method)
+            {
+                allFlags.Add($"--target:{options.Target.ToString().ToLowerInvariant()}");
+            }
+            if((options.Flags & CompilerFlags.Optimize) != 0)
+            {
+                allFlags.Add("--optimize+");
+            }
+            else
+            {
+                allFlags.Add("--optimize-");
+            }
+            if(options.Target is BinaryTarget.Exe or BinaryTarget.WinExe)
+            {
+                allFlags.AddRange(executableFlags);
+                allFlags.Add($"--win32manifest:{manifestPath}");
+            }
+            else
+            {
+                allFlags.AddRange(libraryFlags);
+            }
+            allFlags.AddRange(commonFlags);
+
+            if((options.Flags & CompilerFlags.Privileged) == 0)
+            {
+                allFlags.Add("--reflectionfree");
+            }
 
             await environmentSemaphore.WaitAsync();
             try
@@ -257,21 +284,21 @@ namespace IS4.Sona.Compiler
                         useTransparentCompiler: null
                     );
 
-                    var (options, _) = await FSharpAsync.StartAsTask(checker.GetProjectOptionsFromScript(
+                    var (flags, _) = await FSharpAsync.StartAsTask(checker.GetProjectOptionsFromScript(
                         sourceName,
                         sourceText,
                         previewEnabled: null,
                         loadedTimeStamp: null,
-                        otherFlags: isExecutable ? executableCheckerFlags : libraryCheckerFlags,
+                        otherFlags: allFlags.ToArray(),
                         useFsiAuxLib: false,
                         useSdkRefs: false,
-                        assumeDotNetFramework: isExecutable,
+                        assumeDotNetFramework: options.Target is BinaryTarget.Exe or BinaryTarget.WinExe,
                         sdkDirOverride: null,
                         optionsStamp: null,
                         userOpName: null
                     ), taskCreationOptions: null, cancellationToken: cancellationToken);
 
-                    return (checker, options);
+                    return (checker, flags);
                 }
                 finally
                 {

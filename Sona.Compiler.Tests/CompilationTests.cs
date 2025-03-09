@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Runtime.Loader;
 using System.Text.RegularExpressions;
 using Antlr4.Runtime;
 using IS4.Sona.Compiler;
@@ -27,13 +28,24 @@ namespace IS4.Sona.Tests
         {
             var inputStream = new AntlrInputStream(source);
             var compiler = new SonaCompiler();
-            compiler.AdjustLines = GenerateLineNumbers;
-            compiler.ShowBeginEnd = true;
+
+            var options = new CompilerOptions
+            (
+                Target: BinaryTarget.Exe,
+                Flags: CompilerFlags.Privileged | CompilerFlags.DebuggingComments |
+                    (GenerateLineNumbers ? 0 : CompilerFlags.IgnoreLineNumbers),
+                AssemblyLoadContext: AssemblyLoadContext.Default
+            );
 
             var writer = new StringWriter();
             try
             {
-                compiler.CompileToSource(inputStream, writer, throwOnError: true);
+                var result = compiler.CompileToSource(inputStream, writer, options);
+
+                if(!result.Success)
+                {
+                    return null;
+                }
 
                 return beginEndRegex.Replace(writer.ToString().TrimEnd(newlineChars), "$1");
             }
