@@ -141,9 +141,9 @@ namespace IS4.Sona.Compiler.States
                         '\'' => "\"'\"",
                         _ => text.Replace('\'', '\"')
                     };
-                    Error($"Standard format specifiers (as '…') must be a single letter. Use `{suggestion}` if you wish to use a custom format specifier.");
+                    Error($"Standard format specifiers (as '…') must be a single letter. Use `{suggestion}` if you wish to use a custom format specifier.", context);
                 }
-                AddUncheckedFormat(parsedText);
+                AddUncheckedFormat(parsedText, context);
             }
             finally
             {
@@ -165,9 +165,9 @@ namespace IS4.Sona.Compiler.States
                 var parsedText = Syntax.GetStringLiteralValue(text);
                 if(parsedText.Length == 1 && Char.IsLetter(parsedText[0]))
                 {
-                    Error($"Custom format specifiers (as \"…\") are not expressed as a single letter. Use the format-specific method (such as `\"%{parsedText[0]}\"`) to express it, or `'{parsedText[0]}'` if you wanted to use a standard format specifier.\"");
+                    Error($"Custom format specifiers (as \"…\") are not expressed as a single letter. Use the format-specific method (such as `\"%{parsedText[0]}\"`) to express it, or `'{parsedText[0]}'` if you wanted to use a standard format specifier.\"", context);
                 }
-                AddUncheckedFormat(parsedText);
+                AddUncheckedFormat(parsedText, context);
             }
             finally
             {
@@ -189,7 +189,7 @@ namespace IS4.Sona.Compiler.States
             try
             {
                 var text = context.GetText().TrimStart(':');
-                AddUncheckedFormat(text);
+                AddUncheckedFormat(text, context);
             }
             finally
             {
@@ -211,14 +211,14 @@ namespace IS4.Sona.Compiler.States
 
         public void ExitInterpStrComponentFormat(InterpStrComponentFormatContext context, string format)
         {
-            AddUncheckedFormat(format);
+            AddUncheckedFormat(format, context);
         }
 
-        private void AddUncheckedFormat(string text)
+        private void AddUncheckedFormat(string text, ParserRuleContext context)
         {
             if(text.IndexOf(')') != -1)
             {
-                Error("The ')' character cannot be represented in a format string.");
+                Error("The ')' character cannot be represented in a format string.", context);
             }
             if(Syntax.IsValidIdentifierName(text))
             {
@@ -230,7 +230,7 @@ namespace IS4.Sona.Compiler.States
             if(!Syntax.IsValidEnclosedIdentifierName(text))
             {
                 // Cannot be enclosed
-                Error($"The format '{text}' cannot be syntactically represented.");
+                Error($"The format '{text}' cannot be syntactically represented.", context);
                 return;
             }
             parts.Add(":``");
@@ -316,7 +316,7 @@ namespace IS4.Sona.Compiler.States
                 if((instantState.Traits, durationState.Traits) is (Traits.None, _) or (_, Traits.None) or (Traits.Invalid, Traits.Invalid))
                 {
                     // If one is None, there was no character that could specify the trait
-                    Error($"The format string '{text}' does not contain any recognized specifiers. To use it without validation, enclose it in quotes.");
+                    Error($"The format string '{text}' does not contain any recognized specifiers. To use it without validation, enclose it in quotes.", context);
                 }
                 else if(instantState.Traits == Traits.Invalid)
                 {
@@ -375,7 +375,7 @@ namespace IS4.Sona.Compiler.States
                 if(instantState.Traits == Traits.Invalid && durationState.Traits == Traits.Invalid)
                 {
                     // Last specifier that could be valid
-                    Error($"Format specifier '{token}' is not recognized in this context.");
+                    Error($"Format specifier '{token}' is not recognized in this context.", node);
                 }
             }
 
@@ -630,7 +630,7 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterInterpStrAlignment(InterpStrAlignmentContext context)
         {
-            Error("The alignment cannot be specified in a literal interpolated string expression.");
+            Error("The alignment cannot be specified in a literal interpolated string expression.", context);
         }
 
         public sealed override void ExitInterpStrAlignment(InterpStrAlignmentContext context)
@@ -638,14 +638,14 @@ namespace IS4.Sona.Compiler.States
 
         }
 
-        private void FormatError()
+        private void FormatError(ParserRuleContext context)
         {
-            Error("The format cannot be specified in a literal interpolated string expression.");
+            Error("The format cannot be specified in a literal interpolated string expression.", context);
         }
 
         public sealed override void EnterInterpStrGeneralFormat(InterpStrGeneralFormatContext context)
         {
-            FormatError();
+            FormatError(context);
         }
 
         public sealed override void ExitInterpStrGeneralFormat(InterpStrGeneralFormatContext context)
@@ -655,7 +655,7 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterInterpStrStandardFormat(InterpStrStandardFormatContext context)
         {
-            FormatError();
+            FormatError(context);
         }
 
         public sealed override void ExitInterpStrStandardFormat(InterpStrStandardFormatContext context)
@@ -665,7 +665,7 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterInterpStrCustomFormat(InterpStrCustomFormatContext context)
         {
-            FormatError();
+            FormatError(context);
         }
 
         public sealed override void ExitInterpStrCustomFormat(InterpStrCustomFormatContext context)
@@ -675,7 +675,7 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterInterpStrNumberFormat(InterpStrNumberFormatContext context)
         {
-            FormatError();
+            FormatError(context);
         }
 
         public sealed override void ExitInterpStrNumberFormat(InterpStrNumberFormatContext context)
@@ -685,7 +685,7 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterInterpStrComponentFormat(InterpStrComponentFormatContext context)
         {
-            FormatError();
+            FormatError(context);
         }
 
         public sealed override void ExitInterpStrComponentFormat(InterpStrComponentFormatContext context)

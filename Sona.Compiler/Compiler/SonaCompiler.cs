@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Antlr4.Runtime;
+using Antlr4.Runtime.Misc;
 using FSharp.Compiler.CodeAnalysis;
 using FSharp.Compiler.IO;
 using FSharp.Compiler.Text;
@@ -33,17 +34,18 @@ namespace IS4.Sona.Compiler
             var result = new CompilerResult(options);
 
             // Will add diagnostics to result
-            var errorListener = new ErrorListener(result);
+            var errorListener = new ErrorHandler(result);
 
             var lexer = GetLexer(inputStream);
-            errorListener.AddTo(lexer);
+            errorListener.AddListener(lexer);
 
             // Store pragmas and other channel-specific entities
             var lexerContext = new LexerContext(lexer);
 
             var tokenStream = new UnbufferedListenerTokenStream(lexer, lexerContext.OnLexerToken);
             var parser = new SonaParser(tokenStream);
-            errorListener.AddTo(parser);
+            errorListener.AddListener(parser);
+            parser.ErrorHandler = errorListener;
 
             bool debugBeginEnd = (options.Flags & CompilerFlags.DebuggingComments) != 0;
 
@@ -80,22 +82,24 @@ namespace IS4.Sona.Compiler
             return lexer;
         }
 
-        sealed class ErrorListener : IAntlrErrorListener<IToken>, IAntlrErrorListener<int>
+        sealed class ErrorHandler : DefaultErrorStrategy, IAntlrErrorListener<IToken>, IAntlrErrorListener<int>
         {
             readonly CompilerResult result;
 
-            public ErrorListener(CompilerResult result)
+            public ErrorHandler(CompilerResult result)
             {
                 this.result = result;
             }
 
-            public void AddTo<TInterpreter>(Recognizer<IToken, TInterpreter> recognizer) where TInterpreter : Antlr4.Runtime.Atn.ATNSimulator
+            public void AddListener<TInterpreter>(Recognizer<IToken, TInterpreter> recognizer) where TInterpreter : Antlr4.Runtime.Atn.ATNSimulator
             {
+                recognizer.RemoveErrorListeners();
                 recognizer.AddErrorListener(this);
             }
 
-            public void AddTo<TInterpreter>(Recognizer<int, TInterpreter> recognizer) where TInterpreter : Antlr4.Runtime.Atn.ATNSimulator
+            public void AddListener<TInterpreter>(Recognizer<int, TInterpreter> recognizer) where TInterpreter : Antlr4.Runtime.Atn.ATNSimulator
             {
+                recognizer.RemoveErrorListeners();
                 recognizer.AddErrorListener(this);
             }
 
@@ -115,6 +119,16 @@ namespace IS4.Sona.Compiler
                     Debugger.Break();
                 }
                 result.AddDiagnostic(new(DiagnosticLevel.Error, "LEXER", msg, line, e));
+            }
+
+            public override void ReportError(Parser recognizer, RecognitionException e)
+            {
+                if(e is SemanticException && !InErrorRecoveryMode(recognizer))
+                {
+                    NotifyErrorListeners(recognizer, e.Message, e);
+                    return;
+                }
+                base.ReportError(recognizer, e);
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using Antlr4.Runtime;
 
 namespace IS4.Sona.Compiler.States
 {
@@ -51,9 +52,9 @@ namespace IS4.Sona.Compiler.States
 
         string? InterruptingVariable { get; }
 
-        void WriteBreak(bool hasExpression);
-        void WriteAfterBreak();
-        void WriteContinue(bool hasExpression);
-        void WriteAfterContinue();
+        void WriteBreak(bool hasExpression, ParserRuleContext context);
+        void WriteAfterBreak(ParserRuleContext context);
+        void WriteContinue(bool hasExpression, ParserRuleContext context);
+        void WriteAfterContinue(ParserRuleContext context);
     }
 }

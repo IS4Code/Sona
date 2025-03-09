@@ -115,27 +115,27 @@ namespace IS4.Sona.Compiler
             switch(token.Type)
             {
                 case SonaLexer.NAME:
-                    ValidateName(token.Text);
+                    ValidateName(token.Text, node);
                     break;
                 case SonaLexer.LITERAL_NAME:
                 case SonaLexer.MEMBER_NAME:
                 case SonaLexer.DYNAMIC_MEMBER_NAME:
-                    ValidateName(token.Text.AsSpan(1));
+                    ValidateName(token.Text.AsSpan(1), node);
                     break;
             }
         }
 
-        private void ValidateName(ReadOnlySpan<char> span)
+        private void ValidateName(ReadOnlySpan<char> span, ITerminalNode node)
         {
             if(!IsValidName(span, out var c))
             {
                 if(c == span[0] || Char.IsWhiteSpace(c))
                 {
-                    Error($"Character '{c}' (\\u{(ushort)c:X4}) is not recognized as valid syntax.");
+                    Error($"Character '{c}' (\\u{(ushort)c:X4}) is not recognized as valid syntax.", node);
                 }
                 else
                 {
-                    Error($"Character '{c}' (\\u{(ushort)c:X4}) is not accepted as a part of an identifier.");
+                    Error($"Character '{c}' (\\u{(ushort)c:X4}) is not accepted as a part of an identifier.", node);
                 }
             }
         }
@@ -195,14 +195,24 @@ namespace IS4.Sona.Compiler
             return true;
         }
 
-        protected string Error(string message)
+        protected string Error(string message, ParserRuleContext context)
         {
-            throw new Exception(message);
+            throw new SemanticException(message, context);
         }
 
-        protected ISourceCapture ErrorCapture(string message)
+        protected ISourceCapture ErrorCapture(string message, ParserRuleContext context)
         {
-            throw new Exception(message);
+            throw new SemanticException(message, context);
+        }
+
+        protected string Error(string message, ITerminalNode node)
+        {
+            throw new SemanticException(message, node);
+        }
+
+        protected ISourceCapture ErrorCapture(string message, ITerminalNode node)
+        {
+            throw new SemanticException(message, node);
         }
 
         class Empty : ScriptState

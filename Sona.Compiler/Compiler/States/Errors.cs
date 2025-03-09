@@ -32,19 +32,19 @@ namespace IS4.Sona.Compiler
 
         public sealed override void ExitErrorMissingExpression(ErrorMissingExpressionContext context)
         {
-            Error("This construct requires an expression.");
+            Error("This construct requires an expression.", context);
         }
 
         public sealed override void ExitErrorUnderscoreReserved(ErrorUnderscoreReservedContext context)
         {
-            Error("A single underscore is a reserved identifier.");
+            Error("A single underscore is a reserved identifier.", context);
         }
 
         public sealed override void ExitErrorUnsupportedNumberSuffix(ErrorUnsupportedNumberSuffixContext context)
         {
             try
             {
-                Error($"The literal '{context.GetText()}' has an unsupported suffix.");
+                Error($"The literal '{context.GetText()}' has an unsupported suffix.", context);
             }
             finally
             {
@@ -56,7 +56,7 @@ namespace IS4.Sona.Compiler
         {
             try
             {
-                Error($"The literal '{context.GetText()}' has an unsupported suffix.");
+                Error($"The literal '{context.GetText()}' has an unsupported suffix.", context);
             }
             finally
             {
@@ -68,7 +68,7 @@ namespace IS4.Sona.Compiler
         {
             try
             {
-                Error($"Unsupported string suffix '{context.GetText()}'.");
+                Error($"Unsupported string suffix '{context.GetText()}'.", context);
             }
             finally
             {

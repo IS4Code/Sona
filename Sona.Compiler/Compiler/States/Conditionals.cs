@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Antlr4.Runtime;
 using static IS4.Sona.Grammar.SonaParser;
 
 namespace IS4.Sona.Compiler.States
@@ -137,11 +138,11 @@ namespace IS4.Sona.Compiler.States
             }
             #endregion
 
-            protected override void OnEnterStatement(StatementFlags flags)
+            protected override void OnEnterStatement(StatementFlags flags, ParserRuleContext context)
             {
                 if(!StatementsAllowed)
                 {
-                    Error("A statement is not allowed in this context.");
+                    Error("A statement is not allowed in this context.", context);
                 }
                 if(first)
                 {
@@ -153,7 +154,7 @@ namespace IS4.Sona.Compiler.States
                 }
             }
 
-            protected override void OnExitStatement(StatementFlags flags)
+            protected override void OnExitStatement(StatementFlags flags, ParserRuleContext context)
             {
             
             }
@@ -213,7 +214,7 @@ namespace IS4.Sona.Compiler.States
         const StatementFlags conditionalFlags = StatementFlags.OpenPath | StatementFlags.ReturnPath;
         const StatementFlags interruptibleFlags = StatementFlags.OpenPath | StatementFlags.InterruptPath;
 
-        protected virtual void OnEnter(StatementFlags flags)
+        protected virtual void OnEnter(StatementFlags flags, ParserRuleContext context)
         {
             if((flags & conditionalFlags) == conditionalFlags)
             {
@@ -237,13 +238,13 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
-        protected virtual void OnExit(StatementFlags flags)
+        protected virtual void OnExit(StatementFlags flags, ParserRuleContext context)
         {
             if((flags & conditionalFlags) == conditionalFlags)
             {
                 Out.WriteLine();
                 Out.Write("if ");
-                Out.WriteIdentifier(ScopeReturningVariable ?? Error("Returning from a scope that does not support return."));
+                Out.WriteIdentifier(ScopeReturningVariable ?? Error("Returning from a scope that does not support return.", context));
                 Out.Write(" then ");
                 if(OriginalReturnVariable is null)
                 {
@@ -259,7 +260,7 @@ namespace IS4.Sona.Compiler.States
                 if(interruptScope != null && (flags & interruptibleFlags) == interruptibleFlags)
                 {
                     Out.Write("elif ");
-                    Out.WriteIdentifier(interruptScope.InterruptingVariable ?? Error("COMPILER ERROR: Interrupting variable not provided."));
+                    Out.WriteIdentifier(interruptScope.InterruptingVariable ?? Error("COMPILER ERROR: Interrupting variable not provided.", context));
                     Out.WriteLine(" then ()");
                 }
                 // else ...
@@ -272,19 +273,19 @@ namespace IS4.Sona.Compiler.States
             {
                 Out.WriteLine();
                 Out.Write("if ");
-                Out.WriteIdentifier(interruptScope.InterruptingVariable ?? Error("COMPILER ERROR: Interrupting variable not provided."));
+                Out.WriteIdentifier(interruptScope.InterruptingVariable ?? Error("COMPILER ERROR: Interrupting variable not provided.", context));
                 Out.WriteLine(" then ()");
                 Out.Write("else ");
             }
         }
 
-        protected virtual void OnEnterBlock(StatementFlags flags)
+        protected virtual void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
         {
             Out.WriteLine(_begin_);
             Out.EnterScope();
         }
 
-        protected virtual void OnExitBlock(StatementFlags flags)
+        protected virtual void OnExitBlock(StatementFlags flags, ParserRuleContext context)
         {
             Out.ExitScope();
             Out.Write(_end_);
@@ -293,118 +294,118 @@ namespace IS4.Sona.Compiler.States
         #region Block types
         public sealed override void EnterValueBlock(ValueBlockContext context)
         {
-            OnEnterBlock(StatementFlags.None);
+            OnEnterBlock(StatementFlags.None, context);
             EnterState<BlockState>().EnterValueBlock(context);
         }
 
         public sealed override void ExitValueBlock(ValueBlockContext context)
         {
-            OnExitBlock(StatementFlags.None);
+            OnExitBlock(StatementFlags.None, context);
         }
 
         public sealed override void EnterFreeBlock(FreeBlockContext context)
         {
-            OnEnterBlock(StatementFlags.OpenPath);
+            OnEnterBlock(StatementFlags.OpenPath, context);
             EnterState<BlockState>().EnterFreeBlock(context);
         }
 
         public sealed override void ExitFreeBlock(FreeBlockContext context)
         {
-            OnExitBlock(StatementFlags.OpenPath);
+            OnExitBlock(StatementFlags.OpenPath, context);
         }
 
         public sealed override void EnterOpenBlock(OpenBlockContext context)
         {
-            OnEnterBlock(StatementFlags.OpenPath);
+            OnEnterBlock(StatementFlags.OpenPath, context);
             EnterState<BlockState>().EnterOpenBlock(context);
         }
 
         public sealed override void ExitOpenBlock(OpenBlockContext context)
         {
-            OnExitBlock(StatementFlags.OpenPath);
+            OnExitBlock(StatementFlags.OpenPath, context);
         }
 
         public sealed override void EnterReturningBlock(ReturningBlockContext context)
         {
-            OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
             EnterState<BlockState>().EnterReturningBlock(context);
         }
 
         public sealed override void ExitReturningBlock(ReturningBlockContext context)
         {
-            OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
 
         public sealed override void EnterTerminatingBlock(TerminatingBlockContext context)
         {
-            OnEnterBlock(StatementFlags.Terminating);
+            OnEnterBlock(StatementFlags.Terminating, context);
             EnterState<BlockState>().EnterTerminatingBlock(context);
         }
 
         public sealed override void ExitTerminatingBlock(TerminatingBlockContext context)
         {
-            OnExitBlock(StatementFlags.Terminating);
+            OnExitBlock(StatementFlags.Terminating, context);
         }
 
         public sealed override void EnterInterruptingBlock(InterruptingBlockContext context)
         {
-            OnEnterBlock(StatementFlags.InterruptPath);
+            OnEnterBlock(StatementFlags.InterruptPath, context);
             EnterState<BlockState>().EnterInterruptingBlock(context);
         }
 
         public sealed override void ExitInterruptingBlock(InterruptingBlockContext context)
         {
-            OnExitBlock(StatementFlags.InterruptPath);
+            OnExitBlock(StatementFlags.InterruptPath, context);
         }
 
         public sealed override void EnterClosingBlock(ClosingBlockContext context)
         {
-            OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
             EnterState<BlockState>().EnterClosingBlock(context);
         }
 
         public sealed override void ExitClosingBlock(ClosingBlockContext context)
         {
-            OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
 
         public sealed override void EnterConditionalBlock(ConditionalBlockContext context)
         {
-            OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
             EnterState<BlockState>().EnterConditionalBlock(context);
         }
 
         public sealed override void ExitConditionalBlock(ConditionalBlockContext context)
         {
-            OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public sealed override void EnterInterruptibleBlock(InterruptibleBlockContext context)
         {
-            OnEnterBlock(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterBlock(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
             EnterState<BlockState>().EnterInterruptibleBlock(context);
         }
 
         public sealed override void ExitInterruptibleBlock(InterruptibleBlockContext context)
         {
-            OnExitBlock(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitBlock(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public sealed override void EnterFullBlock(FullBlockContext context)
         {
-            OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
             EnterState<BlockState>().EnterFullBlock(context);
         }
 
         public sealed override void ExitFullBlock(FullBlockContext context)
         {
-            OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
         #endregion
 
         public sealed override void EnterIgnoredTrail(IgnoredTrailContext context)
         {
-            OnExitInner(enterFlags);
+            OnExitInner(enterFlags, context);
             if((enterFlags & StatementFlags.OpenPath) == 0)
             {
                 // `if true` was written previously
@@ -426,7 +427,7 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterIgnoredEmptyTrail(IgnoredEmptyTrailContext context)
         {
-            OnExitInner(enterFlags);
+            OnExitInner(enterFlags, context);
             if((enterFlags & StatementFlags.OpenPath) == 0)
             {
                 // `if true` was written previously
@@ -443,14 +444,14 @@ namespace IS4.Sona.Compiler.States
 
         }
 
-        protected virtual void OnEnterTrail(StatementFlags flags)
+        protected virtual void OnEnterTrail(StatementFlags flags, ParserRuleContext context)
         {
-            OnExitInner(enterFlags);
+            OnExitInner(enterFlags, context);
             Out.WriteLine(_begin_);
             Out.EnterScope();
         }
 
-        protected virtual void OnExitTrail(StatementFlags flags)
+        protected virtual void OnExitTrail(StatementFlags flags, ParserRuleContext context)
         {
             Out.ExitScope();
             Out.Write(_end_);
@@ -459,104 +460,104 @@ namespace IS4.Sona.Compiler.States
         #region Trail types
         public sealed override void EnterOpenTrail(OpenTrailContext context)
         {
-            OnEnterTrail(StatementFlags.OpenPath);
+            OnEnterTrail(StatementFlags.OpenPath, context);
             EnterState<TrailingStatements>().EnterOpenTrail(context);
         }
 
         public sealed override void ExitOpenTrail(OpenTrailContext context)
         {
-            OnExitTrail(StatementFlags.OpenPath);
+            OnExitTrail(StatementFlags.OpenPath, context);
         }
 
         public sealed override void EnterReturningTrail(ReturningTrailContext context)
         {
-            OnEnterTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnEnterTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
             EnterState<TrailingStatements>().EnterReturningTrail(context);
         }
 
         public sealed override void ExitReturningTrail(ReturningTrailContext context)
         {
-            OnExitTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnExitTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
 
         public sealed override void EnterClosingTrail(ClosingTrailContext context)
         {
-            OnEnterTrail(StatementFlags.Terminating);
+            OnEnterTrail(StatementFlags.Terminating, context);
             EnterState<TrailingStatements>().EnterClosingTrail(context);
         }
 
         public sealed override void ExitClosingTrail(ClosingTrailContext context)
         {
-            OnExitTrail(StatementFlags.Terminating);
+            OnExitTrail(StatementFlags.Terminating, context);
         }
 
         public sealed override void EnterTerminatingTrail(TerminatingTrailContext context)
         {
-            OnEnterTrail(StatementFlags.Terminating);
+            OnEnterTrail(StatementFlags.Terminating, context);
             EnterState<TrailingStatements>().EnterTerminatingTrail(context);
         }
 
         public sealed override void ExitTerminatingTrail(TerminatingTrailContext context)
         {
-            OnExitTrail(StatementFlags.Terminating);
+            OnExitTrail(StatementFlags.Terminating, context);
         }
 
         public sealed override void EnterInterruptingTrail(InterruptingTrailContext context)
         {
-            OnEnterTrail(StatementFlags.InterruptPath);
+            OnEnterTrail(StatementFlags.InterruptPath, context);
             EnterState<TrailingStatements>().EnterInterruptingTrail(context);
         }
 
         public sealed override void ExitInterruptingTrail(InterruptingTrailContext context)
         {
-            OnExitTrail(StatementFlags.InterruptPath);
+            OnExitTrail(StatementFlags.InterruptPath, context);
         }
 
         public sealed override void EnterConditionalTrail(ConditionalTrailContext context)
         {
-            OnEnterTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
             EnterState<TrailingStatements>().EnterConditionalTrail(context);
         }
 
         public sealed override void ExitConditionalTrail(ConditionalTrailContext context)
         {
-            OnExitTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public sealed override void EnterInterruptibleTrail(InterruptibleTrailContext context)
         {
-            OnEnterTrail(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterTrail(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
             EnterState<TrailingStatements>().EnterInterruptibleTrail(context);
         }
 
         public sealed override void ExitInterruptibleTrail(InterruptibleTrailContext context)
         {
-            OnExitTrail(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitTrail(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public sealed override void EnterFullTrail(FullTrailContext context)
         {
-            OnEnterTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
             EnterState<TrailingStatements>().EnterFullTrail(context);
         }
 
         public sealed override void ExitFullTrail(FullTrailContext context)
         {
-            OnExitTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
         #endregion
         
-        private void OnEnterInner(StatementFlags flags)
+        private void OnEnterInner(StatementFlags flags, ParserRuleContext context)
         {
             if(this is IReturnableStatementContext)
             {
                 flags |= StatementFlags.OpenPath;
             }
             enterFlags = flags;
-            OnEnter(flags);
+            OnEnter(flags, context);
         }
 
-        private void OnExitInner(StatementFlags flags)
+        private void OnExitInner(StatementFlags flags, ParserRuleContext context)
         {
             if(this is IReturnableStatementContext)
             {
@@ -565,415 +566,415 @@ namespace IS4.Sona.Compiler.States
             if(!exited)
             {
                 exited = true;
-                OnExit(flags);
+                OnExit(flags, context);
             }
         }
 
         #region Statement types
         public sealed override void EnterIfStatementFree(IfStatementFreeContext context)
         {
-            OnEnterInner(StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.OpenPath, context);
         }
 
         public sealed override void ExitIfStatementFree(IfStatementFreeContext context)
         {
-            OnExitInner(StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.OpenPath, context);
             ExitState().ExitIfStatementFree(context);
         }
 
         public sealed override void EnterIfStatementReturning(IfStatementReturningContext context)
         {
-            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
 
         public sealed override void ExitIfStatementReturning(IfStatementReturningContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
             ExitState().ExitIfStatementReturning(context);
         }
 
         public sealed override void EnterIfStatementReturningTrail(IfStatementReturningTrailContext context)
         {
-            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
 
         public sealed override void ExitIfStatementReturningTrail(IfStatementReturningTrailContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
             ExitState().ExitIfStatementReturningTrail(context);
         }
 
         public sealed override void EnterIfStatementReturningTrailFromElse(IfStatementReturningTrailFromElseContext context)
         {
-            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
 
         public sealed override void ExitIfStatementReturningTrailFromElse(IfStatementReturningTrailFromElseContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
             ExitState().ExitIfStatementReturningTrailFromElse(context);
         }
 
         public sealed override void EnterIfStatementInterrupting(IfStatementInterruptingContext context)
         {
-            OnEnterInner(StatementFlags.InterruptPath);
+            OnEnterInner(StatementFlags.InterruptPath, context);
         }
 
         public sealed override void ExitIfStatementInterrupting(IfStatementInterruptingContext context)
         {
-            OnExitInner(StatementFlags.InterruptPath);
+            OnExitInner(StatementFlags.InterruptPath, context);
             ExitState().ExitIfStatementInterrupting(context);
         }
 
         public sealed override void EnterIfStatementInterruptingTrail(IfStatementInterruptingTrailContext context)
         {
-            OnEnterInner(StatementFlags.InterruptPath);
+            OnEnterInner(StatementFlags.InterruptPath, context);
         }
 
         public sealed override void ExitIfStatementInterruptingTrail(IfStatementInterruptingTrailContext context)
         {
-            OnExitInner(StatementFlags.InterruptPath);
+            OnExitInner(StatementFlags.InterruptPath, context);
             ExitState().ExitIfStatementInterruptingTrail(context);
         }
 
         public sealed override void EnterIfStatementInterruptible(IfStatementInterruptibleContext context)
         {
-            OnEnterInner(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public sealed override void ExitIfStatementInterruptible(IfStatementInterruptibleContext context)
         {
-            OnExitInner(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
             ExitState().ExitIfStatementInterruptible(context);
         }
 
         public sealed override void EnterIfStatementTerminating(IfStatementTerminatingContext context)
         {
-            OnEnterInner(StatementFlags.Terminating);
+            OnEnterInner(StatementFlags.Terminating, context);
         }
 
         public sealed override void ExitIfStatementTerminating(IfStatementTerminatingContext context)
         {
-            OnExitInner(StatementFlags.Terminating);
+            OnExitInner(StatementFlags.Terminating, context);
             ExitState().ExitIfStatementTerminating(context);
         }
 
         public sealed override void EnterIfStatementConditional(IfStatementConditionalContext context)
         {
-            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public sealed override void ExitIfStatementConditional(IfStatementConditionalContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
             ExitState().ExitIfStatementConditional(context);
         }
 
         public sealed override void EnterDoStatementFree(DoStatementFreeContext context)
         {
-            OnEnterInner(StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.OpenPath, context);
         }
 
         public sealed override void ExitDoStatementFree(DoStatementFreeContext context)
         {
-            OnExitInner(StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.OpenPath, context);
             ExitState().ExitDoStatementFree(context);
         }
 
         public sealed override void EnterDoStatementTerminating(DoStatementTerminatingContext context)
         {
-            OnEnterInner(StatementFlags.Terminating);
+            OnEnterInner(StatementFlags.Terminating, context);
         }
 
         public sealed override void ExitDoStatementTerminating(DoStatementTerminatingContext context)
         {
-            OnExitInner(StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.OpenPath, context);
             ExitState().ExitDoStatementTerminating(context);
         }
 
         public sealed override void EnterDoStatementReturning(DoStatementReturningContext context)
         {
-            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
 
         public sealed override void ExitDoStatementReturning(DoStatementReturningContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
             ExitState().ExitDoStatementReturning(context);
         }
 
         public sealed override void EnterDoStatementInterrupting(DoStatementInterruptingContext context)
         {
-            OnEnterInner(StatementFlags.InterruptPath);
+            OnEnterInner(StatementFlags.InterruptPath, context);
         }
 
         public sealed override void ExitDoStatementInterrupting(DoStatementInterruptingContext context)
         {
-            OnExitInner(StatementFlags.InterruptPath);
+            OnExitInner(StatementFlags.InterruptPath, context);
             ExitState().ExitDoStatementInterrupting(context);
         }
 
         public sealed override void EnterDoStatementInterruptingTrail(DoStatementInterruptingTrailContext context)
         {
-            OnEnterInner(StatementFlags.InterruptPath);
+            OnEnterInner(StatementFlags.InterruptPath, context);
         }
 
         public sealed override void ExitDoStatementInterruptingTrail(DoStatementInterruptingTrailContext context)
         {
-            OnExitInner(StatementFlags.InterruptPath);
+            OnExitInner(StatementFlags.InterruptPath, context);
             ExitState().ExitDoStatementInterruptingTrail(context);
         }
 
         public sealed override void EnterDoStatementInterruptible(DoStatementInterruptibleContext context)
         {
-            OnEnterInner(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public sealed override void ExitDoStatementInterruptible(DoStatementInterruptibleContext context)
         {
-            OnExitInner(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
             ExitState().ExitDoStatementInterruptible(context);
         }
 
         public sealed override void EnterDoStatementConditional(DoStatementConditionalContext context)
         {
-            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public sealed override void ExitDoStatementConditional(DoStatementConditionalContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
             ExitState().ExitDoStatementConditional(context);
         }
 
         public override void EnterWhileStatementFree(WhileStatementFreeContext context)
         {
-            OnEnterInner(StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.OpenPath, context);
         }
 
         public override void ExitWhileStatementFree(WhileStatementFreeContext context)
         {
-            OnExitInner(StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.OpenPath, context);
             ExitState().ExitWhileStatementFree(context);
         }
 
         public override void EnterWhileStatementFreeInterrupted(WhileStatementFreeInterruptedContext context)
         {
-            OnEnterInner(StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.OpenPath, context);
         }
 
         public override void ExitWhileStatementFreeInterrupted(WhileStatementFreeInterruptedContext context)
         {
-            OnExitInner(StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.OpenPath, context);
             ExitState().ExitWhileStatementFreeInterrupted(context);
         }
 
         public override void EnterWhileStatementTerminating(WhileStatementTerminatingContext context)
         {
-            OnEnterInner(StatementFlags.Terminating);
+            OnEnterInner(StatementFlags.Terminating, context);
         }
 
         public override void ExitWhileStatementTerminating(WhileStatementTerminatingContext context)
         {
-            OnExitInner(StatementFlags.Terminating);
+            OnExitInner(StatementFlags.Terminating, context);
             ExitState().ExitWhileStatementTerminating(context);
         }
 
         public override void EnterWhileStatementReturningTrail(WhileStatementReturningTrailContext context)
         {
-            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
 
         public override void ExitWhileStatementReturningTrail(WhileStatementReturningTrailContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
             ExitState().ExitWhileStatementReturningTrail(context);
         }
 
         public override void EnterWhileStatementConditional(WhileStatementConditionalContext context)
         {
-            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public override void ExitWhileStatementConditional(WhileStatementConditionalContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
             ExitState().ExitWhileStatementConditional(context);
         }
 
         public override void EnterRepeatStatementFree(RepeatStatementFreeContext context)
         {
-            OnEnterInner(StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.OpenPath, context);
         }
 
         public override void ExitRepeatStatementFree(RepeatStatementFreeContext context)
         {
-            OnExitInner(StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.OpenPath, context);
             ExitState().ExitRepeatStatementFree(context);
         }
 
         public override void EnterRepeatStatementFreeInterrupted(RepeatStatementFreeInterruptedContext context)
         {
-            OnEnterInner(StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.OpenPath, context);
         }
 
         public override void ExitRepeatStatementFreeInterrupted(RepeatStatementFreeInterruptedContext context)
         {
-            OnExitInner(StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.OpenPath, context);
             ExitState().ExitRepeatStatementFreeInterrupted(context);
         }
 
         public override void EnterRepeatStatementTerminating(RepeatStatementTerminatingContext context)
         {
-            OnEnterInner(StatementFlags.Terminating);
+            OnEnterInner(StatementFlags.Terminating, context);
         }
 
         public override void ExitRepeatStatementTerminating(RepeatStatementTerminatingContext context)
         {
-            OnExitInner(StatementFlags.Terminating);
+            OnExitInner(StatementFlags.Terminating, context);
             ExitState().ExitRepeatStatementTerminating(context);
         }
 
         public override void EnterRepeatStatementReturningTrail(RepeatStatementReturningTrailContext context)
         {
-            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
 
         public override void ExitRepeatStatementReturningTrail(RepeatStatementReturningTrailContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
             ExitState().ExitRepeatStatementReturningTrail(context);
         }
 
         public override void EnterRepeatStatementConditional(RepeatStatementConditionalContext context)
         {
-            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public override void ExitRepeatStatementConditional(RepeatStatementConditionalContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
             ExitState().ExitRepeatStatementConditional(context);
         }
 
         public override void EnterForStatementFree(ForStatementFreeContext context)
         {
-            OnEnterInner(StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.OpenPath, context);
         }
 
         public override void ExitForStatementFree(ForStatementFreeContext context)
         {
-            OnExitInner(StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.OpenPath, context);
             ExitState().ExitForStatementFree(context);
         }
 
         public override void EnterForStatementFreeInterrupted(ForStatementFreeInterruptedContext context)
         {
-            OnEnterInner(StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.OpenPath, context);
         }
 
         public override void ExitForStatementFreeInterrupted(ForStatementFreeInterruptedContext context)
         {
-            OnExitInner(StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.OpenPath, context);
             ExitState().ExitForStatementFreeInterrupted(context);
         }
 
         public override void EnterForStatementReturningTrail(ForStatementReturningTrailContext context)
         {
-            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
 
         public override void ExitForStatementReturningTrail(ForStatementReturningTrailContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
             ExitState().ExitForStatementReturningTrail(context);
         }
 
         public override void EnterForStatementConditional(ForStatementConditionalContext context)
         {
-            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public override void ExitForStatementConditional(ForStatementConditionalContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
             ExitState().ExitForStatementConditional(context);
         }
 
         public sealed override void EnterSwitchStatementFree(SwitchStatementFreeContext context)
         {
-            OnEnterInner(StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.OpenPath, context);
         }
 
         public sealed override void ExitSwitchStatementFree(SwitchStatementFreeContext context)
         {
-            OnExitInner(StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.OpenPath, context);
             ExitState().ExitSwitchStatementFree(context);
         }
 
         public sealed override void EnterSwitchStatementFreeInterrupted(SwitchStatementFreeInterruptedContext context)
         {
-            OnEnterInner(StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.OpenPath, context);
         }
 
         public sealed override void ExitSwitchStatementFreeInterrupted(SwitchStatementFreeInterruptedContext context)
         {
-            OnExitInner(StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.OpenPath, context);
             ExitState().ExitSwitchStatementFreeInterrupted(context);
         }
 
         public sealed override void EnterSwitchStatementReturning(SwitchStatementReturningContext context)
         {
-            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
 
         public sealed override void ExitSwitchStatementReturning(SwitchStatementReturningContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
             ExitState().ExitSwitchStatementReturning(context);
         }
 
         public sealed override void EnterSwitchStatementReturningTrail(SwitchStatementReturningTrailContext context)
         {
-            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
 
         public sealed override void ExitSwitchStatementReturningTrail(SwitchStatementReturningTrailContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
             ExitState().ExitSwitchStatementReturningTrail(context);
         }
 
         public sealed override void EnterSwitchStatementTerminating(SwitchStatementTerminatingContext context)
         {
-            OnEnterInner(StatementFlags.Terminating);
+            OnEnterInner(StatementFlags.Terminating, context);
         }
 
         public sealed override void ExitSwitchStatementTerminating(SwitchStatementTerminatingContext context)
         {
-            OnExitInner(StatementFlags.Terminating);
+            OnExitInner(StatementFlags.Terminating, context);
             ExitState().ExitSwitchStatementTerminating(context);
         }
 
         public sealed override void EnterSwitchStatementTerminatingInterrupted(SwitchStatementTerminatingInterruptedContext context)
         {
-            OnEnterInner(StatementFlags.Terminating);
+            OnEnterInner(StatementFlags.Terminating, context);
         }
 
         public sealed override void ExitSwitchStatementTerminatingInterrupted(SwitchStatementTerminatingInterruptedContext context)
         {
-            OnExitInner(StatementFlags.Terminating);
+            OnExitInner(StatementFlags.Terminating, context);
             ExitState().ExitSwitchStatementTerminatingInterrupted(context);
         }
 
         public sealed override void EnterSwitchStatementConditional(SwitchStatementConditionalContext context)
         {
-            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public sealed override void ExitSwitchStatementConditional(SwitchStatementConditionalContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
             ExitState().ExitSwitchStatementConditional(context);
         }
         #endregion
@@ -1038,7 +1039,7 @@ namespace IS4.Sona.Compiler.States
     /// </summary>
     internal class IfStatementNoTrail : IfStatement
     {
-        protected override void OnEnter(StatementFlags flags)
+        protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
         {
             if((flags & StatementFlags.OpenPath) == 0)
             {
@@ -1048,10 +1049,10 @@ namespace IS4.Sona.Compiler.States
                 Out.EnterScope();
                 return;
             }
-            base.OnEnter(flags);
+            base.OnEnter(flags, context);
         }
 
-        protected override void OnExit(StatementFlags flags)
+        protected override void OnExit(StatementFlags flags, ParserRuleContext context)
         {
             if((flags & StatementFlags.OpenPath) == 0)
             {
@@ -1061,7 +1062,7 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(_end_);
                 return;
             }
-            base.OnExit(flags);
+            base.OnExit(flags, context);
         }
     }
 
@@ -1078,7 +1079,7 @@ namespace IS4.Sona.Compiler.States
     /// </summary>
     internal sealed class IfStatementTrailFromElse : IfStatement
     {
-        protected override void OnEnterBlock(StatementFlags flags)
+        protected override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
         {
             if((flags & StatementFlags.OpenPath) != 0)
             {
@@ -1086,25 +1087,25 @@ namespace IS4.Sona.Compiler.States
                 Out.EnterScope();
                 Out.Write("if true then ");
             }
-            base.OnEnterBlock(flags);
+            base.OnEnterBlock(flags, context);
         }
 
-        protected override void OnExitBlock(StatementFlags flags)
+        protected override void OnExitBlock(StatementFlags flags, ParserRuleContext context)
         {
-            base.OnExitBlock(flags);
+            base.OnExitBlock(flags, context);
             if((flags & StatementFlags.OpenPath) != 0)
             {
                 Out.WriteLine();
             }
         }
 
-        protected override void OnEnterTrail(StatementFlags flags)
+        protected override void OnEnterTrail(StatementFlags flags, ParserRuleContext context)
         {
             if(!HasElse)
             {
                 Out.WriteLine();
                 Out.Write("else ");
-                base.OnEnterTrail(flags);
+                base.OnEnterTrail(flags, context);
             }
         }
     }
@@ -1117,10 +1118,10 @@ namespace IS4.Sona.Compiler.States
 
     internal abstract class DoStatement : ControlStatement
     {
-        protected override void OnEnterBlock(StatementFlags flags)
+        protected override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
         {
             Out.Write("if true then ");
-            base.OnEnterBlock(flags);
+            base.OnEnterBlock(flags, context);
         }
     }
 
@@ -1176,9 +1177,9 @@ namespace IS4.Sona.Compiler.States
             Out.Write(")do ");
         }
 
-        protected sealed override void OnEnterBlock(StatementFlags flags)
+        protected sealed override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
         {
-            base.OnEnterBlock(flags);
+            base.OnEnterBlock(flags, context);
             if((flags & StatementFlags.InterruptPath) != 0)
             {
                 InterruptingVariable = Out.CreateTemporaryIdentifier();
@@ -1190,30 +1191,30 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
-        public virtual void WriteBreak(bool hasExpression)
+        public virtual void WriteBreak(bool hasExpression, ParserRuleContext context)
         {
             if(hasExpression)
             {
-                Error("`break` in a `while` statement does not take an expression.");
+                Error("`break` in a `while` statement does not take an expression.", context);
             }
-            Error("COMPILER ERROR: `break` used in a wrong version of `while`.");
+            Error("COMPILER ERROR: `break` used in a wrong version of `while`.", context);
         }
 
-        public virtual void WriteContinue(bool hasExpression)
+        public virtual void WriteContinue(bool hasExpression, ParserRuleContext context)
         {
             if(hasExpression)
             {
-                Error("`break` in a `while` statement does not take an expression.");
+                Error("`break` in a `while` statement does not take an expression.", context);
             }
-            Error("COMPILER ERROR: `continue` used in a wrong version of `while`.");
+            Error("COMPILER ERROR: `continue` used in a wrong version of `while`.", context);
         }
 
-        void IInterruptibleStatementContext.WriteAfterBreak()
+        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
         {
 
         }
 
-        void IInterruptibleStatementContext.WriteAfterContinue()
+        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
         {
 
         }
@@ -1224,7 +1225,7 @@ namespace IS4.Sona.Compiler.States
     /// </summary>
     internal class WhileStatementNoTrail : WhileStatement
     {
-        protected override void OnEnter(StatementFlags flags)
+        protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
         {
             if((flags & StatementFlags.OpenPath) == 0)
             {
@@ -1234,10 +1235,10 @@ namespace IS4.Sona.Compiler.States
                 Out.EnterScope();
                 return;
             }
-            base.OnEnter(flags);
+            base.OnEnter(flags, context);
         }
 
-        protected override void OnExit(StatementFlags flags)
+        protected override void OnExit(StatementFlags flags, ParserRuleContext context)
         {
             if(flags == StatementFlags.Terminating)
             {
@@ -1254,7 +1255,7 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(_end_);
                 return;
             }
-            base.OnExit(flags);
+            base.OnExit(flags, context);
         }
 
         public override void EnterWhile(WhileContext context)
@@ -1279,7 +1280,7 @@ namespace IS4.Sona.Compiler.States
             continuingVariable = null;
         }
 
-        protected override void OnEnter(StatementFlags flags)
+        protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
         {
             continuingVariable = Out.CreateTemporaryIdentifier();
             // var continuing = true
@@ -1287,13 +1288,13 @@ namespace IS4.Sona.Compiler.States
             Out.WriteIdentifier(continuingVariable);
             Out.WriteOperator('=');
             Out.WriteLine("true");
-            base.OnEnter(flags);
+            base.OnEnter(flags, context);
         }
 
         public sealed override void EnterWhile(WhileContext context)
         {
             Out.Write("while ");
-            Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `while` used without a condition variable."));
+            Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `while` used without a condition variable.", context));
             Out.WriteOperator("&&");
             Out.Write('(');
         }
@@ -1301,33 +1302,33 @@ namespace IS4.Sona.Compiler.States
         public sealed override void EnterWhileTrue(WhileTrueContext context)
         {
             Out.Write("while ");
-            Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `while` used without a condition variable."));
+            Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `while` used without a condition variable.", context));
             Out.Write(" do ");
         }
 
-        public sealed override void WriteBreak(bool hasExpression)
+        public sealed override void WriteBreak(bool hasExpression, ParserRuleContext context)
         {
             if(hasExpression)
             {
-                base.WriteBreak(hasExpression);
+                base.WriteBreak(hasExpression, context);
                 return;
             }
-            Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to."));
+            Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to.", context));
             Out.WriteOperator("<-");
             Out.WriteLine("false");
-            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to."));
+            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to.", context));
             Out.WriteOperator("<-");
             Out.Write("true");
         }
 
-        public sealed override void WriteContinue(bool hasExpression)
+        public sealed override void WriteContinue(bool hasExpression, ParserRuleContext context)
         {
             if(hasExpression)
             {
-                base.WriteContinue(hasExpression);
+                base.WriteContinue(hasExpression, context);
                 return;
             }
-            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `continue` used without a variable to assign to."));
+            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `continue` used without a variable to assign to.", context));
             Out.WriteOperator("<-");
             Out.Write("true");
         }
@@ -1370,7 +1371,7 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterExpression(ExpressionContext context)
         {
-            Out.WriteIdentifier(ContinuingVariable ?? Error("COMPILER ERROR: `repeat` used without a condition variable."));
+            Out.WriteIdentifier(ContinuingVariable ?? Error("COMPILER ERROR: `repeat` used without a condition variable.", context));
             Out.WriteOperator("<-");
             Out.WriteCoreOperator("not");
             Out.Write('(');
@@ -1383,7 +1384,7 @@ namespace IS4.Sona.Compiler.States
             Out.WriteLine();
         }
 
-        protected sealed override void OnEnterBlock(StatementFlags flags)
+        protected sealed override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
         {
             ContinuingVariable = Out.CreateTemporaryIdentifier();
             // var continuing = true
@@ -1396,7 +1397,7 @@ namespace IS4.Sona.Compiler.States
             Out.WriteIdentifier(ContinuingVariable);
             Out.Write(" do ");
 
-            base.OnEnterBlock(flags);
+            base.OnEnterBlock(flags, context);
 
             if((flags & StatementFlags.InterruptPath) != 0)
             {
@@ -1409,35 +1410,35 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
-        protected sealed override void OnExitBlock(StatementFlags flags)
+        protected sealed override void OnExitBlock(StatementFlags flags, ParserRuleContext context)
         {
             // Exited in ExitUntil
         }
 
-        public virtual void WriteBreak(bool hasExpression)
+        public virtual void WriteBreak(bool hasExpression, ParserRuleContext context)
         {
             if(hasExpression)
             {
-                Error("`break` in a `repeat` statement does not take an expression.");
+                Error("`break` in a `repeat` statement does not take an expression.", context);
             }
-            Error("COMPILER ERROR: `break` used in a wrong version of `repeat`.");
+            Error("COMPILER ERROR: `break` used in a wrong version of `repeat`.", context);
         }
 
-        public virtual void WriteContinue(bool hasExpression)
+        public virtual void WriteContinue(bool hasExpression, ParserRuleContext context)
         {
             if(hasExpression)
             {
-                Error("`break` in a `repeat` statement does not take an expression.");
+                Error("`break` in a `repeat` statement does not take an expression.", context);
             }
-            Error("COMPILER ERROR: `continue` used in a wrong version of `repeat`.");
+            Error("COMPILER ERROR: `continue` used in a wrong version of `repeat`.", context);
         }
 
-        void IInterruptibleStatementContext.WriteAfterBreak()
+        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
         {
 
         }
 
-        void IInterruptibleStatementContext.WriteAfterContinue()
+        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
         {
 
         }
@@ -1448,7 +1449,7 @@ namespace IS4.Sona.Compiler.States
     /// </summary>
     internal class RepeatStatementNoTrail : RepeatStatement
     {
-        protected override void OnEnter(StatementFlags flags)
+        protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
         {
             if((flags & StatementFlags.OpenPath) == 0)
             {
@@ -1458,10 +1459,10 @@ namespace IS4.Sona.Compiler.States
                 Out.EnterScope();
                 return;
             }
-            base.OnEnter(flags);
+            base.OnEnter(flags, context);
         }
 
-        protected override void OnExit(StatementFlags flags)
+        protected override void OnExit(StatementFlags flags, ParserRuleContext context)
         {
             if(flags == StatementFlags.Terminating)
             {
@@ -1478,7 +1479,7 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(_end_);
                 return;
             }
-            base.OnExit(flags);
+            base.OnExit(flags, context);
         }
 
         public override void EnterUntil(UntilContext context)
@@ -1492,33 +1493,33 @@ namespace IS4.Sona.Compiler.States
         public sealed override void EnterUntil(UntilContext context)
         {
             Out.Write("if ");
-            Out.WriteIdentifier(ContinuingVariable ?? Error("COMPILER ERROR: `repeat` used without a condition variable."));
+            Out.WriteIdentifier(ContinuingVariable ?? Error("COMPILER ERROR: `repeat` used without a condition variable.", context));
             Out.Write(" then ");
         }
 
-        public sealed override void WriteBreak(bool hasExpression)
+        public sealed override void WriteBreak(bool hasExpression, ParserRuleContext context)
         {
             if(hasExpression)
             {
-                base.WriteBreak(hasExpression);
+                base.WriteBreak(hasExpression, context);
                 return;
             }
-            Out.WriteIdentifier(ContinuingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to."));
+            Out.WriteIdentifier(ContinuingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to.", context));
             Out.WriteOperator("<-");
             Out.WriteLine("false");
-            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to."));
+            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to.", context));
             Out.WriteOperator("<-");
             Out.Write("true");
         }
 
-        public sealed override void WriteContinue(bool hasExpression)
+        public sealed override void WriteContinue(bool hasExpression, ParserRuleContext context)
         {
             if(hasExpression)
             {
-                base.WriteContinue(hasExpression);
+                base.WriteContinue(hasExpression, context);
                 return;
             }
-            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `continue` used without a variable to assign to."));
+            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `continue` used without a variable to assign to.", context));
             Out.WriteOperator("<-");
             Out.Write("true");
         }
@@ -1559,7 +1560,7 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterForSimpleStep(ForSimpleStepContext context)
         {
-            Error("`for` statement cannot use `by` with a non-range sequence.");
+            Error("`for` statement cannot use `by` with a non-range sequence.", context);
         }
 
         public abstract override void EnterForRange(ForRangeContext context);
@@ -1607,9 +1608,9 @@ namespace IS4.Sona.Compiler.States
 
         public abstract override void ExitDeclaration(DeclarationContext context);
 
-        protected override void OnEnterBlock(StatementFlags flags)
+        protected override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
         {
-            base.OnEnterBlock(flags);
+            base.OnEnterBlock(flags, context);
             if((flags & StatementFlags.InterruptPath) != 0)
             {
                 InterruptingVariable = Out.CreateTemporaryIdentifier();
@@ -1621,30 +1622,30 @@ namespace IS4.Sona.Compiler.States
             }
         }
 
-        public virtual void WriteBreak(bool hasExpression)
+        public virtual void WriteBreak(bool hasExpression, ParserRuleContext context)
         {
             if(hasExpression)
             {
-                Error("`break` in a `for` statement does not take an expression.");
+                Error("`break` in a `for` statement does not take an expression.", context);
             }
-            Error("COMPILER ERROR: `break` used in a wrong version of `for`.");
+            Error("COMPILER ERROR: `break` used in a wrong version of `for`.", context);
         }
 
-        public virtual void WriteContinue(bool hasExpression)
+        public virtual void WriteContinue(bool hasExpression, ParserRuleContext context)
         {
             if(hasExpression)
             {
-                Error("`break` in a `for` statement does not take an expression.");
+                Error("`break` in a `for` statement does not take an expression.", context);
             }
-            Error("COMPILER ERROR: `continue` used in a wrong version of `for`.");
+            Error("COMPILER ERROR: `continue` used in a wrong version of `for`.", context);
         }
 
-        void IInterruptibleStatementContext.WriteAfterBreak()
+        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
         {
 
         }
 
-        void IInterruptibleStatementContext.WriteAfterContinue()
+        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
         {
 
         }
@@ -1682,7 +1683,7 @@ namespace IS4.Sona.Compiler.States
     /// </summary>
     internal class ForStatementNoTrail : ForStatement
     {
-        protected override void OnEnter(StatementFlags flags)
+        protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
         {
             if((flags & StatementFlags.OpenPath) == 0)
             {
@@ -1692,10 +1693,10 @@ namespace IS4.Sona.Compiler.States
                 Out.EnterScope();
                 return;
             }
-            base.OnEnter(flags);
+            base.OnEnter(flags, context);
         }
 
-        protected override void OnExit(StatementFlags flags)
+        protected override void OnExit(StatementFlags flags, ParserRuleContext context)
         {
             if(flags == StatementFlags.Terminating)
             {
@@ -1712,7 +1713,7 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(_end_);
                 return;
             }
-            base.OnExit(flags);
+            base.OnExit(flags, context);
         }
 
         public override void EnterForSimple(ForSimpleContext context)
@@ -1832,7 +1833,7 @@ namespace IS4.Sona.Compiler.States
 
             public override void ExitForRangeStep(ForRangeStepContext context)
             {
-                (capture ?? ErrorCapture(captureError)).Play(Out);
+                (capture ?? ErrorCapture(captureError, context)).Play(Out);
                 Out.WriteIdentifier(parts[0]);
                 Out.Write(')');
                 Out.WriteOperator("..");
@@ -1847,7 +1848,7 @@ namespace IS4.Sona.Compiler.States
             {
                 if(first)
                 {
-                    Out.StopCapture(capture ?? ErrorCapture(captureError));
+                    Out.StopCapture(capture ?? ErrorCapture(captureError, context));
                 }
                 var name = Out.CreateTemporaryIdentifier();
                 parts.Add(name);
@@ -1922,14 +1923,14 @@ namespace IS4.Sona.Compiler.States
                 if(first)
                 {
                     first = false;
-                    Out.StopCapture(leftCapture ?? ErrorCapture(captureError));
+                    Out.StopCapture(leftCapture ?? ErrorCapture(captureError, context));
                 }
             }
 
             public override void EnterPrimitiveExpr(PrimitiveExprContext context)
             {
-                Out.StopCapture(rightCapture ?? ErrorCapture(captureError));
-                (leftCapture ?? ErrorCapture(captureError)).Play(Out);
+                Out.StopCapture(rightCapture ?? ErrorCapture(captureError, context));
+                (leftCapture ?? ErrorCapture(captureError, context)).Play(Out);
                 Out.Write(')');
                 Out.WriteOperator("..");
                 Out.Write('(');
@@ -1942,7 +1943,7 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(')');
                 Out.WriteOperator("..");
                 Out.Write('(');
-                (rightCapture ?? ErrorCapture(captureError)).Play(Out);
+                (rightCapture ?? ErrorCapture(captureError, context)).Play(Out);
             }
         }
     }
@@ -1962,7 +1963,7 @@ namespace IS4.Sona.Compiler.States
             declarationCapture = null;
         }
 
-        protected override void OnEnter(StatementFlags flags)
+        protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
         {
             continuingVariable = Out.CreateTemporaryIdentifier();
             // var continuing = true
@@ -1970,7 +1971,7 @@ namespace IS4.Sona.Compiler.States
             Out.WriteIdentifier(continuingVariable);
             Out.WriteOperator('=');
             Out.WriteLine("true");
-            base.OnEnter(flags);
+            base.OnEnter(flags, context);
 
             enumeratorVariable = Out.CreateTemporaryIdentifier();
             // var enumerator = ...
@@ -2025,7 +2026,7 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitDeclaration(DeclarationContext context)
         {
-            Out.StopCapture(declarationCapture ?? ErrorCapture(captureError));
+            Out.StopCapture(declarationCapture ?? ErrorCapture(captureError, context));
         }
 
         public override void ExitForSimple(ForSimpleContext context)
@@ -2060,24 +2061,24 @@ namespace IS4.Sona.Compiler.States
             Out.WriteLine("try");
             Out.EnterScope();
             Out.Write("while ");
-            Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `for` used without a condition variable."));
+            Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `for` used without a condition variable.", context));
             Out.WriteOperator("&&");
-            Out.WriteIdentifier(enumeratorVariable ?? Error(enumeratorError));
+            Out.WriteIdentifier(enumeratorVariable ?? Error(enumeratorError, context));
             Out.Write(".MoveNext() do ");
         }
 
-        protected override void OnEnterBlock(StatementFlags flags)
+        protected override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
         {
-            base.OnEnterBlock(flags);
+            base.OnEnterBlock(flags, context);
 
             Out.Write("let ");
-            (declarationCapture ?? ErrorCapture(captureError)).Play(Out);
+            (declarationCapture ?? ErrorCapture(captureError, context)).Play(Out);
             Out.WriteOperator('=');
-            Out.WriteIdentifier(enumeratorVariable ?? Error(enumeratorError));
+            Out.WriteIdentifier(enumeratorVariable ?? Error(enumeratorError, context));
             Out.WriteLine(".Current");
         }
 
-        protected sealed override void OnExit(StatementFlags flags)
+        protected sealed override void OnExit(StatementFlags flags, ParserRuleContext context)
         {
             Out.ExitScope();
             Out.WriteLine();
@@ -2086,9 +2087,9 @@ namespace IS4.Sona.Compiler.States
             Out.Write('(');
             Out.WriteNamespacedName("Sona.Runtime.SequenceHelpers", "Marker");
             Out.Write(',');
-            Out.WriteIdentifier(enumeratorVariable ?? Error(enumeratorError));
+            Out.WriteIdentifier(enumeratorVariable ?? Error(enumeratorError, context));
             Out.Write(")");
-            base.OnExit(flags);
+            base.OnExit(flags, context);
         }
 
         public sealed override void EnterExpression(ExpressionContext context)
@@ -2124,29 +2125,29 @@ namespace IS4.Sona.Compiler.States
             Out.Write(')');
         }
 
-        public sealed override void WriteBreak(bool hasExpression)
+        public sealed override void WriteBreak(bool hasExpression, ParserRuleContext context)
         {
             if(hasExpression)
             {
-                base.WriteBreak(hasExpression);
+                base.WriteBreak(hasExpression, context);
                 return;
             }
-            Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to."));
+            Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to.", context));
             Out.WriteOperator("<-");
             Out.WriteLine("false");
-            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to."));
+            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `break` used without a variable to assign to.", context));
             Out.WriteOperator("<-");
             Out.Write("true");
         }
 
-        public sealed override void WriteContinue(bool hasExpression)
+        public sealed override void WriteContinue(bool hasExpression, ParserRuleContext context)
         {
             if(hasExpression)
             {
-                base.WriteContinue(hasExpression);
+                base.WriteContinue(hasExpression, context);
                 return;
             }
-            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `continue` used without a variable to assign to."));
+            Out.WriteIdentifier(InterruptingVariable ?? Error("COMPILER ERROR: `continue` used without a variable to assign to.", context));
             Out.WriteOperator("<-");
             Out.Write("true");
         }
@@ -2174,7 +2175,7 @@ namespace IS4.Sona.Compiler.States
             HasBranches = false;
         }
 
-        protected override void OnExit(StatementFlags flags)
+        protected override void OnExit(StatementFlags flags, ParserRuleContext context)
         {
             if(!HasBranches)
             {
@@ -2184,7 +2185,7 @@ namespace IS4.Sona.Compiler.States
                 Out.WriteCoreOperator("Unchecked");
                 Out.Write(".defaultof<_>");
             }
-            base.OnExit(flags);
+            base.OnExit(flags, context);
         }
 
         public abstract override void EnterSwitch(SwitchContext context);
@@ -2274,12 +2275,12 @@ namespace IS4.Sona.Compiler.States
             matchedVariable = null;
         }
 
-        protected override void OnExit(StatementFlags flags)
+        protected override void OnExit(StatementFlags flags, ParserRuleContext context)
         {
             Out.ExitScope();
             Out.WriteLine();
             Out.Write(_end_);
-            base.OnExit(flags);
+            base.OnExit(flags, context);
         }
 
         public sealed override void EnterSwitch(SwitchContext context)
@@ -2297,7 +2298,7 @@ namespace IS4.Sona.Compiler.States
         {
             Out.WriteLine();
             // var matched = <expression>
-            var matchingVariable = this.matchingVariable ?? Error("COMPILER ERROR: Matching variable missing");
+            var matchingVariable = this.matchingVariable ?? Error("COMPILER ERROR: Matching variable missing", context);
             Out.Write("let mutable ");
             Out.WriteIdentifier(matchingVariable);
             Out.WriteOperator('=');
@@ -2319,37 +2320,37 @@ namespace IS4.Sona.Compiler.States
             Out.WriteOperator('=');
             Out.WriteLine("false");
             Out.Write("match ");
-            Out.WriteIdentifier(matchedVariable ?? Error("COMPILER ERROR: Matched variable missing"));
+            Out.WriteIdentifier(matchedVariable ?? Error("COMPILER ERROR: Matched variable missing", context));
             Out.Write(" with");
         }
 
-        void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
+        void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
         {
-            Error("COMPILER ERROR: `break` used in `switch`.");
+            Error("COMPILER ERROR: `break` used in `switch`.", context);
         }
 
-        void IInterruptibleStatementContext.WriteAfterBreak()
+        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
         {
 
         }
 
-        void IInterruptibleStatementContext.WriteContinue(bool hasExpression)
+        void IInterruptibleStatementContext.WriteContinue(bool hasExpression, ParserRuleContext context)
         {
             if(!hasExpression)
             {
-                Error("`continue` in a `switch` statement must take an expression.");
+                Error("`continue` in a `switch` statement must take an expression.", context);
             }
-            Out.WriteIdentifier(matchedVariable ?? Error("COMPILER ERROR: `continue` used without a variable to assign to."));
+            Out.WriteIdentifier(matchedVariable ?? Error("COMPILER ERROR: `continue` used without a variable to assign to.", context));
             Out.WriteOperator("<-");
         }
 
-        void IInterruptibleStatementContext.WriteAfterContinue()
+        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
         {
             Out.WriteLine();
-            Out.WriteIdentifier(matchingVariable ?? Error("COMPILER ERROR: `continue` used without a matching variable."));
+            Out.WriteIdentifier(matchingVariable ?? Error("COMPILER ERROR: `continue` used without a matching variable.", context));
             Out.WriteOperator("<-");
             Out.WriteLine("true");
-            Out.WriteIdentifier(interruptingVariable ?? Error("COMPILER ERROR: `continue` used without an interrupting variable."));
+            Out.WriteIdentifier(interruptingVariable ?? Error("COMPILER ERROR: `continue` used without an interrupting variable.", context));
             Out.WriteOperator("<-");
             Out.Write("true");
         }
@@ -2360,7 +2361,7 @@ namespace IS4.Sona.Compiler.States
     /// </summary>
     internal class SwitchStatementNoTrail : SwitchStatement
     {
-        protected override void OnEnter(StatementFlags flags)
+        protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
         {
             if((flags & StatementFlags.OpenPath) == 0)
             {
@@ -2370,12 +2371,12 @@ namespace IS4.Sona.Compiler.States
                 Out.EnterScope();
                 return;
             }
-            base.OnEnter(flags);
+            base.OnEnter(flags, context);
         }
 
-        protected override void OnExit(StatementFlags flags)
+        protected override void OnExit(StatementFlags flags, ParserRuleContext context)
         {
-            base.OnExit(flags);
+            base.OnExit(flags, context);
             if((flags & StatementFlags.OpenPath) == 0)
             {
                 // Exit for ignored statements
@@ -2391,7 +2392,7 @@ namespace IS4.Sona.Compiler.States
     /// </summary>
     internal class SwitchStatementInterruptedNoTrail : SwitchStatementInterrupted
     {
-        protected override void OnEnter(StatementFlags flags)
+        protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
         {
             if((flags & StatementFlags.OpenPath) == 0)
             {
@@ -2401,12 +2402,12 @@ namespace IS4.Sona.Compiler.States
                 Out.EnterScope();
                 return;
             }
-            base.OnEnter(flags);
+            base.OnEnter(flags, context);
         }
 
-        protected override void OnExit(StatementFlags flags)
+        protected override void OnExit(StatementFlags flags, ParserRuleContext context)
         {
-            base.OnExit(flags);
+            base.OnExit(flags, context);
             if((flags & StatementFlags.OpenPath) == 0)
             {
                 // Exit for ignored statements

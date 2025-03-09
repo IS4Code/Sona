@@ -1,4 +1,5 @@
-﻿using static IS4.Sona.Grammar.SonaParser;
+﻿using Antlr4.Runtime;
+using static IS4.Sona.Grammar.SonaParser;
 
 namespace IS4.Sona.Compiler.States
 {
@@ -121,22 +122,22 @@ namespace IS4.Sona.Compiler.States
             Out.Write(')');
         }
 
-        void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
+        void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
         {
-            Error("`break` must be used in a statement that supports it.");
+            Error("`break` must be used in a statement that supports it.", context);
         }
 
-        void IInterruptibleStatementContext.WriteContinue(bool hasExpression)
+        void IInterruptibleStatementContext.WriteContinue(bool hasExpression, ParserRuleContext context)
         {
-            Error("`continue` must be used in a statement that supports it.");
+            Error("`continue` must be used in a statement that supports it.", context);
         }
 
-        void IInterruptibleStatementContext.WriteAfterBreak()
+        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
         {
 
         }
 
-        void IInterruptibleStatementContext.WriteAfterContinue()
+        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
         {
 
         }

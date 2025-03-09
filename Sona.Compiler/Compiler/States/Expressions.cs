@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Antlr4.Runtime;
 using static IS4.Sona.Grammar.SonaParser;
 
 namespace IS4.Sona.Compiler.States
@@ -725,7 +726,7 @@ namespace IS4.Sona.Compiler.States
             ISourceCapture? argsCapture;
             readonly List<int> arities = new();
 
-            string ParamName => paramName ?? Error("COMPILER ERROR: Missing constrained member access parameter name.");
+            string ParamName(ParserRuleContext context) => paramName ?? Error("COMPILER ERROR: Missing constrained member access parameter name.", context);
 
             protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
             {
@@ -756,7 +757,7 @@ namespace IS4.Sona.Compiler.States
                 {
                     Out.WriteOperator(':');
                     Out.Write("_)");
-                    Out.WriteIdentifier(ParamName);
+                    Out.WriteIdentifier(ParamName(context));
                 }
                 Out.Write("))");
                 ExitState().ExitConstrainedMemberAccess(context);
@@ -771,7 +772,7 @@ namespace IS4.Sona.Compiler.States
 
             public override void ExitCallArguments(CallArgumentsContext context)
             {
-                var argsCapture = this.argsCapture ?? ErrorCapture("COMPILER ERROR: Missing constraint expression captured state.");
+                var argsCapture = this.argsCapture ?? ErrorCapture("COMPILER ERROR: Missing constraint expression captured state.", context);
                 Out.StopCapture(argsCapture);
                 if(arities.Count == 0)
                 {
@@ -811,7 +812,7 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(')');
             }
 
-            private void OpenArgTuple()
+            private void OpenArgTuple(ParserRuleContext context)
             {
                 if(first)
                 {
@@ -827,12 +828,12 @@ namespace IS4.Sona.Compiler.States
                 arities.Add(0);
             }
 
-            private void CloseArgTuple()
+            private void CloseArgTuple(ParserRuleContext context)
             {
                 if(first)
                 {
                     // First tuple is empty
-                    Out.WriteIdentifier(ParamName);
+                    Out.WriteIdentifier(ParamName(context));
                     first = false;
                     // Add empty arity
                     arities.Add(0);
@@ -846,29 +847,29 @@ namespace IS4.Sona.Compiler.States
 
             public override void EnterSimpleCallArgTuple(SimpleCallArgTupleContext context)
             {
-                OpenArgTuple();
+                OpenArgTuple(context);
             }
 
             public override void ExitSimpleCallArgTuple(SimpleCallArgTupleContext context)
             {
-                CloseArgTuple();
+                CloseArgTuple(context);
             }
 
             public override void EnterComplexCallArgTuple(ComplexCallArgTupleContext context)
             {
-                OpenArgTuple();
+                OpenArgTuple(context);
             }
 
             public override void ExitComplexCallArgTuple(ComplexCallArgTupleContext context)
             {
-                CloseArgTuple();
+                CloseArgTuple(context);
             }
 
             public override void EnterExpression(ExpressionContext context)
             {
                 if(first)
                 {
-                    Out.WriteIdentifier(ParamName);
+                    Out.WriteIdentifier(ParamName(context));
 
                     // Prepare first arity
                     first = false;
@@ -887,7 +888,7 @@ namespace IS4.Sona.Compiler.States
 
             public override void EnterSpreadExpression(SpreadExpressionContext context)
             {
-                Error("A call to a constraint member expression cannot contain spread expressions.");
+                Error("A call to a constraint member expression cannot contain spread expressions.", context);
             }
 
             public override void ExitSpreadExpression(SpreadExpressionContext context)
@@ -897,7 +898,7 @@ namespace IS4.Sona.Compiler.States
 
             public override void EnterFieldAssignment(FieldAssignmentContext context)
             {
-                Error("A call to a constraint member expression cannot contain named arguments.");
+                Error("A call to a constraint member expression cannot contain named arguments.", context);
             }
 
             public override void ExitFieldAssignment(FieldAssignmentContext context)
@@ -1014,22 +1015,22 @@ namespace IS4.Sona.Compiler.States
             Out.Write(')');
         }
 
-        void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
+        void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
         {
-            Error("`break` must be used in a statement that supports it.");
+            Error("`break` must be used in a statement that supports it.", context);
         }
 
-        void IInterruptibleStatementContext.WriteContinue(bool hasExpression)
+        void IInterruptibleStatementContext.WriteContinue(bool hasExpression, ParserRuleContext context)
         {
-            Error("`continue` must be used in a statement that supports it.");
+            Error("`continue` must be used in a statement that supports it.", context);
         }
 
-        void IInterruptibleStatementContext.WriteAfterBreak()
+        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
         {
 
         }
 
-        void IInterruptibleStatementContext.WriteAfterContinue()
+        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
         {
 
         }
@@ -1311,7 +1312,7 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterFieldAssignment(FieldAssignmentContext context)
         {
-            Error("Named arguments are not allowed alongside spread expressions.");
+            Error("Named arguments are not allowed alongside spread expressions.", context);
         }
 
         public override void ExitFieldAssignment(FieldAssignmentContext context)
@@ -1371,22 +1372,22 @@ namespace IS4.Sona.Compiler.States
             return scope ??= FindContext<IExpressionContext>();
         }
 
-        void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
+        void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
         {
-            Error("`break` must be used in a statement that supports it.");
+            Error("`break` must be used in a statement that supports it.", context);
         }
 
-        void IInterruptibleStatementContext.WriteContinue(bool hasExpression)
+        void IInterruptibleStatementContext.WriteContinue(bool hasExpression, ParserRuleContext context)
         {
-            Error("`continue` must be used in a statement that supports it.");
+            Error("`continue` must be used in a statement that supports it.", context);
         }
 
-        void IInterruptibleStatementContext.WriteAfterBreak()
+        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
         {
 
         }
 
-        void IInterruptibleStatementContext.WriteAfterContinue()
+        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
         {
 
         }

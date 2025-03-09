@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Antlr4.Runtime;
 using IS4.Sona.Compiler.Tools;
 using static IS4.Sona.Grammar.SonaParser;
 
@@ -40,25 +41,25 @@ namespace IS4.Sona.Compiler.States
 
         }
 
-        protected virtual void OnEnterStatement(StatementFlags flags)
+        protected virtual void OnEnterStatement(StatementFlags flags, ParserRuleContext context)
         {
 
         }
 
-        protected virtual void OnExitStatement(StatementFlags flags)
+        protected virtual void OnExitStatement(StatementFlags flags, ParserRuleContext context)
         {
             Out.WriteLine();
         }
 
         public override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
         {
-            OnEnterStatement(StatementFlags.None);
+            OnEnterStatement(StatementFlags.None, context);
             Out.Write("()");
         }
 
         public override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
         {
-            OnExitStatement(StatementFlags.None);
+            OnExitStatement(StatementFlags.None, context);
         }
 
         public sealed override void EnterReturnStatement(ReturnStatementContext context)
@@ -348,72 +349,72 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterStatement(StatementContext context)
         {
-            OnEnterStatement(StatementFlags.None);
+            OnEnterStatement(StatementFlags.None, context);
         }
 
         public sealed override void ExitStatement(StatementContext context)
         {
-            OnExitStatement(StatementFlags.None);
+            OnExitStatement(StatementFlags.None, context);
         }
 
         public sealed override void EnterReturningStatement(ReturningStatementContext context)
         {
-            OnEnterStatement(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnEnterStatement(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
 
         public sealed override void ExitReturningStatement(ReturningStatementContext context)
         {
-            OnExitStatement(StatementFlags.ReturnPath | StatementFlags.InterruptPath);
+            OnExitStatement(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
 
         public sealed override void EnterInterruptingStatement(InterruptingStatementContext context)
         {
-            OnEnterStatement(StatementFlags.InterruptPath);
+            OnEnterStatement(StatementFlags.InterruptPath, context);
         }
 
         public sealed override void ExitInterruptingStatement(InterruptingStatementContext context)
         {
-            OnExitStatement(StatementFlags.InterruptPath);
+            OnExitStatement(StatementFlags.InterruptPath, context);
         }
 
         public sealed override void EnterInterruptibleStatement(InterruptibleStatementContext context)
         {
-            OnEnterStatement(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterStatement(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public sealed override void ExitInterruptibleStatement(InterruptibleStatementContext context)
         {
-            OnExitStatement(StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitStatement(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public sealed override void EnterConditionalStatement(ConditionalStatementContext context)
         {
-            OnEnterStatement(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnEnterStatement(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public sealed override void ExitConditionalStatement(ConditionalStatementContext context)
         {
-            OnExitStatement(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath);
+            OnExitStatement(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
         public sealed override void EnterTerminatingStatement(TerminatingStatementContext context)
         {
-            OnEnterStatement(StatementFlags.Terminating);
+            OnEnterStatement(StatementFlags.Terminating, context);
         }
 
         public sealed override void ExitTerminatingStatement(TerminatingStatementContext context)
         {
-            OnExitStatement(StatementFlags.Terminating);
+            OnExitStatement(StatementFlags.Terminating, context);
         }
 
         public sealed override void EnterTopLevelStatement(TopLevelStatementContext context)
         {
-            OnEnterStatement(StatementFlags.None);
+            OnEnterStatement(StatementFlags.None, context);
         }
 
         public sealed override void ExitTopLevelStatement(TopLevelStatementContext context)
         {
-            OnExitStatement(StatementFlags.None);
+            OnExitStatement(StatementFlags.None, context);
         }
 
         #region Block types
@@ -508,22 +509,22 @@ namespace IS4.Sona.Compiler.States
             Out.Write(')');
         }
 
-        void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
+        void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
         {
-            Error("`break` must be used in a statement that supports it.");
+            Error("`break` must be used in a statement that supports it.", context);
         }
 
-        void IInterruptibleStatementContext.WriteContinue(bool hasExpression)
+        void IInterruptibleStatementContext.WriteContinue(bool hasExpression, ParserRuleContext context)
         {
-            Error("`continue` must be used in a statement that supports it.");
+            Error("`continue` must be used in a statement that supports it.", context);
         }
 
-        void IInterruptibleStatementContext.WriteAfterBreak()
+        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
         {
 
         }
 
-        void IInterruptibleStatementContext.WriteAfterContinue()
+        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
         {
 
         }
@@ -579,11 +580,11 @@ namespace IS4.Sona.Compiler.States
         {
             if(FindContext<IComputationContext>() is { IsCollection: true, BuilderVariable: null })
             {
-                Error("`return` is not allowed in a collection without a builder.");
+                Error("`return` is not allowed in a collection without a builder.", context);
             }
         }
 
-        protected virtual void OnExit()
+        protected virtual void OnExit(ParserRuleContext context)
         {
             if(!HasExpression)
             {
@@ -620,13 +621,13 @@ namespace IS4.Sona.Compiler.States
             if(interruptScope != null)
             {
                 Out.WriteLine();
-                interruptScope.WriteBreak(false);
+                interruptScope.WriteBreak(false, context);
             }
         }
 
         public sealed override void ExitReturnStatement(ReturnStatementContext context)
         {
-            OnExit();
+            OnExit(context);
             ExitState().ExitReturnStatement(context);
         }
     }
@@ -681,11 +682,11 @@ namespace IS4.Sona.Compiler.States
         {
             if(scope == null)
             {
-                Error("`break` must be used in a statement that supports it.");
+                Error("`break` must be used in a statement that supports it.", context);
             }
             else
             {
-                scope.WriteBreak(true);
+                scope.WriteBreak(true, context);
             }
             Out.Write('(');
             base.EnterExpression(context);
@@ -702,11 +703,11 @@ namespace IS4.Sona.Compiler.States
             {
                 if(scope == null)
                 {
-                    Error("`break` must be used in a statement that supports it.");
+                    Error("`break` must be used in a statement that supports it.", context);
                 }
                 else
                 {
-                    scope.WriteBreak(false);
+                    scope.WriteBreak(false, context);
                 }
             }
             else
@@ -714,7 +715,7 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(")");
                 if(scope != null)
                 {
-                    scope.WriteAfterContinue();
+                    scope.WriteAfterContinue(context);
                 }
             }
 
@@ -741,11 +742,11 @@ namespace IS4.Sona.Compiler.States
         {
             if(scope == null)
             {
-                Error("`continue` must be used in a statement that supports it.");
+                Error("`continue` must be used in a statement that supports it.", context);
             }
             else
             {
-                scope.WriteContinue(true);
+                scope.WriteContinue(true, context);
             }
             Out.Write('(');
             base.EnterExpression(context);
@@ -762,11 +763,11 @@ namespace IS4.Sona.Compiler.States
             {
                 if(scope == null)
                 {
-                    Error("`continue` must be used in a statement that supports it.");
+                    Error("`continue` must be used in a statement that supports it.", context);
                 }
                 else
                 {
-                    scope.WriteContinue(false);
+                    scope.WriteContinue(false, context);
                 }
             }
             else
@@ -774,7 +775,7 @@ namespace IS4.Sona.Compiler.States
                 Out.Write(")");
                 if(scope != null)
                 {
-                    scope.WriteAfterContinue();
+                    scope.WriteAfterContinue(context);
                 }
             }
 
@@ -816,7 +817,7 @@ namespace IS4.Sona.Compiler.States
         {
             if(FindContext<IComputationContext>() is not ({ IsCollection: true } or { BuilderVariable: not null }))
             {
-                Error("`yield` is not allowed outside a collection or computation.");
+                Error("`yield` is not allowed outside a collection or computation.", context);
             }
             Out.Write("yield ");
         }
@@ -843,7 +844,7 @@ namespace IS4.Sona.Compiler.States
         {
             if(FindContext<IComputationContext>() is not ({ IsCollection: true } or { BuilderVariable: not null }))
             {
-                Error("`yield break` is not allowed outside a collection or computation.");
+                Error("`yield break` is not allowed outside a collection or computation.", context);
             }
         }
 
@@ -851,9 +852,9 @@ namespace IS4.Sona.Compiler.States
         {
             if(HasExpression)
             {
-                Error("`yield break` cannot be used with an expression outside of a computation.");
+                Error("`yield break` cannot be used with an expression outside of a computation.", context);
             }
-            OnExit();
+            OnExit(context);
             ExitState().ExitYieldBreakStatement(context);
         }
     }

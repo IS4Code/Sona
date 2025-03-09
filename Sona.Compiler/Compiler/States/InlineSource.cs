@@ -63,7 +63,7 @@ namespace IS4.Sona.Compiler.States
                 var text = Syntax.GetStringLiteralValue(context.GetText());
                 if(text != "F#")
                 {
-                    Error("Only F# inline source is supported.");
+                    Error("Only F# inline source is supported.", context);
                 }
             }
             finally
@@ -95,7 +95,7 @@ namespace IS4.Sona.Compiler.States
                 indent -= previousIndent;
                 if(indent < 0)
                 {
-                    Error($"Line token is placed {-indent} characters before indent level.");
+                    Error($"Line token is placed {-indent} characters before indent level.", context);
                     indent = 0;
                 }
             }
