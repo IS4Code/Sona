@@ -1002,16 +1002,16 @@ namespace IS4.Sona.Compiler.States
             Out.Write(')');
         }
 
-        void IFunctionContext.WriteBegin()
+        void IComputationContext.WriteBeginBlockExpression()
         {
-            Out.WriteLine(_begin_);
-            Out.EnterScope();
+            Out.EnterNestedScope();
+            Out.WriteLine("(");
         }
 
-        void IFunctionContext.WriteEnd()
+        void IComputationContext.WriteEndBlockExpression()
         {
-            Out.ExitScope();
-            Out.Write(_end_);
+            Out.ExitNestedScope();
+            Out.Write(')');
         }
 
         void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
@@ -1391,17 +1391,8 @@ namespace IS4.Sona.Compiler.States
 
         }
 
-        void IFunctionContext.WriteBegin()
-        {
-            Out.WriteLine(_begin_);
-            Out.EnterScope();
-        }
-
-        void IFunctionContext.WriteEnd()
-        {
-            Out.ExitScope();
-            Out.Write(_end_);
-        }
+        public abstract void WriteBeginBlockExpression();
+        public abstract void WriteEndBlockExpression();
     }
 
     internal abstract class CollectionState : IsolatedState
@@ -1601,6 +1592,18 @@ namespace IS4.Sona.Compiler.States
             Out.Write("|]");
             ExitState().ExitArrayConstructor(context);
         }
+
+        public override void WriteBeginBlockExpression()
+        {
+            Out.EnterNestedScope();
+            Out.WriteLine("[|");
+        }
+
+        public override void WriteEndBlockExpression()
+        {
+            Out.ExitNestedScope();
+            Out.Write("|]");
+        }
     }
 
     internal sealed class SequenceState : CollectionState
@@ -1620,8 +1623,7 @@ namespace IS4.Sona.Compiler.States
             else
             {
                 Out.ExitNestedScope();
-                Out.Write('}');
-                Out.Write(')');
+                Out.Write("})");
             }
             ExitState().ExitSequenceConstructor(context);
         }
@@ -1637,6 +1639,20 @@ namespace IS4.Sona.Compiler.States
             }
 
             base.OnOperand(simple);
+        }
+
+        public override void WriteBeginBlockExpression()
+        {
+            Out.EnterNestedScope();
+            Out.Write('(');
+            Out.WriteCoreOperator("seq");
+            Out.WriteLine("{");
+        }
+
+        public override void WriteEndBlockExpression()
+        {
+            Out.ExitNestedScope();
+            Out.Write("})");
         }
     }
 
@@ -1658,14 +1674,26 @@ namespace IS4.Sona.Compiler.States
             ExitState().ExitInlineExpr(context);
         }
 
-        public sealed override void EnterExpressionStatement(ExpressionStatementContext context)
+        public override void EnterExpressionStatement(ExpressionStatementContext context)
         {
             EnterState<ExpressionStatementState>().EnterExpressionStatement(context);
         }
 
-        public sealed override void ExitExpressionStatement(ExpressionStatementContext context)
+        public override void ExitExpressionStatement(ExpressionStatementContext context)
         {
 
+        }
+
+        public override void WriteBeginBlockExpression()
+        {
+            Out.EnterNestedScope();
+            Out.WriteLine("(");
+        }
+
+        public override void WriteEndBlockExpression()
+        {
+            Out.ExitNestedScope();
+            Out.Write(')');
         }
     }
 

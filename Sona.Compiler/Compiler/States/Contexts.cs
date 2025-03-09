@@ -16,14 +16,14 @@ namespace IS4.Sona.Compiler.States
     internal interface IFunctionContext : IReturnableStatementContext, IInterruptibleStatementContext, IStatementContext, IComputationContext, IExpressionContext
     {
         bool IsOptionalReturn { get; }
-        void WriteBegin();
-        void WriteEnd();
     }
 
     internal interface IComputationContext : IInterruptibleStatementContext, IStatementContext
     {
         bool IsCollection { get; }
         string? BuilderVariable { get; }
+        void WriteBeginBlockExpression();
+        void WriteEndBlockExpression();
     }
 
     internal interface IExpressionContext

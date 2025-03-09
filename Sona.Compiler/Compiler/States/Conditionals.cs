@@ -8,7 +8,7 @@ namespace IS4.Sona.Compiler.States
         sealed class TrailingStatements : BlockState
         {
             bool first;
-            IFunctionContext? scope;
+            IComputationContext? scope;
             bool? statementsAllowed;
 
             bool StatementsAllowed => statementsAllowed ??= (Parent!.FindContext<IStatementContext>()?.TrailAllowed ?? true);
@@ -24,11 +24,11 @@ namespace IS4.Sona.Compiler.States
 
             public override void EnterIgnoredTrail(IgnoredTrailContext context)
             {
-                scope = FindContext<IFunctionContext>();
+                scope = FindContext<IComputationContext>();
 
                 Out.WriteCoreOperator("ignore");
                 Out.Write(" ");
-                scope?.WriteBegin();
+                scope?.WriteBeginBlockExpression();
             }
 
             void OnExitTrail()
@@ -42,7 +42,7 @@ namespace IS4.Sona.Compiler.States
             public override void ExitIgnoredTrail(IgnoredTrailContext context)
             {
                 OnExitTrail();
-                scope?.WriteEnd();
+                scope?.WriteEndBlockExpression();
                 Out.WriteLine();
                 ExitState()?.ExitIgnoredTrail(context);
             }

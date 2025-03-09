@@ -109,16 +109,16 @@ namespace IS4.Sona.Compiler.States
             Out.Write(')');
         }
 
-        void IFunctionContext.WriteBegin()
+        void IComputationContext.WriteBeginBlockExpression()
         {
-            Out.WriteLine(_begin_);
-            Out.EnterScope();
+            Out.EnterNestedScope();
+            Out.WriteLine("(");
         }
 
-        void IFunctionContext.WriteEnd()
+        void IComputationContext.WriteEndBlockExpression()
         {
-            Out.ExitScope();
-            Out.Write(_end_);
+            Out.ExitNestedScope();
+            Out.Write(')');
         }
 
         void IInterruptibleStatementContext.WriteBreak(bool hasExpression)
