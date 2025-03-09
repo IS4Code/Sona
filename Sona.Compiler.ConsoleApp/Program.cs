@@ -30,6 +30,14 @@ internal class Program
             Flags: CompilerFlags.Privileged
         );
 
+        AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => {
+            if(SonaCompiler.ResolveEmbeddedAssembly(args.Name) is not { } stream)
+            {
+                return null;
+            }
+            return options.AssemblyLoadContext.LoadFromStream(stream);
+        };
+
         var backColor = Console.BackgroundColor;
         var textColor = Console.ForegroundColor;
 

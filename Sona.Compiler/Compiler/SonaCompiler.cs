@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Antlr4.Runtime;
@@ -117,7 +118,27 @@ namespace IS4.Sona.Compiler
             }
         }
 
-        static readonly string[] embeddedFiles = { "FSharp.Core.dll", "Sona.Runtime.dll" };
+        static readonly Dictionary<string, string> embeddedFiles = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { "FSharp.Core", "FSharp.Core.dll" },
+            { "Sona.Runtime", "Sona.Runtime.dll" }
+        };
+
+        static readonly Assembly currentAssembly = typeof(SonaCompiler).Assembly;
+
+        public static Stream? ResolveEmbeddedAssembly(string? name)
+        {
+            if(name is null)
+            {
+                return null;
+            }
+            name = new AssemblyName(name).Name;
+            if(name is null || !embeddedFiles.TryGetValue(name, out var file))
+            {
+                return null;
+            }
+            return currentAssembly.GetManifestResourceStream(file);
+        }
 
         public async Task<CompilerResult> CompileToStream(AntlrInputStream inputStream, string fileName, Stream outputStream, CompilerOptions options, CancellationToken cancellationToken = default)
         {
@@ -145,11 +166,10 @@ namespace IS4.Sona.Compiler
             fs.InputFiles[manifestPath] = defaultWin32Manifest;
 
             var depsPath = fsPrefix + ".deps";
-            var assembly = typeof(SonaCompiler).Assembly;
-            foreach(var file in embeddedFiles)
+            foreach(var file in embeddedFiles.Values)
             {
                 var path = Path.Combine(depsPath, file);
-                fs.InputFiles[path] = LocalInputFile.FromEmbeddedFile(assembly, file);
+                fs.InputFiles[path] = LocalInputFile.FromEmbeddedFile(currentAssembly, file);
             }
 
             fs.OutputFiles[dllPath] = outputStream;
@@ -166,7 +186,7 @@ namespace IS4.Sona.Compiler
             {
                 "fsc.exe", // ignored
                 "--out:" + dllPath
-            }.Concat(embeddedFiles.Select(f => "-r:" + Path.Combine(depsPath, f)))
+            }.Concat(embeddedFiles.Values.Select(f => "-r:" + Path.Combine(depsPath, f)))
             .Concat(flags.OtherOptions)
             .Concat(flags.ReferencedProjects.Select(p => p.OutputFile))
             .Concat(flags.SourceFiles)

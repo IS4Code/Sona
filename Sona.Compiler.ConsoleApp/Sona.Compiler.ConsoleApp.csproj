@@ -15,12 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Sona.Compiler\Sona.Compiler.csproj" />
-    <ProjectReference Include="..\Sona.Runtime\Sona.Runtime.fsproj" />
-  </ItemGroup>
-
-
-  <ItemGroup>
-    <PackageReference Include="FSharp.Core" Version="9.0.100" />
   </ItemGroup>
 
 </Project>
