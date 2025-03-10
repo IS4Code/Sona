@@ -311,37 +311,42 @@ namespace IS4.Sona.Compiler.States
 
             public sealed override void ExitInterpStrComponentFormat(InterpStrComponentFormatContext context)
             {
-                OnEnd(ref instantState);
-                OnEnd(ref durationState);
-                if((instantState.Traits, durationState.Traits) is (Traits.None, _) or (_, Traits.None) or (Traits.Invalid, Traits.Invalid))
+                try
                 {
-                    // If one is None, there was no character that could specify the trait
-                    Error($"The format string '{text}' does not contain any recognized specifiers. To use it without validation, enclose it in quotes.", context);
+                    OnEnd(ref instantState);
+                    OnEnd(ref durationState);
+                    if((instantState.Traits, durationState.Traits) is (Traits.None, _) or (_, Traits.None) or (Traits.Invalid, Traits.Invalid))
+                    {
+                        // If one is None, there was no character that could specify the trait
+                        Error($"The format string '{text}' does not contain any recognized specifiers. To use it without validation, enclose it in quotes.", context);
+                    }
+                    else if(instantState.Traits == Traits.Invalid)
+                    {
+                        // Duration is valid
+                        Out.WriteOperator(':');
+                        Out.WriteNamespacedName("Sona.Runtime.Traits", "trait " + durationState.TraitName);
+                        Out.Write("<_>");
+                    }
+                    else if(durationState.Traits == Traits.Invalid)
+                    {
+                        // Instant is valid
+                        Out.WriteOperator(':');
+                        Out.WriteNamespacedName("Sona.Runtime.Traits", "trait " + instantState.TraitName);
+                        Out.Write("<_>");
+                    }
+                    else
+                    {
+                        // Both are valid
+                        Out.WriteOperator("|>");
+                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Inference");
+                        Out.Write('.');
+                        Out.WriteIdentifier(instantState.TraitName + "|" + durationState.TraitName);
+                    }
                 }
-                else if(instantState.Traits == Traits.Invalid)
+                finally
                 {
-                    // Duration is valid
-                    Out.WriteOperator(':');
-                    Out.WriteNamespacedName("Sona.Runtime.Traits", "trait " + durationState.TraitName);
-                    Out.Write("<_>");
+                    ((InterpolatedString)ExitState()).ExitInterpStrComponentFormat(context, text.ToString());
                 }
-                else if(durationState.Traits == Traits.Invalid)
-                {
-                    // Instant is valid
-                    Out.WriteOperator(':');
-                    Out.WriteNamespacedName("Sona.Runtime.Traits", "trait " + instantState.TraitName);
-                    Out.Write("<_>");
-                }
-                else
-                {
-                    // Both are valid
-                    Out.WriteOperator("|>");
-                    Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Inference");
-                    Out.Write('.');
-                    Out.WriteIdentifier(instantState.TraitName + "|" + durationState.TraitName);
-                }
-
-                ((InterpolatedString)ExitState()).ExitInterpStrComponentFormat(context, text.ToString());
             }
 
             public override void VisitTerminal(ITerminalNode node)

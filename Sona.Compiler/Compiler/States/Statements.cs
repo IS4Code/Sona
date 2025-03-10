@@ -759,27 +759,32 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitContinueStatement(ContinueStatementContext context)
         {
-            if(!HasExpression)
+            try
             {
-                if(scope == null)
+                if(!HasExpression)
                 {
-                    Error("`continue` must be used in a statement that supports it.", context);
+                    if(scope == null)
+                    {
+                        Error("`continue` must be used in a statement that supports it.", context);
+                    }
+                    else
+                    {
+                        scope.WriteContinue(false, context);
+                    }
                 }
                 else
                 {
-                    scope.WriteContinue(false, context);
+                    Out.Write(")");
+                    if(scope != null)
+                    {
+                        scope.WriteAfterContinue(context);
+                    }
                 }
             }
-            else
+            finally
             {
-                Out.Write(")");
-                if(scope != null)
-                {
-                    scope.WriteAfterContinue(context);
-                }
+                ExitState().ExitContinueStatement(context);
             }
-
-            ExitState().ExitContinueStatement(context);
         }
     }
 
@@ -850,12 +855,18 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitYieldBreakStatement(YieldBreakStatementContext context)
         {
-            if(HasExpression)
+            try
             {
-                Error("`yield break` cannot be used with an expression outside of a computation.", context);
+                if(HasExpression)
+                {
+                    Error("`yield break` cannot be used with an expression outside of a computation.", context);
+                }
+                OnExit(context);
             }
-            OnExit(context);
-            ExitState().ExitYieldBreakStatement(context);
+            finally
+            {
+                ExitState().ExitYieldBreakStatement(context);
+            }
         }
     }
 

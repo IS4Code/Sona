@@ -405,16 +405,22 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void EnterIgnoredTrail(IgnoredTrailContext context)
         {
-            OnExitInner(enterFlags, context);
-            if((enterFlags & StatementFlags.OpenPath) == 0)
+            try
             {
-                // `if true` was written previously
-                Out.WriteLine();
-                Out.Write("else ");
+                OnExitInner(enterFlags, context);
+                if((enterFlags & StatementFlags.OpenPath) == 0)
+                {
+                    // `if true` was written previously
+                    Out.WriteLine();
+                    Out.Write("else ");
+                }
             }
-            Out.WriteLine(_begin_);
-            Out.EnterScope();
-            EnterState<TrailingStatements>().EnterIgnoredTrail(context);
+            finally
+            {
+                Out.WriteLine(_begin_);
+                Out.EnterScope();
+                EnterState<TrailingStatements>().EnterIgnoredTrail(context);
+            }
         }
 
         public sealed override void ExitIgnoredTrail(IgnoredTrailContext context)
@@ -578,8 +584,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitIfStatementFree(IfStatementFreeContext context)
         {
-            OnExitInner(StatementFlags.OpenPath, context);
-            ExitState().ExitIfStatementFree(context);
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitIfStatementFree(context);
+            }
         }
 
         public sealed override void EnterIfStatementReturning(IfStatementReturningContext context)
@@ -589,8 +601,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitIfStatementReturning(IfStatementReturningContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
-            ExitState().ExitIfStatementReturning(context);
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitIfStatementReturning(context);
+            }
         }
 
         public sealed override void EnterIfStatementReturningTrail(IfStatementReturningTrailContext context)
@@ -600,8 +618,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitIfStatementReturningTrail(IfStatementReturningTrailContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
-            ExitState().ExitIfStatementReturningTrail(context);
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitIfStatementReturningTrail(context);
+            }
         }
 
         public sealed override void EnterIfStatementReturningTrailFromElse(IfStatementReturningTrailFromElseContext context)
@@ -611,8 +635,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitIfStatementReturningTrailFromElse(IfStatementReturningTrailFromElseContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
-            ExitState().ExitIfStatementReturningTrailFromElse(context);
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitIfStatementReturningTrailFromElse(context);
+            }
         }
 
         public sealed override void EnterIfStatementInterrupting(IfStatementInterruptingContext context)
@@ -622,8 +652,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitIfStatementInterrupting(IfStatementInterruptingContext context)
         {
-            OnExitInner(StatementFlags.InterruptPath, context);
-            ExitState().ExitIfStatementInterrupting(context);
+            try
+            {
+                OnExitInner(StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitIfStatementInterrupting(context);
+            }
         }
 
         public sealed override void EnterIfStatementInterruptingTrail(IfStatementInterruptingTrailContext context)
@@ -633,8 +669,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitIfStatementInterruptingTrail(IfStatementInterruptingTrailContext context)
         {
-            OnExitInner(StatementFlags.InterruptPath, context);
-            ExitState().ExitIfStatementInterruptingTrail(context);
+            try
+            {
+                OnExitInner(StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitIfStatementInterruptingTrail(context);
+            }
         }
 
         public sealed override void EnterIfStatementInterruptible(IfStatementInterruptibleContext context)
@@ -644,8 +686,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitIfStatementInterruptible(IfStatementInterruptibleContext context)
         {
-            OnExitInner(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
-            ExitState().ExitIfStatementInterruptible(context);
+            try
+            {
+                OnExitInner(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitIfStatementInterruptible(context);
+            }
         }
 
         public sealed override void EnterIfStatementTerminating(IfStatementTerminatingContext context)
@@ -655,8 +703,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitIfStatementTerminating(IfStatementTerminatingContext context)
         {
-            OnExitInner(StatementFlags.Terminating, context);
-            ExitState().ExitIfStatementTerminating(context);
+            try
+            {
+                OnExitInner(StatementFlags.Terminating, context);
+            }
+            finally
+            {
+                ExitState().ExitIfStatementTerminating(context);
+            }
         }
 
         public sealed override void EnterIfStatementConditional(IfStatementConditionalContext context)
@@ -666,8 +720,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitIfStatementConditional(IfStatementConditionalContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
-            ExitState().ExitIfStatementConditional(context);
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitIfStatementConditional(context);
+            }
         }
 
         public sealed override void EnterDoStatementFree(DoStatementFreeContext context)
@@ -677,8 +737,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitDoStatementFree(DoStatementFreeContext context)
         {
-            OnExitInner(StatementFlags.OpenPath, context);
-            ExitState().ExitDoStatementFree(context);
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitDoStatementFree(context);
+            }
         }
 
         public sealed override void EnterDoStatementTerminating(DoStatementTerminatingContext context)
@@ -688,8 +754,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitDoStatementTerminating(DoStatementTerminatingContext context)
         {
-            OnExitInner(StatementFlags.OpenPath, context);
-            ExitState().ExitDoStatementTerminating(context);
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitDoStatementTerminating(context);
+            }
         }
 
         public sealed override void EnterDoStatementReturning(DoStatementReturningContext context)
@@ -699,8 +771,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitDoStatementReturning(DoStatementReturningContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
-            ExitState().ExitDoStatementReturning(context);
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitDoStatementReturning(context);
+            }
         }
 
         public sealed override void EnterDoStatementInterrupting(DoStatementInterruptingContext context)
@@ -710,8 +788,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitDoStatementInterrupting(DoStatementInterruptingContext context)
         {
-            OnExitInner(StatementFlags.InterruptPath, context);
-            ExitState().ExitDoStatementInterrupting(context);
+            try
+            {
+                OnExitInner(StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitDoStatementInterrupting(context);
+            }
         }
 
         public sealed override void EnterDoStatementInterruptingTrail(DoStatementInterruptingTrailContext context)
@@ -721,8 +805,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitDoStatementInterruptingTrail(DoStatementInterruptingTrailContext context)
         {
-            OnExitInner(StatementFlags.InterruptPath, context);
-            ExitState().ExitDoStatementInterruptingTrail(context);
+            try
+            {
+                OnExitInner(StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitDoStatementInterruptingTrail(context);
+            }
         }
 
         public sealed override void EnterDoStatementInterruptible(DoStatementInterruptibleContext context)
@@ -732,8 +822,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitDoStatementInterruptible(DoStatementInterruptibleContext context)
         {
-            OnExitInner(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
-            ExitState().ExitDoStatementInterruptible(context);
+            try
+            {
+                OnExitInner(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitDoStatementInterruptible(context);
+            }
         }
 
         public sealed override void EnterDoStatementConditional(DoStatementConditionalContext context)
@@ -743,8 +839,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitDoStatementConditional(DoStatementConditionalContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
-            ExitState().ExitDoStatementConditional(context);
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitDoStatementConditional(context);
+            }
         }
 
         public override void EnterWhileStatementFree(WhileStatementFreeContext context)
@@ -754,8 +856,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitWhileStatementFree(WhileStatementFreeContext context)
         {
-            OnExitInner(StatementFlags.OpenPath, context);
-            ExitState().ExitWhileStatementFree(context);
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitWhileStatementFree(context);
+            }
         }
 
         public override void EnterWhileStatementFreeInterrupted(WhileStatementFreeInterruptedContext context)
@@ -765,8 +873,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitWhileStatementFreeInterrupted(WhileStatementFreeInterruptedContext context)
         {
-            OnExitInner(StatementFlags.OpenPath, context);
-            ExitState().ExitWhileStatementFreeInterrupted(context);
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitWhileStatementFreeInterrupted(context);
+            }
         }
 
         public override void EnterWhileStatementTerminating(WhileStatementTerminatingContext context)
@@ -776,8 +890,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitWhileStatementTerminating(WhileStatementTerminatingContext context)
         {
-            OnExitInner(StatementFlags.Terminating, context);
-            ExitState().ExitWhileStatementTerminating(context);
+            try
+            {
+                OnExitInner(StatementFlags.Terminating, context);
+            }
+            finally
+            {
+                ExitState().ExitWhileStatementTerminating(context);
+            }
         }
 
         public override void EnterWhileStatementReturningTrail(WhileStatementReturningTrailContext context)
@@ -787,8 +907,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitWhileStatementReturningTrail(WhileStatementReturningTrailContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
-            ExitState().ExitWhileStatementReturningTrail(context);
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitWhileStatementReturningTrail(context);
+            }
         }
 
         public override void EnterWhileStatementConditional(WhileStatementConditionalContext context)
@@ -798,8 +924,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitWhileStatementConditional(WhileStatementConditionalContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
-            ExitState().ExitWhileStatementConditional(context);
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitWhileStatementConditional(context);
+            }
         }
 
         public override void EnterRepeatStatementFree(RepeatStatementFreeContext context)
@@ -809,8 +941,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitRepeatStatementFree(RepeatStatementFreeContext context)
         {
-            OnExitInner(StatementFlags.OpenPath, context);
-            ExitState().ExitRepeatStatementFree(context);
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitRepeatStatementFree(context);
+            }
         }
 
         public override void EnterRepeatStatementFreeInterrupted(RepeatStatementFreeInterruptedContext context)
@@ -820,8 +958,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitRepeatStatementFreeInterrupted(RepeatStatementFreeInterruptedContext context)
         {
-            OnExitInner(StatementFlags.OpenPath, context);
-            ExitState().ExitRepeatStatementFreeInterrupted(context);
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitRepeatStatementFreeInterrupted(context);
+            }
         }
 
         public override void EnterRepeatStatementTerminating(RepeatStatementTerminatingContext context)
@@ -831,8 +975,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitRepeatStatementTerminating(RepeatStatementTerminatingContext context)
         {
-            OnExitInner(StatementFlags.Terminating, context);
-            ExitState().ExitRepeatStatementTerminating(context);
+            try
+            {
+                OnExitInner(StatementFlags.Terminating, context);
+            }
+            finally
+            {
+                ExitState().ExitRepeatStatementTerminating(context);
+            }
         }
 
         public override void EnterRepeatStatementReturningTrail(RepeatStatementReturningTrailContext context)
@@ -842,8 +992,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitRepeatStatementReturningTrail(RepeatStatementReturningTrailContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
-            ExitState().ExitRepeatStatementReturningTrail(context);
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitRepeatStatementReturningTrail(context);
+            }
         }
 
         public override void EnterRepeatStatementConditional(RepeatStatementConditionalContext context)
@@ -853,8 +1009,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitRepeatStatementConditional(RepeatStatementConditionalContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
-            ExitState().ExitRepeatStatementConditional(context);
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitRepeatStatementConditional(context);
+            }
         }
 
         public override void EnterForStatementFree(ForStatementFreeContext context)
@@ -864,8 +1026,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitForStatementFree(ForStatementFreeContext context)
         {
-            OnExitInner(StatementFlags.OpenPath, context);
-            ExitState().ExitForStatementFree(context);
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitForStatementFree(context);
+            }
         }
 
         public override void EnterForStatementFreeInterrupted(ForStatementFreeInterruptedContext context)
@@ -875,8 +1043,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitForStatementFreeInterrupted(ForStatementFreeInterruptedContext context)
         {
-            OnExitInner(StatementFlags.OpenPath, context);
-            ExitState().ExitForStatementFreeInterrupted(context);
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitForStatementFreeInterrupted(context);
+            }
         }
 
         public override void EnterForStatementReturningTrail(ForStatementReturningTrailContext context)
@@ -886,8 +1060,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitForStatementReturningTrail(ForStatementReturningTrailContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
-            ExitState().ExitForStatementReturningTrail(context);
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitForStatementReturningTrail(context);
+            }
         }
 
         public override void EnterForStatementConditional(ForStatementConditionalContext context)
@@ -897,8 +1077,14 @@ namespace IS4.Sona.Compiler.States
 
         public override void ExitForStatementConditional(ForStatementConditionalContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
-            ExitState().ExitForStatementConditional(context);
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitForStatementConditional(context);
+            }
         }
 
         public sealed override void EnterSwitchStatementFree(SwitchStatementFreeContext context)
@@ -908,8 +1094,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitSwitchStatementFree(SwitchStatementFreeContext context)
         {
-            OnExitInner(StatementFlags.OpenPath, context);
-            ExitState().ExitSwitchStatementFree(context);
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitSwitchStatementFree(context);
+            }
         }
 
         public sealed override void EnterSwitchStatementFreeInterrupted(SwitchStatementFreeInterruptedContext context)
@@ -919,8 +1111,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitSwitchStatementFreeInterrupted(SwitchStatementFreeInterruptedContext context)
         {
-            OnExitInner(StatementFlags.OpenPath, context);
-            ExitState().ExitSwitchStatementFreeInterrupted(context);
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitSwitchStatementFreeInterrupted(context);
+            }
         }
 
         public sealed override void EnterSwitchStatementReturning(SwitchStatementReturningContext context)
@@ -930,8 +1128,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitSwitchStatementReturning(SwitchStatementReturningContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
-            ExitState().ExitSwitchStatementReturning(context);
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitSwitchStatementReturning(context);
+            }
         }
 
         public sealed override void EnterSwitchStatementReturningTrail(SwitchStatementReturningTrailContext context)
@@ -941,8 +1145,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitSwitchStatementReturningTrail(SwitchStatementReturningTrailContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
-            ExitState().ExitSwitchStatementReturningTrail(context);
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitSwitchStatementReturningTrail(context);
+            }
         }
 
         public sealed override void EnterSwitchStatementTerminating(SwitchStatementTerminatingContext context)
@@ -952,8 +1162,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitSwitchStatementTerminating(SwitchStatementTerminatingContext context)
         {
-            OnExitInner(StatementFlags.Terminating, context);
-            ExitState().ExitSwitchStatementTerminating(context);
+            try
+            {
+                OnExitInner(StatementFlags.Terminating, context);
+            }
+            finally
+            {
+                ExitState().ExitSwitchStatementTerminating(context);
+            }
         }
 
         public sealed override void EnterSwitchStatementTerminatingInterrupted(SwitchStatementTerminatingInterruptedContext context)
@@ -963,8 +1179,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitSwitchStatementTerminatingInterrupted(SwitchStatementTerminatingInterruptedContext context)
         {
-            OnExitInner(StatementFlags.Terminating, context);
-            ExitState().ExitSwitchStatementTerminatingInterrupted(context);
+            try
+            {
+                OnExitInner(StatementFlags.Terminating, context);
+            }
+            finally
+            {
+                ExitState().ExitSwitchStatementTerminatingInterrupted(context);
+            }
         }
 
         public sealed override void EnterSwitchStatementConditional(SwitchStatementConditionalContext context)
@@ -974,8 +1196,14 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitSwitchStatementConditional(SwitchStatementConditionalContext context)
         {
-            OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
-            ExitState().ExitSwitchStatementConditional(context);
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitSwitchStatementConditional(context);
+            }
         }
         #endregion
     }
