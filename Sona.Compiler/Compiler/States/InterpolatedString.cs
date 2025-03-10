@@ -347,21 +347,43 @@ namespace IS4.Sona.Compiler.States
             public override void VisitTerminal(ITerminalNode node)
             {
                 var token = node.Symbol.Text;
-                text.Append(token);
 
                 char type = token[0];
 
                 if(type is '\\' or '\'')
                 {
                     // Escape characters do not contribute
+                    text.Append(token);
                     return;
                 }
                 
                 if(type == '%')
                 {
+                    text.Append(token);
+
                     // Singleton - just trim %
                     type = token[1];
                     token = token.Substring(1);
+                }
+                else if(!Char.IsAsciiLetter(type) && type is not (':' or '/'))
+                {
+                    // Escape literal characters
+                    if(token.Length == 1)
+                    {
+                        text.Append('\\');
+                        text.Append(token);
+                    }
+                    else
+                    {
+                        text.Append('\'');
+                        text.Append(token);
+                        text.Append('\'');
+                    }
+                    return;
+                }
+                else
+                {
+                    text.Append(token);
                 }
 
                 if(instantState.Traits != Traits.Invalid)

@@ -559,6 +559,9 @@ INTERP_FORMAT_COMPONENTS:
 fragment INTERP_FORMAT_ESCAPE:
   '\\' ('\\' | INTERP_NON_DELIMITER) | '\'' ~['\\\r\n]+ '\'';
 
+fragment INTERP_FORMAT_LITERAL:
+  LINE_WHITESPACE | [-+_];
+
 fragment STANDARD_NUM_FORMAT:
   [bBcCdDeEfFgGnNpPrRxX] '0'* [1-9]? [0-9];
 
@@ -566,7 +569,7 @@ fragment CUSTOM_NUM_FORMAT:
   CUSTOM_NUM_SECTION (';' CUSTOM_NUM_SECTION (';' CUSTOM_NUM_SECTION)?)?;
 
 fragment CUSTOM_NUM_LITERAL:
-  (INTERP_FORMAT_ESCAPE | LINE_WHITESPACE | [-+])*;
+  (INTERP_FORMAT_ESCAPE | INTERP_FORMAT_LITERAL)*;
 
 fragment CUSTOM_NUM_SECTION:
   CUSTOM_NUM_LITERAL (
@@ -789,7 +792,7 @@ INTERP_COMPONENTS_PART_SHORT:
   [a-zA-Z];
 
 INTERP_COMPONENTS_PART_LONG:
-  INTERP_FORMAT_ESCAPE |
+  INTERP_FORMAT_ESCAPE | (INTERP_FORMAT_LITERAL)+ |
   '%' [a-zA-Z] | COLON | SLASH |
   'a'+ | 'b'+ | 'c'+ | 'd'+ | 'e'+ | 'f'+ | 'g'+ |
   'h'+ | 'i'+ | 'j'+ | 'k'+ | 'l'+ | 'm'+ | 'n'+ |
