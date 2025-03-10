@@ -437,7 +437,7 @@ namespace IS4.Sona.Compiler.Gui
 
                 var options = new CompilerOptions
                 (
-                    Target: BinaryTarget.Exe,
+                    Target: BinaryTarget.Script,
                     Flags: CompilerFlags.Privileged |
                         (showBeginEnd ? CompilerFlags.DebuggingComments : 0) |
                         (adjustLineNumbers ? 0 : CompilerFlags.IgnoreLineNumbers),
@@ -465,23 +465,31 @@ namespace IS4.Sona.Compiler.Gui
 
             var inputStream = new AntlrInputStream(text);
 
-            var writer = new StringWriter();
             try
             {
-                compiler.CompileToSource(inputStream, writer, options);
+                var result = compiler.CompileToString(inputStream, options);
 
-                var result = writer.ToString();
+                var resultText = result.IntermediateCode ?? "";
 
                 Invoke(() => {
                     if(latest)
                     {
                         // Show visible success only on latest code
                         resultRichText.Enabled = true;
-                        messageBox.Text = "";
+                        messageBox.Text = String.Join(Environment.NewLine, result.Diagnostics);
                     }
 
-                    SetOutputText(result, (options.Flags & CompilerFlags.IgnoreLineNumbers) == 0);
+                    SetOutputText(resultText, (options.Flags & CompilerFlags.IgnoreLineNumbers) == 0);
                 });
+
+                if(latest)
+                {
+                    // Expose F# errors
+                    compiler.CheckResult(result, "input", options);
+                    Invoke(() => {
+                        messageBox.Text = String.Join(Environment.NewLine, result.Diagnostics);
+                    });
+                }
 
                 return latestResult = true;
             }

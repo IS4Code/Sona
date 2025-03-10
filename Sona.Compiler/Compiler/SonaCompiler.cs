@@ -206,7 +206,7 @@ namespace IS4.Sona.Compiler
 
             fs.OutputFiles[outputPath] = outputStream;
 
-            using var replacedEnv = await FSharpIsolatedEnvironment.Create(fs, depsPath, cancellationToken);
+            using var replacedEnv = await FSharpIsolatedEnvironment.CreateAsync(fs, depsPath, cancellationToken);
 
             var sourceText = SourceText.ofString(source);
 
@@ -248,17 +248,8 @@ namespace IS4.Sona.Compiler
             return CompileToStream(inputStream, fileName, new BlockBufferStream(), options, cancellationToken: cancellationToken);
         }
 
-        public async Task<CompilerResult> CompileToDelegate(AntlrInputStream inputStream, string fileName, CompilerOptions options, CancellationToken cancellationToken = default)
+        public FsiEvaluationSession CheckEvaluation(CompilerResult result, string manifestPath, string depsPath, CompilerOptions options)
         {
-            var result = CompileToString(inputStream, options);
-            var source = result.IntermediateCode!;
-
-            var fs = GetFileSystem(source, fileName, options, out var inputPath, out _, out var manifestPath, out var depsPath);
-
-            using var replacedEnv = await FSharpIsolatedEnvironment.Create(fs, depsPath, cancellationToken);
-
-            FSharpOption<CancellationToken>? cancelTokenOption = cancellationToken.CanBeCanceled ? cancellationToken : null;
-                
             var flags = GetOptions(manifestPath, options);
 
             var args = new[]
@@ -276,8 +267,8 @@ namespace IS4.Sona.Compiler
             var session = FsiEvaluationSession.Create(config, args, Console.In, Console.Out, Console.Error, collectible: true, legacyReferenceResolver: null);
 
             // Check for errors separately 
-            var (parseResults, fileResults, projectResults) = session.ParseAndCheckInteraction(source);
-            
+            var (parseResults, fileResults, projectResults) = session.ParseAndCheckInteraction(result.IntermediateCode!);
+
             foreach(var diagnostic in parseResults.Diagnostics.Concat(fileResults.Diagnostics).Concat(projectResults.Diagnostics).Distinct())
             {
                 var level =
@@ -291,11 +282,30 @@ namespace IS4.Sona.Compiler
             if(projectResults.HasCriticalErrors)
             {
                 result.Success = false;
+            }
+            return session;
+        }
+
+        public async Task<CompilerResult> CompileToDelegate(AntlrInputStream inputStream, string fileName, CompilerOptions options, CancellationToken cancellationToken = default)
+        {
+            var result = CompileToString(inputStream, options);
+            var source = result.IntermediateCode!;
+
+            var fs = GetFileSystem(source, fileName, options, out var inputPath, out _, out var manifestPath, out var depsPath);
+
+            using var replacedEnv = await FSharpIsolatedEnvironment.CreateAsync(fs, depsPath, cancellationToken);
+
+            FSharpOption<CancellationToken>? cancelTokenOption = cancellationToken.CanBeCanceled ? cancellationToken : null;
+
+            var session = CheckEvaluation(result, manifestPath, depsPath, options);
+
+            if(!result.Success)
+            {
                 return result;
             }
 
             result.EntryPoint = async () => {
-                using var replacedEnv = await FSharpIsolatedEnvironment.Create(fs, depsPath, cancellationToken);
+                using var replacedEnv = await FSharpIsolatedEnvironment.CreateAsync(fs, depsPath, cancellationToken);
                 await EvalInteraction();
             };
 
@@ -324,6 +334,14 @@ namespace IS4.Sona.Compiler
             {
                 return CompileToBinary(inputStream, fileName, options, cancellationToken);
             }
+        }
+
+        public void CheckResult(CompilerResult result, string fileName, CompilerOptions options, CancellationToken cancellationToken = default)
+        {
+            var fs = GetFileSystem(result.IntermediateCode ?? throw new ArgumentException("Result is missing compilable code.", nameof(result)), fileName, options, out _, out _, out var manifestPath, out var depsPath);
+
+            using var replacedEnv = FSharpIsolatedEnvironment.Create(fs, depsPath, cancellationToken);
+            CheckEvaluation(result, manifestPath, depsPath, options);
         }
 
         static readonly string[] executableFlags = new[] {
@@ -356,7 +374,7 @@ namespace IS4.Sona.Compiler
             "--langversion:latest",
             "--nowarn:3220",
             "--warnon:21,52,1178,1182,3387,3388,3389,3397,3390,3517,3559",
-            "--warnaserror+:20,25,193,3517",
+            "--warnaserror+:20,25,193,3517,3388",
             "--checknulls+",
         };
 
@@ -474,9 +492,15 @@ namespace IS4.Sona.Compiler
                 }
             }
 
-            public static async ValueTask<FSharpIsolatedEnvironment> Create(IFileSystem newFileSystem, string compilerBinPath, CancellationToken cancellationToken)
+            public static async ValueTask<FSharpIsolatedEnvironment> CreateAsync(IFileSystem newFileSystem, string compilerBinPath, CancellationToken cancellationToken)
             {
                 await semaphore.WaitAsync(cancellationToken);
+                return new FSharpIsolatedEnvironment(newFileSystem, compilerBinPath);
+            }
+
+            public static FSharpIsolatedEnvironment Create(IFileSystem newFileSystem, string compilerBinPath, CancellationToken cancellationToken)
+            {
+                semaphore.Wait(cancellationToken);
                 return new FSharpIsolatedEnvironment(newFileSystem, compilerBinPath);
             }
 
