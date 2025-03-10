@@ -553,8 +553,8 @@ INTERP_FORMAT_STANDARD:
 INTERP_FORMAT_NUMBER:
   ':' (STANDARD_NUM_FORMAT | CUSTOM_NUM_FORMAT) -> mode(InterpolationEnd);
 
-INTERP_FORMAT_COMPONENTS:
-  COLON -> skip, mode(InterpolationComponents);
+INTERP_FORMAT_BEGIN_COMPONENTS:
+  COLON -> mode(InterpolationComponents);
 
 fragment INTERP_FORMAT_ESCAPE:
   '\\' ('\\' | INTERP_NON_DELIMITER) | '\'' ~['\\\r\n]+ '\'';

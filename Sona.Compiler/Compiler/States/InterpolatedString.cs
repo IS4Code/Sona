@@ -315,7 +315,11 @@ namespace IS4.Sona.Compiler.States
                 {
                     OnEnd(ref instantState);
                     OnEnd(ref durationState);
-                    if((instantState.Traits, durationState.Traits) is (Traits.None, _) or (_, Traits.None) or (Traits.Invalid, Traits.Invalid))
+                    if(text.Length == 0)
+                    {
+                        Error($"The format string must not be empty.", context);
+                    }
+                    else if((instantState.Traits, durationState.Traits) is (Traits.None, _) or (_, Traits.None) or (Traits.Invalid, Traits.Invalid))
                     {
                         // If one is None, there was no character that could specify the trait
                         Error($"The format string '{text}' does not contain any recognized specifiers. To use it without validation, enclose it in quotes.", context);
@@ -351,6 +355,11 @@ namespace IS4.Sona.Compiler.States
 
             public override void VisitTerminal(ITerminalNode node)
             {
+                if(node.Symbol.Type == SonaLexer.INTERP_FORMAT_BEGIN_COMPONENTS)
+                {
+                    return;
+                }
+
                 var token = node.Symbol.Text;
 
                 char type = token[0];
