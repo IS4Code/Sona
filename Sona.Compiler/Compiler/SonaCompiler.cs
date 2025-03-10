@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Antlr4.Runtime;
-using Antlr4.Runtime.Misc;
 using FSharp.Compiler.CodeAnalysis;
 using FSharp.Compiler.IO;
 using FSharp.Compiler.Text;
@@ -16,6 +15,7 @@ using IS4.Sona.Compiler.Tools;
 using IS4.Sona.Grammar;
 using Microsoft.FSharp.Control;
 using Microsoft.FSharp.Core;
+using static FSharp.Compiler.Interactive.Shell;
 
 namespace IS4.Sona.Compiler
 {
@@ -161,10 +161,9 @@ namespace IS4.Sona.Compiler
             return currentAssembly.GetManifestResourceStream(file);
         }
 
-        public async Task<CompilerResult> CompileToStream(AntlrInputStream inputStream, string fileName, Stream outputStream, CompilerOptions options, CancellationToken cancellationToken = default)
+        public CompilerResult CompileToString(AntlrInputStream inputStream, CompilerOptions options)
         {
             CompilerResult result;
-
             string source;
             using(var sourceWriter = new StringWriter())
             {
@@ -173,40 +172,52 @@ namespace IS4.Sona.Compiler
                 source = sourceWriter.ToString();
             }
             result.IntermediateCode = source;
-            result.Stream = outputStream;
+            return result;
+        }
 
+        private LocalFileSystem GetFileSystem(string source, string fileName, CompilerOptions options, out string inputPath, out string outputPath, out string manifestPath, out string depsPath)
+        {
             // A virtual file prefix (accessed through the local file system) to stand for in-memory dependencies
             var fsPrefix = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), Path.GetFileNameWithoutExtension(fileName));
-            
-            var fs = new LocalFileSystem(fsPrefix, options.AssemblyLoadContext);
-            var fsxName = fsPrefix + ".fsx";
-            var dllPath = fsPrefix + ".dll";
-            var manifestPath = fsPrefix + ".win32manifest";
 
-            fs.InputFiles[fsxName] = source;
+            var fs = new LocalFileSystem(fsPrefix, options.AssemblyLoadContext);
+            inputPath = fsPrefix + ".fsx";
+            outputPath = fsPrefix + ".dll";
+            manifestPath = fsPrefix + ".win32manifest";
+
+            fs.InputFiles[inputPath] = source;
             fs.InputFiles[manifestPath] = defaultWin32Manifest;
 
-            var depsPath = fsPrefix + ".deps";
+            depsPath = fsPrefix + ".deps";
             foreach(var file in embeddedFiles.Values)
             {
                 var path = Path.Combine(depsPath, file);
                 fs.InputFiles[path] = LocalInputFile.FromEmbeddedFile(currentAssembly, file);
             }
+            return fs;
+        }
 
-            fs.OutputFiles[dllPath] = outputStream;
+        public async Task<CompilerResult> CompileToStream(AntlrInputStream inputStream, string fileName, Stream outputStream, CompilerOptions options, CancellationToken cancellationToken = default)
+        {
+            var result = CompileToString(inputStream, options);
+            var source = result.IntermediateCode!;
 
-            using var replacedFs = new FileSystemReplacement(fs);
+            var fs = GetFileSystem(source, fileName, options, out var inputPath, out var outputPath, out var manifestPath, out var depsPath);
+
+            fs.OutputFiles[outputPath] = outputStream;
+
+            using var replacedEnv = await FSharpIsolatedEnvironment.Create(fs, depsPath, cancellationToken);
 
             var sourceText = SourceText.ofString(source);
 
             FSharpOption<CancellationToken>? cancelTokenOption = cancellationToken.CanBeCanceled ? cancellationToken : null;
                 
-            var (checker, flags) = await GetCheckerAndOptions(fsxName, sourceText, depsPath, manifestPath, options, cancelTokenOption);
+            var (checker, flags) = await GetCheckerAndOptions(inputPath, sourceText, manifestPath, options, cancelTokenOption);
 
             var args = new[]
             {
                 "fsc.exe", // ignored
-                "--out:" + dllPath
+                "--out:" + outputPath
             }.Concat(embeddedFiles.Values.Select(f => "-r:" + Path.Combine(depsPath, f)))
             .Concat(flags.OtherOptions)
             .Concat(flags.ReferencedProjects.Select(p => p.OutputFile))
@@ -237,21 +248,104 @@ namespace IS4.Sona.Compiler
             return CompileToStream(inputStream, fileName, new BlockBufferStream(), options, cancellationToken: cancellationToken);
         }
 
+        public async Task<CompilerResult> CompileToDelegate(AntlrInputStream inputStream, string fileName, CompilerOptions options, CancellationToken cancellationToken = default)
+        {
+            var result = CompileToString(inputStream, options);
+            var source = result.IntermediateCode!;
+
+            var fs = GetFileSystem(source, fileName, options, out var inputPath, out _, out var manifestPath, out var depsPath);
+
+            using var replacedEnv = await FSharpIsolatedEnvironment.Create(fs, depsPath, cancellationToken);
+
+            FSharpOption<CancellationToken>? cancelTokenOption = cancellationToken.CanBeCanceled ? cancellationToken : null;
+                
+            var flags = GetOptions(manifestPath, options);
+
+            var args = new[]
+            {
+                "fsi.exe", // ignored
+                "--noninteractive",
+                "--consolecolors",
+                "--gui-",
+                "--quiet"
+            }.Concat(embeddedFiles.Values.Select(f => "-r:" + Path.Combine(depsPath, f)))
+            .Concat(flags)
+            .ToArray();
+
+            var config = FsiEvaluationSession.GetDefaultConfiguration();
+            var session = FsiEvaluationSession.Create(config, args, Console.In, Console.Out, Console.Error, collectible: true, legacyReferenceResolver: null);
+
+            // Check for errors separately 
+            var (parseResults, fileResults, projectResults) = session.ParseAndCheckInteraction(source);
+            
+            foreach(var diagnostic in parseResults.Diagnostics.Concat(fileResults.Diagnostics).Concat(projectResults.Diagnostics).Distinct())
+            {
+                var level =
+                    diagnostic.Severity.IsError ? DiagnosticLevel.Error :
+                    diagnostic.Severity.IsWarning ? DiagnosticLevel.Warning :
+                    DiagnosticLevel.Info;
+
+                result.AddDiagnostic(new(level, diagnostic.ErrorNumberText, diagnostic.Message, diagnostic.StartLine, diagnostic.ExtendedData?.Value));
+            }
+
+            if(projectResults.HasCriticalErrors)
+            {
+                result.Success = false;
+                return result;
+            }
+
+            result.EntryPoint = async () => {
+                using var replacedEnv = await FSharpIsolatedEnvironment.Create(fs, depsPath, cancellationToken);
+                await EvalInteraction();
+            };
+
+            return result;
+
+            Task EvalInteraction()
+            {
+                var (result, diagnostics) = session.EvalInteractionNonThrowing(source, inputPath, cancelTokenOption);
+
+                if(result is FSharpChoice<FSharpOption<FsiValue>, Exception>.Choice2Of2 { Item: { } exception })
+                {
+                    // Unwrap exception
+                    return Task.FromException(exception);
+                }
+                return Task.CompletedTask;
+            }
+        }
+
+        public Task<CompilerResult> Compile(AntlrInputStream inputStream, string fileName, CompilerOptions options, CancellationToken cancellationToken = default)
+        {
+            if(options.Target == BinaryTarget.Script)
+            {
+                return CompileToDelegate(inputStream, fileName, options, cancellationToken);
+            }
+            else
+            {
+                return CompileToBinary(inputStream, fileName, options, cancellationToken);
+            }
+        }
+
         static readonly string[] executableFlags = new[] {
             "--subsystemversion:6.00",
             "--standalone",
             "--nointerfacedata",
+            "--platform:anycpu",
         };
 
         static readonly string[] libraryFlags = new[] {
             "--nowin32manifest",
+            "--targetprofile:netstandard",
+            "--platform:anycpu",
+        };
+
+        static readonly string[] scriptFlags = new[] {
             "--targetprofile:netstandard",
         };
 
         static readonly string[] commonFlags = new[] {
             "--debug:embedded",
             "--deterministic+",
-            "--platform:anycpu",
 
             "--preferreduilang:en",
             //"--flaterrors",
@@ -266,15 +360,10 @@ namespace IS4.Sona.Compiler
             "--checknulls+",
         };
 
-        static readonly SemaphoreSlim environmentSemaphore = new SemaphoreSlim(1, 1);
-
-        private async Task<(FSharpChecker, FSharpProjectOptions)> GetCheckerAndOptions(string sourceName, ISourceText sourceText, string depsPath, string manifestPath, CompilerOptions options, FSharpOption<CancellationToken>? cancellationToken)
+        private IEnumerable<string> GetOptions(string manifestPath, CompilerOptions options)
         {
-            // Does not appear to be used at all
-            var documentSource = GetDocumentSource(sourceName, sourceText);
-
             var allFlags = new List<string>();
-            if(options.Target != BinaryTarget.Method)
+            if(options.Target != BinaryTarget.Script)
             {
                 allFlags.Add($"--target:{options.Target.ToString().ToLowerInvariant()}");
             }
@@ -286,14 +375,19 @@ namespace IS4.Sona.Compiler
             {
                 allFlags.Add("--optimize-");
             }
-            if(options.Target is BinaryTarget.Exe or BinaryTarget.WinExe)
+            switch(options.Target)
             {
-                allFlags.AddRange(executableFlags);
-                allFlags.Add($"--win32manifest:{manifestPath}");
-            }
-            else
-            {
-                allFlags.AddRange(libraryFlags);
+                case BinaryTarget.Exe:
+                case BinaryTarget.WinExe:
+                    allFlags.AddRange(executableFlags);
+                    allFlags.Add($"--win32manifest:{manifestPath}");
+                    break;
+                case BinaryTarget.Script:
+                    allFlags.AddRange(scriptFlags);
+                    break;
+                default:
+                    allFlags.AddRange(libraryFlags);
+                    break;
             }
             allFlags.AddRange(commonFlags);
 
@@ -301,56 +395,48 @@ namespace IS4.Sona.Compiler
             {
                 allFlags.Add("--reflectionfree");
             }
+            return allFlags;
+        }
 
-            await environmentSemaphore.WaitAsync();
-            try
-            {
-                var previousBin = Environment.GetEnvironmentVariable("FSHARP_COMPILER_BIN");
-                Environment.SetEnvironmentVariable("FSHARP_COMPILER_BIN", depsPath);
-                try
-                {
-                    var checker = FSharpChecker.Create(
-                        projectCacheSize: null,
-                        keepAssemblyContents: null,
-                        keepAllBackgroundResolutions: false,
-                        legacyReferenceResolver: null,
-                        tryGetMetadataSnapshot: null,
-                        suggestNamesForErrors: null,
-                        keepAllBackgroundSymbolUses: false,
-                        enableBackgroundItemKeyStoreAndSemanticClassification: null,
-                        enablePartialTypeChecking: null,
-                        parallelReferenceResolution: true,
-                        captureIdentifiersWhenParsing: null,
-                        documentSource: documentSource,
-                        useSyntaxTreeCache: false,
-                        useTransparentCompiler: null
-                    );
+        private async Task<(FSharpChecker, FSharpProjectOptions)> GetCheckerAndOptions(string sourceName, ISourceText sourceText, string manifestPath, CompilerOptions options, FSharpOption<CancellationToken>? cancellationToken)
+        {
+            // Does not appear to be used at all
+            var documentSource = GetDocumentSource(sourceName, sourceText);
 
-                    var (flags, _) = await FSharpAsync.StartAsTask(checker.GetProjectOptionsFromScript(
-                        sourceName,
-                        sourceText,
-                        previewEnabled: null,
-                        loadedTimeStamp: null,
-                        otherFlags: allFlags.ToArray(),
-                        useFsiAuxLib: false,
-                        useSdkRefs: false,
-                        assumeDotNetFramework: options.Target is BinaryTarget.Exe or BinaryTarget.WinExe,
-                        sdkDirOverride: null,
-                        optionsStamp: null,
-                        userOpName: null
-                    ), taskCreationOptions: null, cancellationToken: cancellationToken);
+            var allFlags = GetOptions(manifestPath, options);
 
-                    return (checker, flags);
-                }
-                finally
-                {
-                    Environment.SetEnvironmentVariable("FSHARP_COMPILER_BIN", previousBin);
-                }
-            }
-            finally
-            {
-                environmentSemaphore.Release();
-            }
+            var checker = FSharpChecker.Create(
+                projectCacheSize: null,
+                keepAssemblyContents: null,
+                keepAllBackgroundResolutions: false,
+                legacyReferenceResolver: null,
+                tryGetMetadataSnapshot: null,
+                suggestNamesForErrors: null,
+                keepAllBackgroundSymbolUses: false,
+                enableBackgroundItemKeyStoreAndSemanticClassification: null,
+                enablePartialTypeChecking: null,
+                parallelReferenceResolution: true,
+                captureIdentifiersWhenParsing: null,
+                documentSource: documentSource,
+                useSyntaxTreeCache: false,
+                useTransparentCompiler: null
+            );
+
+            var (flags, _) = await FSharpAsync.StartAsTask(checker.GetProjectOptionsFromScript(
+                sourceName,
+                sourceText,
+                previewEnabled: null,
+                loadedTimeStamp: null,
+                otherFlags: allFlags.ToArray(),
+                useFsiAuxLib: false,
+                useSdkRefs: false,
+                assumeDotNetFramework: options.Target is BinaryTarget.Exe or BinaryTarget.WinExe,
+                sdkDirOverride: null,
+                optionsStamp: null,
+                userOpName: null
+            ), taskCreationOptions: null, cancellationToken: cancellationToken);
+
+            return (checker, flags);
         }
 
         static readonly FSharpAsync<FSharpOption<ISourceText>?> nullSourceTextAsync = FSharpAsync.AwaitTask(Task.FromResult<FSharpOption<ISourceText>?>(
@@ -367,27 +453,41 @@ namespace IS4.Sona.Compiler
             return DocumentSource.NewCustom(func);
         }
 
-        readonly struct FileSystemReplacement : IDisposable
+        readonly struct FSharpIsolatedEnvironment : IDisposable
         {
             static readonly Type fileSystemLock = typeof(FileSystemAutoOpens);
 
-            readonly IFileSystem previous;
+            static readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
 
-            public FileSystemReplacement(IFileSystem newFileSystem)
+            readonly IFileSystem previousFileSystem;
+            readonly string? previousBin;
+
+            private FSharpIsolatedEnvironment(IFileSystem newFileSystem, string compilerBinPath)
             {
                 lock(fileSystemLock)
                 {
-                    previous = FileSystemAutoOpens.FileSystem;
+                    previousFileSystem = FileSystemAutoOpens.FileSystem;
                     FileSystemAutoOpens.FileSystem = newFileSystem;
+
+                    previousBin = Environment.GetEnvironmentVariable("FSHARP_COMPILER_BIN");
+                    Environment.SetEnvironmentVariable("FSHARP_COMPILER_BIN", compilerBinPath);
                 }
+            }
+
+            public static async ValueTask<FSharpIsolatedEnvironment> Create(IFileSystem newFileSystem, string compilerBinPath, CancellationToken cancellationToken)
+            {
+                await semaphore.WaitAsync(cancellationToken);
+                return new FSharpIsolatedEnvironment(newFileSystem, compilerBinPath);
             }
 
             public void Dispose()
             {
                 lock(fileSystemLock)
                 {
-                    FileSystemAutoOpens.FileSystem = previous;
+                    FileSystemAutoOpens.FileSystem = previousFileSystem;
+                    Environment.SetEnvironmentVariable("FSHARP_COMPILER_BIN", previousBin);
                 }
+                semaphore.Release();
             }
         }
 

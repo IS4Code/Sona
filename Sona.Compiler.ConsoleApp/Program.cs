@@ -43,7 +43,7 @@ internal class Program
 
         while(true)
         {
-            MethodInfo? entryPoint;
+            Func<Task>? entryPoint;
             try
             {
                 CompilerResult result;
@@ -64,7 +64,7 @@ internal class Program
                     }
                     else
                     {
-                        result = await compiler.CompileToBinary(inputStream, Guid.NewGuid().ToString(), options with { Target = BinaryTarget.Method });
+                        result = await compiler.CompileToDelegate(inputStream, Guid.NewGuid().ToString(), options with { Target = BinaryTarget.Script });
                     }
                 }
 
@@ -99,7 +99,7 @@ internal class Program
             }
             catch(Exception e) when(!Debugger.IsAttached)
             {
-                WriteLine(ConsoleColor.Red, "Compiler error:" + e.Message);
+                WriteLine(ConsoleColor.Red, "Compiler error: " + e.Message);
                 WriteLine(ConsoleColor.White, "Press any key to retry.");
                 Console.ReadKey(true);
                 continue;
@@ -107,10 +107,7 @@ internal class Program
 
             try
             {
-                if(entryPoint.Invoke(null, null) is int exitCode)
-                {
-                    Environment.Exit(exitCode);
-                }
+                await entryPoint();
             }
             catch(Exception e)
             {

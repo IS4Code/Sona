@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace IS4.Sona.Compiler
 {
@@ -17,7 +19,11 @@ namespace IS4.Sona.Compiler
 
         public IReadOnlyCollection<CompilerDiagnostic> Diagnostics => diagnostics;
 
-        public bool Success => !diagnostics.Any(d => d.Level == DiagnosticLevel.Error);
+        bool? success;
+        public bool Success {
+            get => success ?? !diagnostics.Any(d => d.Level == DiagnosticLevel.Error);
+            internal set => success = value;
+        }
 
         object syncLock = new();
 
@@ -29,7 +35,11 @@ namespace IS4.Sona.Compiler
             return options.AssemblyLoadContext.LoadFromStream(Stream);
         });
 
-        public MethodInfo? EntryPoint => Assembly?.EntryPoint;
+        Func<Task>? entryPoint;
+        public Func<Task>? EntryPoint {
+            get => entryPoint ??= CreateEntryPoint();
+            set => entryPoint = value;
+        } 
 
         public CompilerResult(CompilerOptions options)
         {
@@ -39,6 +49,19 @@ namespace IS4.Sona.Compiler
         internal void AddDiagnostic(CompilerDiagnostic diagnostic)
         {
             diagnostics.Add(diagnostic);
+        }
+
+        private Func<Task>? CreateEntryPoint()
+        {
+            if(Assembly is not { EntryPoint: { } entryPoint })
+            {
+                return null;
+            }
+#pragma warning disable CS1998
+            return async () => {
+                entryPoint.CreateDelegate<Action>().Invoke();
+            };
+#pragma warning restore CS1998
         }
     }
 

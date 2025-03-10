@@ -11,7 +11,7 @@ namespace IS4.Sona.Compiler
         WinExe,
         Library,
         Module,
-        Method
+        Script
     }
 
     [Flags]
