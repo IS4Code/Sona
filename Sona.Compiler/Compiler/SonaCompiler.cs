@@ -64,7 +64,14 @@ namespace IS4.Sona.Compiler
             // Main state to process the chunk
             parser.AddParseListener(new ChunkState(context));
 
-            parser.chunk();
+            try
+            {
+                parser.chunk();
+            }
+            catch(Exception e)
+            {
+                result.AddDiagnostic(new(DiagnosticLevel.Error, "COMPILER", e.Message, lexer.Line, e));
+            }
 
             return result;
         }
