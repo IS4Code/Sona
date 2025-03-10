@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -248,23 +249,27 @@ namespace IS4.Sona.Compiler
             return CompileToStream(inputStream, fileName, new BlockBufferStream(), options, cancellationToken: cancellationToken);
         }
 
-        public FsiEvaluationSession CheckEvaluation(CompilerResult result, string manifestPath, string depsPath, CompilerOptions options)
+        readonly ConcurrentDictionary<CompilerOptions, FsiEvaluationSession> sessionCache = new();
+
+        private FsiEvaluationSession CheckEvaluation(CompilerResult result, string manifestPath, string depsPath, CompilerOptions options)
         {
-            var flags = GetOptions(manifestPath, options);
+            var session = sessionCache.GetOrAdd(options, options => {
+                var flags = GetOptions(manifestPath, options);
 
-            var args = new[]
-            {
-                "fsi.exe", // ignored
-                "--noninteractive",
-                "--consolecolors",
-                "--gui-",
-                "--quiet"
-            }.Concat(embeddedFiles.Values.Select(f => "-r:" + Path.Combine(depsPath, f)))
-            .Concat(flags)
-            .ToArray();
+                var args = new[]
+                {
+                    "fsi.exe", // ignored
+                    "--noninteractive",
+                    "--consolecolors",
+                    "--gui-",
+                    "--quiet"
+                }.Concat(embeddedFiles.Values.Select(f => "-r:" + Path.Combine(depsPath, f)))
+                .Concat(flags)
+                .ToArray();
 
-            var config = FsiEvaluationSession.GetDefaultConfiguration();
-            var session = FsiEvaluationSession.Create(config, args, Console.In, Console.Out, Console.Error, collectible: true, legacyReferenceResolver: null);
+                var config = FsiEvaluationSession.GetDefaultConfiguration();
+                return FsiEvaluationSession.Create(config, args, Console.In, Console.Out, Console.Error, collectible: true, legacyReferenceResolver: null);
+            });
 
             // Check for errors separately 
             var (parseResults, fileResults, projectResults) = session.ParseAndCheckInteraction(result.IntermediateCode!);
