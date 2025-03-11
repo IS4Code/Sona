@@ -655,8 +655,9 @@ namespace IS4.Sona.Compiler.States
             else
             {
                 Out.Write(")");
-                Out.WriteSpecialMember("throw()");
-                Out.Write("()");
+                Out.WriteOperator("|>");
+                Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators");
+                Out.Write(".Throw");
             }
 
             ExitState().ExitThrowStatement(context);

@@ -1,4 +1,5 @@
-﻿namespace Sona.Runtime
+﻿namespace Sona.Runtime.CompilerServices.Extensions
+[<AutoOpen(path = "Sona.Runtime.CompilerServices.Extensions")>]do()
 
 open System
 open System.Runtime.CompilerServices
@@ -63,15 +64,10 @@ type BitExtensions private () =
 type StringExtensions private () =
   [<Extension>] static member inline ``#``(this: ^T when ^T : (member Length : int)) = this.Length
   [<Extension>] static member inline ``..``(this, other) = this ^ other
-  [<Extension>] static member inline ``throw()``(this) = failwith this
 
 [<Extension>]
 type RangeExtensions private () =
   [<Extension>] static member inline ``..``(this, other) = (..) this other
-
-[<Extension>]
-type ExceptionExtensions private () =
-  [<Extension>] static member inline ``throw()``(this) = raise this
 
 [<Extension>]
 type SequenceExtensions private () =
