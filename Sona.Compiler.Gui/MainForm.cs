@@ -311,38 +311,17 @@ namespace IS4.Sona.Compiler.Gui
                 var start = token.StartIndex;
                 var length = token.StopIndex + 1 - start;
 
-                if(start > lastPosition && (reformatModifiedText || (affectedEnd >= lastPosition && affectedStart <= start)))
+                if(start > lastPosition)
                 {
                     // Ignored part after previous token
                     var ignoreLength = start - lastPosition;
-                    sonaRichText.SelectionStart = lastPosition;
-                    sonaRichText.SelectionLength = ignoreLength;
-                    sonaRichText.SelectionFont = new(sonaRichText.Font, input.AsSpan(lastPosition, ignoreLength).IsWhiteSpace() ? FontStyle.Regular : FontStyle.Italic);
-                    updated = true;
+                    FormatToken(lastPosition, ignoreLength, input.AsSpan(lastPosition, ignoreLength).IsWhiteSpace() ? FontStyle.Regular : FontStyle.Italic);
                 }
-
                 lastPosition = start + length;
-
-                if(!reformatModifiedText)
-                {
-                    if(start + length <= affectedStart)
-                    {
-                        continue;
-                    }
-                    if(start >= affectedEnd)
-                    {
-                        continue;
-                    }
-                }
-
-                // Needs reformatting
-                sonaRichText.SelectionStart = start;
-                sonaRichText.SelectionLength = length;
-
+                
                 if(token.Type is SonaLexer.BEGIN_INLINE_SOURCE)
                 {
-                    updated = true;
-                    sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Bold | FontStyle.Italic);
+                    FormatToken(start, length, FontStyle.Bold | FontStyle.Italic);
                     while((token = lexer.NextToken()) is { Type: not SonaLexer.END_INLINE_SOURCE } fsToken)
                     {
                         switch(token.Type)
@@ -357,9 +336,7 @@ namespace IS4.Sona.Compiler.Gui
                             case SonaLexer.FS_END_BLOCK_COMMENT:
                                 start = token.StartIndex;
                                 length = token.StopIndex + 1 - start;
-                                sonaRichText.SelectionStart = start;
-                                sonaRichText.SelectionLength = length;
-                                sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Italic);
+                                FormatToken(start, length, FontStyle.Italic);
                                 continue;
                         }
                         var tokenText = token.Text;
@@ -380,21 +357,13 @@ namespace IS4.Sona.Compiler.Gui
                                 return;
                             }
                             offset = found + part.Length;
-                            if(style == FontStyle.Regular)
-                            {
-                                return;
-                            }
-                            sonaRichText.SelectionStart = start + found;
-                            sonaRichText.SelectionLength = part.Length;
-                            sonaRichText.SelectionFont = new(sonaRichText.Font, style);
+                            FormatToken(start + found, part.Length, style);
                         });
                     }
                     start = token.StartIndex;
                     length = token.StopIndex + 1 - start;
                     lastPosition = start + length;
-                    sonaRichText.SelectionStart = start;
-                    sonaRichText.SelectionLength = length;
-                    sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Bold | FontStyle.Italic);
+                    FormatToken(start, length, FontStyle.Bold | FontStyle.Italic);
                     continue;
                 }
 
@@ -402,37 +371,52 @@ namespace IS4.Sona.Compiler.Gui
                 if(token.Type is SonaLexer.ERROR or SonaLexer.UNDERSCORE or SonaLexer.INT_SUFFIX or SonaLexer.FLOAT_SUFFIX or SonaLexer.EXP_SUFFIX or SonaLexer.HEX_SUFFIX or SonaLexer.END_STRING_SUFFIX or SonaLexer.END_CHAR_SUFFIX)
                 {
                     // Error
-                    sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Italic | FontStyle.Strikeout);
+                    FormatToken(start, length, FontStyle.Italic | FontStyle.Strikeout);
                 }
                 else if(token.Type is SonaLexer.INT_LITERAL or SonaLexer.FLOAT_LITERAL or SonaLexer.EXP_LITERAL or SonaLexer.HEX_LITERAL or SonaLexer.STRING_LITERAL or SonaLexer.VERBATIM_STRING_LITERAL or SonaLexer.CHAR_LITERAL or SonaLexer.BEGIN_CHAR or SonaLexer.BEGIN_STRING or SonaLexer.BEGIN_INTERPOLATED_STRING or SonaLexer.BEGIN_VERBATIM_INTERPOLATED_STRING or SonaLexer.CHAR_PART or SonaLexer.STRING_PART or SonaLexer.END_CHAR or SonaLexer.END_STRING or SonaLexer.DOC_COMMENT)
                 {
                     // Literal
-                    sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Italic);
+                    FormatToken(start, length, FontStyle.Italic);
                 }
                 else if(text.Length > 0 && Char.IsAsciiLetter(text[0]) && token.Type is not SonaLexer.NAME)
                 {
                     // Keyword
-                    sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Bold);
+                    FormatToken(start, length, FontStyle.Bold);
                 }
                 else if((text.Length > 2 && text[0] == '#' && Char.IsAsciiLetter(text[1])) || token.Type is SonaLexer.END_INLINE_SOURCE or SonaLexer.BEGIN_GENERAL_LOCAL_ATTRIBUTE or SonaLexer.END_DIRECTIVE)
                 {
                     // Directive
-                    sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Bold | FontStyle.Italic);
+                    FormatToken(start, length, FontStyle.Bold | FontStyle.Italic);
                 }
                 else
                 {
                     // Normal
-                    sonaRichText.SelectionFont = sonaRichText.Font;
+                    FormatToken(start, length, FontStyle.Regular);
                 }
-                updated = true;
             }
 
-            if(input.Length > lastPosition && (reformatModifiedText || affectedEnd >= lastPosition))
+            if(input.Length > lastPosition)
             {
                 // Ignored part after last token
-                sonaRichText.SelectionStart = lastPosition;
-                sonaRichText.SelectionLength = input.Length - lastPosition;
-                sonaRichText.SelectionFont = new(sonaRichText.Font, input.AsSpan(lastPosition).IsWhiteSpace() ? FontStyle.Regular : FontStyle.Italic);
+                FormatToken(lastPosition, input.Length - lastPosition, input.AsSpan(lastPosition).IsWhiteSpace() ? FontStyle.Regular : FontStyle.Italic);
+            }
+
+            void FormatToken(int start, int length, FontStyle style)
+            {
+                if(!reformatModifiedText)
+                {
+                    if(start + length <= affectedStart)
+                    {
+                        return;
+                    }
+                    if(start >= affectedEnd)
+                    {
+                        return;
+                    }
+                }
+                sonaRichText.SelectionStart = start;
+                sonaRichText.SelectionLength = length;
+                sonaRichText.SelectionFont = new(sonaRichText.Font, style);
                 updated = true;
             }
 
