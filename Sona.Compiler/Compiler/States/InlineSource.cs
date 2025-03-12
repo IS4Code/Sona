@@ -74,12 +74,19 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterInlineSourceNewLine(InlineSourceNewLineContext context)
         {
-
+            Environment.EnableParseTree();
         }
 
         public override void ExitInlineSourceNewLine(InlineSourceNewLineContext context)
         {
-            Out.WriteLine();
+            try
+            {
+                Out.Write(context.GetText());
+            }
+            finally
+            {
+                Environment.DisableParseTree();
+            }
         }
 
         public override void EnterInlineSourceIndentation(InlineSourceIndentationContext context)
