@@ -339,13 +339,67 @@ namespace IS4.Sona.Compiler.Gui
                 sonaRichText.SelectionStart = start;
                 sonaRichText.SelectionLength = length;
 
-                var text = token.Text;
-                if(token.Type is SonaLexer.FS_BEGIN_BLOCK_COMMENT or SonaLexer.FS_COMMENT or SonaLexer.FS_DIRECTIVE or SonaLexer.FS_END_BLOCK_COMMENT or SonaLexer.FS_EOL or SonaLexer.FS_PART or SonaLexer.FS_WHITESPACE)
+                if(token.Type is SonaLexer.BEGIN_INLINE_SOURCE)
                 {
-                    // Inline F#
-                    sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Italic);
+                    updated = true;
+                    sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Bold | FontStyle.Italic);
+                    while((token = lexer.NextToken()) is { Type: not SonaLexer.END_INLINE_SOURCE } fsToken)
+                    {
+                        switch(token.Type)
+                        {
+                            case SonaLexer.Eof:
+                                return true;
+                            case SonaLexer.FS_WHITESPACE:
+                            case SonaLexer.FS_EOL:
+                                continue;
+                            case SonaLexer.FS_COMMENT:
+                            case SonaLexer.FS_BEGIN_BLOCK_COMMENT:
+                            case SonaLexer.FS_END_BLOCK_COMMENT:
+                                start = token.StartIndex;
+                                length = token.StopIndex + 1 - start;
+                                sonaRichText.SelectionStart = start;
+                                sonaRichText.SelectionLength = length;
+                                sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Italic);
+                                continue;
+                        }
+                        var tokenText = token.Text;
+                        if(String.IsNullOrWhiteSpace(tokenText))
+                        {
+                            continue;
+                        }
+                        start = token.StartIndex;
+                        int offset = 0;
+                        FSharpTokenize(tokenText, (part, style) => {
+                            if(part.Length == 0)
+                            {
+                                return;
+                            }
+                            int found = tokenText.IndexOf(part, offset);
+                            if(found == -1)
+                            {
+                                return;
+                            }
+                            offset = found + part.Length;
+                            if(style == FontStyle.Regular)
+                            {
+                                return;
+                            }
+                            sonaRichText.SelectionStart = start + found;
+                            sonaRichText.SelectionLength = part.Length;
+                            sonaRichText.SelectionFont = new(sonaRichText.Font, style);
+                        });
+                    }
+                    start = token.StartIndex;
+                    length = token.StopIndex + 1 - start;
+                    lastPosition = start + length;
+                    sonaRichText.SelectionStart = start;
+                    sonaRichText.SelectionLength = length;
+                    sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Bold | FontStyle.Italic);
+                    continue;
                 }
-                else if(token.Type is SonaLexer.ERROR or SonaLexer.UNDERSCORE or SonaLexer.INT_SUFFIX or SonaLexer.FLOAT_SUFFIX or SonaLexer.EXP_SUFFIX or SonaLexer.HEX_SUFFIX or SonaLexer.END_STRING_SUFFIX or SonaLexer.END_CHAR_SUFFIX)
+
+                var text = token.Text;
+                if(token.Type is SonaLexer.ERROR or SonaLexer.UNDERSCORE or SonaLexer.INT_SUFFIX or SonaLexer.FLOAT_SUFFIX or SonaLexer.EXP_SUFFIX or SonaLexer.HEX_SUFFIX or SonaLexer.END_STRING_SUFFIX or SonaLexer.END_CHAR_SUFFIX)
                 {
                     // Error
                     sonaRichText.SelectionFont = new(sonaRichText.Font, FontStyle.Italic | FontStyle.Strikeout);
@@ -528,95 +582,20 @@ namespace IS4.Sona.Compiler.Gui
                     resultRichText.Text = str;
                     return;
                 }
-                var text = SourceText.ofString(str);
-                var lastPosition = PositionModule.pos0;
-                FSharpLexer.Tokenize(
-                    text,
-                    FSharpFunc<FSharpToken, Unit>.FromConverter(tok => {
-                        var range = tok.Range;
-                        if(range.IsSynthetic || PositionModule.posGeq(lastPosition, range.End))
-                        {
-                            return null!;
-                        }
-                        if(PositionModule.posGt(range.Start, lastPosition))
-                        {
-                            string pretext;
-                            try
-                            {
-                                pretext = text.GetSubTextFromRange(RangeModule.mkRange("", lastPosition, range.Start));
-                            }
-                            catch(ArgumentException)
-                            {
-                                return null!;
-                            }
-                            if(pretext != ")" && !String.IsNullOrWhiteSpace(pretext))
-                            {
-                                if(pretext.Contains("(*begin*)", StringComparison.Ordinal) || pretext.Contains("(*end*)"))
-                                {
-                                    resultRichText.SelectionFont = new(resultRichText.Font, FontStyle.Italic | FontStyle.Bold);
-                                }
-                                else
-                                {
-                                    resultRichText.SelectionFont = new(resultRichText.Font, FontStyle.Italic);
-                                }
-                            }
-                            resultRichText.AppendText(pretext);
-                            resultRichText.SelectionFont = resultRichText.Font;
-                            lastPosition = range.Start;
-                        }
-                        string subtext;
-                        try
-                        {
-                            subtext = text.GetSubTextFromRange(range);
-                        }
-                        catch(ArgumentException)
-                        {
-                            return null!;
-                        }
-                        if(tok.Kind == FSharpTokenKind.OffsideBlockBegin && subtext != "begin")
-                        {
-                            return null!;
-                        }
-                        if(tok.Kind == FSharpTokenKind.OffsideBlockEnd && subtext != "end")
-                        {
-                            return null!;
-                        }
-                        lastPosition = range.End;
-                        if(tok.IsKeyword || (subtext.Length > 0 && Char.IsAsciiLetter(subtext[0]) && !PrettyNaming.IsIdentifierName(subtext)))
-                        {
-                            resultRichText.SelectionFont = new(resultRichText.Font, FontStyle.Bold);
-                        }
-                        else if(tok.IsCommentTrivia || tok.IsNumericLiteral || tok.IsStringLiteral || tok.Kind == FSharpTokenKind.KeywordString || tok.Kind == FSharpTokenKind.Char)
-                        {
-                            resultRichText.SelectionFont = new(resultRichText.Font, FontStyle.Italic);
-                        }
-                        else if(tok.Kind == FSharpTokenKind.Identifier && subtext.StartsWith('`'))
-                        {
-                            resultRichText.SelectionFont = new(resultRichText.Font, subtext.StartsWith("``_ ") ? FontStyle.Underline | FontStyle.Italic : FontStyle.Italic);
-                        }
-                        resultRichText.AppendText(subtext);
-                        resultRichText.SelectionFont = resultRichText.Font;
-                        return null!;
-                    }),
-                    langVersion: null,
-                    strictIndentation: null,
-                    filePath: null,
-                    conditionalDefines: null,
-                    flags: null,
-                    pathMap: null,
-                    ct: null
-                );
-                var (lastline, lastcol) = text.GetLastCharacterPosition();
-                string lasttext;
-                try
-                {
-                    lasttext = text.GetSubTextFromRange(RangeModule.mkRange("", lastPosition, PositionModule.mkPos(lastline, lastcol)));
-                }
-                catch(ArgumentException)
-                {
-                    return;
-                }
-                resultRichText.AppendText(lasttext);
+                FontStyle lastStyle = FontStyle.Regular;
+                FSharpTokenize(str, (part, style) => {
+                    if(part.Length == 0)
+                    {
+                        return;
+                    }
+                    if(style != lastStyle)
+                    {
+                        resultRichText.SelectionFont = new(resultRichText.Font, style);
+                        lastStyle = style;
+                    }
+                    resultRichText.AppendText(part);
+                });
+                resultRichText.SelectionFont = resultRichText.Font;
             }
             finally
             {
@@ -629,6 +608,103 @@ namespace IS4.Sona.Compiler.Gui
                 resultRichText.ResumeDrawing();
                 resultRichText.Update();
             }
+        }
+
+        private void FSharpTokenize(string str, Action<string, FontStyle> receiver)
+        {
+            var text = SourceText.ofString(str);
+            var lastPosition = PositionModule.pos0;
+            FSharpLexer.Tokenize(
+                text,
+                FSharpFunc<FSharpToken, Unit>.FromConverter(tok => {
+                    var range = tok.Range;
+                    if(range.IsSynthetic || PositionModule.posGeq(lastPosition, range.End))
+                    {
+                        return null!;
+                    }
+                    if(PositionModule.posGt(range.Start, lastPosition))
+                    {
+                        string pretext;
+                        try
+                        {
+                            pretext = text.GetSubTextFromRange(RangeModule.mkRange("", lastPosition, range.Start));
+                        }
+                        catch(ArgumentException)
+                        {
+                            return null!;
+                        }
+                        if(pretext != ")" && !String.IsNullOrWhiteSpace(pretext))
+                        {
+                            if(pretext.Contains("(*begin*)", StringComparison.Ordinal) || pretext.Contains("(*end*)"))
+                            {
+                                receiver(pretext, FontStyle.Italic | FontStyle.Bold);
+                            }
+                            else
+                            {
+                                receiver(pretext, FontStyle.Italic);
+                            }
+                        }
+                        else
+                        {
+                            receiver(pretext, FontStyle.Regular);
+                        }
+                        lastPosition = range.Start;
+                    }
+                    string subtext;
+                    try
+                    {
+                        subtext = text.GetSubTextFromRange(range);
+                    }
+                    catch(ArgumentException)
+                    {
+                        return null!;
+                    }
+                    if(tok.Kind == FSharpTokenKind.OffsideBlockBegin && subtext != "begin")
+                    {
+                        return null!;
+                    }
+                    if(tok.Kind == FSharpTokenKind.OffsideBlockEnd && subtext != "end")
+                    {
+                        return null!;
+                    }
+                    lastPosition = range.End;
+                    if(tok.IsKeyword || (subtext.Length > 0 && Char.IsAsciiLetter(subtext[0]) && !PrettyNaming.IsIdentifierName(subtext)))
+                    {
+                        receiver(subtext, FontStyle.Bold);
+                    }
+                    else if(tok.IsCommentTrivia || tok.IsNumericLiteral || tok.IsStringLiteral || tok.Kind == FSharpTokenKind.KeywordString || tok.Kind == FSharpTokenKind.Char)
+                    {
+                        receiver(subtext, FontStyle.Italic);
+                    }
+                    else if(tok.Kind == FSharpTokenKind.Identifier && subtext.StartsWith('`'))
+                    {
+                        receiver(subtext, subtext.StartsWith("``_ ") ? FontStyle.Underline | FontStyle.Italic : FontStyle.Italic);
+                    }
+                    else
+                    {
+                        receiver(subtext, FontStyle.Regular);
+                    }
+                    return null!;
+                }),
+                langVersion: null,
+                strictIndentation: null,
+                filePath: null,
+                conditionalDefines: null,
+                flags: null,
+                pathMap: null,
+                ct: null
+            );
+            var (lastline, lastcol) = text.GetLastCharacterPosition();
+            string lasttext;
+            try
+            {
+                lasttext = text.GetSubTextFromRange(RangeModule.mkRange("", lastPosition, PositionModule.mkPos(lastline, lastcol)));
+            }
+            catch(ArgumentException)
+            {
+                return;
+            }
+            receiver(lasttext, FontStyle.Regular);
         }
 
         private void sonaRichText_ContentsResized(object sender, ContentsResizedEventArgs e)
