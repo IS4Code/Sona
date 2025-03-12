@@ -368,30 +368,70 @@ namespace IS4.Sona.Compiler.Gui
                 }
 
                 var text = token.Text;
-                if(token.Type is SonaLexer.ERROR or SonaLexer.UNDERSCORE or SonaLexer.INT_SUFFIX or SonaLexer.FLOAT_SUFFIX or SonaLexer.EXP_SUFFIX or SonaLexer.HEX_SUFFIX or SonaLexer.END_STRING_SUFFIX or SonaLexer.END_CHAR_SUFFIX)
+                switch(token.Type)
                 {
-                    // Error
-                    FormatToken(start, length, FontStyle.Italic | FontStyle.Strikeout);
-                }
-                else if(token.Type is SonaLexer.INT_LITERAL or SonaLexer.FLOAT_LITERAL or SonaLexer.EXP_LITERAL or SonaLexer.HEX_LITERAL or SonaLexer.STRING_LITERAL or SonaLexer.VERBATIM_STRING_LITERAL or SonaLexer.CHAR_LITERAL or SonaLexer.BEGIN_CHAR or SonaLexer.BEGIN_STRING or SonaLexer.BEGIN_INTERPOLATED_STRING or SonaLexer.BEGIN_VERBATIM_INTERPOLATED_STRING or SonaLexer.CHAR_PART or SonaLexer.STRING_PART or SonaLexer.END_CHAR or SonaLexer.END_STRING or SonaLexer.DOC_COMMENT)
-                {
-                    // Literal
-                    FormatToken(start, length, FontStyle.Italic);
-                }
-                else if(text.Length > 0 && Char.IsAsciiLetter(text[0]) && token.Type is not SonaLexer.NAME)
-                {
-                    // Keyword
-                    FormatToken(start, length, FontStyle.Bold);
-                }
-                else if((text.Length > 2 && text[0] == '#' && Char.IsAsciiLetter(text[1])) || token.Type is SonaLexer.END_INLINE_SOURCE or SonaLexer.BEGIN_GENERAL_LOCAL_ATTRIBUTE or SonaLexer.END_DIRECTIVE)
-                {
-                    // Directive
-                    FormatToken(start, length, FontStyle.Bold | FontStyle.Italic);
-                }
-                else
-                {
-                    // Normal
-                    FormatToken(start, length, FontStyle.Regular);
+                    case SonaLexer.ERROR:
+                    case SonaLexer.UNDERSCORE:
+                    case SonaLexer.INT_SUFFIX:
+                    case SonaLexer.FLOAT_SUFFIX:
+                    case SonaLexer.EXP_SUFFIX:
+                    case SonaLexer.HEX_SUFFIX:
+                    case SonaLexer.END_STRING_SUFFIX:
+                    case SonaLexer.END_CHAR_SUFFIX:
+                        // Error
+                        FormatToken(start, length, FontStyle.Italic | FontStyle.Strikeout);
+                        break;
+                    case SonaLexer.INT_LITERAL:
+                    case SonaLexer.FLOAT_LITERAL:
+                    case SonaLexer.EXP_LITERAL:
+                    case SonaLexer.HEX_LITERAL:
+                    case SonaLexer.STRING_LITERAL:
+                    case SonaLexer.VERBATIM_STRING_LITERAL:
+                    case SonaLexer.CHAR_LITERAL:
+                    case SonaLexer.BEGIN_CHAR:
+                    case SonaLexer.BEGIN_STRING:
+                    case SonaLexer.BEGIN_INTERPOLATED_STRING:
+                    case SonaLexer.BEGIN_VERBATIM_INTERPOLATED_STRING:
+                    case SonaLexer.CHAR_PART:
+                    case SonaLexer.STRING_PART:
+                    case SonaLexer.END_CHAR:
+                    case SonaLexer.END_STRING:
+                    case SonaLexer.DOC_COMMENT:
+                    case SonaLexer.INTERP_FORMAT_CUSTOM:
+                    case SonaLexer.INTERP_FORMAT_STANDARD:
+                    case SonaLexer.INTERP_ALIGNMENT:
+                        // Literal
+                        FormatToken(start, length, FontStyle.Italic);
+                        break;
+                    case SonaLexer.INTERP_FORMAT_GENERAL:
+                    case SonaLexer.INTERP_FORMAT_NUMBER:
+                    case SonaLexer.INTERP_FORMAT_BEGIN_COMPONENTS:
+                    case SonaLexer.INTERP_COMPONENTS_PART_SHORT:
+                    case SonaLexer.INTERP_COMPONENTS_PART_LONG:
+                        // Checked interpolation format
+                        if(text.Length > 0 && text[0] is '\\' or '\'')
+                        {
+                            goto case SonaLexer.INTERP_FORMAT_CUSTOM;
+                        }
+                        FormatToken(start, length, FontStyle.Bold | FontStyle.Italic);
+                        break;
+                    case not SonaLexer.NAME when text.Length > 0 && Char.IsAsciiLetter(text[0]):
+                        // Keyword
+                        FormatToken(start, length, FontStyle.Bold);
+                        break;
+                    case SonaLexer.BEGIN_GENERAL_LOCAL_ATTRIBUTE:
+                    case SonaLexer.END_DIRECTIVE:
+                        // Directive
+                        FormatToken(start, length, FontStyle.Bold | FontStyle.Italic);
+                        break;
+                    default:
+                        if(text.Length > 2 && text[0] == '#' && Char.IsAsciiLetter(text[1]))
+                        {
+                            goto case SonaLexer.END_DIRECTIVE;
+                        }
+                        // Normal
+                        FormatToken(start, length, FontStyle.Regular);
+                        break;
                 }
             }
 
