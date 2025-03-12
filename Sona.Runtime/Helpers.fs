@@ -54,54 +54,105 @@ type SequenceHelpersExtensions private() =
   [<Extension>]
   static member inline GetEnumerable(o: ^T list, _: Priority4): ^T seq = o
 
-[<AbstractClass; AllowNullLiteral>]
-type OperatorsBase internal() = 
-  static member inline ``operator Throw``(_:OperatorsBase, x) =
+[<Sealed; AbstractClass; AllowNullLiteral>]
+type Operators1 = class end
+
+[<Sealed; AbstractClass; AllowNullLiteral>]
+type Operators2 = class end
+
+type Operators1 with
+  static member inline ``operator Throw``(_:Operators1, _:Operators2, x) =
     let _ = (^T : (member ``throw()``: unit -> _) x)
     raise (ArgumentException("The object's 'throw()' operator implementation did not throw an exception.", nameof x))
     x
     
-  static member inline ``operator Rethrow``(_:OperatorsBase, x) =
+  static member inline ``operator Rethrow``(_:Operators1, _:Operators2, x) =
     let _ = (^T : (member ``rethrow()``: unit -> _) x)
     raise (ArgumentException("The object's 'rethrow()' operator implementation did not throw an exception.", nameof x))
     x
   
   // Using string directly infers it in Throw
-  static member inline ``operator Throw``(_:OperatorsBase, x : ^T when ^T :> IEquatable<string> and ^T :> char seq) =
+  static member inline ``operator Throw``(_:Operators1, _:Operators2, x : ^T when ^T :> IEquatable<string> and ^T :> char seq) =
     failwith (x.ToString())
     x
-
-  static member inline ``operator Rethrow``(_:OperatorsBase, x : ExceptionDispatchInfo) =
+  
+  static member inline ``operator Rethrow``(_:Operators1, _:Operators2, x : ExceptionDispatchInfo) =
     x.Throw()
     x
+  
+  static member inline ``operator Lift``(_:Operators1, _:Operators2, _ : Nullable<^T>, x : ^T) =
+    Nullable.op_Implicit(x)
+  
+  static member inline ``operator Lift``(_:Operators1, _:Operators2, _ : ^T option, x : ^T) =
+    Some x
+  
+  static member inline ``operator Lift``(_:Operators1, _:Operators2, _ : ^T voption, x : ^T) =
+    ValueSome x
+  
+  static member inline ``operator Lift``(_:Operators1, _:Operators2, _ : Result<^T, _>, x : ^T) =
+    Ok x
+  
+  static member inline ``operator BindToResult``(_:Operators1, _:Operators2, x : Nullable<_>, y) =
+    match x with
+    | NonNullV value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator Lift``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
+    | NullV -> struct(false, Unchecked.defaultof<_>)
+  
+  static member inline ``operator BindToResult``(_:Operators1, _:Operators2, x : _ option, y) =
+    match x with
+    | Some value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator Lift``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
+    | None -> struct(false, Unchecked.defaultof<_>)
+  
+  static member inline ``operator BindToResult``(_:Operators1, _:Operators2, x : _ voption, y) =
+    match x with
+    | ValueSome value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator Lift``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
+    | ValueNone -> struct(false, Unchecked.defaultof<_>)
+  
+  static member inline ``operator BindToResult``(_:Operators1, _:Operators2, x : Result<_, _>, y) =
+    match x with
+    | Ok value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator Lift``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
+    | Error _ -> struct(false, Unchecked.defaultof<_>)
+  
+  // Impossible overload needed with the same signature as the one in Operators2
+  static member inline ``operator BindToResult``(_:Operators1, _:Operators2, x : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T), _) = ()
 
-[<Sealed; AbstractClass; AllowNullLiteral>]
-type Operators private() = 
-  inherit OperatorsBase()
-  static member inline ``operator Throw``(_:OperatorsBase, x : #Exception) =
+type Operators2 with
+  static member inline ``operator Throw``(_:Operators1, _:Operators2, x : #Exception) =
     raise x
     x
-    
-  static member inline ``operator Rethrow``(_:OperatorsBase, x : #Exception) =
+  
+  static member inline ``operator Rethrow``(_:Operators1, _:Operators2, x : #Exception) =
     ExceptionDispatchInfo.Capture(x).Throw()
     x
   
   // Including this prevents ExceptionDispatchInfo from being inferred in Rethrow
-  static member inline ``operator Rethrow``(_:OperatorsBase, x : RuntimeWrappedException) = Operators.``operator Rethrow``(null, x :> Exception) :?> RuntimeWrappedException
+  static member inline ``operator Rethrow``(_:Operators1, _:Operators2, x : RuntimeWrappedException) =
+    ExceptionDispatchInfo.Capture(x).Throw()
+    x
+  
+  static member inline ``operator Lift``(_:Operators1, _:Operators2, _ : ^T, x : ^T) =
+    x
+  
+  static member inline ``operator BindToResult``(_:Operators1, _:Operators2, x : ^T when ^T : null, y) =
+    match x with
+    | NonNull value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator Lift``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
+    | Null -> struct(false, Unchecked.defaultof<_>)
 
 module Operators =
   let inline Throw(x) =
-    let _ = ((^self or ^x) : (static member ``operator Throw``: ^self * ^x -> ^x) (null : Operators), x)
+    let _ = ((^self1 or ^self2 or ^x) : (static member ``operator Throw``: ^self1 * ^self2 * ^x -> ^x) (null : Operators1), (null : Operators2), x)
     Unchecked.defaultof<_>
     
   let inline Rethrow(x) =
-    let _ = ((^self or ^x) : (static member ``operator Rethrow``: ^self * ^x -> ^x) (null : Operators), x)
+    let _ = ((^self1 or ^self2 or ^x) : (static member ``operator Rethrow``: ^self1 * ^self2 * ^x -> ^x) (null : Operators1), (null : Operators2), x)
     Unchecked.defaultof<_>
 
   let inline ThrowObject(x : obj) =
     (# "throw" x #)
     Unchecked.defaultof<_>
   
+  let inline BindToResult(y)(x) =
+    ((^self1 or ^self2 or ^x) : (static member ``operator BindToResult``: ^self1 * ^self2 * ^x * _ -> struct(bool * _)) (null : Operators1), (null : Operators2), x, y)
+
 module Patterns =
   [<return: Struct>]
   let inline (|RuntimeWrappedException|_|)(x : obj) =

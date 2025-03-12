@@ -916,6 +916,20 @@ outerExpr:
   outerExpr_Inner (outerBinaryOperator outerExpr_Inner)+;
 
 outerExpr_Inner:
+  coalesceExprOuter;
+
+
+coalesceExprOuter:
+  coalesceExpr |
+  coalesceExpr_Inner;
+
+coalesceExpr:
+  coalesceExprArg '??' coalesceExprOuter;
+
+coalesceExprArg:
+  coalesceExpr_Inner;
+
+coalesceExpr_Inner:
   concatExpr_Outer;
 
 
