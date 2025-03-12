@@ -557,7 +557,7 @@ INTERP_FORMAT_BEGIN_COMPONENTS:
   COLON -> mode(InterpolationComponents);
 
 fragment INTERP_FORMAT_ESCAPE:
-  '\\' ('\\' | INTERP_NON_DELIMITER) | '\'' ~['\\\r\n]+ '\'';
+  '\\' ('\\' | INTERP_NON_DELIMITER) | '\'' ~['\\\r\n]* '\'';
 
 fragment INTERP_FORMAT_LITERAL:
   LINE_WHITESPACE | [-+_];
