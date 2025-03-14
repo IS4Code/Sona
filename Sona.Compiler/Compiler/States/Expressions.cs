@@ -101,6 +101,16 @@ namespace IS4.Sona.Compiler.States
             Out.Write(')');
         }
 
+        public override void EnterOuterExpr(OuterExprContext context)
+        {
+            Out.Write('(');
+        }
+
+        public override void ExitOuterExpr(OuterExprContext context)
+        {
+            Out.Write(')');
+        }
+
         public override void EnterCoalesceExpr(CoalesceExprContext context)
         {
             EnterState<CoalesceState>().EnterCoalesceExpr(context);
