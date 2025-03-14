@@ -583,7 +583,7 @@ namespace IS4.Sona.Compiler.States
 
             public override void EnterIndexAccess(IndexAccessContext context)
             {
-                Out.Write('[');
+                Out.Write(".[");
             }
 
             public override void ExitIndexAccess(IndexAccessContext context)
