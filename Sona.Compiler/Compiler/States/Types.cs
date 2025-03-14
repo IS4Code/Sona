@@ -42,6 +42,9 @@ namespace IS4.Sona.Compiler.States
                     case "void":
                         Out.WriteNamespacedName("System", "Void");
                         return;
+                    case "exception":
+                        Out.WriteNamespacedName("System", "Exception");
+                        return;
                 }
                 Out.WriteNamespacedName("Microsoft.FSharp.Core", text);
             }

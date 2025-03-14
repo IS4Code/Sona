@@ -111,7 +111,8 @@ type:
 
 primitiveType:
   'bool' | 'int' | 'uint' | 'float' |
-  'char' | 'string' | 'object' | 'void';
+  'char' | 'string' | 'object' | 'void' |
+  'exception';
 
 /* ---------- */
 /* Attributes */

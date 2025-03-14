@@ -317,6 +317,9 @@ namespace IS4.Sona.Compiler.States
                     case "void":
                         text = "ignore";
                         break;
+                    case "exception":
+                        Out.WriteNamespacedName("System", "Exception");
+                        return;
                 }
                 Out.WriteCoreOperator(text);
             }
