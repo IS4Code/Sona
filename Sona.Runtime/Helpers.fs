@@ -1,31 +1,61 @@
 ﻿namespace Sona.Runtime.CompilerServices.Internal
 
-[<AbstractClass>]
+[<AbstractClass; AllowNullLiteral>]
 type Priority1 internal() = class end
 
-[<AbstractClass>]
+[<AbstractClass; AllowNullLiteral>]
 type Priority2 internal() =
   inherit Priority1()
  
-[<AbstractClass>]
+[<AbstractClass; AllowNullLiteral>]
 type Priority3 internal() =
   inherit Priority2()
 
-[<Sealed>]
+[<Sealed; AllowNullLiteral>]
 type Priority4 internal() =
   inherit Priority3()
+
+namespace Sona.Runtime.CompilerServices.Extensions
+open System
+open System.Runtime.CompilerServices
+open Sona.Runtime.CompilerServices.Internal
+
+[<AbstractClass; Extension>]
+type SequenceHelpersExtensions internal() = 
+  [<Extension>]
+  static member inline ``operator AsEnumerable``(o: byref<^T> when ^T : struct, _: Priority1) = &o
+  
+  [<Extension>]
+  static member inline ``operator AsEnumerable``(o: ^T array, _: Priority2): ^T seq = o
+  
+  [<Extension>]
+  static member inline ``operator AsEnumerable``(o: ^T list, _: Priority2): ^T seq = o
+  
+  [<Extension>]
+  static member inline ``operator AsEnumerable``(o: ArraySegment<^T>, _: Priority2) = o
+  
+  [<Extension>]
+  static member inline ``operator AsEnumerable``(o: Span<^T>, _: Priority2) = o
+  
+  [<Extension>]
+  static member inline ``operator AsEnumerable``(o: ReadOnlySpan<^T>, _: Priority2) = o
+  
+[<Sealed; AbstractClass; Extension>]
+type SequenceHelpersExtensions2 private() = 
+  inherit SequenceHelpersExtensions()
+  
+  [<Extension>]
+  static member inline ``operator AsEnumerable``(o: ^T when ^T : not struct, _: Priority1) = o
 
 namespace Sona.Runtime.CompilerServices
 open System
 open System.Runtime.CompilerServices
+open System.Runtime.ExceptionServices
 open Sona.Runtime.Traits
 open Sona.Runtime.CompilerServices.Internal
-open System.Runtime.ExceptionServices
 
 [<Sealed; AbstractClass>]
-type SequenceHelpers private() = 
-  static member Marker = Priority4()
-
+type SequenceHelpers private() =
   static member inline DisposeEnumerator(_: Priority1, o: byref<^T>
     when ^T : not struct) =
     match box o with
@@ -39,20 +69,10 @@ type SequenceHelpers private() =
     when ^T : struct
     and ^T :> IDisposable) =
     o.Dispose()
-  
-[<Sealed; AbstractClass; Extension>]
-type SequenceHelpersExtensions private() = 
-  [<Extension>]
-  static member inline GetEnumerable(o: _, _: Priority1) = o
-  
-  [<Extension>]
-  static member inline GetEnumerable(o: inref<_>, _: Priority2) = &o
-  
-  [<Extension>]
-  static member inline GetEnumerable(o: ^T array, _: Priority3): ^T seq = o
-  
-  [<Extension>]
-  static member inline GetEnumerable(o: ^T list, _: Priority4): ^T seq = o
+
+module SequenceHelpers =
+  [<Literal>]
+  let Marker : Priority4 = null
 
 [<Sealed; AbstractClass; AllowNullLiteral>]
 type Operators1 = class end

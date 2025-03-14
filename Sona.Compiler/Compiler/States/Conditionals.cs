@@ -2280,12 +2280,14 @@ namespace IS4.Sona.Compiler.States
             Out.Write(')');
         }
 
-        const string enumeratorError = "COMPILER ERROR: `for` without enumerator variable.";
+        const string enumeratorError = "COMPILER ERROR: `for` used without enumerator variable.";
 
         public sealed override void ExitFor(ForContext context)
         {
-            Out.WriteSpecialMember("each()");
-            Out.WriteLine("().GetEnumerator()");
+            Out.WriteSpecialMember("operator AsEnumerable");
+            Out.Write('(');
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "SequenceHelpers");
+            Out.WriteLine(".Marker).GetEnumerator()");
             Out.WriteLine("try");
             Out.EnterScope();
             Out.Write("while ");
@@ -2311,10 +2313,10 @@ namespace IS4.Sona.Compiler.States
             Out.ExitScope();
             Out.WriteLine();
             Out.Write("finally ");
-            Out.WriteNamespacedName("Sona.Runtime.SequenceHelpers", "DisposeEnumerator");
-            Out.Write('(');
-            Out.WriteNamespacedName("Sona.Runtime.SequenceHelpers", "Marker");
-            Out.Write(',');
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "SequenceHelpers");
+            Out.Write(".DisposeEnumerator(");
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "SequenceHelpers");
+            Out.Write(".Marker,&");
             Out.WriteIdentifier(enumeratorVariable ?? Error(enumeratorError, context));
             Out.Write(")");
             base.OnExit(flags, context);
