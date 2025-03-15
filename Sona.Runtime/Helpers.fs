@@ -100,9 +100,13 @@ type Operators1 with
     raise (ArgumentException("The object's 'rethrow()' operator implementation did not throw an exception.", nameof x))
     x
   
-  // Using string directly infers it in Throw
-  static member inline ``operator Throw``(_:Operators1, _:Operators2, x : ^T when ^T :> IEquatable<string> and ^T :> char seq) =
-    failwith (x.ToString())
+  static member inline ``operator Throw``(_:Operators1, _:Operators2, x) =
+    failwith x
+    x
+  
+  // Including this prevents strings from being inferred in Throw
+  static member inline ``operator Throw``(_:Operators1, _:Operators2, x : RuntimeWrappedException) =
+    raise x
     x
   
   static member inline ``operator Rethrow``(_:Operators1, _:Operators2, x : ExceptionDispatchInfo) =
