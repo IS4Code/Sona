@@ -18,9 +18,9 @@ namespace IS4.Sona.Tests
         static readonly char[] newlineChars = Environment.NewLine.ToCharArray();
 
         private protected const string not = "global.Microsoft.FSharp.Core.Operators.``not``";
-        private protected const string cat = ".``..``";
-        private protected const string each = ".``each()``";
-        private protected const string set = ".``<-``";
+        private protected const string cat = " |> global.Sona.Runtime.CompilerServices.BinaryOperators.Concat";
+        private protected const string each = ".``operator AsEnumerable``(global.Sona.Runtime.CompilerServices.SequenceHelpers.Marker)";
+        private protected const string set = ".``operator Assign``";
 
         static readonly Regex beginEndRegex = new Regex(@"\(\*(begin|end)\*\)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 

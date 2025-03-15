@@ -63,8 +63,9 @@ open B")]
             AssertStatementEquivalence(source, expected);
         }
 
-        const string ignore = "global.Microsoft.FSharp.Core.Operators.ignore";
-        const string @throw = "``throw()``()";
+        const string ignore_begin = "global.Microsoft.FSharp.Core.Operators.ignore (";
+        const string ignore_end   = "                                              )";
+        const string @throw = " |> global.Sona.Runtime.CompilerServices.Operators.Throw";
         const string @default = "global.Microsoft.FSharp.Core.Operators.Unchecked.defaultof<_>";
         const string _1 = "``_ 1``";
         const string _2 = "``_ 2``";
@@ -125,51 +126,51 @@ f(f)
         }
 
         [DataRow("if a then throw b end f(c)", $@"if(a)then begin
- (b).{@throw}
+ (b){@throw}
 end
 f(c)
 ()")]
         [DataRow("if a then throw b else throw c end", $@"if true then begin
  if(a)then begin
-  (b).{@throw}
+  (b){@throw}
  end
  else begin
-  (c).{@throw}
+  (c){@throw}
  end
 end
 else begin
- {ignore} begin
+ {ignore_begin}
   ()
- end
+ {ignore_end}
  {@default}
 end")]
         [DataRow("if a then throw b else throw c end f()", $@"if true then begin
  if(a)then begin
-  (b).{@throw}
+  (b){@throw}
  end
  else begin
-  (c).{@throw}
+  (c){@throw}
  end
 end
 else begin
- {ignore} begin
+ {ignore_begin}
   f()
   ()
- end
+ {ignore_end}
  {@default}
 end")]
         [DataRow("if a then throw b else throw c end return d", $@"if true then begin
  if(a)then begin
-  (b).{@throw}
+  (b){@throw}
  end
  else begin
-  (c).{@throw}
+  (c){@throw}
  end
 end
 else begin
- {ignore} begin
+ {ignore_begin}
   (d)
- end
+ {ignore_end}
  {@default}
 end")]
         [DataRow("if a then return b else throw c end return d", $@"if true then begin
@@ -177,13 +178,13 @@ end")]
   (b)
  end
  else begin
-  (c).{@throw}
+  (c){@throw}
  end
 end
 else begin
- {ignore} begin
+ {ignore_begin}
   (d)
- end
+ {ignore_end}
  {@default}
 end")]
         [DataRow("if a then return b else throw c end return d", $@"if true then begin
@@ -191,13 +192,13 @@ end")]
   (b)
  end
  else begin
-  (c).{@throw}
+  (c){@throw}
  end
 end
 else begin
- {ignore} begin
+ {ignore_begin}
   (d)
- end
+ {ignore_end}
  {@default}
 end")]
         [TestMethod]
@@ -226,7 +227,7 @@ else begin
  (d)
 end")]
         [DataRow("if a then throw b elseif c then return d else end return e", $@"if(a)then begin
- (b).{@throw}
+ (b){@throw}
 end
 elif(c)then begin
  (d)
@@ -317,24 +318,24 @@ else {@default}")]
  (a)
 end
 else begin
- {ignore} begin
+ {ignore_begin}
   f(b)
   ()
- end
+ {ignore_end}
  {@default}
 end")]
         [DataRow("do throw a end", $@"if true then begin
- (a).{@throw}
+ (a){@throw}
 end
 else {@default}")]
         [DataRow("do throw a end f(b)", $@"if true then begin
- (a).{@throw}
+ (a){@throw}
 end
 else begin
- {ignore} begin
+ {ignore_begin}
   f(b)
   ()
- end
+ {ignore_end}
  {@default}
 end")]
         [DataRow("do if x then f(y) else g(y) return a end h(y) end i(y)", $@"let mutable <$returning$> = false
@@ -380,7 +381,7 @@ while <$continuing$> && (x)do begin
 end
 ()")]
         [DataRow("while x do throw a end", $@"while(x)do begin
- (a).{@throw}
+ (a){@throw}
 end
 ()")]
         [DataRow("while x do f(a) return b end g(a)", $@"let mutable <$continuing$> = true
@@ -413,9 +414,9 @@ end")]
  {@default}
 end
 else begin
- {ignore} begin
+ {ignore_begin}
   ()
- end
+ {ignore_end}
  {@default}
 end")]
         [DataRow("while ( ( true ) ) do f(a) end", $@"if true then begin
@@ -426,9 +427,9 @@ end")]
  {@default}
 end
 else begin
- {ignore} begin
+ {ignore_begin}
   ()
- end
+ {ignore_end}
  {@default}
 end")]
         [DataRow("while true do f(a) break end", $@"let mutable <$continuing$> = true
@@ -441,14 +442,14 @@ end
 ()")]
         [DataRow("while true do throw a end", $@"if true then begin
  while true do begin
-  (a).{@throw}
+  (a){@throw}
  end
  {@default}
 end
 else begin
- {ignore} begin
+ {ignore_begin}
   ()
- end
+ {ignore_end}
  {@default}
 end")]
         [TestMethod]
@@ -476,15 +477,15 @@ end
         [DataRow("repeat throw a until x", $@"if true then begin
  let mutable <$continuing$> = true
  while <$continuing$> do begin
-  (a).{@throw}
+  (a){@throw}
   <$continuing$> <- {not}(x)
  end
  {@default}
 end
 else begin
- {ignore} begin
+ {ignore_begin}
   ()
- end
+ {ignore_end}
  {@default}
 end")]
         [DataRow("repeat f(a) return b until x g(a)", $@"let mutable <$returning$> = false
@@ -510,7 +511,7 @@ end")]
             AssertBlockEquivalence(source, expected);
         }
 
-        const string DisposeEnumerator_ = "global.Sona.Runtime.SequenceHelpers.DisposeEnumerator(global.Sona.Runtime.SequenceHelpers.Marker,";
+        const string DisposeEnumerator_ = "global.Sona.Runtime.CompilerServices.SequenceHelpers.DisposeEnumerator(global.Sona.Runtime.CompilerServices.SequenceHelpers.Marker,&";
 
         [DataRow("for x in c do f(a) end", $@"for x in(c)do begin
  f(a)
@@ -518,7 +519,7 @@ end")]
 end
 ()")]
         [DataRow("for x in c do f(a) break end", $@"let mutable <$continuing$> = true
-let mutable <$enumerator$> = (c){each}().GetEnumerator()
+let mutable <$enumerator$> = (c){each}.GetEnumerator()
 try
  while <$continuing$> && <$enumerator$>.MoveNext() do begin
   let mutable <$interrupting$> = false
@@ -530,13 +531,13 @@ try
 finally {DisposeEnumerator_}<$enumerator$>)
 ()")]
         [DataRow("for x in c do throw a end", $@"for x in(c)do begin
- (a).{@throw}
+ (a){@throw}
 end
 ()")]
         [DataRow("for x in c do f(a) return b end g(a)", $@"let mutable <$continuing$> = true
 let mutable <$returning$> = false
 let mutable <$result$> = {@default}
-let mutable <$enumerator$> = (c){each}().GetEnumerator()
+let mutable <$enumerator$> = (c){each}.GetEnumerator()
 try
  while <$continuing$> && <$enumerator$>.MoveNext() do begin
   let mutable <$interrupting$> = false
@@ -572,7 +573,7 @@ end")]
 end
 ()")]
         [DataRow("for x in c..d do f(a) break end", $@"let mutable <$continuing$> = true
-let mutable <$enumerator$> = ((..)(c)(d)){each}().GetEnumerator()
+let mutable <$enumerator$> = ((..)(c)(d)){each}.GetEnumerator()
 try
  while <$continuing$> && <$enumerator$>.MoveNext() do begin
   let mutable <$interrupting$> = false
@@ -584,13 +585,13 @@ try
 finally {DisposeEnumerator_}<$enumerator$>)
 ()")]
         [DataRow("for x in c..d do throw a end", $@"for x in(c) .. (d)do begin
- (a).{@throw}
+ (a){@throw}
 end
 ()")]
         [DataRow("for x in c..d do f(a) return b end g(a)", $@"let mutable <$continuing$> = true
 let mutable <$returning$> = false
 let mutable <$result$> = {@default}
-let mutable <$enumerator$> = ((..)(c)(d)){each}().GetEnumerator()
+let mutable <$enumerator$> = ((..)(c)(d)){each}.GetEnumerator()
 try
  while <$continuing$> && <$enumerator$>.MoveNext() do begin
   let mutable <$interrupting$> = false
@@ -622,7 +623,7 @@ for x in(<$start$>) .. <$step$> .. (<$end$>)do begin
 end
 ()")]
         [DataRow("for x in c..d by e do f(a) break end", $@"let mutable <$continuing$> = true
-let mutable <$enumerator$> = ((fun <$start$> <$end$> <$step$> -> (.. ..)<$start$> <$step$> <$end$>)(c)(d)(e)){each}().GetEnumerator()
+let mutable <$enumerator$> = ((fun <$start$> <$end$> <$step$> -> (.. ..)<$start$> <$step$> <$end$>)(c)(d)(e)){each}.GetEnumerator()
 try
  while <$continuing$> && <$enumerator$>.MoveNext() do begin
   let mutable <$interrupting$> = false
@@ -637,13 +638,13 @@ finally {DisposeEnumerator_}<$enumerator$>)
 let <$end$> = d
 let <$step$> = e
 for x in(<$start$>) .. <$step$> .. (<$end$>)do begin
- (a).{@throw}
+ (a){@throw}
 end
 ()")]
         [DataRow("for x in c..d by e do f(a) return b end g(a)", $@"let mutable <$continuing$> = true
 let mutable <$returning$> = false
 let mutable <$result$> = {@default}
-let mutable <$enumerator$> = ((fun <$start$> <$end$> <$step$> -> (.. ..)<$start$> <$step$> <$end$>)(c)(d)(e)){each}().GetEnumerator()
+let mutable <$enumerator$> = ((fun <$start$> <$end$> <$step$> -> (.. ..)<$start$> <$step$> <$end$>)(c)(d)(e)){each}.GetEnumerator()
 try
  while <$continuing$> && <$enumerator$>.MoveNext() do begin
   let mutable <$interrupting$> = false
@@ -672,7 +673,7 @@ end")]
 end
 ()")]
         [DataRow("for x in c..d by 9 do f(a) break end", $@"let mutable <$continuing$> = true
-let mutable <$enumerator$> = ((fun <$start$> <$end$> <$step$> -> (.. ..)<$start$> <$step$> <$end$>)(c)(d)(9)){each}().GetEnumerator()
+let mutable <$enumerator$> = ((fun <$start$> <$end$> <$step$> -> (.. ..)<$start$> <$step$> <$end$>)(c)(d)(9)){each}.GetEnumerator()
 try
  while <$continuing$> && <$enumerator$>.MoveNext() do begin
   let mutable <$interrupting$> = false
@@ -684,13 +685,13 @@ try
 finally {DisposeEnumerator_}<$enumerator$>)
 ()")]
         [DataRow("for x in c..d by 9 do throw a end", $@"for x in(c) .. (9) .. (d)do begin
- (a).{@throw}
+ (a){@throw}
 end
 ()")]
         [DataRow("for x in c..d by 9 do f(a) return b end g(a)", $@"let mutable <$continuing$> = true
 let mutable <$returning$> = false
 let mutable <$result$> = {@default}
-let mutable <$enumerator$> = ((fun <$start$> <$end$> <$step$> -> (.. ..)<$start$> <$step$> <$end$>)(c)(d)(9)){each}().GetEnumerator()
+let mutable <$enumerator$> = ((fun <$start$> <$end$> <$step$> -> (.. ..)<$start$> <$step$> <$end$>)(c)(d)(9)){each}.GetEnumerator()
 try
  while <$continuing$> && <$enumerator$>.MoveNext() do begin
   let mutable <$interrupting$> = false

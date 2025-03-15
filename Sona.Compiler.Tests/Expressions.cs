@@ -70,42 +70,42 @@ namespace IS4.Sona.Tests
         [DataRow("a or not not b", $"a || {not}({not}(b))")]
         [DataRow("a and b or c", null)]
         [DataRow("a or b and c", null)]
-        [DataRow("a and b || c", "a && (b || c)")]
-        [DataRow("a && b or c", "(a && b) || c")]
-        [DataRow("a or b && c", "a || (b && c)")]
-        [DataRow("a || b and c", "(a || b) && c")]
-        [DataRow("not a && b", $"{not}(a && b)")]
-        [DataRow("not a || b", $"{not}(a || b)")]
-        [DataRow("a1 and b1 || b2 && b3 || b4 and c1", "a1 && (b1 || b2 && b3 || b4) && c1")]
+        [DataRow("a and b || c", "a && ((b || c))")]
+        [DataRow("a && b or c", "((a && b)) || c")]
+        [DataRow("a or b && c", "a || ((b && c))")]
+        [DataRow("a || b and c", "((a || b)) && c")]
+        [DataRow("not a && b", $"{not}((a && b))")]
+        [DataRow("not a || b", $"{not}((a || b))")]
+        [DataRow("a1 and b1 || b2 && b3 || b4 and c1", "a1 && ((b1 || b2 && b3 || b4)) && c1")]
         [TestMethod]
         public void LogicOperators(string source, string? expected)
         {
             AssertExpressionEquivalence(source, expected);
         }
 
-        [DataRow("a and b < c", "a && (b < c)")]
-        [DataRow("a or b < c", "a || (b < c)")]
-        [DataRow("a && b < c", "a && b < c")]
-        [DataRow("a || b < c", "a || b < c")]
-        [DataRow("a < b <= c > d >= e == f != g ~= h", "a < b <= c > d >= e = f <> g <> h")]
-        [DataRow("a ~= b != c == d >= e > f <= g < h", "a <> b <> c = d >= e > f <= g < h")]
+        [DataRow("a and b < c", "a && ((b < c))")]
+        [DataRow("a or b < c", "a || ((b < c))")]
+        [DataRow("a && b < c", "(a && b < c)")]
+        [DataRow("a || b < c", "(a || b < c)")]
+        [DataRow("a < b <= c > d >= e == f != g ~= h", "(a < b <= c > d >= e = f <> g <> h)")]
+        [DataRow("a ~= b != c == d >= e > f <= g < h", "(a <> b <> c = d >= e > f <= g < h)")]
         [TestMethod]
         public void RelationalOperators(string source, string? expected)
         {
             AssertExpressionEquivalence(source, expected);
         }
 
-        const string and = ".``&``";
-        const string or = ".``|``";
-        const string xor = ".``^``";
-        const string shl = ".``<<``";
-        const string shr = ".``>>``";
+        const string and = " |> global.Sona.Runtime.CompilerServices.BinaryOperators.And";
+        const string or = " |> global.Sona.Runtime.CompilerServices.BinaryOperators.Pipe";
+        const string xor = " |> global.Sona.Runtime.CompilerServices.BinaryOperators.Hat";
+        const string shl = " |> global.Sona.Runtime.CompilerServices.BinaryOperators.LeftShift";
+        const string shr = " |> global.Sona.Runtime.CompilerServices.BinaryOperators.RightShift";
 
         [DataRow("a and b + c", "a && b + c")]
         [DataRow("a or b + c", "a || b + c")]
         [DataRow("a..b", $"(a){cat}(b)")]
         [DataRow("a..b..c", $"(a){cat}(b){cat}(c)")]
-        [DataRow("a .. b ==1..2", $"(a){cat}(b) = (1){cat}(2)")]
+        [DataRow("a .. b ==1..2", $"((a){cat}(b) = (1){cat}(2))")]
         [DataRow("a&b", $"(a){and}(b)")]
         [DataRow("a^b", $"(a){xor}(b)")]
         [DataRow("a|b", $"(a){or}(b)")]
@@ -129,7 +129,7 @@ namespace IS4.Sona.Tests
             AssertExpressionEquivalence(source, expected);
         }
 
-        const string hash = ".``#``()";
+        const string hash = " |> global.Sona.Runtime.CompilerServices.UnaryOperators.Length";
 
         [DataRow("+a", " + a")]
         [DataRow("-a", " - a")]
@@ -152,11 +152,11 @@ namespace IS4.Sona.Tests
 
         [DataRow("a", "a")]
         [DataRow("a.b", "a.b")]
-        [DataRow("a[b]", "a[b]")]
+        [DataRow("a[b]", "a.[b]")]
         [DataRow("a[b,]", null)]
         [DataRow("a[]", null)]
-        [DataRow("a[b, c]", "a[b,c]")]
-        [DataRow("a[b].c", "a[b].c")]
+        [DataRow("a[b, c]", "a.[b,c]")]
+        [DataRow("a[b].c", "a.[b].c")]
         [DataRow("()[a]", null)]
         [DataRow("a()", "a()")]
         [DataRow("(a).b", "(a).b")]
@@ -166,10 +166,10 @@ namespace IS4.Sona.Tests
         [DataRow("a. and", null)]
         [DataRow("a: and", null)]
         [DataRow("f(a).b", "f(a).b")]
-        [DataRow("f(a)[b, c]", "f(a)[b,c]")]
+        [DataRow("f(a)[b, c]", "f(a).[b,c]")]
         [DataRow("a.f(b).c", "a.f(b).c")]
-        [DataRow("!(a).f(b)[c, d].e", $"{not}((a).f(b)[c,d].e)")]
-        [DataRow(@"""""[0]", @"("""")[0]")]
+        [DataRow("!(a).f(b)[c, d].e", $"{not}((a).f(b).[c,d].e)")]
+        [DataRow(@"""""[0]", @"("""").[0]")]
         [DataRow(@""""".ToString()", @"("""").ToString()")]
         [DataRow("(a)()", "(a)()")]
         [DataRow("(a, b)()", "(struct(a,b))()")]
@@ -183,7 +183,7 @@ namespace IS4.Sona.Tests
         [DataRow("a.b = 1", null)]
         [DataRow("(a = 1)", $"(a){set}(1)")]
         [DataRow("(a.b = 1)", $"(a.b){set}(1)")]
-        [DataRow("(a[b] = 1)", $"(a[b]){set}(1)")]
+        [DataRow("(a[b] = 1)", $"(a.[b]){set}(1)")]
         [DataRow("(a() = 1)", $"(a()){set}(1)")]
         [DataRow("(a[] = 1)", null)]
         [DataRow("(a = 1, 2)", null)]
@@ -224,7 +224,7 @@ namespace IS4.Sona.Tests
         [DataRow("{a=1}", "{ a = 1 }")]
         [DataRow("{a=1, b=2}", "{ a = 1;b = 2 }")]
         [DataRow("{a=1,}", null)]
-        [DataRow("{a=1}[0]", "{ a = 1 }[0]")]
+        [DataRow("{a=1}[0]", "{ a = 1 }.[0]")]
         [DataRow("{a=1}.b", "{ a = 1 }.b")]
         [DataRow("{a=1}(b)", "{ a = 1 }(b)")]
         [TestMethod]
@@ -238,7 +238,7 @@ namespace IS4.Sona.Tests
         [DataRow("[a]", "[| a |]")]
         [DataRow("[a, b]", "[| a;b |]")]
         [DataRow("[a, b,]", null)]
-        [DataRow("[a][0]", "[| a |][0]")]
+        [DataRow("[a][0]", "[| a |].[0]")]
         [DataRow("[a].b", "[| a |].b")]
         [DataRow("[a](b)", "[| a |](b)")]
         [DataRow("[[a]=b]", $"[| {KeyValuePair}(a,b) |]")]
@@ -265,7 +265,7 @@ namespace IS4.Sona.Tests
         [DataRow("{a}", $"({seq}{{ a }})")]
         [DataRow("{a, b}", $"({seq}{{ a;b }})")]
         [DataRow("{a, b,}", null)]
-        [DataRow("{a}[0]", $"({seq}{{ a }})[0]")]
+        [DataRow("{a}[0]", $"({seq}{{ a }}).[0]")]
         [DataRow("{a}.b", $"({seq}{{ a }}).b")]
         [DataRow("{a}(b)", $"({seq}{{ a }})(b)")]
         [DataRow("{[a]=b}", $"({seq}{{ {KeyValuePair}(a,b) }})")]
