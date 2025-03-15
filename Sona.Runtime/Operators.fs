@@ -32,7 +32,8 @@ type UnaryOperators1 with
 type UnaryOperators2 with
   static member inline ``operator Length``(_:UnaryOperators1, _:UnaryOperators2, x) =
     (^T : (member Length : int) x)
-
+    
+[<RequireQualifiedAccess>]
 module UnaryOperators =
   let inline Length x = ((^self1 or ^self2 or ^x) : (static member ``operator Length``: ^self1 * ^self2 * ^x -> int) (null : UnaryOperators1), (null : UnaryOperators2), x)
 
@@ -139,6 +140,7 @@ type BinaryOperators2 with
   static member inline ``operator LeftShift``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
     x <<< y
 
+[<RequireQualifiedAccess>]
 module BinaryOperators =
   let inline Concat y x = ((^self1 or ^self2 or ^x) : (static member ``operator Concat``: ^self1 * ^self2 * ^x * _ -> _) (null : BinaryOperators1), (null : BinaryOperators2), x, y)
   
@@ -154,7 +156,7 @@ module BinaryOperators =
 
   let inline (..) x y = Concat y x
   let inline (<|>) x y = Pipe y x
-  let inline (^) x y = Hat y x
-  let inline (&) x y = And y x
+  let inline (<^>) x y = Hat y x
+  let inline (<&>) x y = And y x
   let inline (>>) x y = RightShift y x
   let inline (<<) x y = LeftShift y x
