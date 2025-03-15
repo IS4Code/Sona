@@ -178,7 +178,7 @@ namespace IS4.Sona.Compiler.States
 
         void OnOperand()
         {
-            Out.WriteCoreOperator("not");
+            Out.WriteCoreOperatorName("not");
             Out.Write('(');
         }
 

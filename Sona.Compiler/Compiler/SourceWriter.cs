@@ -43,15 +43,50 @@ namespace IS4.Sona.Compiler
 
     internal static class SourceWriterExtensions
     {
-        public static void WriteCoreOperator(this ISourceWriter writer, string op)
+        public static void WriteNamespacedName(this ISourceWriter writer, string ns, string name, string member)
         {
-            writer.WriteNamespacedName("Microsoft.FSharp.Core.Operators", op);
+            writer.WriteNamespacedName(ns, name);
+            writer.Write('.');
+            writer.WriteIdentifier(member);
         }
 
-        public static void WriteSpecialMember(this ISourceWriter writer, string op)
+        public static void WriteCoreName(this ISourceWriter writer, string name)
+        {
+            writer.WriteNamespacedName("Microsoft.FSharp.Core", name);
+        }
+
+        public static void WriteCoreOperatorName(this ISourceWriter writer, string name)
+        {
+            writer.WriteNamespacedName("Microsoft.FSharp.Core.Operators", name);
+        }
+
+        public static void WriteSystemName(this ISourceWriter writer, string name)
+        {
+            writer.WriteNamespacedName("System", name);
+        }
+
+        public static void WriteSpecialMember(this ISourceWriter writer, string name)
         {
             writer.Write('.');
-            writer.WriteIdentifier(op);
+            writer.WriteIdentifier(name);
+        }
+
+        public static void WriteSpecialOperator(this ISourceWriter writer, string name)
+        {
+            writer.WriteOperator("|>");
+            writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", name);
+        }
+
+        public static void WriteSpecialUnaryOperator(this ISourceWriter writer, string name)
+        {
+            writer.WriteOperator("|>");
+            writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "UnaryOperators", name);
+        }
+
+        public static void WriteSpecialBinaryOperator(this ISourceWriter writer, string name)
+        {
+            writer.WriteOperator("|>");
+            writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "BinaryOperators", name);
         }
 
         static readonly string space32 = new string(' ', 32);

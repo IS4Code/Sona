@@ -16,36 +16,45 @@ type Priority4 internal() =
   inherit Priority3()
 
 namespace Sona.Runtime.CompilerServices.Extensions
+[<AutoOpen(path = "Sona.Runtime.CompilerServices.Extensions")>]do()
+
 open System
 open System.Runtime.CompilerServices
 open Sona.Runtime.CompilerServices.Internal
 
 [<AbstractClass; Extension>]
-type SequenceHelpersExtensions internal() = 
+type SequenceExtensions internal() = 
   [<Extension>]
-  static member inline ``operator AsEnumerable``(o: byref<^T> when ^T : struct, _: Priority1) = &o
+  static member inline ``operator AsEnumerable``(o : byref<^T> when ^T : struct, _:Priority1) = &o
   
   [<Extension>]
-  static member inline ``operator AsEnumerable``(o: ^T array, _: Priority2): ^T seq = o
+  static member inline ``operator AsEnumerable``(o : ^T array, _:Priority2): ^T seq = o
   
   [<Extension>]
-  static member inline ``operator AsEnumerable``(o: ^T list, _: Priority2): ^T seq = o
+  static member inline ``operator AsEnumerable``(o : ^T list, _:Priority2): ^T seq = o
   
   [<Extension>]
-  static member inline ``operator AsEnumerable``(o: ArraySegment<^T>, _: Priority2) = o
+  static member inline ``operator AsEnumerable``(o : ArraySegment<^T>, _:Priority2) = o
   
   [<Extension>]
-  static member inline ``operator AsEnumerable``(o: Span<^T>, _: Priority2) = o
+  static member inline ``operator AsEnumerable``(o : Span<^T>, _:Priority2) = o
   
   [<Extension>]
-  static member inline ``operator AsEnumerable``(o: ReadOnlySpan<^T>, _: Priority2) = o
-  
+  static member inline ``operator AsEnumerable``(o : ReadOnlySpan<^T>, _:Priority2) = o
+
 [<Sealed; AbstractClass; Extension>]
-type SequenceHelpersExtensions2 private() = 
-  inherit SequenceHelpersExtensions()
+type SequenceExtensions2 private() = 
+  inherit SequenceExtensions()
   
   [<Extension>]
-  static member inline ``operator AsEnumerable``(o: ^T when ^T : not struct, _: Priority1) = o
+  static member inline ``operator AsEnumerable``(o : ^T when ^T : not struct, _:Priority1) = o
+
+[<Sealed; AbstractClass; Extension>]
+type VariableExtensions private() = 
+  [<Extension>]
+  static member inline ``operator Assign``(var : byref<^T>, value : ^T) =
+    var <- value
+    &var
 
 namespace Sona.Runtime.CompilerServices
 open System
@@ -56,16 +65,16 @@ open Sona.Runtime.CompilerServices.Internal
 
 [<Sealed; AbstractClass>]
 type SequenceHelpers private() =
-  static member inline DisposeEnumerator(_: Priority1, o: byref<^T>
+  static member inline DisposeEnumerator(_:Priority1, o : byref<^T>
     when ^T : not struct) =
     match box o with
     | :? IDisposable as d -> d.Dispose()
     | _ -> ()
 
-  static member inline DisposeEnumerator(_: Priority2, o: byref<^T>
+  static member inline DisposeEnumerator(_:Priority2, o : byref<^T>
     when ^T : struct) = ()
     
-  static member inline DisposeEnumerator(_: Priority3, o: byref<^T>
+  static member inline DisposeEnumerator(_:Priority3, o : byref<^T>
     when ^T : struct
     and ^T :> IDisposable) =
     o.Dispose()

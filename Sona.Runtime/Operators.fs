@@ -1,8 +1,4 @@
-﻿namespace Sona.Runtime.CompilerServices.Extensions
-[<AutoOpen(path = "Sona.Runtime.CompilerServices.Extensions")>]do()
-
-open System
-open System.Runtime.CompilerServices
+﻿namespace Sona.Runtime.CompilerServices
 
 module private helpers =
   let inline curry1(func, a)() = func(a)
@@ -23,53 +19,142 @@ module private helpers =
   let inline curry16(func, a)(b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) = func(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
 open helpers
 
-#nowarn "62" "86"
+[<Sealed; AbstractClass; AllowNullLiteral>]
+type UnaryOperators1 = class end
 
-[<Extension>]
-type ListExtensions private () =
-  [<Extension>] static member inline ``#``(this: ^T when ^T : (member Count : int)) = this.Count
-  [<Extension>] static member inline ``..``(this, other) = this @ other
+[<Sealed; AbstractClass; AllowNullLiteral>]
+type UnaryOperators2 = class end
 
-[<Extension>]
-type FunctionExtensions private () =
-  [<Extension>] static member inline ``|``(this, func) = this |> func
-  [<Extension>] static member inline ``&``(this, a) = curry1(this, a)
-  [<Extension>] static member inline ``&``(this, a) = curry2(this, a)
-  [<Extension>] static member inline ``&``(this, a) = curry3(this, a)
-  [<Extension>] static member inline ``&``(this, a) = curry4(this, a)
-  [<Extension>] static member inline ``&``(this, a) = curry5(this, a)
-  [<Extension>] static member inline ``&``(this, a) = curry6(this, a)
-  [<Extension>] static member inline ``&``(this, a) = curry7(this, a)
-  [<Extension>] static member inline ``&``(this, a) = curry8(this, a)
-  [<Extension>] static member inline ``&``(this, a) = curry9(this, a)
-  [<Extension>] static member inline ``&``(this, a) = curry10(this, a)
-  [<Extension>] static member inline ``&``(this, a) = curry11(this, a)
-  [<Extension>] static member inline ``&``(this, a) = curry12(this, a)
-  [<Extension>] static member inline ``&``(this, a) = curry13(this, a)
-  [<Extension>] static member inline ``&``(this, a) = curry14(this, a)
-  [<Extension>] static member inline ``&``(this, a) = curry15(this, a)
-  [<Extension>] static member inline ``&``(this, a) = curry16(this, a)
-  [<Extension>] static member inline ``>>``(this, func) = this >> func
-  [<Extension>] static member inline ``<<``(this, func) = this << func
+type UnaryOperators1 with
+  static member inline ``operator Length``(_:UnaryOperators1, _:UnaryOperators2, x) =
+    (^T : (member Count : int) x)
 
-[<Extension>]
-type BitExtensions private () =
-  [<Extension>] static member inline ``|``(this, other) = this ||| other
-  [<Extension>] static member inline ``^``(this, other) = this ^^^ other
-  [<Extension>] static member inline ``&``(this, other) = this &&& other
-  [<Extension>] static member inline ``>>``(this, other) = this >>> other
-  [<Extension>] static member inline ``<<``(this, other) = this <<< other
+type UnaryOperators2 with
+  static member inline ``operator Length``(_:UnaryOperators1, _:UnaryOperators2, x) =
+    (^T : (member Length : int) x)
 
-[<Extension>]
-type StringExtensions private () =
-  [<Extension>] static member inline ``#``(this: ^T when ^T : (member Length : int)) = this.Length
-  [<Extension>] static member inline ``..``(this, other) = this ^ other
+module UnaryOperators =
+  let inline Length x = ((^self1 or ^self2 or ^x) : (static member ``operator Length``: ^self1 * ^self2 * ^x -> int) (null : UnaryOperators1), (null : UnaryOperators2), x)
 
-[<Extension>]
-type RangeExtensions private () =
-  [<Extension>] static member inline ``..``(this, other) = (..) this other
+[<Sealed; AbstractClass; AllowNullLiteral>]
+type BinaryOperators1 = class end
 
-[<Extension>]
-type SequenceExtensions private () =
-  [<Extension>]
-  static member inline ``..``(this, other) = Seq.append this other
+[<Sealed; AbstractClass; AllowNullLiteral>]
+type BinaryOperators2 = class end
+
+type BinaryOperators1 with
+  static member inline ``operator Concat``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    x @ y
+  
+  // Non-generic overload needed to balance the string one
+  static member inline ``operator Concat``(_:BinaryOperators1, _:BinaryOperators2, x : System.DBNull[], y : System.DBNull[]) =
+    Seq.append x y
+  
+  // Impossible overload needed with the same signature as the one in BinaryOperators2
+  static member inline ``operator Concat``(_:BinaryOperators1, _:BinaryOperators2, _ : ^T, _ : ^T when ^T :> System.Enum and ^T : not struct and ^T : (new : unit -> ^T)) =
+    ()
+
+type BinaryOperators2 with
+  static member inline ``operator Concat``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    (..) x y
+  
+  static member inline ``operator Concat``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    Seq.append x y
+    
+  static member inline ``operator Concat``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    x ^ y
+    
+type BinaryOperators1 with
+  static member inline ``operator Pipe``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    x |> y
+   
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry1(x, y)
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry2(x, y)
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry3(x, y)
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry4(x, y)
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry5(x, y)
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry6(x, y)
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry7(x, y)
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry8(x, y)
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry9(x, y)
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry10(x, y)
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry11(x, y)
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry12(x, y)
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry13(x, y)
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry14(x, y)
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry15(x, y)
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    curry16(x, y)
+    
+  static member inline ``operator RightShift``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    x >> y
+    
+  static member inline ``operator LeftShift``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    x << y
+  
+  // Impossible overloads needed with the same signature as the ones in BinaryOperators2
+  static member inline ``operator Pipe``(_:BinaryOperators1, _:BinaryOperators2, _ : ^T, _ : ^T when ^T :> System.Enum and ^T : not struct and ^T : (new : unit -> ^T)) =
+    ()
+  
+  static member inline ``operator Hat``(_:BinaryOperators1, _:BinaryOperators2, _ : ^T, _ : ^T when ^T :> System.Enum and ^T : not struct and ^T : (new : unit -> ^T)) =
+    ()
+  
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, _ : ^T, _ : ^T when ^T :> System.Enum and ^T : not struct and ^T : (new : unit -> ^T)) =
+    ()
+
+  static member inline ``operator RightShift``(_:BinaryOperators1, _:BinaryOperators2, _ : ^T when ^T :> System.Enum and ^T : not struct and ^T : (new : unit -> ^T), _ : int) =
+    ()
+
+  static member inline ``operator LeftShift``(_:BinaryOperators1, _:BinaryOperators2, _ : ^T when ^T :> System.Enum and ^T : not struct and ^T : (new : unit -> ^T), _ : int) =
+    ()
+
+type BinaryOperators2 with
+  static member inline ``operator Pipe``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    x ||| y
+   
+  static member inline ``operator Hat``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    x ^^^ y
+   
+  static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    x &&& y
+  
+  static member inline ``operator RightShift``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    x >>> y
+  
+  static member inline ``operator LeftShift``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    x <<< y
+
+module BinaryOperators =
+  let inline Concat y x = ((^self1 or ^self2 or ^x) : (static member ``operator Concat``: ^self1 * ^self2 * ^x * _ -> _) (null : BinaryOperators1), (null : BinaryOperators2), x, y)
+  
+  let inline Pipe y x = ((^self1 or ^self2 or ^x) : (static member ``operator Pipe``: ^self1 * ^self2 * ^x * _ -> _) (null : BinaryOperators1), (null : BinaryOperators2), x, y)
+  
+  let inline Hat y x = ((^self1 or ^self2 or ^x) : (static member ``operator Hat``: ^self1 * ^self2 * ^x * _ -> _) (null : BinaryOperators1), (null : BinaryOperators2), x, y)
+  
+  let inline And y x = ((^self1 or ^self2 or ^x) : (static member ``operator And``: ^self1 * ^self2 * ^x * _ -> _) (null : BinaryOperators1), (null : BinaryOperators2), x, y)
+  
+  let inline RightShift y x = ((^self1 or ^self2 or ^x) : (static member ``operator RightShift``: ^self1 * ^self2 * ^x * _ -> _) (null : BinaryOperators1), (null : BinaryOperators2), x, y)
+  
+  let inline LeftShift y x = ((^self1 or ^self2 or ^x) : (static member ``operator LeftShift``: ^self1 * ^self2 * ^x * _ -> _) (null : BinaryOperators1), (null : BinaryOperators2), x, y)
+
+  let inline (..) x y = Concat y x
+  let inline (<|>) x y = Pipe y x
+  let inline (^) x y = Hat y x
+  let inline (&) x y = And y x
+  let inline (>>) x y = RightShift y x
+  let inline (<<) x y = LeftShift y x

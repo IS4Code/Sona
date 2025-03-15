@@ -139,7 +139,7 @@ namespace IS4.Sona.Compiler.States
             }
             else
             {
-                Out.WriteSpecialMember("..");
+                Out.WriteSpecialBinaryOperator("Concat");
             }
         }
 
@@ -161,7 +161,7 @@ namespace IS4.Sona.Compiler.States
             }
             else
             {
-                Out.WriteSpecialMember("|");
+                Out.WriteSpecialBinaryOperator("Pipe");
             }
         }
 
@@ -183,7 +183,7 @@ namespace IS4.Sona.Compiler.States
             }
             else
             {
-                Out.WriteSpecialMember("^");
+                Out.WriteSpecialBinaryOperator("Hat");
             }
         }
 
@@ -205,7 +205,7 @@ namespace IS4.Sona.Compiler.States
             }
             else
             {
-                Out.WriteSpecialMember("&");
+                Out.WriteSpecialBinaryOperator("And");
             }
         }
 
@@ -227,7 +227,7 @@ namespace IS4.Sona.Compiler.States
             }
             else
             {
-                Out.WriteSpecialMember("<<");
+                Out.WriteSpecialBinaryOperator("LeftShift");
             }
         }
 
@@ -239,7 +239,7 @@ namespace IS4.Sona.Compiler.States
             }
             else
             {
-                Out.WriteSpecialMember(">>");
+                Out.WriteSpecialBinaryOperator("RightShift");
             }
         }
 
@@ -257,14 +257,13 @@ namespace IS4.Sona.Compiler.States
             }
             else
             {
-                Out.WriteSpecialMember("#");
-                Out.Write("()");
+                Out.WriteSpecialUnaryOperator("Length");
             }
         }
 
         public override void EnterNotExpr(NotExprContext context)
         {
-            Out.WriteCoreOperator("not");
+            Out.WriteCoreOperatorName("not");
             Out.Write('(');
         }
 
@@ -292,7 +291,7 @@ namespace IS4.Sona.Compiler.States
         public override void ExitAtomicObjectExpr(AtomicObjectExprContext context)
         {
             Out.WriteOperator(":>");
-            Out.WriteNamespacedName("Microsoft.FSharp.Core", "objnull");
+            Out.WriteCoreName("objnull");
             Out.Write(')');
         }
 
@@ -300,7 +299,7 @@ namespace IS4.Sona.Compiler.States
         {
             Out.Write("(()");
             Out.WriteOperator(':');
-            Out.WriteNamespacedName("Microsoft.FSharp.Core", "unit");
+            Out.WriteCoreName("unit");
             Out.Write(')');
         }
 
@@ -328,10 +327,10 @@ namespace IS4.Sona.Compiler.States
                         text = "ignore";
                         break;
                     case "exception":
-                        Out.WriteNamespacedName("System", "Exception");
+                        Out.WriteSystemName("Exception");
                         return;
                 }
-                Out.WriteCoreOperator(text);
+                Out.WriteCoreOperatorName(text);
             }
             finally
             {
@@ -442,7 +441,7 @@ namespace IS4.Sona.Compiler.States
         public override void ExitMemberObjectExpr(MemberObjectExprContext context)
         {
             Out.WriteOperator(":>");
-            Out.WriteNamespacedName("Microsoft.FSharp.Core", "objnull");
+            Out.WriteCoreName("objnull");
             Out.Write(')');
         }
 
@@ -499,9 +498,7 @@ namespace IS4.Sona.Compiler.States
         public override void EnterComplexCallArgTuple(ComplexCallArgTupleContext context)
         {
             Out.Write('(');
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples");
-            Out.Write('.');
-            Out.WriteIdentifier("FromTree");
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples", "FromTree");
             Out.Write('(');
             EnterState<TupleAppendState>().EnterComplexCallArgTuple(context);
         }
@@ -547,7 +544,7 @@ namespace IS4.Sona.Compiler.States
             public override void EnterAssignment(AssignmentContext context)
             {
                 Out.Write(')');
-                Out.WriteSpecialMember("<-");
+                Out.WriteSpecialMember("operator Assign");
                 Out.Write('(');
             }
 
@@ -799,7 +796,7 @@ namespace IS4.Sona.Compiler.States
                 Out.StopCapture(argsCapture);
                 if(arities.Count == 0)
                 {
-                    Out.WriteNamespacedName("Microsoft.FSharp.Core", "unit");
+                    Out.WriteCoreName("unit");
                 }
                 else
                 {
@@ -816,7 +813,7 @@ namespace IS4.Sona.Compiler.States
                         }
                         if(arity == 0)
                         {
-                            Out.WriteNamespacedName("Microsoft.FSharp.Core", "unit");
+                            Out.WriteCoreName("unit");
                         }
                         else
                         {
@@ -1205,9 +1202,7 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterComplexTupleContents(ComplexTupleContentsContext context)
         {
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples");
-            Out.Write('.');
-            Out.WriteIdentifier(isStruct ? "FromTreeValue" : "FromTree");
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples", isStruct ? "FromTreeValue" : "FromTree");
             Out.Write('(');
             EnterState<TupleAppendState>().EnterComplexTupleContents(context);
         }
@@ -1285,9 +1280,7 @@ namespace IS4.Sona.Compiler.States
 
         private void AppendTuples()
         {
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples");
-            Out.Write('.');
-            Out.WriteIdentifier("Append");
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples", "Append");
             appendDepth++;
             Out.Write('(');
         }
@@ -1347,9 +1340,7 @@ namespace IS4.Sona.Compiler.States
         {
             public override void EnterSpreadExpression(SpreadExpressionContext context)
             {
-                Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples");
-                Out.Write('.');
-                Out.WriteIdentifier("ToTree");
+                Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples", "ToTree");
                 Out.Write('(');
             }
 
@@ -1641,8 +1632,7 @@ namespace IS4.Sona.Compiler.States
         {
             if(IsEmpty)
             {
-                Out.WriteNamespacedName("Microsoft.FSharp.Collections", "Seq");
-                Out.Write(".empty");
+                Out.WriteNamespacedName("Microsoft.FSharp.Collections", "Seq", "empty");
             }
             else
             {
@@ -1658,7 +1648,7 @@ namespace IS4.Sona.Compiler.States
             {
                 Out.EnterNestedScope();
                 Out.Write('(');
-                Out.WriteCoreOperator("seq");
+                Out.WriteCoreOperatorName("seq");
                 Out.Write('{');
             }
 
@@ -1669,7 +1659,7 @@ namespace IS4.Sona.Compiler.States
         {
             Out.EnterNestedScope();
             Out.Write('(');
-            Out.WriteCoreOperator("seq");
+            Out.WriteCoreOperatorName("seq");
             Out.WriteLine("{");
         }
 
@@ -1851,10 +1841,10 @@ namespace IS4.Sona.Compiler.States
             alternativeName = Out.CreateTemporaryIdentifier();
             Out.WriteIdentifier(alternativeName);
             Out.WriteOperator('=');
-            Out.WriteCoreOperator("Unchecked");
+            Out.WriteCoreOperatorName("Unchecked");
             Out.Write(".defaultof<_> in match ");
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators");
-            Out.Write(".BindToResult(");
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "BindToResult");
+            Out.Write('(');
             Out.WriteIdentifier(alternativeName);
             Out.Write(')');
         }

@@ -27,7 +27,7 @@ namespace IS4.Sona.Compiler.States
             {
                 scope = FindContext<IComputationContext>();
 
-                Out.WriteCoreOperator("ignore");
+                Out.WriteCoreOperatorName("ignore");
                 Out.Write(" ");
                 scope?.WriteBeginBlockExpression();
             }
@@ -232,7 +232,7 @@ namespace IS4.Sona.Compiler.States
                     Out.Write("let mutable ");
                     Out.WriteIdentifier(ReturnVariable);
                     Out.WriteOperator('=');
-                    Out.WriteCoreOperator("Unchecked");
+                    Out.WriteCoreOperatorName("Unchecked");
                     Out.WriteLine(".defaultof<_>");
                 }
             }
@@ -425,7 +425,7 @@ namespace IS4.Sona.Compiler.States
 
         public sealed override void ExitIgnoredTrail(IgnoredTrailContext context)
         {
-            Out.WriteCoreOperator("Unchecked");
+            Out.WriteCoreOperatorName("Unchecked");
             Out.WriteLine(".defaultof<_>");
             Out.ExitScope();
             Out.Write(_end_);
@@ -440,7 +440,7 @@ namespace IS4.Sona.Compiler.States
                 Out.WriteLine();
                 Out.Write("else ");
             }
-            Out.WriteCoreOperator("Unchecked");
+            Out.WriteCoreOperatorName("Unchecked");
             Out.Write(".defaultof<_>");
             // Possible to elide even further if empty trail is predicted
         }
@@ -1472,7 +1472,7 @@ namespace IS4.Sona.Compiler.States
             {
                 // Return any value
                 Out.WriteLine();
-                Out.WriteCoreOperator("Unchecked");
+                Out.WriteCoreOperatorName("Unchecked");
                 Out.Write(".defaultof<_>");
             }
             if((flags & StatementFlags.OpenPath) == 0)
@@ -1601,7 +1601,7 @@ namespace IS4.Sona.Compiler.States
         {
             Out.WriteIdentifier(ContinuingVariable ?? Error("COMPILER ERROR: `repeat` used without a condition variable.", context));
             Out.WriteOperator("<-");
-            Out.WriteCoreOperator("not");
+            Out.WriteCoreOperatorName("not");
             Out.Write('(');
             EnterState<ExpressionState>().EnterExpression(context);
         }
@@ -1696,7 +1696,7 @@ namespace IS4.Sona.Compiler.States
             {
                 // Return any value
                 Out.WriteLine();
-                Out.WriteCoreOperator("Unchecked");
+                Out.WriteCoreOperatorName("Unchecked");
                 Out.Write(".defaultof<_>");
             }
             if((flags & StatementFlags.OpenPath) == 0)
@@ -1930,7 +1930,7 @@ namespace IS4.Sona.Compiler.States
             {
                 // Return any value
                 Out.WriteLine();
-                Out.WriteCoreOperator("Unchecked");
+                Out.WriteCoreOperatorName("Unchecked");
                 Out.Write(".defaultof<_>");
             }
             if((flags & StatementFlags.OpenPath) == 0)
@@ -2286,8 +2286,8 @@ namespace IS4.Sona.Compiler.States
         {
             Out.WriteSpecialMember("operator AsEnumerable");
             Out.Write('(');
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "SequenceHelpers");
-            Out.WriteLine(".Marker).GetEnumerator()");
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "SequenceHelpers", "Marker");
+            Out.WriteLine(").GetEnumerator()");
             Out.WriteLine("try");
             Out.EnterScope();
             Out.Write("while ");
@@ -2313,10 +2313,10 @@ namespace IS4.Sona.Compiler.States
             Out.ExitScope();
             Out.WriteLine();
             Out.Write("finally ");
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "SequenceHelpers");
-            Out.Write(".DisposeEnumerator(");
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "SequenceHelpers");
-            Out.Write(".Marker,&");
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "SequenceHelpers", "DisposeEnumerator");
+            Out.Write('(');
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "SequenceHelpers", "Marker");
+            Out.Write(",&");
             Out.WriteIdentifier(enumeratorVariable ?? Error(enumeratorError, context));
             Out.Write(")");
             base.OnExit(flags, context);
@@ -2412,7 +2412,7 @@ namespace IS4.Sona.Compiler.States
                 Out.WriteLine();
                 Out.Write("| _ when false");
                 Out.WriteOperator("->");
-                Out.WriteCoreOperator("Unchecked");
+                Out.WriteCoreOperatorName("Unchecked");
                 Out.Write(".defaultof<_>");
             }
             base.OnExit(flags, context);

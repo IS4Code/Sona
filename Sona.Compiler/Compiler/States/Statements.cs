@@ -649,15 +649,13 @@ namespace IS4.Sona.Compiler.States
         {
             if(!HasExpression)
             {
-                Out.WriteCoreOperator("reraise");
+                Out.WriteCoreOperatorName("reraise");
                 Out.Write("()");
             }
             else
             {
                 Out.Write(")");
-                Out.WriteOperator("|>");
-                Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators");
-                Out.Write(".Throw");
+                Out.WriteSpecialOperator("Throw");
             }
 
             ExitState().ExitThrowStatement(context);
@@ -795,7 +793,7 @@ namespace IS4.Sona.Compiler.States
         {
             var identifier = LexerContext.GetState<EchoPragma>()?.Identifier ?? "printfn";
 
-            Out.WriteNamespacedName("Microsoft.FSharp.Core", "ExtraTopLevelOperators");
+            Out.WriteCoreName("ExtraTopLevelOperators");
             Out.Write('.');
             Out.WriteIdentifier(identifier);
         }

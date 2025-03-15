@@ -342,9 +342,7 @@ namespace IS4.Sona.Compiler.States
                     {
                         // Both are valid
                         Out.WriteOperator("|>");
-                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Inference");
-                        Out.Write('.');
-                        Out.WriteIdentifier(instantState.TraitName + "|" + durationState.TraitName);
+                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Inference", instantState.TraitName + "|" + durationState.TraitName);
                     }
                 }
                 finally

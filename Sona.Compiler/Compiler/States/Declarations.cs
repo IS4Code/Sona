@@ -252,7 +252,7 @@ namespace IS4.Sona.Compiler.States
         public override void EnterConstDecl(ConstDeclContext context)
         {
             Out.Write("[<");
-            Out.WriteNamespacedName("Microsoft.FSharp.Core", "LiteralAttribute");
+            Out.WriteCoreName("LiteralAttribute");
             Out.WriteLine(">]");
             Out.Write("let ");
             isliteral = true;

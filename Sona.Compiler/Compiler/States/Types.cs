@@ -16,7 +16,7 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterUnit(UnitContext context)
         {
-            Out.WriteNamespacedName("Microsoft.FSharp.Core", "unit");
+            Out.WriteCoreName("unit");
         }
 
         public override void ExitUnit(UnitContext context)
@@ -40,13 +40,13 @@ namespace IS4.Sona.Compiler.States
                         text = "obj";
                         break;
                     case "void":
-                        Out.WriteNamespacedName("System", "Void");
+                        Out.WriteSystemName("Void");
                         return;
                     case "exception":
-                        Out.WriteNamespacedName("System", "Exception");
+                        Out.WriteSystemName("Exception");
                         return;
                 }
-                Out.WriteNamespacedName("Microsoft.FSharp.Core", text);
+                Out.WriteCoreName(text);
             }
             finally
             {
