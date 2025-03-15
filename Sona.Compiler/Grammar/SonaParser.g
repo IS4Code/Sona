@@ -1276,15 +1276,15 @@ interpStrExpression:
 
 inlineSourceFree:
   BEGIN_INLINE_SOURCE WHITESPACE* inlineSourceLanguage inlineSourceFirstLine inlineSourceLine*
-  END_INLINE_SOURCE WHITESPACE* END_DIRECTIVE;
+  END_INLINE_SOURCE WHITESPACE* (END_DIRECTIVE | EOF);
 
 inlineSourceReturning:
   BEGIN_INLINE_SOURCE WHITESPACE* inlineSourceLanguage inlineSourceFirstLine inlineSourceLine*
-  END_INLINE_SOURCE WHITESPACE* 'return' WHITESPACE* END_DIRECTIVE;
+  END_INLINE_SOURCE WHITESPACE* 'return' WHITESPACE* (END_DIRECTIVE | EOF);
 
 inlineSourceTerminating:
   BEGIN_INLINE_SOURCE WHITESPACE* inlineSourceLanguage inlineSourceFirstLine inlineSourceLine*
-  END_INLINE_SOURCE WHITESPACE* 'throw' WHITESPACE* END_DIRECTIVE;
+  END_INLINE_SOURCE WHITESPACE* 'throw' WHITESPACE* (END_DIRECTIVE | EOF);
 
 inlineSourceLanguage:
   STRING_LITERAL | VERBATIM_STRING_LITERAL;
