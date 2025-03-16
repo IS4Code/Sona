@@ -250,6 +250,7 @@ type Tuples =
   static member inline ToTree((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o)) = (a, (b, (c, (d, (e, (f, (g, (h, (i, (j, (k, (l, (m, (n, (o, ())))))))))))))))
   static member inline ToTree((a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)) = (a, (b, (c, (d, (e, (f, (g, (h, (i, (j, (k, (l, (m, (n, (o, (p, ()))))))))))))))))
   
+  static member inline ToTree(_ : ValueTuple) = ()
   static member inline ToTree(t : ValueTuple<_>) = (t.Item1, ())
   static member inline ToTree(struct(a, b)) = (a, (b, ()))
   static member inline ToTree(struct(a, b, c)) = (a, (b, (c, ())))
