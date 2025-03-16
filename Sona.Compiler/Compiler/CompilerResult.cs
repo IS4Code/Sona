@@ -10,9 +10,9 @@ namespace IS4.Sona.Compiler
 {
     public class CompilerResult
     {
-        readonly CompilerOptions options;
         readonly List<CompilerDiagnostic> diagnostics = new();
 
+        public CompilerOptions Options { get; }
         public int? ExitCode { get; internal set; }
         public string? IntermediateCode { get; internal set; }
         public Stream? Stream { get; internal set; }
@@ -32,7 +32,7 @@ namespace IS4.Sona.Compiler
 
         public Assembly? Assembly => LazyInitializer.EnsureInitialized(ref assembly, ref assemblyInitialized, ref syncLock, () => {
             if(Stream == null) return null;
-            return options.AssemblyLoadContext.LoadFromStream(Stream);
+            return Options.AssemblyLoadContext.LoadFromStream(Stream);
         });
 
         Func<Task>? entryPoint;
@@ -43,7 +43,7 @@ namespace IS4.Sona.Compiler
 
         public CompilerResult(CompilerOptions options)
         {
-            this.options = options;
+            Options = options;
         }
 
         internal void AddDiagnostic(CompilerDiagnostic diagnostic)

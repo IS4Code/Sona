@@ -23,6 +23,7 @@ namespace IS4.Sona.Compiler.Gui
     public partial class MainForm : Form
     {
         readonly Channel<string> codeChannel;
+        readonly Channel<CompilerResult> sourceChannel;
         readonly SonaCompiler compiler;
 
         public MainForm()
@@ -70,11 +71,18 @@ namespace IS4.Sona.Compiler.Gui
 
             progressBar.Size = new(progressBar.Height, progressBar.Height);
 
+            // Reading will be done from a thread
             codeChannel = Channel.CreateUnbounded<string>(new()
             {
                 SingleReader = true,
                 SingleWriter = true,
-                // Reading will be done from a thread anyway
+                AllowSynchronousContinuations = true
+            });
+
+            sourceChannel = Channel.CreateUnbounded<CompilerResult>(new()
+            {
+                SingleReader = true,
+                SingleWriter = true,
                 AllowSynchronousContinuations = true
             });
 
@@ -85,9 +93,14 @@ namespace IS4.Sona.Compiler.Gui
         {
             base.OnLoad(e);
 
+            // Run compilers as a background thread in case of freeze
             new Thread(UpdateText)
             {
-                // Run compiler as a background thread in case of freeze
+                IsBackground = true
+            }.Start();
+
+            new Thread(UpdateSource)
+            {
                 IsBackground = true
             }.Start();
         }
@@ -463,6 +476,28 @@ namespace IS4.Sona.Compiler.Gui
             return updated;
         }
 
+        int workCounter;
+
+        private void BeginWork()
+        {
+            if(Interlocked.Increment(ref workCounter) == 1)
+            {
+                Invoke(() => {
+                    progressBar.Style = ProgressBarStyle.Marquee;
+                });
+            }
+        }
+
+        private void EndWork()
+        {
+            if(Interlocked.Decrement(ref workCounter) == 0)
+            {
+                Invoke(() => {
+                    progressBar.Style = ProgressBarStyle.Blocks;
+                });
+            }
+        }
+
         private void UpdateText()
         {
             var reader = codeChannel.Reader;
@@ -470,6 +505,8 @@ namespace IS4.Sona.Compiler.Gui
 
             bool showBeginEnd = false;
             bool adjustLineNumbers = false;
+
+            BeginWork();
 
             while(true)
             {
@@ -484,9 +521,7 @@ namespace IS4.Sona.Compiler.Gui
                 if(stack.Count == 0)
                 {
                     // Nothing yet and no history to try
-                    Invoke(() => {
-                        progressBar.Style = ProgressBarStyle.Blocks;
-                    });
+                    EndWork();
                     try
                     {
                         // Wait for code
@@ -498,8 +533,8 @@ namespace IS4.Sona.Compiler.Gui
                         // Unwrap exception
                         ExceptionDispatchInfo.Capture(e.InnerException!).Throw();
                     }
+                    BeginWork();
                     (showBeginEnd, adjustLineNumbers) = Invoke(() => {
-                        progressBar.Style = ProgressBarStyle.Marquee;
                         return (blockDelimitersButton.Checked, adjustLineNumbersButton.Checked);
                     });
 
@@ -530,15 +565,15 @@ namespace IS4.Sona.Compiler.Gui
             }
         }
 
-        (string text, bool latest, CompilerOptions options) latestTuple;
-        bool latestResult;
+        (string text, bool latest, CompilerOptions options) latestCodeTuple;
+        bool latestCodeResult;
 
         private bool CompileText(string text, bool latest, CompilerOptions options)
         {
             var tuple = (text, latest, options);
-            if(latestTuple == tuple)
+            if(latestCodeTuple == tuple)
             {
-                return latestResult;
+                return latestCodeResult;
             }
 
             var inputStream = new AntlrInputStream(text);
@@ -562,14 +597,14 @@ namespace IS4.Sona.Compiler.Gui
 
                 if(latest)
                 {
-                    // Expose F# errors
-                    compiler.CheckResult(result, "input", options);
-                    Invoke(() => {
-                        messageBox.Text = String.Join(Environment.NewLine, result.Diagnostics);
-                    });
+                    // Send to F# checker
+                    if(!sourceChannel.Writer.TryWrite(result))
+                    {
+                        sourceChannel.Writer.WriteAsync(result).AsTask().Wait();
+                    }
                 }
 
-                return latestResult = true;
+                return latestCodeResult = true;
             }
             catch(Exception e)
             {
@@ -583,11 +618,99 @@ namespace IS4.Sona.Compiler.Gui
                     });
                 }
 
-                return latestResult = false;
+                return latestCodeResult = false;
             }
             finally
             {
-                latestTuple = tuple;
+                latestCodeTuple = tuple;
+            }
+        }
+        
+
+        private void UpdateSource()
+        {
+            var reader = sourceChannel.Reader;
+
+            while(true)
+            {
+                CompilerResult? last = null;
+                while(reader.TryRead(out var next))
+                {
+                    // Get latest results
+                    last = next;
+                }
+                if(last == null)
+                {
+                    // Nothing yet
+                    try
+                    {
+                        // Wait for results
+                        last = reader.ReadAsync().AsTask().Result;
+                    }
+                    catch(AggregateException e) when(e.InnerExceptions.Count == 1)
+                    {
+                        // Unwrap exception
+                        ExceptionDispatchInfo.Capture(e.InnerException!).Throw();
+                    }
+                    while(reader.TryRead(out var next))
+                    {
+                        // Anything afterwards?
+                        last = next;
+                    }
+                }
+
+                // Result exists
+                BeginWork();
+                var diagnostics = CheckSource(last!);
+                EndWork();
+
+                if(reader.TryPeek(out _))
+                {
+                    // Outdated
+                    continue;
+                }
+
+                Invoke(() => {
+                    messageBox.Text = String.Join(Environment.NewLine, diagnostics);
+                });
+            }
+        }
+
+        (string? text, CompilerOptions options) latestSourceTuple;
+        IReadOnlyCollection<CompilerDiagnostic> latestSourceResult;
+
+        private IReadOnlyCollection<CompilerDiagnostic> CheckSource(CompilerResult result)
+        {
+            var tuple = (result.IntermediateCode, result.Options);
+            if(latestSourceTuple == tuple)
+            {
+                return latestSourceResult;
+            }
+
+            try
+            {
+                // Expose F# errors
+                compiler.CheckResult(result, "input", result.Options);
+
+                return latestSourceResult = result.Diagnostics;
+            }
+            catch(Exception e)
+            {
+                // Ignore exceptions from non-recent code
+                var message = e.ToString();
+                Invoke(() => {
+                    resultRichText.Enabled = false;
+                    messageBox.Text = e.Message;
+                });
+
+                return latestSourceResult = new[]
+                {
+                    new CompilerDiagnostic(DiagnosticLevel.Error, "EXCEPTION", e.ToString(), 0, e)
+                };
+            }
+            finally
+            {
+                latestSourceTuple = tuple;
             }
         }
 
