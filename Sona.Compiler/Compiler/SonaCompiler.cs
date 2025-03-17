@@ -152,8 +152,7 @@ namespace IS4.Sona.Compiler
 
         static readonly string[] referencedLibraries = new[]
         {
-            "Sona.Runtime",
-            "FSharp.Core"
+            "Sona.Runtime"
         };
 
         static readonly Assembly currentAssembly = typeof(SonaCompiler).Assembly;
@@ -229,7 +228,7 @@ namespace IS4.Sona.Compiler
             {
                 "fsc.exe", // ignored
                 "--out:" + outputPath
-            }.Concat(referencedLibraries.Select(f => "-r:" + Path.Combine(depsPath, f)))
+            }.Concat(referencedLibraries.Select(f => $"-r:{Path.Combine(depsPath, f)}.dll"))
             .Concat(flags.OtherOptions)
             .Concat(flags.ReferencedProjects.Select(p => p.OutputFile))
             .Concat(flags.SourceFiles)
