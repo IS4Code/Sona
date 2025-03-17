@@ -140,10 +140,20 @@ namespace IS4.Sona.Compiler
             }
         }
 
-        static readonly Dictionary<string, string> embeddedFiles = new(StringComparer.OrdinalIgnoreCase)
+        static readonly Dictionary<string, string> embeddedLibraries = new[]
         {
-            { "FSharp.Core", "FSharp.Core.dll" },
-            { "Sona.Runtime", "Sona.Runtime.dll" }
+            "Sona.Runtime",
+            "FSharp.Core",
+            "System.Buffers",
+            "System.Memory",
+            "System.Numerics.Vectors",
+            "System.Runtime.CompilerServices.Unsafe"
+        }.ToDictionary(n => n, n => n + ".dll", StringComparer.OrdinalIgnoreCase);
+
+        static readonly string[] referencedLibraries = new[]
+        {
+            "Sona.Runtime",
+            "FSharp.Core"
         };
 
         static readonly Assembly currentAssembly = typeof(SonaCompiler).Assembly;
@@ -155,7 +165,7 @@ namespace IS4.Sona.Compiler
                 return null;
             }
             name = new AssemblyName(name).Name;
-            if(name is null || !embeddedFiles.TryGetValue(name, out var file))
+            if(name is null || !embeddedLibraries.TryGetValue(name, out var file))
             {
                 return null;
             }
@@ -190,7 +200,7 @@ namespace IS4.Sona.Compiler
             fs.InputFiles[manifestPath] = defaultWin32Manifest;
 
             depsPath = fsPrefix + ".deps";
-            foreach(var file in embeddedFiles.Values)
+            foreach(var file in embeddedLibraries.Values)
             {
                 var path = Path.Combine(depsPath, file);
                 fs.InputFiles[path] = LocalInputFile.FromEmbeddedFile(currentAssembly, file);
@@ -219,7 +229,7 @@ namespace IS4.Sona.Compiler
             {
                 "fsc.exe", // ignored
                 "--out:" + outputPath
-            }.Concat(embeddedFiles.Values.Select(f => "-r:" + Path.Combine(depsPath, f)))
+            }.Concat(referencedLibraries.Select(f => "-r:" + Path.Combine(depsPath, f)))
             .Concat(flags.OtherOptions)
             .Concat(flags.ReferencedProjects.Select(p => p.OutputFile))
             .Concat(flags.SourceFiles)
@@ -263,7 +273,7 @@ namespace IS4.Sona.Compiler
                     "--consolecolors",
                     "--gui-",
                     "--quiet"
-                }.Concat(embeddedFiles.Values.Select(f => "-r:" + Path.Combine(depsPath, f)))
+                }.Concat(referencedLibraries.Select(f => "-r:" + Path.Combine(depsPath, f)))
                 .Concat(flags)
                 .ToArray();
 

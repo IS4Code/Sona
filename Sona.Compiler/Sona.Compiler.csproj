@@ -19,6 +19,10 @@
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.9.2" />
     <PackageReference Include="FSharp.Compiler.Service" Version="43.9.100" />
     <PackageReference Include="FSharp.Core" Version="9.0.100" GeneratePathProperty="true" />
+    <PackageReference Include="System.Buffers" Version="4.6.0" GeneratePathProperty="true" />
+    <PackageReference Include="System.Memory" Version="4.6.0" GeneratePathProperty="true" />
+    <PackageReference Include="System.Numerics.Vectors" Version="4.6.0" GeneratePathProperty="true" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.0" GeneratePathProperty="true" />
     <PackageReference Include="System.Security.Permissions" Version="9.0.0" />
   </ItemGroup>
 
@@ -27,8 +31,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="$(PkgFSharp_Core)\lib\netstandard2.0\FSharp.Core.dll" LogicalName="FSharp.Core.dll" CopyToOutputDirectory="Never" />
     <EmbeddedResource Include="..\Sona.Runtime\bin\$(ConfigurationName)\netstandard2.0\Sona.Runtime.dll" LogicalName="Sona.Runtime.dll" CopyToOutputDirectory="Never" />
+    <EmbeddedResource Include="$(PkgFSharp_Core)\lib\netstandard2.0\FSharp.Core.dll" LogicalName="FSharp.Core.dll" CopyToOutputDirectory="Never" />
+    <EmbeddedResource Include="$(PkgSystem_Buffers)\lib\netstandard2.0\System.Buffers.dll" LogicalName="System.Buffers.dll" CopyToOutputDirectory="Never" />
+    <EmbeddedResource Include="$(PkgSystem_Memory)\lib\netstandard2.0\System.Memory.dll" LogicalName="System.Memory.dll" CopyToOutputDirectory="Never" />
+    <EmbeddedResource Include="$(PkgSystem_Numerics_Vectors)\lib\netstandard2.0\System.Numerics.Vectors.dll" LogicalName="System.Numerics.Vectors.dll" CopyToOutputDirectory="Never" />
+    <EmbeddedResource Include="$(PkgSystem_Runtime_CompilerServices_Unsafe)\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll" LogicalName="System.Runtime.CompilerServices.Unsafe.dll" CopyToOutputDirectory="Never" />
   </ItemGroup>
 
 </Project>
