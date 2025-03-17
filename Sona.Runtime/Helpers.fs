@@ -185,6 +185,8 @@ module Operators =
   
   let inline BindToResult(y)(x) =
     ((^self1 or ^self2 or ^x) : (static member ``operator BindToResult``: ^self1 * ^self2 * ^x * _ -> struct(bool * _)) (null : Operators1), (null : Operators2), x, y)
+  
+  let inline ToBoolean x = (^T : (static member op_Explicit : ^T -> bool) x)
 
 module Patterns =
   [<return: Struct>]
@@ -329,9 +331,3 @@ type Tuples =
   static member inline Append(a : (_ * (_ * _)), b : unit) = Tuples.``operator Append``((null : Tuples), a, b)
   static member inline Append(a : (_ * (_ * _)), b : (_ * unit)) = Tuples.``operator Append``((null : Tuples), a, b)
   static member inline Append(a : (_ * (_ * _)), b : (_ * (_ * _))) = Tuples.``operator Append``((null : Tuples), a, b)
-
-namespace Microsoft.FSharp.Core
-[<AutoOpen>]
-module Operators =
-  [<CompiledName("ToBoolean")>]
-  let inline bool x = (^T : (static member op_Explicit : ^T -> bool) x)

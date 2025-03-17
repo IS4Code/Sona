@@ -326,6 +326,9 @@ namespace IS4.Sona.Compiler.States
                     case "void":
                         text = "ignore";
                         break;
+                    case "bool":
+                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "ToBoolean");
+                        return;
                     case "exception":
                         Out.WriteSystemName("Exception");
                         return;
