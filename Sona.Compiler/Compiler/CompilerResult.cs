@@ -13,7 +13,7 @@ namespace IS4.Sona.Compiler
         readonly List<CompilerDiagnostic> diagnostics = new();
 
         public CompilerOptions Options { get; }
-        public int? ExitCode { get; internal set; }
+        public Exception? Exception { get; internal set; }
         public string? IntermediateCode { get; internal set; }
         public Stream? Stream { get; internal set; }
 

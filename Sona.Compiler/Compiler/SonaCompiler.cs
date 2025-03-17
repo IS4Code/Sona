@@ -235,12 +235,13 @@ namespace IS4.Sona.Compiler
             .Concat(flags.SourceFiles)
             .ToArray();
 
-            var (diagnostics, exitCode) = await FSharpAsync.StartAsTask(
+            var (diagnostics, exception) = await FSharpAsync.StartAsTask(
                 checker.Compile(args, userOpName: null),
                 taskCreationOptions: null, cancellationToken: cancelTokenOption
             );
 
-            result.ExitCode = exitCode;
+            result.Exception = exception?.Value;
+
             foreach(var diagnostic in diagnostics)
             {
                 var level =
@@ -452,8 +453,8 @@ namespace IS4.Sona.Compiler
                 parallelReferenceResolution: true,
                 captureIdentifiersWhenParsing: null,
                 documentSource: documentSource,
-                useSyntaxTreeCache: false,
-                useTransparentCompiler: null
+                useTransparentCompiler: null,
+                transparentCompilerCacheSizes: null
             );
 
             var (flags, _) = await FSharpAsync.StartAsTask(checker.GetProjectOptionsFromScript(

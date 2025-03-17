@@ -17,8 +17,8 @@
 
   <ItemGroup>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.9.2" />
-    <PackageReference Include="FSharp.Compiler.Service" Version="43.9.100" />
-    <PackageReference Include="FSharp.Core" Version="9.0.100" GeneratePathProperty="true" />
+    <PackageReference Include="FSharp.Compiler.Service" Version="43.9.201" />
+    <PackageReference Include="FSharp.Core" Version="9.0.201" GeneratePathProperty="true" />
     <PackageReference Include="System.Buffers" Version="4.6.0" GeneratePathProperty="true" />
     <PackageReference Include="System.Memory" Version="4.6.0" GeneratePathProperty="true" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.6.0" GeneratePathProperty="true" />
