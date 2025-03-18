@@ -3,6 +3,15 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
+
+    <DisableAutoSetFscCompilerPath>true</DisableAutoSetFscCompilerPath>
+    <FSharp_Shim_Present>false</FSharp_Shim_Present>
+    <FscToolExe>$(ProgramFiles)\dotnet\dotnet.exe</FscToolExe>
+    <DotnetFscCompilerPath>"$(ProgramFiles)\dotnet\sdk\9.0.201\FSharp\fsc.dll"</DotnetFscCompilerPath>
+    <FSharpPreferNetFrameworkTools>false</FSharpPreferNetFrameworkTools>
+    <FSharpPrefer64BitTools>true</FSharpPrefer64BitTools>
+
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="9.0.100" />
+    <PackageReference Update="FSharp.Core" Version="9.0.201" />
   </ItemGroup>
 
 </Project>
