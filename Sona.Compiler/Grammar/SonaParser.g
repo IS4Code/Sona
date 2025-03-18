@@ -1029,7 +1029,7 @@ atomicExpr:
   altMemberExpr |
   memberExpr |
   simpleExpr |
-  constructExpr |
+  fullConstructExpr |
   funcExpr |
   inlineExpr |
   hashExpr |
@@ -1077,17 +1077,20 @@ funcExpr:
 inlineExpr:
   'inline' expressionStatement;
 
-constructExpr:
+basicConstructExpr:
   arrayConstructor |
   recordConstructor |
   anonymousRecordConstructor |
   anonymousClassRecordConstructor |
   anonymousStructRecordConstructor |
   sequenceConstructor |
-  tupleConstructor |
   explicitTupleConstructor |
   classTupleConstructor |
   structTupleConstructor;
+
+fullConstructExpr:
+  basicConstructExpr |
+  tupleConstructor;
 
 // Member access
 
@@ -1098,15 +1101,15 @@ memberExpr:
 memberExpr_Standalone:
   name simpleCallArgument?? |
   memberTypeConstructExpr |
-  memberVoidExpr |
-  memberObjectExpr |
-  memberTypeConvertExpr |
   nestedExpr |
   nestedAssignment;
 
 memberExpr_Prefix:
   simpleExpr |
-  constructExpr;
+  fullConstructExpr |
+  memberVoidExpr |
+  memberObjectExpr |
+  memberTypeConvertExpr;
 
 memberExpr_Suffix:
   (
@@ -1161,7 +1164,7 @@ callArguments:
   '(' callArgList ')';
 
 simpleCallArgument:
-  constructExpr |
+  basicConstructExpr |
   string |
   interpolatedString |
   verbatimInterpolatedString;
