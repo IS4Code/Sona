@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -147,9 +148,9 @@ namespace IS4.Sona.Compiler
 
         public bool SkipEmptyLines { get; set; } = false;
 
-        readonly List<Capture> captures = new();
+        readonly Stack<Capture> captures = new();
 
-        bool Recording => captures.Count > 0;
+        bool Recording([MaybeNullWhen(false)] out Capture capture) => captures.TryPeek(out capture);
 
         int tmpIdIndex;
 
@@ -158,27 +159,24 @@ namespace IS4.Sona.Compiler
 
         }
 
-        void Record(Action<SourceWriter> action, bool idempotent = false)
+        void Record(Capture capture, Action<SourceWriter> action, CaptureActionType type = default)
         {
-            foreach(var capture in captures)
+            if(type != default && capture.Count is > 0 and var count && capture[count - 1].type == type)
             {
-                if(idempotent && capture.Count is > 0 and var count && capture[count - 1].Method.Equals(action.Method))
-                {
-                    capture[count - 1] = action;
-                }
-                else
-                {
-                    capture.Add(action);
-                }
+                capture[count - 1] = (action, type);
+            }
+            else
+            {
+                capture.Add((action, type));
             }
         }
 
         IToken? expectedNextLineToken;
         public void UpdateLine(IToken token)
         {
-            if(Recording)
+            if(Recording(out var capture))
             {
-                Record(x => x.UpdateLine(token), true);
+                Record(capture, x => x.UpdateLine(token), CaptureActionType.LineUpdate);
                 return;
             }
 
@@ -253,9 +251,9 @@ namespace IS4.Sona.Compiler
                 return;
             }
 
-            if(Recording)
+            if(Recording(out var capture))
             {
-                Record(x => ((ISourceWriter)x).Write(text));
+                Record(capture, x => ((ISourceWriter)x).Write(text));
                 return;
             }
 
@@ -264,9 +262,9 @@ namespace IS4.Sona.Compiler
 
         void ISourceWriter.Write(char value)
         {
-            if(Recording)
+            if(Recording(out var capture))
             {
-                Record(x => ((ISourceWriter)x).Write(value));
+                Record(capture, x => ((ISourceWriter)x).Write(value));
                 return;
             }
 
@@ -275,9 +273,9 @@ namespace IS4.Sona.Compiler
 
         void ISourceWriter.WriteLine()
         {
-            if(Recording)
+            if(Recording(out var capture))
             {
-                Record(x => ((ISourceWriter)x).WriteLine());
+                Record(capture, x => ((ISourceWriter)x).WriteLine());
                 return;
             }
 
@@ -292,9 +290,9 @@ namespace IS4.Sona.Compiler
 
         void ISourceWriter.WriteLine(string text)
         {
-            if(Recording)
+            if(Recording(out var capture))
             {
-                Record(x => ((ISourceWriter)x).WriteLine(text));
+                Record(capture, x => ((ISourceWriter)x).WriteLine(text));
                 return;
             }
 
@@ -309,9 +307,9 @@ namespace IS4.Sona.Compiler
 
         public void WriteIdentifier(string name)
         {
-            if(Recording)
+            if(Recording(out var capture))
             {
-                Record(x => x.WriteIdentifier(name));
+                Record(capture, x => x.WriteIdentifier(name));
                 return;
             }
 
@@ -333,9 +331,9 @@ namespace IS4.Sona.Compiler
 
         public void WriteOperator(string op)
         {
-            if(Recording)
+            if(Recording(out var capture))
             {
-                Record(x => x.WriteOperator(op));
+                Record(capture, x => x.WriteOperator(op));
                 return;
             }
 
@@ -346,9 +344,9 @@ namespace IS4.Sona.Compiler
 
         public void WriteOperator(char op)
         {
-            if(Recording)
+            if(Recording(out var capture))
             {
-                Record(x => x.WriteOperator(op));
+                Record(capture, x => x.WriteOperator(op));
                 return;
             }
 
@@ -359,9 +357,9 @@ namespace IS4.Sona.Compiler
 
         public void WriteLeftOperator(string op)
         {
-            if(Recording)
+            if(Recording(out var capture))
             {
-                Record(x => x.WriteLeftOperator(op));
+                Record(capture, x => x.WriteLeftOperator(op));
                 return;
             }
 
@@ -371,9 +369,9 @@ namespace IS4.Sona.Compiler
 
         public void WriteLeftOperator(char op)
         {
-            if(Recording)
+            if(Recording(out var capture))
             {
-                Record(x => x.WriteLeftOperator(op));
+                Record(capture, x => x.WriteLeftOperator(op));
                 return;
             }
 
@@ -383,9 +381,9 @@ namespace IS4.Sona.Compiler
 
         public void WriteNamespacedName(string ns, string name)
         {
-            if(Recording)
+            if(Recording(out var capture))
             {
-                Record(x => x.WriteNamespacedName(ns, name));
+                Record(capture, x => x.WriteNamespacedName(ns, name));
                 return;
             }
 
@@ -398,9 +396,9 @@ namespace IS4.Sona.Compiler
         readonly Stack<(int from, int to)> scopeRestore = new();
         public void EnterScope()
         {
-            if(Recording)
+            if(Recording(out var capture))
             {
-                Record(x => x.EnterScope());
+                Record(capture, x => x.EnterScope());
                 return;
             }
 
@@ -419,9 +417,9 @@ namespace IS4.Sona.Compiler
 
         public void ExitScope()
         {
-            if(Recording)
+            if(Recording(out var capture))
             {
-                Record(x => x.ExitScope());
+                Record(capture, x => x.ExitScope());
                 return;
             }
 
@@ -438,9 +436,9 @@ namespace IS4.Sona.Compiler
 
         public void EnterNestedScope(bool keepLevel = false)
         {
-            if(Recording)
+            if(Recording(out var capture))
             {
-                Record(x => x.EnterNestedScope(keepLevel));
+                Record(capture, x => x.EnterNestedScope(keepLevel));
                 return;
             }
 
@@ -460,9 +458,9 @@ namespace IS4.Sona.Compiler
 
         public void ExitNestedScope()
         {
-            if(Recording)
+            if(Recording(out var capture))
             {
-                Record(x => x.ExitNestedScope());
+                Record(capture, x => x.ExitNestedScope());
                 return;
             }
 
@@ -489,19 +487,58 @@ namespace IS4.Sona.Compiler
         public ISourceCapture StartCapture()
         {
             var capture = new Capture();
-            captures.Add(capture);
+            captures.Push(capture);
             return capture;
         }
 
         public void StopCapture(ISourceCapture capture)
         {
-            if(capture is Capture capture2)
+            if(capture is not Capture)
             {
-                captures.Remove(capture2);
+                throw new ArgumentException("Argument must be a capture created from this instance.", nameof(capture));
+            }
+            if(!captures.TryPop(out var topCapture))
+            {
+                throw new InvalidOperationException("The writer is not currently recording.");
+            }
+            if(topCapture != capture)
+            {
+                // Push back
+                captures.Push(topCapture!);
+                throw new InvalidOperationException("Only the capture that is currently being recorded can be stopped.");
             }
         }
 
-        sealed class Capture : List<Action<SourceWriter>>, ISourceCapture
+        private void PlayCapture(Capture capture)
+        {
+            if(!captures.TryPeek(out var topCapture))
+            {
+                // Direct output
+                foreach(var (action, _) in capture)
+                {
+                    action(this);
+                }
+                return;
+            }
+            if(topCapture == capture)
+            {
+                throw new InvalidOperationException("It is not possible to play back the capture that is currently being recorded.");
+            }
+            // Recording - copy the contents
+            if(capture.Count == 0)
+            {
+                return;
+            }
+            var type = capture[0].type;
+            if(type != default && topCapture.Count is > 0 and var count && topCapture[count - 1].type == type)
+            {
+                // Merge actions of same type
+                topCapture.RemoveAt(count - 1);
+            }
+            topCapture.AddRange(capture);
+        }
+
+        sealed class Capture : List<(Action<SourceWriter> action, CaptureActionType type)>, ISourceCapture
         {
             public void Play(ISourceWriter writer)
             {
@@ -509,11 +546,14 @@ namespace IS4.Sona.Compiler
                 {
                     throw new ArgumentException("Argument must be the same object that created this instance.", nameof(writer));
                 }
-                foreach(var action in this)
-                {
-                    action(parentWriter);
-                }
+                parentWriter.PlayCapture(this);
             }
+        }
+
+        enum CaptureActionType
+        {
+            NonReplaceable,
+            LineUpdate
         }
 
         sealed class LineCountingTextWriter : TextWriter

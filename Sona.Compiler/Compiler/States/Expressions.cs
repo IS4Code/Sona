@@ -65,24 +65,19 @@ namespace IS4.Sona.Compiler.States
             EnterState<NegatedExpression>().EnterNegatedExpr(context);
         }
 
-        public override void EnterConjunctiveExpr(ConjunctiveExprContext context)
+        public override void ExitNegatedExpr(NegatedExprContext context)
         {
-            EnterState<LogicExpression>().EnterConjunctiveExpr(context);
+
         }
 
-        public override void EnterDisjunctiveExpr(DisjunctiveExprContext context)
+        public override void EnterLogicExpr(LogicExprContext context)
         {
-            EnterState<LogicExpression>().EnterDisjunctiveExpr(context);
+            EnterState<LogicExpression>().EnterLogicExpr(context);
         }
 
-        public override void EnterDnfExpr(DnfExprContext context)
+        public override void ExitLogicExpr(LogicExprContext context)
         {
-            EnterState<LogicFormExpression>().EnterDnfExpr(context);
-        }
 
-        public override void EnterCnfExpr(CnfExprContext context)
-        {
-            EnterState<LogicFormExpression>().EnterCnfExpr(context);
         }
 
         public sealed override void EnterInlineSourceFree(InlineSourceFreeContext context)
@@ -101,12 +96,12 @@ namespace IS4.Sona.Compiler.States
 
         public override void EnterOuterExpr(OuterExprContext context)
         {
-            Out.Write('(');
+            EnterState<StandardBinaryState<OuterExprContext>>().EnterOuterExpr(context);
         }
 
         public override void ExitOuterExpr(OuterExprContext context)
         {
-            Out.Write(')');
+
         }
 
         public override void EnterCoalesceExpr(CoalesceExprContext context)
@@ -119,126 +114,64 @@ namespace IS4.Sona.Compiler.States
 
         }
 
-        public override void EnterConcatExprArg(ConcatExprArgContext context)
+        public override void EnterConcatExpr(ConcatExprContext context)
         {
-            Out.Write('(');
+            EnterState<SpecialBinaryState<ConcatExprContext>>().EnterConcatExpr(context);
         }
 
-        public override void ExitConcatExprArg(ConcatExprArgContext context)
+        public override void ExitConcatExpr(ConcatExprContext context)
         {
-            Out.Write(')');
+
         }
 
-        public override void EnterConcatExprNextArg(ConcatExprNextArgContext context)
+        public override void EnterBitOrExpr(BitOrExprContext context)
         {
-            if(IsLiteral)
-            {
-                Out.WriteOperator("+\"\"+");
-            }
-            else
-            {
-                Out.WriteSpecialBinaryOperator("Concat");
-            }
+            EnterState<SpecialBinaryState<BitOrExprContext>>().EnterBitOrExpr(context);
         }
 
-        public override void EnterBitOrExprArg(BitOrExprArgContext context)
+        public override void ExitBitOrExpr(BitOrExprContext context)
         {
-            Out.Write('(');
+
         }
 
-        public override void ExitBitOrExprArg(BitOrExprArgContext context)
+        public override void EnterBitXorExpr(BitXorExprContext context)
         {
-            Out.Write(')');
+            EnterState<SpecialBinaryState<BitXorExprContext>>().EnterBitXorExpr(context);
         }
 
-        public override void EnterBitOrExprNextArg(BitOrExprNextArgContext context)
+        public override void ExitBitXorExpr(BitXorExprContext context)
         {
-            if(IsLiteral)
-            {
-                Out.WriteOperator("|||");
-            }
-            else
-            {
-                Out.WriteSpecialBinaryOperator("Pipe");
-            }
+
         }
 
-        public override void EnterBitXorExprArg(BitXorExprArgContext context)
+        public override void EnterBitAndExpr(BitAndExprContext context)
         {
-            Out.Write('(');
+            EnterState<SpecialBinaryState<BitAndExprContext>>().EnterBitAndExpr(context);
         }
 
-        public override void ExitBitXorExprArg(BitXorExprArgContext context)
+        public override void ExitBitAndExpr(BitAndExprContext context)
         {
-            Out.Write(')');
+
         }
 
-        public override void EnterBitXorExprNextArg(BitXorExprNextArgContext context)
+        public override void EnterBitShiftExpr(BitShiftExprContext context)
         {
-            if(IsLiteral)
-            {
-                Out.WriteOperator("^^^");
-            }
-            else
-            {
-                Out.WriteSpecialBinaryOperator("Hat");
-            }
+            EnterState<SpecialBinaryState<BitShiftExprContext>>().EnterBitShiftExpr(context);
         }
 
-        public override void EnterBitAndExprArg(BitAndExprArgContext context)
+        public override void ExitBitShiftExpr(BitShiftExprContext context)
         {
-            Out.Write('(');
+
         }
 
-        public override void ExitBitAndExprArg(BitAndExprArgContext context)
+        public override void EnterInnerExpr(InnerExprContext context)
         {
-            Out.Write(')');
+            EnterState<StandardBinaryState<InnerExprContext>>().EnterInnerExpr(context);
         }
 
-        public override void EnterBitAndExprNextArg(BitAndExprNextArgContext context)
+        public override void ExitInnerExpr(InnerExprContext context)
         {
-            if(IsLiteral)
-            {
-                Out.WriteOperator("&&&");
-            }
-            else
-            {
-                Out.WriteSpecialBinaryOperator("And");
-            }
-        }
 
-        public override void EnterBitShiftExprArg(BitShiftExprArgContext context)
-        {
-            Out.Write('(');
-        }
-
-        public override void ExitBitShiftExprArg(BitShiftExprArgContext context)
-        {
-            Out.Write(')');
-        }
-
-        public override void EnterBitShiftLeftExprNextArg(BitShiftLeftExprNextArgContext context)
-        {
-            if(IsLiteral)
-            {
-                Out.WriteOperator("<<<");
-            }
-            else
-            {
-                Out.WriteSpecialBinaryOperator("LeftShift");
-            }
-        }
-
-        public override void EnterBitShiftRightExprNextArg(BitShiftRightExprNextArgContext context)
-        {
-            if(IsLiteral)
-            {
-                Out.WriteOperator(">>>");
-            }
-            else
-            {
-                Out.WriteSpecialBinaryOperator("RightShift");
-            }
         }
 
         public override void EnterHashExpr(HashExprContext context)

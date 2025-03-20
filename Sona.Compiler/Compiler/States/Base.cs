@@ -268,51 +268,6 @@ namespace IS4.Sona.Compiler
 
         }
 
-        public override void EnterOuterBinaryOperator(OuterBinaryOperatorContext context)
-        {
-            Environment.EnableParseTree();
-        }
-
-        public override void EnterInnerBinaryOperator(InnerBinaryOperatorContext context)
-        {
-            Environment.EnableParseTree();
-        }
-
-        public override void ExitOuterBinaryOperator(OuterBinaryOperatorContext context)
-        {
-            try
-            {
-                string text = context.GetText();
-                switch(text)
-                {
-                    case "==":
-                        text = "=";
-                        break;
-                    case "!=" or "~=":
-                        text = "<>";
-                        break;
-                }
-                Out.WriteOperator(text);
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
-        }
-
-        public override void ExitInnerBinaryOperator(InnerBinaryOperatorContext context)
-        {
-            try
-            {
-                string text = context.GetText();
-                Out.WriteOperator(text);
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
-        }
-
         public override void EnterUnaryOperator(UnaryOperatorContext context)
         {
             Environment.EnableParseTree();

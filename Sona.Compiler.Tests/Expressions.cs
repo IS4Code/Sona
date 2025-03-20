@@ -52,43 +52,45 @@ namespace IS4.Sona.Tests
             AssertExpressionEquivalence(source, expected);
         }
 
-        [DataRow("a and b", "a && b")]
-        [DataRow("a and b and c", "a && b && c")]
-        [DataRow("a or b", "a || b")]
-        [DataRow("a or b or c", "a || b || c")]
+        [DataRow("a and b", "(a) && (b)")]
+        [DataRow("a and b and c", "(a) && (b) && (c)")]
+        [DataRow("a or b", "(a) || (b)")]
+        [DataRow("a or b or c", "(a) || (b) || (c)")]
         [DataRow("not a", $"{not}(a)")]
         [DataRow("not not a", $"{not}({not}(a))")]
         [DataRow("not a and b", null)]
         [DataRow("not a or b", null)]
         [DataRow("not a and not b", null)]
         [DataRow("not a or not b", null)]
-        [DataRow("a and not b", $"a && {not}(b)")]
-        [DataRow("a or not b", $"a || {not}(b)")]
+        [DataRow("a and not b", $"(a) && {not}(b)")]
+        [DataRow("a or not b", $"(a) || {not}(b)")]
         [DataRow("a and not b and c", null)]
         [DataRow("a or not b or c", null)]
-        [DataRow("a and not not b", $"a && {not}({not}(b))")]
-        [DataRow("a or not not b", $"a || {not}({not}(b))")]
+        [DataRow("a and not not b", $"(a) && {not}({not}(b))")]
+        [DataRow("a or not not b", $"(a) || {not}({not}(b))")]
         [DataRow("a and b or c", null)]
         [DataRow("a or b and c", null)]
-        [DataRow("a and b || c", "a && ((b || c))")]
-        [DataRow("a && b or c", "((a && b)) || c")]
-        [DataRow("a or b && c", "a || ((b && c))")]
-        [DataRow("a || b and c", "((a || b)) && c")]
-        [DataRow("not a && b", $"{not}((a && b))")]
-        [DataRow("not a || b", $"{not}((a || b))")]
-        [DataRow("a1 and b1 || b2 && b3 || b4 and c1", "a1 && ((b1 || b2 && b3 || b4)) && c1")]
+        [DataRow("a and b || c", "(a) && (b || c)")]
+        [DataRow("a && b or c", "(a && b) || (c)")]
+        [DataRow("a or b && c", "(a) || (b && c)")]
+        [DataRow("a || b and c", "(a || b) && (c)")]
+        [DataRow("not a && b", $"{not}(a && b)")]
+        [DataRow("not a || b", $"{not}(a || b)")]
+        [DataRow("a1 and b1 || b2 && b3 || b4 and c1", "(a1) && (b1 || b2 && b3 || b4) && (c1)")]
         [TestMethod]
         public void LogicOperators(string source, string? expected)
         {
             AssertExpressionEquivalence(source, expected);
         }
 
-        [DataRow("a and b < c", "a && ((b < c))")]
-        [DataRow("a or b < c", "a || ((b < c))")]
-        [DataRow("a && b < c", "(a && b < c)")]
-        [DataRow("a || b < c", "(a || b < c)")]
-        [DataRow("a < b <= c > d >= e == f != g ~= h", "(a < b <= c > d >= e = f <> g <> h)")]
-        [DataRow("a ~= b != c == d >= e > f <= g < h", "(a <> b <> c = d >= e > f <= g < h)")]
+        [DataRow("a and b < c", "(a) && (b < c)")]
+        [DataRow("a or b < c", "(a) || (b < c)")]
+        [DataRow("a && b < c", "a && b < c")]
+        [DataRow("a || b < c", "a || b < c")]
+        [DataRow("a < b <= c > d >= e == f != g ~= h", "a < b <= c > d >= e = f <> g <> h")]
+        [DataRow("a ~= b != c == d >= e > f <= g < h", "a <> b <> c = d >= e > f <= g < h")]
+        [DataRow("a == b != c ~= d", "(a = b <> c <> d)")]
+        [DataRow("a == b >= c > d <= e < f", "(a = b >= c > d <= e < f)")]
         [TestMethod]
         public void RelationalOperators(string source, string? expected)
         {
@@ -101,8 +103,8 @@ namespace IS4.Sona.Tests
         const string shl = " |> global.Sona.Runtime.CompilerServices.BinaryOperators.LeftShift";
         const string shr = " |> global.Sona.Runtime.CompilerServices.BinaryOperators.RightShift";
 
-        [DataRow("a and b + c", "a && b + c")]
-        [DataRow("a or b + c", "a || b + c")]
+        [DataRow("a and b + c", "(a) && (b + c)")]
+        [DataRow("a or b + c", "(a) || (b + c)")]
         [DataRow("a..b", $"(a){cat}(b)")]
         [DataRow("a..b..c", $"(a){cat}(b){cat}(c)")]
         [DataRow("a .. b ==1..2", $"((a){cat}(b) = (1){cat}(2))")]

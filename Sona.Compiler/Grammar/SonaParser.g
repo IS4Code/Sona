@@ -867,163 +867,45 @@ nestedPattern:
 
 expression:
   negatedExpr |
-  conjunctiveExpr |
-  disjunctiveExpr |
-  /* Require parentheses */
-  //cnfExpr |
-  //dnfExpr |
-  inlineSourceFree |
-  outerExpr_Outer;
-
-
-logicExprArg:
-  outerExpr_Outer;
+  logicExpr |
+  inlineSourceFree;
 
 negatedExpr:
-  'not' doubleNegation* logicExprArg;
+  'not'+ outerExpr;
 
-doubleNegation:
-  'not';
-
-conjunctiveExpr:
-  logicExprArg ('and' logicExprArg)* 'and' (negatedExpr | logicExprArg);
-
-disjunctiveExpr:
-  logicExprArg ('or' logicExprArg)* 'or' (negatedExpr | logicExprArg);
-
-cnfExpr:
-  disjunctiveExpr ('and' disjunctiveExpr)+;
-
-dnfExpr:
-  conjunctiveExpr ('or' conjunctiveExpr)+;
-
-/*
-// Relaxed versions
-
-cnfExpr:
-  disjunctiveExpr ('and' (logicExprArg | disjunctiveExpr))+;
-
-dnfExpr:
-  conjunctiveExpr ('or' (logicExprArg | conjunctiveExpr))+;
-
-*/
-
-
-outerExpr_Outer:
-  outerExpr |
-  outerExpr_Inner;
+logicExpr:
+  outerExpr (
+    (
+      'and' (outerExpr 'and')* |
+      'or' (outerExpr 'or')*
+    ) 'not'* outerExpr
+  )?;
 
 outerExpr:
-  outerExpr_Inner (outerBinaryOperator outerExpr_Inner)+;
-
-outerExpr_Inner:
-  coalesceExprOuter;
-
-
-coalesceExprOuter:
-  coalesceExpr |
-  coalesceExpr_Inner;
+  coalesceExpr (('<' | '<=' | '>' | '>=' | '==' | '!=' | '~=' | '&&' | '||') coalesceExpr)*;
 
 coalesceExpr:
-  coalesceExprArg '??' coalesceExprOuter;
-
-coalesceExprArg:
-  coalesceExpr_Inner;
-
-coalesceExpr_Inner:
-  concatExpr_Outer;
-
-
-concatExpr_Outer:
-  concatExpr |
-  concatExpr_Inner;
+  concatExpr ('??' concatExpr)*;
 
 concatExpr:
-  concatExprArg ('..' concatExprNextArg)+;
+  concatExpr_Inner ('..' concatExpr_Inner)*;
 
-concatExprArg:
-  concatExpr_Inner;
-
-concatExprNextArg:
-  concatExprArg;
-
-concatExpr_Inner:
-  bitOrExpr_Outer;
-
-
-bitOrExpr_Outer:
-  bitOrExpr |
-  bitOrExpr_Inner;
+concatExpr_Inner: bitOrExpr;
 
 bitOrExpr:
-  bitOrExprArg ('|' bitOrExprNextArg)+;
-
-bitOrExprArg:
-  bitOrExpr_Inner;
-
-bitOrExprNextArg:
-  bitOrExprArg;
-
-bitOrExpr_Inner:
-  bitXorExpr_Outer;
-
-
-bitXorExpr_Outer:
-  bitXorExpr |
-  bitXorExpr_Inner;
+  bitXorExpr ('|' bitXorExpr)*;
 
 bitXorExpr:
-  bitXorExprArg ('^' bitXorExprNextArg)+;
-
-bitXorExprArg:
-  bitXorExpr_Inner;
-
-bitXorExprNextArg:
-  bitXorExprArg;
-
-bitXorExpr_Inner:
-  bitAndExpr_Outer;
-
-
-bitAndExpr_Outer:
-  bitAndExpr |
-  bitAndExpr_Inner;
+  bitAndExpr ('^' bitAndExpr)*;
 
 bitAndExpr:
-  bitAndExprArg ('&' bitAndExprNextArg)+;
-
-bitAndExprArg:
-  bitAndExpr_Inner;
-
-bitAndExprNextArg:
-  bitAndExprArg;
-
-bitAndExpr_Inner:
-  bitShiftExpr_Outer;
-
-
-bitShiftExpr_Outer:
-  bitShiftExpr |
-  bitShiftExpr_Inner;
+  bitShiftExpr ('&' bitShiftExpr)*;
 
 bitShiftExpr:
-  bitShiftExprArg (bitShiftLeftExprNextArg | bitShiftRightExprNextArg)+;
-
-bitShiftExprArg:
-  bitShiftExpr_Inner;
-
-bitShiftLeftExprNextArg:
-  '<<' bitShiftExprArg;
-
-bitShiftRightExprNextArg:
-  '>>' bitShiftExprArg;
-
-bitShiftExpr_Inner:
-  innerExpr;
-
+  innerExpr (('<<' | '>>') innerExpr)*;
 
 innerExpr:
-  atomicExpr (innerBinaryOperator atomicExpr)*;
+  atomicExpr (('+' | '-' | '*' | '/' | '%') atomicExpr)*;
 
 atomicExpr:
   altMemberExpr |
@@ -1333,13 +1215,6 @@ inlineSourceWhitespace:
 /* --------- */
 /* Operators */
 /* --------- */
-
-innerBinaryOperator:
-  '+' | '-' | '*' | '/' | '%';
-
-outerBinaryOperator:
-  '<' | '<=' | '>' | '>=' | '==' | '!=' | '~=' |
-  '&&' | '||';
 
 unaryOperator:
   '+' | '-' | '~';

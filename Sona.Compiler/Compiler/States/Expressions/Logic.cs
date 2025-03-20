@@ -1,222 +1,98 @@
-﻿using static IS4.Sona.Grammar.SonaParser;
+﻿using Antlr4.Runtime;
+using Antlr4.Runtime.Tree;
+using IS4.Sona.Grammar;
+using static IS4.Sona.Grammar.SonaParser;
 
 namespace IS4.Sona.Compiler.States
 {
-    internal sealed class LogicPartExpression : ExpressionState
+    internal sealed class LogicExpression : BinaryState<LogicExprContext>
     {
-        public override void EnterLogicExprArg(LogicExprArgContext context)
-        {
-
-        }
-
-        public override void ExitLogicExprArg(LogicExprArgContext context)
-        {
-            ExitState().ExitLogicExprArg(context);
-        }
-
-        public override void EnterOuterExpr(OuterExprContext context)
-        {
-            Out.Write('(');
-            base.EnterOuterExpr(context);
-        }
-
-        public override void ExitOuterExpr(OuterExprContext context)
-        {
-            base.ExitOuterExpr(context);
-            Out.Write(')');
-        }
-    }
-
-    internal sealed class LogicExpression : ExpressionState
-    {
-        string op = null!;
-        bool first;
+        int notLevel;
 
         protected sealed override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            first = true;
-            op = null!;
+            notLevel = 0;
         }
 
-        public override void EnterDisjunctiveExpr(DisjunctiveExprContext context)
+        protected override void OnEnterOperand(ParserRuleContext context)
         {
-            op = "||";
-        }
-
-        public override void EnterConjunctiveExpr(ConjunctiveExprContext context)
-        {
-            op = "&&";
-        }
-
-        public override void ExitDisjunctiveExpr(DisjunctiveExprContext context)
-        {
-            ExitState().ExitDisjunctiveExpr(context);
-        }
-
-        public override void ExitConjunctiveExpr(ConjunctiveExprContext context)
-        {
-            ExitState().ExitConjunctiveExpr(context);
-        }
-
-        void OnOperand()
-        {
-            if(first)
+            if(notLevel == 0)
             {
-                first = false;
-            }
-            else
-            {
-                Out.WriteOperator(op);
+                Out.Write('(');
             }
         }
 
-        public override void EnterLogicExprArg(LogicExprArgContext context)
+        protected override void OnExitOperand(ParserRuleContext context)
         {
-            OnOperand();
-            EnterState<LogicPartExpression>().EnterLogicExprArg(context);
-        }
-
-        public override void EnterNegatedExpr(NegatedExprContext context)
-        {
-            OnOperand();
-            base.EnterNegatedExpr(context);
-        }
-    }
-
-    internal sealed class LogicFormExpression : NodeState
-    {
-        string op = null!;
-        bool first;
-
-        protected sealed override void Initialize(ScriptEnvironment environment, ScriptState? parent)
-        {
-            base.Initialize(environment, parent);
-
-            first = true;
-            op = null!;
-        }
-
-        public override void EnterDnfExpr(DnfExprContext context)
-        {
-            op = "||";
-        }
-
-        public override void EnterCnfExpr(CnfExprContext context)
-        {
-            op = "&&";
-        }
-
-        public override void ExitDnfExpr(DnfExprContext context)
-        {
-            ExitState().ExitDnfExpr(context);
-        }
-
-        public override void ExitCnfExpr(CnfExprContext context)
-        {
-            ExitState().ExitCnfExpr(context);
-        }
-
-        void OnOperand()
-        {
-            if(first)
+            if(notLevel == 0)
             {
-                first = false;
-            }
-            else
-            {
-                Out.WriteOperator(op);
+                Out.Write(')');
             }
         }
 
-        public override void EnterDisjunctiveExpr(DisjunctiveExprContext context)
+        protected override void OnExit(LogicExprContext context)
         {
-            OnOperand();
-            Out.Write('(');
-            EnterState<LogicExpression>().EnterDisjunctiveExpr(context);
+            while(notLevel-- > 0)
+            {
+                Out.Write(")");
+            }
         }
 
-        public override void EnterConjunctiveExpr(ConjunctiveExprContext context)
+        protected override void OnOperator(ITerminalNode node)
         {
-            OnOperand();
-            Out.Write('(');
-            EnterState<LogicExpression>().EnterConjunctiveExpr(context);
-        }
-
-        public override void EnterLogicExprArg(LogicExprArgContext context)
-        {
-            OnOperand();
-            EnterState<LogicPartExpression>().EnterLogicExprArg(context);
-        }
-
-        public override void ExitDisjunctiveExpr(DisjunctiveExprContext context)
-        {
-            Out.Write(')');
-        }
-
-        public override void ExitConjunctiveExpr(ConjunctiveExprContext context)
-        {
-            Out.Write(')');
-        }
-
-        public override void ExitLogicExprArg(LogicExprArgContext context)
-        {
-
+            switch(node.Symbol.Type)
+            {
+                case SonaLexer.AND:
+                    Out.WriteOperator("&&");
+                    break;
+                case SonaLexer.OR:
+                    Out.WriteOperator("||");
+                    break;
+                case SonaLexer.NOT:
+                    Out.WriteCoreOperatorName("not");
+                    Out.Write('(');
+                    notLevel++;
+                    break;
+            }
         }
     }
 
     internal sealed class NegatedExpression : ExpressionState
     {
-        int level;
+        int notLevel;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
-            level = 0;
-        }
 
-        void OnOperand()
-        {
-            Out.WriteCoreOperatorName("not");
-            Out.Write('(');
+            notLevel = 0;
         }
 
         public override void EnterNegatedExpr(NegatedExprContext context)
-        {
-            OnOperand();
-        }
-
-        public override void EnterDoubleNegation(DoubleNegationContext context)
-        {
-            OnOperand();
-            level++;
-        }
-
-        public override void ExitDoubleNegation(DoubleNegationContext context)
         {
 
         }
 
         public override void ExitNegatedExpr(NegatedExprContext context)
         {
-            Out.Write(")");
-            while(level > 0)
+            while(notLevel-- > 0)
             {
                 Out.Write(")");
-                level--;
             }
             ExitState().ExitNegatedExpr(context);
         }
 
-        public override void EnterLogicExprArg(LogicExprArgContext context)
+        public override void VisitTerminal(ITerminalNode node)
         {
-
-        }
-
-        public override void ExitLogicExprArg(LogicExprArgContext context)
-        {
-
+            base.VisitTerminal(node);
+            if(node.Symbol.Type == SonaLexer.NOT)
+            {
+                Out.WriteCoreOperatorName("not");
+                Out.Write('(');
+                notLevel++;
+            }
         }
     }
 }
