@@ -589,7 +589,7 @@ namespace IS4.Sona.Compiler.Gui
                     {
                         // Show visible success only on latest code
                         resultRichText.Enabled = true;
-                        messageBox.Text = String.Join(Environment.NewLine, result.Diagnostics);
+                        messageBox.Text = String.Join(Environment.NewLine, result.Diagnostics.OrderBy(d => d.Line));
                     }
 
                     SetOutputText(resultText, (options.Flags & CompilerFlags.IgnoreLineNumbers) == 0);
@@ -661,7 +661,7 @@ namespace IS4.Sona.Compiler.Gui
 
                 // Result exists
                 BeginWork();
-                var diagnostics = CheckSource(last!);
+                var diagnostics = CheckSource(last!).Concat(last!.Diagnostics).Distinct().OrderBy(d => d.Line);
                 EndWork();
 
                 if(reader.TryPeek(out _))
