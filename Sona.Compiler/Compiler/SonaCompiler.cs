@@ -286,12 +286,7 @@ namespace IS4.Sona.Compiler
 
             foreach(var diagnostic in parseResults.Diagnostics.Concat(fileResults.Diagnostics).Concat(projectResults.Diagnostics).Distinct())
             {
-                var level =
-                    diagnostic.Severity.IsError ? DiagnosticLevel.Error :
-                    diagnostic.Severity.IsWarning ? DiagnosticLevel.Warning :
-                    DiagnosticLevel.Info;
-
-                result.AddDiagnostic(new(level, diagnostic.ErrorNumberText, diagnostic.Message, diagnostic.StartLine, diagnostic.ExtendedData?.Value));
+                result.AddDiagnostic(new(diagnostic));
             }
 
             if(projectResults.HasCriticalErrors)
@@ -334,7 +329,7 @@ namespace IS4.Sona.Compiler
 
             Task EvalInteraction()
             {
-                var (result, diagnostics) = session.EvalInteractionNonThrowing(source, inputPath, cancelTokenOption);
+                var (result, diagnostics) = session.EvalInteractionNonThrowing(source + Environment.NewLine + "()", inputPath, cancelTokenOption);
 
                 if(result is FSharpChoice<FSharpOption<FsiValue>, Exception>.Choice2Of2 { Item: { } exception })
                 {

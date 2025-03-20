@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using FSharp.Compiler.Diagnostics;
 
 namespace IS4.Sona.Compiler
 {
@@ -67,6 +68,18 @@ namespace IS4.Sona.Compiler
 
     public record CompilerDiagnostic(DiagnosticLevel Level, string Code, string Message, int Line, object? Data)
     {
+        public CompilerDiagnostic(FSharpDiagnostic diagnostic) : this(
+            diagnostic.Severity.IsError ? DiagnosticLevel.Error :
+            diagnostic.Severity.IsWarning ? DiagnosticLevel.Warning :
+            DiagnosticLevel.Info,
+            diagnostic.ErrorNumberText,
+            diagnostic.Message,
+            diagnostic.StartLine,
+            diagnostic.ExtendedData?.Value)
+        {
+
+        }
+
         public override string ToString()
         {
             return $"{Code}:{Line}: {Message}";
