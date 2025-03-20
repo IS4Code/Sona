@@ -301,10 +301,16 @@ namespace IS4.Sona.Compiler
             return session;
         }
 
-        public async Task<CompilerResult> CompileToDelegate(AntlrInputStream inputStream, string fileName, CompilerOptions options, CancellationToken cancellationToken = default)
+        public Task<CompilerResult> CompileToDelegate(AntlrInputStream inputStream, string fileName, CompilerOptions options, CancellationToken cancellationToken = default)
         {
-            var result = CompileToString(inputStream, options);
-            var source = result.IntermediateCode!;
+            return CompileToDelegate(CompileToString(inputStream, options), fileName, cancellationToken);
+        }
+
+        public async Task<CompilerResult> CompileToDelegate(CompilerResult result, string fileName, CancellationToken cancellationToken = default)
+        {
+            var options = result.Options;
+
+            var source = result.IntermediateCode ?? throw new ArgumentException("Argument is missing intermediate code.", nameof(result));
 
             var fs = GetFileSystem(source, fileName, options, out var inputPath, out _, out var manifestPath, out var depsPath);
 

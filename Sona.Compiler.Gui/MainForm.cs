@@ -2,8 +2,8 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Linq;
+using System.Runtime;
 using System.Runtime.ExceptionServices;
 using System.Runtime.Loader;
 using System.Text.RegularExpressions;
@@ -331,7 +331,7 @@ namespace IS4.Sona.Compiler.Gui
                     FormatToken(lastPosition, ignoreLength, input.AsSpan(lastPosition, ignoreLength).IsWhiteSpace() ? FontStyle.Regular : FontStyle.Italic);
                 }
                 lastPosition = start + length;
-                
+
                 if(token.Type is SonaLexer.BEGIN_INLINE_SOURCE)
                 {
                     FormatToken(start, length, FontStyle.Bold | FontStyle.Italic);
@@ -625,7 +625,8 @@ namespace IS4.Sona.Compiler.Gui
                 latestCodeTuple = tuple;
             }
         }
-        
+
+        Func<Task>? lastEntryPoint;
 
         private void UpdateSource()
         {
@@ -661,7 +662,7 @@ namespace IS4.Sona.Compiler.Gui
 
                 // Result exists
                 BeginWork();
-                var diagnostics = CheckSource(last!).Concat(last!.Diagnostics).Distinct().OrderBy(d => d.Line);
+                var diagnostics = CheckSource(last!, out var entryPoint).Concat(last!.Diagnostics).Distinct().OrderBy(d => d.Line);
                 EndWork();
 
                 if(reader.TryPeek(out _))
@@ -672,27 +673,32 @@ namespace IS4.Sona.Compiler.Gui
 
                 Invoke(() => {
                     messageBox.Text = String.Join(Environment.NewLine, diagnostics);
+                    lastEntryPoint = entryPoint;
+                    runButton.Enabled = entryPoint != null;
                 });
             }
         }
 
         (string? text, CompilerOptions options) latestSourceTuple;
-        IReadOnlyCollection<CompilerDiagnostic> latestSourceResult;
+        (IReadOnlyCollection<CompilerDiagnostic> diagnostics, Func<Task>? entryPoint) latestSourceResult;
 
-        private IReadOnlyCollection<CompilerDiagnostic> CheckSource(CompilerResult result)
+        private IReadOnlyCollection<CompilerDiagnostic> CheckSource(CompilerResult result, out Func<Task>? entryPoint)
         {
             var tuple = (result.IntermediateCode, result.Options);
             if(latestSourceTuple == tuple)
             {
-                return latestSourceResult;
+                var lastResult = latestSourceResult;
+                entryPoint = lastResult.entryPoint;
+                return lastResult.diagnostics;
             }
 
             try
             {
                 // Expose F# errors
-                compiler.CheckResult(result, "input", result.Options);
-
-                return latestSourceResult = result.Diagnostics;
+                result = compiler.CompileToDelegate(result, "input").Result;
+                entryPoint = result.Success ? result.EntryPoint : null;
+                latestSourceResult = (result.Diagnostics, entryPoint);
+                return result.Diagnostics;
             }
             catch(Exception e)
             {
@@ -703,10 +709,13 @@ namespace IS4.Sona.Compiler.Gui
                     messageBox.Text = e.Message;
                 });
 
-                return latestSourceResult = new[]
+                var diagnostics = new[]
                 {
                     new CompilerDiagnostic(DiagnosticLevel.Error, "EXCEPTION", e.ToString(), 0, e)
                 };
+                entryPoint = null;
+                latestSourceResult = (diagnostics, null);
+                return diagnostics;
             }
             finally
             {
@@ -898,6 +907,67 @@ namespace IS4.Sona.Compiler.Gui
             sonaRichText.ZoomFactor = 1;
             resultRichText.ZoomFactor = 1;
             zoomButton.Text = $"{1:P0}";
+        }
+
+        CancellationTokenSource? executionCts;
+        private async void runButton_Click(object sender, EventArgs e)
+        {
+            var cts = executionCts;
+            if(cts != null)
+            {
+                await cts.CancelAsync();
+            }
+            cts = executionCts = new();
+            var entryPoint = lastEntryPoint;
+            if(entryPoint == null)
+            {
+                return;
+            }
+            var tcs = new TaskCompletionSource();
+            new Thread(() => {
+                try
+                {
+                    ConsoleExtensions.ShowConsole();
+                    Console.Clear();
+#pragma warning disable SYSLIB0046
+                    ControlledExecution.Run(() => {
+                        entryPoint().Wait(cts.Token);
+                    }, cts.Token);
+#pragma warning restore SYSLIB0046
+                    tcs.TrySetResult();
+                }
+                catch(OperationCanceledException)
+                {
+
+                }
+                catch(Exception e)
+                {
+                    tcs.TrySetException(e);
+                }
+                finally
+                {
+                    try
+                    {
+                        Task.Delay(2000).Wait(cts.Token);
+                    }
+                    catch(OperationCanceledException)
+                    {
+
+                    }
+                    if(!cts.IsCancellationRequested)
+                    {
+                        Console.Clear();
+                        ConsoleExtensions.HideConsole();
+                    }
+                }
+            })
+            {
+                IsBackground = true
+            }.Start();
+
+            await tcs.Task;
+
+            Activate();
         }
     }
 }
