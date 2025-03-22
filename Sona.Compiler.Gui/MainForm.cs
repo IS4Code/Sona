@@ -120,25 +120,23 @@ namespace IS4.Sona.Compiler.Gui
         private void sonaText_SelectionChanged(object sender, EventArgs e)
         {
             var selectionStart = sonaRichText.SelectionStart;
+            var selectionLength = sonaRichText.SelectionLength;
             lineLabel.Text = $"{sonaRichText.GetLineFromCharIndex(selectionStart) + 1} : {selectionStart - sonaRichText.GetFirstCharIndexOfCurrentLine() + 1}";
 
-            if(sonaRichText.Modified)
+            if(!sonaRichText.Modified)
             {
-                // Ignore selection change due to modification
-                return;
+                // Preserve selection when not due to modification
+                lastSelectedStart = sonaRichText.SelectionStart;
+                lastSelectedLength = selectionLength;
             }
 
-            // Preserve selection
-            lastSelectedStart = sonaRichText.SelectionStart;
-            lastSelectedLength = sonaRichText.SelectionLength;
-
-            int start = Math.Max(lastSelectedStart - 1, 0);
-            int end = Math.Min(lastSelectedStart + lastSelectedLength + 1, sonaRichText.TextLength);
+            int start = Math.Max(selectionStart - 1, 0);
+            int end = Math.Min(selectionStart + selectionLength + 1, sonaRichText.TextLength);
             var text = sonaRichText.Text;
             var selectedSpan = text.AsSpan(start, end - start);
             // Check if selection is near characters that might require reformatting
-            reformatModifiedText = selectedSpan.ContainsAny(surroundReformattingCharacters);
-            if(!reformatModifiedText)
+            bool reformat = selectedSpan.ContainsAny(surroundReformattingCharacters);
+            if(!reformat)
             {
                 // Get span of the whole line
                 var startLine = sonaRichText.GetLineFromCharIndex(start);
@@ -161,7 +159,16 @@ namespace IS4.Sona.Compiler.Gui
                 }
                 var lineSpan = text.AsSpan(lineStart, lineEnd - lineStart);
                 // Check if lines contain characters that might require reformatting
-                reformatModifiedText = lineSpan.ContainsAny(lineReformattingCharacters);
+                reformat = lineSpan.ContainsAny(lineReformattingCharacters);
+            }
+
+            if(sonaRichText.Modified)
+            {
+                reformatModifiedText |= reformat;
+            }
+            else
+            {
+                reformatModifiedText = reformat;
             }
         }
 
@@ -175,6 +182,7 @@ namespace IS4.Sona.Compiler.Gui
             var selectedLength = sonaRichText.SelectionLength;
 
             bool updated = false;
+            bool reformat = reformatModifiedText;
             sonaRichText.SuspendDrawing();
             try
             {
@@ -192,7 +200,7 @@ namespace IS4.Sona.Compiler.Gui
                 sonaRichText.SelectedText = sonaRichText.SelectedText;
 
                 // Update formatting of input
-                updated = FormatInputText(sonaRichText.Text, start, end);
+                updated = FormatInputText(sonaRichText.Text, reformat ? 0 : start, reformat ? sonaRichText.TextLength : end);
             }
             finally
             {
@@ -467,16 +475,13 @@ namespace IS4.Sona.Compiler.Gui
 
             void FormatToken(int start, int length, FontStyle style)
             {
-                if(!reformatModifiedText)
+                if(start + length <= affectedStart)
                 {
-                    if(start + length <= affectedStart)
-                    {
-                        return;
-                    }
-                    if(start >= affectedEnd)
-                    {
-                        return;
-                    }
+                    return;
+                }
+                if(start >= affectedEnd)
+                {
+                    return;
                 }
                 sonaRichText.SelectionStart = start;
                 sonaRichText.SelectionLength = length;
