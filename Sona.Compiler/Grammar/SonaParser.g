@@ -977,8 +977,8 @@ fullConstructExpr:
 // Member access
 
 memberExpr:
-  memberExpr_Standalone memberExpr_Suffix? |
-  memberExpr_Prefix memberExpr_Suffix;
+  (memberExpr_Standalone | memberExpr_Prefix memberExpr_Suffix)
+    memberExpr_Suffix*;
 
 memberExpr_Standalone:
   name simpleCallArgument?? |
@@ -994,20 +994,17 @@ memberExpr_Prefix:
   memberTypeConvertExpr;
 
 memberExpr_Suffix:
-  (
-    callArguments |
-    indexAccess |
-    (memberAccess | dynamicMemberAccess) simpleCallArgument?? |
-    dynamicExprMemberAccess
-  )+;
+  callArguments |
+  indexAccess |
+  (memberAccess | dynamicMemberAccess) simpleCallArgument?? |
+  dynamicExprMemberAccess;
 
 altMemberExpr:
-  (
-    memberExpr_Standalone | memberExpr_Prefix
-  ) memberExpr_Suffix? altMemberExpr_Suffix (memberExpr_Suffix altMemberExpr_Suffix)* memberExpr_Suffix?;
+  (memberExpr_Standalone | memberExpr_Prefix)
+    memberExpr_Suffix* altMemberExpr_Suffix (memberExpr_Suffix | altMemberExpr_Suffix)*;
 
 altMemberExpr_Suffix:
-  constrainedMemberAccess+;
+  constrainedMemberAccess;
 
 constrainedMemberAccess:
   '.' '(' name ')' callArguments?;
