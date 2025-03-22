@@ -2,21 +2,25 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Runtime;
 using System.Runtime.ExceptionServices;
 using System.Runtime.Loader;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Antlr4.Runtime;
+using FSharp.Compiler.Diagnostics;
 using FSharp.Compiler.Syntax;
 using FSharp.Compiler.Text;
 using FSharp.Compiler.Tokenization;
 using IS4.Sona.Grammar;
 using Microsoft.FSharp.Core;
+using static FSharp.Compiler.Interactive.Shell;
 
 namespace IS4.Sona.Compiler.Gui
 {
@@ -26,6 +30,8 @@ namespace IS4.Sona.Compiler.Gui
         readonly Channel<CompilerResult> sourceChannel;
         readonly SonaCompiler compiler;
 
+        const float fontScale = 1.5f;
+
         public MainForm()
         {
             InitializeComponent();
@@ -33,11 +39,9 @@ namespace IS4.Sona.Compiler.Gui
 
             var font = messageBox.Font;
 
-            const float zoom = 1.5f;
-
             messageBox.Font = new Font(
                 font.FontFamily,
-                font.SizeInPoints * zoom,
+                font.SizeInPoints * fontScale,
                 font.Style,
                 font.Unit,
                 font.GdiCharSet,
@@ -46,7 +50,7 @@ namespace IS4.Sona.Compiler.Gui
 
             sonaRichText.Font = new Font(
                 FontFamily.GenericMonospace,
-                font.SizeInPoints * zoom,
+                font.SizeInPoints * fontScale,
                 font.Style,
                 font.Unit,
                 font.GdiCharSet,
@@ -57,17 +61,19 @@ namespace IS4.Sona.Compiler.Gui
             const int tabSize = 2;
             var indentSize = (float)TextRenderer.MeasureText(new string('_', measureLength), sonaRichText.Font).Width / measureLength * tabSize;
             sonaRichText.SelectionTabs = Enumerable.Range(1, 32).Select(i => (int)Math.Round(i * indentSize)).ToArray();
+            sonaRichText.SetPadding(8, 8, 8, 8);
 
             resultRichText.BackColor = sonaRichText.BackColor;
             resultRichText.ForeColor = sonaRichText.ForeColor;
             resultRichText.Font = sonaRichText.Font;
+            resultRichText.SetPadding(8, 8, 8, 8);
 
             codeSplit.SplitterWidth = codeSplit.SplitterWidth * 3 / 2;
 
             orientationButton.Text = codeSplit.Orientation.ToString();
             orientationButton.Tag = codeSplit.Orientation;
 
-            zoomButton.Text = $"{sonaRichText.ZoomFactor:P0}";
+            ZoomChanged(1);
 
             progressBar.Size = new(progressBar.Height, progressBar.Height);
 
@@ -113,6 +119,9 @@ namespace IS4.Sona.Compiler.Gui
 
         private void sonaText_SelectionChanged(object sender, EventArgs e)
         {
+            var selectionStart = sonaRichText.SelectionStart;
+            lineLabel.Text = $"{sonaRichText.GetLineFromCharIndex(selectionStart) + 1} : {selectionStart - sonaRichText.GetFirstCharIndexOfCurrentLine() + 1}";
+
             if(sonaRichText.Modified)
             {
                 // Ignore selection change due to modification
@@ -674,7 +683,7 @@ namespace IS4.Sona.Compiler.Gui
                 Invoke(() => {
                     messageBox.Text = String.Join(Environment.NewLine, diagnostics);
                     lastEntryPoint = entryPoint;
-                    runButton.Enabled = entryPoint != null;
+                    runMenuButton.Enabled = entryPoint != null;
                 });
             }
         }
@@ -866,13 +875,28 @@ namespace IS4.Sona.Compiler.Gui
         private void sonaRichText_ContentsResized(object sender, ContentsResizedEventArgs e)
         {
             resultRichText.ZoomFactor = sonaRichText.ZoomFactor;
-            zoomButton.Text = $"{sonaRichText.ZoomFactor:P0}";
+            ZoomChanged(sonaRichText.ZoomFactor);
         }
 
         private void resultRichText_ContentsResized(object sender, ContentsResizedEventArgs e)
         {
             sonaRichText.ZoomFactor = resultRichText.ZoomFactor;
-            zoomButton.Text = $"{resultRichText.ZoomFactor:P0}";
+            ZoomChanged(resultRichText.ZoomFactor);
+        }
+
+        private void ZoomChanged(float zoom)
+        {
+            zoomButton.Text = $"{zoom:P0}";
+
+            var statusFont = statusStrip.Font;
+            lineLabel.Font = new Font(
+                statusFont.FontFamily,
+                statusFont.SizeInPoints * zoom * fontScale,
+                statusFont.Style,
+                statusFont.Unit,
+                statusFont.GdiCharSet,
+                statusFont.GdiVerticalFont
+            );
         }
 
         private void orientationButton_Click(object sender, EventArgs e)
@@ -886,10 +910,62 @@ namespace IS4.Sona.Compiler.Gui
                     case Orientation.Horizontal:
                         codeSplit.Orientation = Orientation.Vertical;
                         codeSplit.SplitterDistance = distance * codeSplit.Width / codeSplit.Height;
+
+                        sourceToolStrip.Visible = false;
+                        editorToolStrip.Items.Remove(progressBar);
+                        editorToolStrip.Items.Add(progressBar);
+                        foreach(var item in sourceToolStrip.Items.Cast<ToolStripItem>().ToArray())
+                        {
+                            editorToolStrip.Items.Add(item);
+                            if(item != progressBar)
+                            {
+                                item.Alignment = ToolStripItemAlignment.Right;
+                            }
+                            item.Tag = sourceToolStrip;
+                        }
+
+                        orientationButton.Text = codeSplit.Orientation.ToString();
+                        orientationButton.Tag = codeSplit.Orientation;
                         break;
                     case Orientation.Vertical:
+                        codeSplit.Panel2Collapsed = true;
+                        orientationButton.Text = "Hidden";
+                        orientationButton.Tag = null;
+
+                        foreach(var item in editorToolStrip.Items.Cast<ToolStripItem>())
+                        {
+                            if(item.Tag == sourceToolStrip)
+                            {
+                                if(item != progressBar)
+                                {
+                                    item.Visible = false;
+                                }
+                            }
+                        }
+                        break;
+                    case null:
+                        codeSplit.Panel2Collapsed = false;
+
                         codeSplit.Orientation = Orientation.Horizontal;
                         codeSplit.SplitterDistance = distance * codeSplit.Height / codeSplit.Width;
+
+                        foreach(var item in editorToolStrip.Items.Cast<ToolStripItem>().ToArray())
+                        {
+                            if(item.Tag == sourceToolStrip)
+                            {
+                                sourceToolStrip.Items.Add(item);
+                                if(item != progressBar)
+                                {
+                                    item.Alignment = ToolStripItemAlignment.Left;
+                                    item.Visible = true;
+                                }
+                            }
+                        }
+                        sourceToolStrip.Items.Add(progressBar);
+                        sourceToolStrip.Visible = true;
+
+                        orientationButton.Text = codeSplit.Orientation.ToString();
+                        orientationButton.Tag = codeSplit.Orientation;
                         break;
                 }
             }
@@ -898,8 +974,6 @@ namespace IS4.Sona.Compiler.Gui
                 codeSplit.ResumeDrawing();
                 codeSplit.Update();
             }
-            orientationButton.Text = codeSplit.Orientation.ToString();
-            orientationButton.Tag = codeSplit.Orientation;
         }
 
         private void zoomButton_Click(object sender, EventArgs e)
@@ -910,7 +984,7 @@ namespace IS4.Sona.Compiler.Gui
         }
 
         CancellationTokenSource? executionCts;
-        private async void runButton_Click(object sender, EventArgs e)
+        private async void runMenuButton_Click(object sender, EventArgs e)
         {
             var cts = executionCts;
             if(cts != null)
@@ -923,29 +997,40 @@ namespace IS4.Sona.Compiler.Gui
             {
                 return;
             }
+
+            var buffer = new StringBuilder();
+
             var tcs = new TaskCompletionSource();
+            cts.Token.Register(() => tcs.TrySetResult());
+
             new Thread(() => {
                 try
                 {
                     ConsoleExtensions.ShowConsole();
-                    Console.Clear();
+
+                    Console.SetOut(new DuplicatingTextWriter(Console.Out, new StringWriter(buffer)));
+                    Console.SetError(new DuplicatingTextWriter(Console.Error, new StringWriter(buffer)));
+
+                    Task? task = null;
 #pragma warning disable SYSLIB0046
                     ControlledExecution.Run(() => {
-                        entryPoint().Wait(cts.Token);
+                        task = entryPoint();
                     }, cts.Token);
 #pragma warning restore SYSLIB0046
-                    tcs.TrySetResult();
-                }
-                catch(OperationCanceledException)
-                {
 
-                }
-                catch(Exception e)
-                {
-                    tcs.TrySetException(e);
-                }
-                finally
-                {
+                    if(task != null)
+                    {
+                        try
+                        {
+                            task.Wait(cts.Token);
+                        }
+                        catch(AggregateException e) when(e.InnerExceptions.Count == 1)
+                        {
+                            ExceptionDispatchInfo.Capture(e.InnerException!).Throw();
+                        }
+                    }
+
+                    tcs.TrySetResult();
                     try
                     {
                         Task.Delay(2000).Wait(cts.Token);
@@ -954,9 +1039,41 @@ namespace IS4.Sona.Compiler.Gui
                     {
 
                     }
+                }
+                catch(OperationCanceledException) when(cts.IsCancellationRequested)
+                {
+
+                }
+                catch(FsiCompilationException fsiE)
+                {
+                    var errors = fsiE.ErrorInfos?.Value ?? Array.Empty<FSharpDiagnostic>();
+                    if(errors.Length == 0)
+                    {
+                        Console.BackgroundColor = ConsoleColor.Black;
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine(fsiE);
+                        Console.ReadKey(true);
+                    }
+                    else
+                    {
+                        foreach(var diagnostic in errors)
+                        {
+                            Console.WriteLine(new CompilerDiagnostic(diagnostic));
+                        }
+                    }
+                }
+                catch(Exception e)
+                {
+                    Console.BackgroundColor = ConsoleColor.Black;
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(e);
+                    Console.ReadKey(true);
+                }
+                finally
+                {
+                    tcs.TrySetResult();
                     if(!cts.IsCancellationRequested)
                     {
-                        Console.Clear();
                         ConsoleExtensions.HideConsole();
                     }
                 }
@@ -967,7 +1084,67 @@ namespace IS4.Sona.Compiler.Gui
 
             await tcs.Task;
 
-            Activate();
+            if(!cts.IsCancellationRequested)
+            {
+                messageBox.Text = buffer.ToString();
+                Activate();
+            }
+        }
+
+        string? currentFileName;
+
+        private void saveMenuButton_Click(object sender, EventArgs e)
+        {
+            if(currentFileName == null)
+            {
+                saveAsMenuButton_Click(sender, e);
+                return;
+            }
+            Save();
+        }
+
+        private void saveAsMenuButton_Click(object sender, EventArgs e)
+        {
+            if(saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                currentFileName = saveFileDialog.FileName;
+                Save();
+            }
+        }
+
+        private void loadMenuButton_Click(object sender, EventArgs e)
+        {
+            if(openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                currentFileName = openFileDialog.FileName;
+                sonaRichText.Clear();
+                sonaRichText.ClearUndo();
+                reformatModifiedText = true;
+                sonaRichText.Text = File.ReadAllText(currentFileName);
+                sonaRichText.ClearUndo();
+            }
+        }
+
+        private void Save()
+        {
+            if(currentFileName == null)
+            {
+                return;
+            }
+            using var writer = File.CreateText(currentFileName);
+            var first = true;
+            foreach(var line in sonaRichText.Lines)
+            {
+                if(first)
+                {
+                    first = false;
+                }
+                else
+                {
+                    writer.WriteLine();
+                }
+                writer.Write(line);
+            }
         }
     }
 }

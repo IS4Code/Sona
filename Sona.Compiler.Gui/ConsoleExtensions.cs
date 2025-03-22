@@ -25,6 +25,8 @@ namespace IS4.Sona.Compiler.Gui
         const int SW_SHOW = 5;
 
         static bool consoleAllocated;
+        static ConsoleColor textColor;
+        static ConsoleColor backColor;
 
         public static void ShowConsole()
         {
@@ -40,15 +42,21 @@ namespace IS4.Sona.Compiler.Gui
                 Console.SetError(OpenConsoleWriter(encoding));
                 Console.SetIn(OpenConsoleReader(encoding));
 
+                textColor = Console.ForegroundColor;
+                backColor = Console.BackgroundColor;
                 consoleAllocated = true;
             }
 
+            Console.Clear();
+            Console.ForegroundColor = textColor;
+            Console.BackgroundColor = backColor;
             ToggleConsole(SW_SHOW);
         }
 
         public static void HideConsole()
         {
             ToggleConsole(SW_HIDE);
+            Console.Clear();
         }
 
         static void ToggleConsole(int flag)
