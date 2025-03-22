@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Runtime.Loader;
 using System.Windows.Forms;
 
 namespace IS4.Sona.Compiler.Gui
@@ -13,6 +14,14 @@ namespace IS4.Sona.Compiler.Gui
         static void Main()
         {
             CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+
+            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => {
+                if(SonaCompiler.ResolveEmbeddedAssembly(args.Name) is not { } stream)
+                {
+                    return null;
+                }
+                return AssemblyLoadContext.Default.LoadFromStream(stream);
+            };
 
             ApplicationConfiguration.Initialize();
             Application.Run(new MainForm());
