@@ -213,6 +213,8 @@ namespace IS4.Sona.Compiler.Gui
 
         private async void Recompile()
         {
+            runMenuButton.Enabled = false;
+
             // Yield to get latest text in case of replacement
             await Task.Yield();
 
@@ -582,6 +584,12 @@ namespace IS4.Sona.Compiler.Gui
             var tuple = (text, latest, options);
             if(latestCodeTuple == tuple)
             {
+                if(latest && lastEntryPoint != null)
+                {
+                    Invoke(() => {
+                        runMenuButton.Enabled = true;
+                    });
+                }
                 return latestCodeResult;
             }
 
