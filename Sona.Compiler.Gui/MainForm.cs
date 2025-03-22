@@ -745,11 +745,14 @@ namespace IS4.Sona.Compiler.Gui
             }
         }
 
+        bool redrawing = false;
+
         private void SetOutputText(string str, bool noHighlighting)
         {
             var position = resultRichText.SelectionStart;
             var zoom = resultRichText.ZoomFactor;
             resultRichText.SuspendDrawing();
+            redrawing = true;
             try
             {
                 resultRichText.Clear();
@@ -785,6 +788,7 @@ namespace IS4.Sona.Compiler.Gui
                 resultRichText.ScrollToCaret();
                 resultRichText.ResumeDrawing();
                 resultRichText.Update();
+                redrawing = false;
             }
         }
 
@@ -893,6 +897,10 @@ namespace IS4.Sona.Compiler.Gui
 
         private void resultRichText_ContentsResized(object sender, ContentsResizedEventArgs e)
         {
+            if(redrawing)
+            {
+                return;
+            }
             sonaRichText.ZoomFactor = resultRichText.ZoomFactor;
             ZoomChanged(resultRichText.ZoomFactor);
         }
