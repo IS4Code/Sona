@@ -81,7 +81,7 @@ namespace IS4.Sona.Compiler.States
         {
             try
             {
-                Out.Write(context.GetText());
+                Out.WriteLineEnd(context.GetText());
             }
             finally
             {

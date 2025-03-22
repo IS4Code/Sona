@@ -26,6 +26,7 @@ namespace IS4.Sona.Compiler
 
         void WriteLine();
         void WriteLine(string text);
+        void WriteLineEnd(string newline);
 
         void UpdateLine(IToken token);
         void EnterScope();
@@ -303,6 +304,28 @@ namespace IS4.Sona.Compiler
             }
 
             WriteLine(text);
+        }
+
+        public void WriteLineEnd(string newline)
+        {
+            if(Recording(out var capture))
+            {
+                Record(capture, x => x.WriteLineEnd(newline));
+                return;
+            }
+
+            // Never skip empty lines
+
+            var original = NewLine;
+            NewLine = newline;
+            try
+            {
+                WriteLine();
+            }
+            finally
+            {
+                NewLine = original;
+            }
         }
 
         public void WriteIdentifier(string name)
