@@ -664,13 +664,13 @@ namespace IS4.Sona.Compiler.States
         protected override void OnNestedEnter(CoalesceExprContext context)
         {
             // Expose the type of the alternative through a variable
-            Out.Write("(let mutable ");
+            Out.Write("(let ");
             alternativeName = Out.CreateTemporaryIdentifier();
             Out.WriteIdentifier(alternativeName);
             Out.WriteOperator('=');
             Out.WriteCoreOperatorName("Unchecked");
             Out.Write(".defaultof<_> in match ");
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "BindToResult");
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "BindToLiftedResult");
             Out.Write('(');
             Out.WriteIdentifier(alternativeName);
             Out.Write(")(");

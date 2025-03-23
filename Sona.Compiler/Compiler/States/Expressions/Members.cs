@@ -312,12 +312,14 @@ namespace IS4.Sona.Compiler.States
     internal class AltMemberExprState : MemberExprState
     {
         bool lambdaOpen;
+        int level;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             lambdaOpen = false;
+            level = 0;
         }
 
         public override void EnterAltMemberExpr(AltMemberExprContext context)
@@ -328,6 +330,11 @@ namespace IS4.Sona.Compiler.States
         public override void ExitAltMemberExpr(AltMemberExprContext context)
         {
             CloseLambda();
+            while(level-- > 0)
+            {
+                // Clear all previous levels
+                Out.Write("))");
+            }
             Out.Write(')');
             ExitState().ExitAltMemberExpr(context);
         }
@@ -390,6 +397,35 @@ namespace IS4.Sona.Compiler.States
         {
             OpenLambda();
             base.EnterComplexCallArgTuple(context);
+        }
+
+        public override void EnterConditionalMember(ConditionalMemberContext context)
+        {
+
+        }
+
+        public override void ExitConditionalMember(ConditionalMemberContext context)
+        {
+            CloseLambda();
+            Out.WriteOperator("|>");
+            var arg = Out.CreateTemporaryIdentifier();
+            Out.Write("(fun ");
+            Out.WriteIdentifier(arg);
+            Out.WriteOperator("->");
+            Out.Write("match ");
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "BindToResult");
+            Out.Write('(');
+            Out.WriteIdentifier(arg);
+            Out.Write(")with|struct(false,_)->");
+            Out.WriteCoreName("ValueNone");
+            var value = Out.CreateTemporaryIdentifier();
+            Out.Write("|struct(true,");
+            Out.WriteIdentifier(value);
+            Out.Write(")->");
+            Out.WriteCoreName("ValueSome");
+            Out.Write('(');
+            Out.WriteIdentifier(value);
+            level++;
         }
 
         public override void EnterConstrainedMemberAccess(ConstrainedMemberAccessContext context)

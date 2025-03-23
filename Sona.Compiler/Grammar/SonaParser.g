@@ -1001,10 +1001,13 @@ memberExpr_Suffix:
 
 altMemberExpr:
   (memberExpr_Standalone | memberExpr_Prefix)
-    memberExpr_Suffix* altMemberExpr_Suffix (memberExpr_Suffix | altMemberExpr_Suffix)*;
+    memberExpr_Suffix* (conditionalMember memberExpr_Suffix | conditionalMember? altMemberExpr_Suffix) (conditionalMember? (memberExpr_Suffix | altMemberExpr_Suffix))*;
 
 altMemberExpr_Suffix:
   constrainedMemberAccess;
+
+conditionalMember:
+  '?';
 
 constrainedMemberAccess:
   '.' '(' name ')' callArguments?;
