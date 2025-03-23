@@ -36,7 +36,7 @@ namespace IS4.Sona.Compiler.States
         {
             while(notLevel-- > 0)
             {
-                Out.Write(")");
+                Out.Write(')');
             }
         }
 
@@ -59,7 +59,7 @@ namespace IS4.Sona.Compiler.States
         }
     }
 
-    internal sealed class NegatedExpression : ExpressionState
+    internal sealed class AtomicLogicExpression : ExpressionState
     {
         int notLevel;
 
@@ -70,18 +70,18 @@ namespace IS4.Sona.Compiler.States
             notLevel = 0;
         }
 
-        public override void EnterNegatedExpr(NegatedExprContext context)
+        public override void EnterAtomicLogicExpr(AtomicLogicExprContext context)
         {
 
         }
 
-        public override void ExitNegatedExpr(NegatedExprContext context)
+        public override void ExitAtomicLogicExpr(AtomicLogicExprContext context)
         {
             while(notLevel-- > 0)
             {
-                Out.Write(")");
+                Out.Write(')');
             }
-            ExitState().ExitNegatedExpr(context);
+            ExitState().ExitAtomicLogicExpr(context);
         }
 
         public override void VisitTerminal(ITerminalNode node)
@@ -93,6 +93,44 @@ namespace IS4.Sona.Compiler.States
                 Out.Write('(');
                 notLevel++;
             }
+        }
+    }
+
+    internal sealed class InlineIfExpression : ExpressionState
+    {
+        public override void EnterInlineIfExpr(InlineIfExprContext context)
+        {
+            Out.Write("(if(");
+        }
+
+        public override void ExitInlineIfExpr(InlineIfExprContext context)
+        {
+            Out.Write("))");
+            ExitState().ExitInlineIfExpr(context);
+        }
+
+        public override void VisitTerminal(ITerminalNode node)
+        {
+            base.VisitTerminal(node);
+            switch(node.Symbol.Type)
+            {
+                case SonaLexer.THEN:
+                    Out.Write(")then(");
+                    break;
+                case SonaLexer.ELSE:
+                    Out.Write(")else(");
+                    break;
+            }
+        }
+
+        public override void EnterExpression(ExpressionContext context)
+        {
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public override void ExitExpression(ExpressionContext context)
+        {
+
         }
     }
 }

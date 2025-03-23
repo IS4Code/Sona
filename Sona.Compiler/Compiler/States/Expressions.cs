@@ -60,12 +60,12 @@ namespace IS4.Sona.Compiler.States
 
         }
 
-        public override void EnterNegatedExpr(NegatedExprContext context)
+        public override void EnterAtomicLogicExpr(AtomicLogicExprContext context)
         {
-            EnterState<NegatedExpression>().EnterNegatedExpr(context);
+            EnterState<AtomicLogicExpression>().EnterAtomicLogicExpr(context);
         }
 
-        public override void ExitNegatedExpr(NegatedExprContext context)
+        public override void ExitAtomicLogicExpr(AtomicLogicExprContext context)
         {
 
         }
@@ -76,6 +76,16 @@ namespace IS4.Sona.Compiler.States
         }
 
         public override void ExitLogicExpr(LogicExprContext context)
+        {
+
+        }
+
+        public override void EnterInlineIfExpr(InlineIfExprContext context)
+        {
+            EnterState<InlineIfExpression>().EnterInlineIfExpr(context);
+        }
+
+        public override void ExitInlineIfExpr(InlineIfExprContext context)
         {
 
         }

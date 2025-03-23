@@ -866,20 +866,23 @@ nestedPattern:
 /* ----------- */
 
 expression:
-  negatedExpr |
+  atomicLogicExpr |
   logicExpr |
   inlineSourceFree;
 
-negatedExpr:
-  'not'+ outerExpr;
+atomicLogicExpr:
+  'not'* ('not' outerExpr | inlineIfExpr);
 
 logicExpr:
   outerExpr (
     (
       'and' (outerExpr 'and')* |
       'or' (outerExpr 'or')*
-    ) 'not'* outerExpr
+    ) (outerExpr | atomicLogicExpr)
   )?;
+
+inlineIfExpr:
+  'if' expression 'then' expression 'else' (outerExpr | atomicLogicExpr);
 
 outerExpr:
   coalesceExpr (('<' | '<=' | '>' | '>=' | '==' | '!=' | '~=' | '&&' | '||') coalesceExpr)*;
