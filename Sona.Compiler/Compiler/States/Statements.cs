@@ -54,7 +54,16 @@ namespace IS4.Sona.Compiler.States
         public override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
         {
             OnEnterStatement(StatementFlags.None, context);
-            Out.Write("()");
+            if(FindContext<IComputationContext>() is { IsCollection: true })
+            {
+                Out.Write("if false then yield ");
+                Out.WriteCoreOperatorName("Unchecked");
+                Out.WriteLine(".defaultof<_>");
+            }
+            else
+            {
+                Out.Write("()");
+            }
         }
 
         public override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
