@@ -92,6 +92,11 @@ namespace IS4.Sona.Compiler.States
             EnterState<YieldState>().EnterYieldStatement(context);
         }
 
+        public sealed override void EnterYieldEachStatement(YieldEachStatementContext context)
+        {
+            EnterState<YieldEachState>().EnterYieldEachStatement(context);
+        }
+
         public sealed override void EnterYieldBreakStatement(YieldBreakStatementContext context)
         {
             EnterState<YieldBreakState>().EnterYieldBreakStatement(context);
@@ -839,6 +844,46 @@ namespace IS4.Sona.Compiler.States
         public override void ExitExpression(ExpressionContext context)
         {
 
+        }
+    }
+
+    internal sealed class YieldEachState : NodeState
+    {
+        public override void EnterYieldEachStatement(YieldEachStatementContext context)
+        {
+            if(FindContext<IComputationContext>() is not ({ IsCollection: true } or { BuilderVariable: not null }))
+            {
+                Error("`yield` is not allowed outside a collection or computation.", context);
+            }
+            Out.Write("yield! ");
+        }
+
+        public override void ExitYieldEachStatement(YieldEachStatementContext context)
+        {
+            ExitState().ExitYieldEachStatement(context);
+        }
+
+        public override void EnterSpreadExpression(SpreadExpressionContext context)
+        {
+            EnterState<SpreadExpression>().EnterSpreadExpression(context);
+        }
+
+        public override void ExitSpreadExpression(SpreadExpressionContext context)
+        {
+
+        }
+
+        sealed class SpreadExpression : ExpressionState
+        {
+            public override void EnterSpreadExpression(SpreadExpressionContext context)
+            {
+
+            }
+
+            public override void ExitSpreadExpression(SpreadExpressionContext context)
+            {
+                ExitState().ExitSpreadExpression(context);
+            }
         }
     }
 

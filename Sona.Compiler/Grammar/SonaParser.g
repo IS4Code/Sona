@@ -158,6 +158,7 @@ statement:
   memberOrAssignment |
   echoStatement |
   yieldStatement |
+  yieldEachStatement |
   inlineSourceFree |
   ifStatementFree |
   doStatementFree |
@@ -190,6 +191,9 @@ returnStatement:
 
 yieldStatement:
   'yield' (expression | errorMissingExpression);
+
+yieldEachStatement:
+  'yield' spreadExpression;
 
 yieldBreakStatement:
   YIELD_BREAK expression?;
