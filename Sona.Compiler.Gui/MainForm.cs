@@ -73,7 +73,7 @@ namespace Sona.Compiler.Gui
 
             codeSplit.SplitterWidth = codeSplit.SplitterWidth * 3 / 2;
 
-            orientationButton.Text = codeSplit.Orientation.ToString();
+            orientationButton.Text = $"View: {codeSplit.Orientation}";
             orientationButton.Tag = codeSplit.Orientation;
 
             ZoomChanged(1);
@@ -1105,7 +1105,7 @@ ReadKey(true)!";
 
         private void ZoomChanged(float zoom)
         {
-            zoomButton.Text = $"{zoom:P0}";
+            zoomButton.Text = $"Zoom: {zoom:P0}";
 
             var statusFont = statusStrip.Font;
             lineLabel.Font = new Font(
@@ -1133,7 +1133,7 @@ ReadKey(true)!";
                         sourceToolStrip.Visible = false;
                         editorToolStrip.Items.Remove(progressBar);
                         editorToolStrip.Items.Add(progressBar);
-                        foreach(var item in sourceToolStrip.Items.Cast<ToolStripItem>().ToArray())
+                        foreach(var item in sourceToolStrip.Items.Cast<ToolStripItem>().ToArray().Reverse())
                         {
                             editorToolStrip.Items.Add(item);
                             if(item != progressBar)
@@ -1143,12 +1143,12 @@ ReadKey(true)!";
                             item.Tag = sourceToolStrip;
                         }
 
-                        orientationButton.Text = $"Source: {codeSplit.Orientation}";
+                        orientationButton.Text = $"View: {codeSplit.Orientation}";
                         orientationButton.Tag = codeSplit.Orientation;
                         break;
                     case Orientation.Vertical:
                         codeSplit.Panel2Collapsed = true;
-                        orientationButton.Text = "Source: Hidden";
+                        orientationButton.Text = "View: Hidden";
                         orientationButton.Tag = null;
 
                         foreach(var item in editorToolStrip.Items.Cast<ToolStripItem>())
@@ -1168,7 +1168,7 @@ ReadKey(true)!";
                         codeSplit.Orientation = Orientation.Horizontal;
                         codeSplit.SplitterDistance = distance * codeSplit.Height / codeSplit.Width;
 
-                        foreach(var item in editorToolStrip.Items.Cast<ToolStripItem>().ToArray())
+                        foreach(var item in editorToolStrip.Items.Cast<ToolStripItem>().ToArray().Reverse())
                         {
                             if(item.Tag == sourceToolStrip)
                             {
@@ -1183,7 +1183,7 @@ ReadKey(true)!";
                         sourceToolStrip.Items.Add(progressBar);
                         sourceToolStrip.Visible = true;
 
-                        orientationButton.Text = $"Source: {codeSplit.Orientation}";
+                        orientationButton.Text = $"View: {codeSplit.Orientation}";
                         orientationButton.Tag = codeSplit.Orientation;
                         break;
                 }
@@ -1197,9 +1197,27 @@ ReadKey(true)!";
 
         private void zoomButton_Click(object sender, EventArgs e)
         {
-            sonaRichText.ZoomFactor = 1;
-            resultRichText.ZoomFactor = 1;
-            zoomButton.Text = $"{1:P0}";
+            sonaRichText.ZoomFactor = resultRichText.ZoomFactor = 1;
+            ZoomChanged(1);
+        }
+
+        private void lineWrapButton_CheckedChanged(object sender, EventArgs e)
+        {
+            modifying = true;
+            sonaRichText.SuspendDrawing();
+            resultRichText.SuspendDrawing();
+            try
+            {
+                var zoom = resultRichText.ZoomFactor;
+                resultRichText.WordWrap = lineWrapButton.Checked;
+                resultRichText.ZoomFactor = zoom;
+            }
+            finally
+            {
+                resultRichText.ResumeDrawing();
+                sonaRichText.ResumeDrawing();
+                modifying = false;
+            }
         }
 
         CancellationTokenSource? executionCts;

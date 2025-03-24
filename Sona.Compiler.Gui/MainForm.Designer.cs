@@ -44,13 +44,14 @@ namespace Sona.Compiler.Gui
             blockDelimitersButton = new ToolStripButton();
             adjustLineNumbersButton = new ToolStripButton();
             progressBar = new ToolStripProgressBar();
+            lineWrapButton = new ToolStripButton();
             messageBox = new TextBox();
             runMenuButton = new ToolStripMenuItem();
             statusStrip = new StatusStrip();
             lineLabel = new ToolStripStatusLabel();
             editorToolStrip = new ToolStrip();
-            orientationButton = new ToolStripButton();
             zoomButton = new ToolStripButton();
+            orientationButton = new ToolStripButton();
             saveFileDialog = new SaveFileDialog();
             openFileDialog = new OpenFileDialog();
             diagnosticsSplit = new SplitContainer();
@@ -144,7 +145,7 @@ namespace Sona.Compiler.Gui
             // sourceToolStrip
             // 
             sourceToolStrip.GripStyle = ToolStripGripStyle.Hidden;
-            sourceToolStrip.Items.AddRange(new ToolStripItem[] { blockDelimitersButton, adjustLineNumbersButton, progressBar });
+            sourceToolStrip.Items.AddRange(new ToolStripItem[] { blockDelimitersButton, adjustLineNumbersButton, progressBar, lineWrapButton });
             sourceToolStrip.Location = new Point(0, 0);
             sourceToolStrip.Name = "sourceToolStrip";
             sourceToolStrip.Size = new Size(817, 25);
@@ -179,6 +180,17 @@ namespace Sona.Compiler.Gui
             progressBar.MarqueeAnimationSpeed = 50;
             progressBar.Name = "progressBar";
             progressBar.Size = new Size(100, 22);
+            // 
+            // lineWrapButton
+            // 
+            lineWrapButton.CheckOnClick = true;
+            lineWrapButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            lineWrapButton.Image = (Image)resources.GetObject("lineWrapButton.Image");
+            lineWrapButton.ImageTransparentColor = Color.Magenta;
+            lineWrapButton.Name = "lineWrapButton";
+            lineWrapButton.Size = new Size(69, 22);
+            lineWrapButton.Text = "Word wrap";
+            lineWrapButton.CheckedChanged += lineWrapButton_CheckedChanged;
             // 
             // messageBox
             // 
@@ -247,22 +259,12 @@ namespace Sona.Compiler.Gui
             // editorToolStrip
             // 
             editorToolStrip.GripStyle = ToolStripGripStyle.Hidden;
-            editorToolStrip.Items.AddRange(new ToolStripItem[] { orientationButton, zoomButton });
+            editorToolStrip.Items.AddRange(new ToolStripItem[] { zoomButton, orientationButton });
             editorToolStrip.Location = new Point(0, 24);
             editorToolStrip.Name = "editorToolStrip";
             editorToolStrip.Size = new Size(817, 25);
             editorToolStrip.TabIndex = 2;
             editorToolStrip.Text = "Editor";
-            // 
-            // orientationButton
-            // 
-            orientationButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            orientationButton.Image = (Image)resources.GetObject("orientationButton.Image");
-            orientationButton.ImageTransparentColor = Color.Magenta;
-            orientationButton.Name = "orientationButton";
-            orientationButton.Size = new Size(105, 22);
-            orientationButton.Text = "orientationButton";
-            orientationButton.Click += orientationButton_Click;
             // 
             // zoomButton
             // 
@@ -272,7 +274,19 @@ namespace Sona.Compiler.Gui
             zoomButton.Name = "zoomButton";
             zoomButton.Size = new Size(77, 22);
             zoomButton.Text = "zoomButton";
+            zoomButton.ToolTipText = "Reset zoom";
             zoomButton.Click += zoomButton_Click;
+            // 
+            // orientationButton
+            // 
+            orientationButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            orientationButton.Image = (Image)resources.GetObject("orientationButton.Image");
+            orientationButton.ImageTransparentColor = Color.Magenta;
+            orientationButton.Name = "orientationButton";
+            orientationButton.Size = new Size(105, 22);
+            orientationButton.Text = "orientationButton";
+            orientationButton.ToolTipText = "Switch view";
+            orientationButton.Click += orientationButton_Click;
             // 
             // saveFileDialog
             // 
@@ -341,5 +355,6 @@ namespace Sona.Compiler.Gui
         private ToolStripStatusLabel lineLabel;
         private SaveFileDialog saveFileDialog;
         private OpenFileDialog openFileDialog;
+        private ToolStripButton lineWrapButton;
     }
 }
