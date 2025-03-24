@@ -2,9 +2,24 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
+    <AssemblyName>Sona.Compiler</AssemblyName>
+    <VersionPrefix>0.1</VersionPrefix>
+    <Product>Sona Language</Product>
+    <Authors>IS4</Authors>
+    <Copyright>Copyright (c) $(Authors) $([System.DateTime]::UtcNow.ToString('yyyy'))</Copyright>
     <RootNamespace>Sona</RootNamespace>
     <LangVersion>10.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <AssemblyTitle>$(Product) Compiler</AssemblyTitle>
+    <PackageId>$(AssemblyName)</PackageId>
+    <Title>$(AssemblyTitle)</Title>
+    <Description>The necessary API for running the compiler and execution environment for $(Product).</Description>
+    <RepositoryUrl>https://github.com/IS4Code/Sona</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>$(RepositoryUrl)/tree/HEAD/Sona.Compiler</PackageProjectUrl>
+    <PackageTags>sona;language;compiler</PackageTags>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>

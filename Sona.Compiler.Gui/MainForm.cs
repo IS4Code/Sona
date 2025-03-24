@@ -35,6 +35,9 @@ namespace Sona.Compiler.Gui
         public MainForm()
         {
             InitializeComponent();
+
+            Text = $"{ProductName} v{ProductVersion}";
+
             DoubleBuffered = true;
 
             var font = messageBox.Font;

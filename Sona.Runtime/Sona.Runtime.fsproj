@@ -2,8 +2,23 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AssemblyName>Sona.Runtime</AssemblyName>
+    <VersionPrefix>0.1</VersionPrefix>
+    <Product>Sona Language</Product>
+    <Authors>IS4</Authors>
+    <Copyright>Copyright (c) $(Authors) $([System.DateTime]::UtcNow.ToString('yyyy'))</Copyright>
+    <RootNamespace>Sona</RootNamespace>
     <LangVersion>latest</LangVersion>
+    <AssemblyTitle>$(Product) Runtime</AssemblyTitle>
+    <PackageId>$(AssemblyName)</PackageId>
+    <Title>$(AssemblyTitle)</Title>
+    <Description>The standard library for the $(Product).</Description>
+    <RepositoryUrl>https://github.com/IS4Code/Sona</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>$(RepositoryUrl)/tree/HEAD/Sona.Runtime</PackageProjectUrl>
+    <PackageTags>sona;language;runtime</PackageTags>
+    <DebugType>embedded</DebugType>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <DisableAutoSetFscCompilerPath>true</DisableAutoSetFscCompilerPath>
     <FSharp_Shim_Present>false</FSharp_Shim_Present>

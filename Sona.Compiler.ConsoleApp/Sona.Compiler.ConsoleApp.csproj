@@ -1,12 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
+    <AssemblyName>sonac</AssemblyName>
+    <VersionPrefix>0.1</VersionPrefix>
+    <Product>Sona Language</Product>
+    <Authors>IS4</Authors>
+    <Copyright>Copyright (c) $(Authors) $([System.DateTime]::UtcNow.ToString('yyyy'))</Copyright>
     <RootNamespace>Sona.Compiler.ConsoleApp</RootNamespace>
     <LangVersion>10.0</LangVersion>
-    <AssemblyName>sonac</AssemblyName>
+    <Nullable>enable</Nullable>
+    <AssemblyTitle>$(Product) Compiler Executable</AssemblyTitle>
+    <PackageId>Sona.Compiler.ConsoleApp</PackageId>
+    <Title>$(AssemblyTitle)</Title>
+    <Description>Provides the $(Product) compiler as a tool.</Description>
+    <RepositoryUrl>https://github.com/IS4Code/Sona</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>$(RepositoryUrl)/tree/HEAD/Sona.Compiler.ConsoleApp</PackageProjectUrl>
+    <PackageTags>sona;language;compiler;cli;tool</PackageTags>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <OutputType>Exe</OutputType>
+    <DebugType>embedded</DebugType>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>sonac</ToolCommandName>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishSelfContained>true</PublishSelfContained>
     <PublishReadyToRun>true</PublishReadyToRun>
