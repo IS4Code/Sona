@@ -21,8 +21,17 @@ namespace Sona.Compiler.Gui
         [DllImport("user32.dll")]
         static extern bool SetForegroundWindow(IntPtr hWnd);
 
+        [DllImport("user32.dll")]
+        static extern bool EnableMenuItem(IntPtr hMenu, uint uIDEnableItem, uint uEnable);
+
+        [DllImport("user32.dll")]
+        static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
+
         const int SW_HIDE = 0;
         const int SW_SHOW = 5;
+
+        const uint SC_CLOSE = 0xF060;
+        const uint MF_GRAYED = 0x00000001;
 
         static bool consoleAllocated;
         static ConsoleColor textColor;
@@ -70,6 +79,9 @@ namespace Sona.Compiler.Gui
             ShowWindow(window, flag);
             if(flag == SW_SHOW)
             {
+                var menu = GetSystemMenu(window, false);
+                EnableMenuItem(menu, SC_CLOSE, MF_GRAYED);
+
                 SetForegroundWindow(window);
             }
         }
