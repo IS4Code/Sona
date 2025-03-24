@@ -414,18 +414,27 @@ ReadKey(true)!";
 
         private void sonaRichText_KeyDown(object sender, KeyEventArgs e)
         {
-            if(!e.Control)
+            switch(e.KeyCode)
+            {
+                case Keys.Enter when e.Shift:
+                    sonaRichText.SelectedText = Environment.NewLine;
+                    e.Handled = true;
+                    return;
+                case Keys.Z when e.Control && e.Shift:
+                    PerformRedo();
+                    e.Handled = true;
+                    return;
+                case Keys.Z when e.Control:
+                    PerformUndo();
+                    e.Handled = true;
+                    return;
+            }
+            if(!e.Control || e.Alt)
             {
                 return;
             }
             switch(e.KeyCode)
             {
-                case Keys.Z when e.Shift:
-                    PerformRedo();
-                    return;
-                case Keys.Z:
-                    PerformUndo();
-                    return;
                 case Keys.A:
                 case Keys.C:
                 case Keys.V:
@@ -439,6 +448,8 @@ ReadKey(true)!";
                 case Keys.Home:
                 case Keys.End:
                 case Keys.Delete:
+                case Keys.Back:
+                case Keys.Insert:
                     return;
                 default:
                     e.SuppressKeyPress = true;
