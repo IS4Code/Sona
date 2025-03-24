@@ -927,7 +927,11 @@ namespace Sona.Compiler.States
     {
         public override void EnterMemberOrAssignment(MemberOrAssignmentContext context)
         {
-
+            if(FindContext<IStatementContext>() is ChunkState)
+            {
+                // Top-level statement requires unit return
+                Out.Write("do ");
+            }
         }
 
         public override void ExitMemberOrAssignment(MemberOrAssignmentContext context)
