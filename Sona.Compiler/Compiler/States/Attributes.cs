@@ -1,6 +1,6 @@
-﻿using static IS4.Sona.Grammar.SonaParser;
+﻿using static Sona.Grammar.SonaParser;
 
-namespace IS4.Sona.Compiler.States
+namespace Sona.Compiler.States
 {
     internal sealed class AttributeState : NodeState, IExpressionContext
     {

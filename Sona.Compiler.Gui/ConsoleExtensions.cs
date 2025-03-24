@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
 
-namespace IS4.Sona.Compiler.Gui
+namespace Sona.Compiler.Gui
 {
     static class ConsoleExtensions
     {

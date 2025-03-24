@@ -2,7 +2,7 @@
 using System.Globalization;
 using Antlr4.Runtime;
 using System.IO;
-using IS4.Sona.Compiler;
+using Sona.Compiler;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
 using System.Diagnostics;

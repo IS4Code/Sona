@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Runtime.Loader;
 using System.Windows.Forms;
 
-namespace IS4.Sona.Compiler.Gui
+namespace Sona.Compiler.Gui
 {
     internal static class Program
     {

@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace IS4.Sona.Compiler.Tools
+namespace Sona.Compiler.Tools
 {
     internal sealed class StringStream : Stream
     {

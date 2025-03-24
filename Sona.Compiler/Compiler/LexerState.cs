@@ -1,9 +1,9 @@
 ﻿using System;
 using Antlr4.Runtime;
-using IS4.Sona.Compiler.Tools;
-using IS4.Sona.Grammar;
+using Sona.Compiler.Tools;
+using Sona.Grammar;
 
-namespace IS4.Sona.Compiler
+namespace Sona.Compiler
 {
     internal abstract class LexerState
     {

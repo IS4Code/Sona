@@ -1,7 +1,7 @@
 ﻿using System;
 using Antlr4.Runtime;
 
-namespace IS4.Sona.Compiler.States
+namespace Sona.Compiler.States
 {
     internal interface IStatementContext
     {

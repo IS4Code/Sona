@@ -1,7 +1,7 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 
-namespace IS4.Sona.Compiler
+namespace Sona.Compiler
 {
     internal class SemanticException : RecognitionException
     {

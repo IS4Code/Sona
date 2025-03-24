@@ -2,7 +2,7 @@
 using System.Linq;
 using Antlr4.Runtime;
 
-namespace IS4.Sona.Compiler.States
+namespace Sona.Compiler.States
 {
     [LexerStateName("echo")]
     internal sealed class EchoPragma : LexerState

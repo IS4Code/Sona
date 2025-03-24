@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace IS4.Sona.Tests
+namespace Sona.Tests
 {
     [TestClass]
     public class Statements : CompilationTests

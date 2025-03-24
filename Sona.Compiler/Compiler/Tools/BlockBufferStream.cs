@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Threading;
 
-namespace IS4.Sona.Compiler.Tools
+namespace Sona.Compiler.Tools
 {
     internal sealed class BlockBufferStream : Stream
     {

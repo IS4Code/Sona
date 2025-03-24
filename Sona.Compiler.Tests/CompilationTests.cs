@@ -6,10 +6,10 @@ using System.Linq;
 using System.Runtime.Loader;
 using System.Text.RegularExpressions;
 using Antlr4.Runtime;
-using IS4.Sona.Compiler;
+using Sona.Compiler;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace IS4.Sona.Tests
+namespace Sona.Tests
 {
     public abstract class CompilationTests
     {

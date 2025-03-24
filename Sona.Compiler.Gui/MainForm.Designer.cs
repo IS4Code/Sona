@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
 using System.Windows.Forms;
 
-namespace IS4.Sona.Compiler.Gui
+namespace Sona.Compiler.Gui
 {
     partial class MainForm
     {

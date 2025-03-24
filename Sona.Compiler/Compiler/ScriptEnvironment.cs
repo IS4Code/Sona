@@ -2,7 +2,7 @@
 using System.Linq;
 using Antlr4.Runtime;
 
-namespace IS4.Sona.Compiler
+namespace Sona.Compiler
 {
     internal record class ScriptEnvironment(Parser Parser, ISourceWriter Output, LexerContext LexerContext, string Begin, string End)
     {

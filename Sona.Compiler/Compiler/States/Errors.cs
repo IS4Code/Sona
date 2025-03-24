@@ -1,7 +1,7 @@
 ﻿using Antlr4.Runtime.Misc;
-using static IS4.Sona.Grammar.SonaParser;
+using static Sona.Grammar.SonaParser;
 
-namespace IS4.Sona.Compiler
+namespace Sona.Compiler
 {
     partial class ScriptState
     {

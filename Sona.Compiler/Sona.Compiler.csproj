@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <RootNamespace>IS4.Sona</RootNamespace>
+    <RootNamespace>Sona</RootNamespace>
     <LangVersion>10.0</LangVersion>
   </PropertyGroup>
 

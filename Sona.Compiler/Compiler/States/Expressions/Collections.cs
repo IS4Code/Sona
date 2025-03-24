@@ -1,7 +1,7 @@
 ﻿using Antlr4.Runtime;
-using static IS4.Sona.Grammar.SonaParser;
+using static Sona.Grammar.SonaParser;
 
-namespace IS4.Sona.Compiler.States
+namespace Sona.Compiler.States
 {
     internal abstract class IsolatedState : NodeState, IFunctionContext
     {

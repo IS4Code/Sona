@@ -7,7 +7,7 @@ using System.Runtime.Loader;
 using FSharp.Compiler.IO;
 using Microsoft.FSharp.Core;
 
-namespace IS4.Sona.Compiler.Tools
+namespace Sona.Compiler.Tools
 {
     internal sealed class LocalFileSystem : DefaultFileSystem, IAssemblyLoader
     {

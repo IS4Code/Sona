@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
 using Antlr4.Runtime;
-using IS4.Sona.Compiler.Tools;
-using static IS4.Sona.Grammar.SonaParser;
+using Sona.Compiler.Tools;
+using static Sona.Grammar.SonaParser;
 
-namespace IS4.Sona.Compiler.States
+namespace Sona.Compiler.States
 {
     [Flags]
     internal enum StatementFlags

@@ -11,14 +11,14 @@ using Antlr4.Runtime;
 using FSharp.Compiler.CodeAnalysis;
 using FSharp.Compiler.IO;
 using FSharp.Compiler.Text;
-using IS4.Sona.Compiler.States;
-using IS4.Sona.Compiler.Tools;
-using IS4.Sona.Grammar;
+using Sona.Compiler.States;
+using Sona.Compiler.Tools;
+using Sona.Grammar;
 using Microsoft.FSharp.Control;
 using Microsoft.FSharp.Core;
 using static FSharp.Compiler.Interactive.Shell;
 
-namespace IS4.Sona.Compiler
+namespace Sona.Compiler
 {
     public class SonaCompiler
     {

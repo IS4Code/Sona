@@ -4,9 +4,9 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
-using IS4.Sona.Grammar;
+using Sona.Grammar;
 
-namespace IS4.Sona.Compiler
+namespace Sona.Compiler
 {
     internal abstract partial class ScriptState : SonaParserBaseListener
     {

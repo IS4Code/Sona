@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace IS4.Sona.Compiler.Tools
+namespace Sona.Compiler.Tools
 {
     internal sealed class NonClosingStream : Stream
     {

@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FSharp.Compiler.Diagnostics;
 
-namespace IS4.Sona.Compiler
+namespace Sona.Compiler
 {
     public class CompilerResult
     {

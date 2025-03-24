@@ -7,7 +7,7 @@ using FSharp.Compiler.Text;
 using FSharp.Compiler.Tokenization;
 using Microsoft.FSharp.Core;
 
-namespace IS4.Sona.Compiler.Tools
+namespace Sona.Compiler.Tools
 {
     internal static class Syntax
     {

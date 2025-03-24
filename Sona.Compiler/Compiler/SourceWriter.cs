@@ -7,9 +7,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Antlr4.Runtime;
-using IS4.Sona.Compiler.Tools;
+using Sona.Compiler.Tools;
 
-namespace IS4.Sona.Compiler
+namespace Sona.Compiler
 {
     internal interface ISourceWriter
     {

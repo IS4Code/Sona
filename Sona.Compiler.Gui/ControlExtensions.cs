@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-namespace IS4.Sona.Compiler.Gui
+namespace Sona.Compiler.Gui
 {
     static class ControlExtensions
     {

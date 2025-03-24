@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using IS4.Sona.Compiler.States;
+using Sona.Compiler.States;
 using Microsoft.FSharp.Collections;
 
 namespace Sona.Compiler.Grammar.Generator

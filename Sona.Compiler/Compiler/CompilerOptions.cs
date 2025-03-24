@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Loader;
 
-namespace IS4.Sona.Compiler
+namespace Sona.Compiler
 {
     public record CompilerOptions(BinaryTarget Target, CompilerFlags Flags, AssemblyLoadContext AssemblyLoadContext);
 

@@ -18,11 +18,11 @@ using FSharp.Compiler.Diagnostics;
 using FSharp.Compiler.Syntax;
 using FSharp.Compiler.Text;
 using FSharp.Compiler.Tokenization;
-using IS4.Sona.Grammar;
+using Sona.Grammar;
 using Microsoft.FSharp.Core;
 using static FSharp.Compiler.Interactive.Shell;
 
-namespace IS4.Sona.Compiler.Gui
+namespace Sona.Compiler.Gui
 {
     public partial class MainForm : Form
     {

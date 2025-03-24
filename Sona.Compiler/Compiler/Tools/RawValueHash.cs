@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Security.Cryptography;
 
-namespace IS4.Sona.Compiler.Tools
+namespace Sona.Compiler.Tools
 {
     [EditorBrowsable(EditorBrowsableState.Never)]
     public sealed class RawValueHash : HashAlgorithm
