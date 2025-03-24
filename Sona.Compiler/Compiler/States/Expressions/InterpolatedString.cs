@@ -262,6 +262,7 @@ namespace Sona.Compiler.States
         {
             // let valI = ...
             fillName = Out.CreateTemporaryIdentifier();
+            Out.EnterNestedScope(true);
             Out.Write("let ");
             Out.WriteIdentifier(fillName);
             Out.WriteOperator('=');
@@ -272,7 +273,9 @@ namespace Sona.Compiler.States
         {
             AddFill();
             parts.Add("}");
-            Out.Write(" in ");
+            Out.Write(' ');
+            Out.ExitNestedScope();
+            Out.Write("in ");
         }
 
         public override void EnterExpression(ExpressionContext context)

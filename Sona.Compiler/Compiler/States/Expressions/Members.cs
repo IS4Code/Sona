@@ -89,12 +89,14 @@ namespace Sona.Compiler.States
 
         public override void EnterMemberVoidExpr(MemberVoidExprContext context)
         {
+            Out.EnterNestedScope(true);
             Out.Write("(let _");
             Out.WriteOperator('=');
         }
 
         public override void ExitMemberVoidExpr(MemberVoidExprContext context)
         {
+            Out.ExitNestedScope();
             Out.Write(" in ())");
         }
 

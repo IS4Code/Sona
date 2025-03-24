@@ -215,12 +215,14 @@ namespace Sona.Compiler.States
 
         public override void EnterAtomicVoidExpr(AtomicVoidExprContext context)
         {
+            Out.EnterNestedScope(true);
             Out.Write("(let _");
             Out.WriteOperator('=');
         }
 
         public override void ExitAtomicVoidExpr(AtomicVoidExprContext context)
         {
+            Out.ExitNestedScope();
             Out.Write(" in ())");
         }
 
