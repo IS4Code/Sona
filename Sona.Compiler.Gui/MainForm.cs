@@ -1211,6 +1211,7 @@ ReadKey(true)!";
                 var zoom = resultRichText.ZoomFactor;
                 resultRichText.WordWrap = lineWrapButton.Checked;
                 resultRichText.ZoomFactor = zoom;
+                resultRichText.SetPadding(8, 8, 8, 8);
             }
             finally
             {
