@@ -124,6 +124,7 @@ namespace Sona.Compiler.Gui
             sonaRichText.ContentsResized += sonaRichText_ContentsResized;
             sonaRichText.SelectionChanged += sonaText_SelectionChanged;
             sonaRichText.TextChanged += sonaText_TextChanged;
+            sonaRichText.KeyDown += sonaRichText_KeyDown;
             sonaRichText.KeyPress += sonaRichText_KeyPress;
             sonaRichText.PreviewKeyDown += sonaRichText_PreviewKeyDown;
             // 

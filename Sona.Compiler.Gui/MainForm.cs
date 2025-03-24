@@ -418,6 +418,34 @@ ReadKey(true)!";
             }
         }
 
+        private void sonaRichText_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(!e.Control)
+            {
+                return;
+            }
+            switch(e.KeyCode)
+            {
+                case Keys.A:
+                case Keys.C:
+                case Keys.V:
+                case Keys.X:
+                case Keys.Left:
+                case Keys.Right:
+                case Keys.Up:
+                case Keys.Down:
+                case Keys.PageUp:
+                case Keys.PageDown:
+                case Keys.Home:
+                case Keys.End:
+                case Keys.Delete:
+                    return;
+                default:
+                    e.SuppressKeyPress = true;
+                    return;
+            }
+        }
+
         static readonly Regex lastLineWhitespace = new Regex(@"^([ \t]*).*(?-m)$", RegexOptions.CultureInvariant | RegexOptions.Multiline | RegexOptions.Compiled);
 
         private void sonaRichText_KeyPress(object sender, KeyPressEventArgs e)
