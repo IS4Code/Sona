@@ -36,6 +36,21 @@ namespace Sona.Compiler.Gui
         {
             InitializeComponent();
 
+            sonaRichText.AllowDrop = true;
+            sonaRichText.EnableAutoDragDrop = true;
+            sonaRichText.DragEnter += (sender, e) => {
+                if((e.Data?.GetDataPresent(DataFormats.Text) ?? false) || (e.Data?.GetDataPresent(DataFormats.UnicodeText) ?? false))
+                {
+                    sonaRichText.EnableAutoDragDrop = true;
+                    return;
+                }
+                sonaRichText.EnableAutoDragDrop = false;
+                OnDragEnter(e);
+            };
+            sonaRichText.DragDrop += (sender, e) => {
+                OnDragDrop(e);
+            };
+
             Text = $"{ProductName} Playground v{ProductVersion}";
 
             DoubleBuffered = true;
@@ -119,14 +134,45 @@ namespace Sona.Compiler.Gui
                 IsBackground = true
             }.Start();
 
-            reformatModifiedText = true;
-            sonaRichText.Text = @"import System
+            var args = Environment.GetCommandLineArgs();
+            if(args.Length == 2 && File.Exists(args[1]))
+            {
+                SetFile(args[1]);
+            }
+            else
+            {
+                SetText(@"import System
 import Console.*
 
 let name = ""Sona""
 echo $""Hello, {name}""
-ReadKey(true)!";
-            ResetUndo();
+ReadKey(true)!");
+            }
+        }
+
+        protected override void OnDragEnter(DragEventArgs drgevent)
+        {
+            base.OnDragEnter(drgevent);
+
+            if(drgevent.Data?.GetDataPresent(DataFormats.FileDrop) ?? false)
+            {
+                drgevent.Effect = DragDropEffects.Copy;
+            }
+            else
+            {
+                drgevent.Effect = DragDropEffects.None;
+            }
+        }
+
+        protected override void OnDragDrop(DragEventArgs drgevent)
+        {
+            base.OnDragDrop(drgevent);
+
+            var files = (string[]?)drgevent.Data?.GetData(DataFormats.FileDrop);
+            if(files != null && files.Length > 0)
+            {
+                SetFile(files[files.Length - 1]);
+            }
         }
 
         int lastSelectedStart, lastSelectedLength;
@@ -196,6 +242,23 @@ ReadKey(true)!";
             {
                 reformatModifiedText = reformat;
             }
+        }
+
+        void SetText(string text)
+        {
+            sonaRichText.Clear();
+            sonaRichText.SelectionFont = sonaRichText.Font;
+            sonaRichText.ClearUndo();
+
+            reformatModifiedText = true;
+            sonaRichText.Text = text;
+            ResetUndo();
+        }
+
+        void SetFile(string fileName)
+        {
+            currentFileName = fileName;
+            SetText(File.ReadAllText(fileName));
         }
 
         record Checkpoint(int FirstLineIndex, int LastLineIndexFromEnd, string Content, int SelectionStart, int SelectionLength);
@@ -450,6 +513,10 @@ ReadKey(true)!";
                 case Keys.Delete:
                 case Keys.Back:
                 case Keys.Insert:
+                    return;
+                case Keys.S when !e.Shift:
+                    e.Handled = true;
+                    saveMenuButton_Click(sender, e);
                     return;
                 default:
                     e.SuppressKeyPress = true;
@@ -1365,12 +1432,7 @@ ReadKey(true)!";
         {
             if(openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                currentFileName = openFileDialog.FileName;
-                sonaRichText.Clear();
-                sonaRichText.ClearUndo();
-                reformatModifiedText = true;
-                sonaRichText.Text = File.ReadAllText(currentFileName);
-                ResetUndo();
+                SetFile(openFileDialog.FileName);
             }
         }
 
@@ -1380,19 +1442,28 @@ ReadKey(true)!";
             {
                 return;
             }
-            using var writer = File.CreateText(currentFileName);
-            var first = true;
-            foreach(var line in sonaRichText.Lines)
+
+            UseWaitCursor = true;
+            try
             {
-                if(first)
+                using var writer = File.CreateText(currentFileName);
+                var first = true;
+                foreach(var line in sonaRichText.Lines)
                 {
-                    first = false;
+                    if(first)
+                    {
+                        first = false;
+                    }
+                    else
+                    {
+                        writer.WriteLine();
+                    }
+                    writer.Write(line);
                 }
-                else
-                {
-                    writer.WriteLine();
-                }
-                writer.Write(line);
+            }
+            finally
+            {
+                UseWaitCursor = false;
             }
         }
     }
