@@ -409,12 +409,6 @@ ReadKey(true)!";
                     // Ctrl-Tab is non-input
                     e.IsInputKey = !e.Control;
                     break;
-                case Keys.Z when e.Control && e.Shift:
-                    PerformRedo();
-                    break;
-                case Keys.Z when e.Control:
-                    PerformUndo();
-                    break;
             }
         }
 
@@ -426,6 +420,12 @@ ReadKey(true)!";
             }
             switch(e.KeyCode)
             {
+                case Keys.Z when e.Shift:
+                    PerformRedo();
+                    return;
+                case Keys.Z:
+                    PerformUndo();
+                    return;
                 case Keys.A:
                 case Keys.C:
                 case Keys.V:
