@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -46,7 +47,7 @@ namespace Sona.Compiler.Gui
                     throw new Win32Exception();
                 }
 
-                var encoding = Console.OutputEncoding;
+                var encoding = Encoding.GetEncoding(CultureInfo.InstalledUICulture.TextInfo.OEMCodePage);
                 Console.SetOut(OpenConsoleWriter(encoding));
                 Console.SetError(OpenConsoleWriter(encoding));
                 Console.SetIn(OpenConsoleReader(encoding));
