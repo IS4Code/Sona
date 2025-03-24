@@ -126,19 +126,26 @@ import Console.*
 let name = ""Sona""
 echo $""Hello, {name}""
 ReadKey(true)!";
-            sonaRichText.ClearUndo();
+            ResetUndo();
         }
 
         int lastSelectedStart, lastSelectedLength;
         bool reformatModifiedText;
+        bool modifying;
 
         static readonly SearchValues<char> surroundReformattingCharacters = SearchValues.Create(new[] { '(', ')', '[', ']', '{', '}', '/', '*', '$', '"', '\'', '\\' });
         static readonly SearchValues<char> lineReformattingCharacters = SearchValues.Create(new[] { '#' });
 
         private void sonaText_SelectionChanged(object sender, EventArgs e)
         {
+            if(modifying)
+            {
+                return;
+            }
+
             var selectionStart = sonaRichText.SelectionStart;
             var selectionLength = sonaRichText.SelectionLength;
+
             lineLabel.Text = $"{sonaRichText.GetLineFromCharIndex(selectionStart) + 1} : {selectionStart - sonaRichText.GetFirstCharIndexOfCurrentLine() + 1}";
 
             if(!sonaRichText.Modified)
@@ -146,6 +153,7 @@ ReadKey(true)!";
                 // Preserve selection when not due to modification
                 lastSelectedStart = sonaRichText.SelectionStart;
                 lastSelectedLength = selectionLength;
+                UpdateUndo(selectionStart, selectionLength);
             }
 
             int start = Math.Max(selectionStart - 1, 0);
@@ -190,10 +198,139 @@ ReadKey(true)!";
             }
         }
 
+        record Checkpoint(int FirstLineIndex, int LastLineIndexFromEnd, string Content, int SelectionStart, int SelectionLength);
+
+        readonly Stack<Checkpoint> undoCheckpoints = new();
+        readonly Stack<Checkpoint> redoCheckpoints = new();
+
+        void SaveUndo(int from, int to, int selectedStart, int selectedLength)
+        {
+            int firstLine = sonaRichText.GetLineFromCharIndex(from);
+            int lastLine = sonaRichText.GetLineFromCharIndex(to);
+
+            int lineStart = sonaRichText.GetFirstCharIndexFromLine(firstLine);
+            int lineEnd = sonaRichText.GetFirstCharIndexFromLine(lastLine + 1);
+            if(lineEnd == -1)
+            {
+                lineEnd = sonaRichText.TextLength;
+            }
+
+            // Drawing is suspended and selection will be restored
+            sonaRichText.SelectionStart = lineStart;
+            sonaRichText.SelectionLength = lineEnd - lineStart;
+            var content = sonaRichText.SelectedText;
+
+            // Offset from end
+            lastLine -= sonaRichText.GetLineFromCharIndex(sonaRichText.TextLength);
+
+            undoCheckpoints.Push(new(firstLine, lastLine, content, selectedStart, selectedLength));
+        }
+
+        void UpdateUndo(int selectedStart, int selectedLength)
+        {
+            if(!undoCheckpoints.TryPop(out var cp))
+            {
+                return;
+            }
+            undoCheckpoints.Push(cp with
+            {
+                SelectionStart = selectedStart,
+                SelectionLength = selectedLength
+            });
+        }
+
+        void PerformUndo()
+        {
+            if(undoCheckpoints.Count <= 1)
+            {
+                return;
+            }
+            redoCheckpoints.Push(undoCheckpoints.Pop());
+            RestoreCheckpoint(undoCheckpoints.Peek());
+        }
+
+        void PerformRedo()
+        {
+            if(!redoCheckpoints.TryPop(out var cp))
+            {
+                return;
+            }
+            undoCheckpoints.Push(cp);
+            RestoreCheckpoint(cp);
+        }
+
+        void ResetUndo()
+        {
+            sonaRichText.ClearUndo();
+            undoCheckpoints.Clear();
+            redoCheckpoints.Clear();
+            undoCheckpoints.Push(new(0, 0, sonaRichText.Text, sonaRichText.SelectionStart, sonaRichText.SelectionLength));
+        }
+
+        void RestoreCheckpoint(Checkpoint cp)
+        {
+            var (firstLine, lastLine, content, selectedStart, selectedLength) = cp;
+
+            int lineStart = sonaRichText.GetFirstCharIndexFromLine(firstLine);
+            int lineEnd = sonaRichText.GetFirstCharIndexFromLine(lastLine + sonaRichText.GetLineFromCharIndex(sonaRichText.TextLength) + 1);
+            if(lineEnd == -1)
+            {
+                lineEnd = sonaRichText.TextLength;
+            }
+
+            bool updated = false;
+            sonaRichText.SuspendDrawing();
+            modifying = true;
+            try
+            {
+                // Select span to replace
+                sonaRichText.SelectionStart = lineStart;
+                sonaRichText.SelectionLength = lineEnd - lineStart;
+                sonaRichText.SelectionFont = sonaRichText.Font;
+                sonaRichText.SelectedText = content;
+
+                // Recalculate line end after modification
+                lineEnd = sonaRichText.GetFirstCharIndexFromLine(lastLine + sonaRichText.GetLineFromCharIndex(sonaRichText.TextLength) + 1);
+                if(lineEnd == -1)
+                {
+                    lineEnd = sonaRichText.TextLength;
+                }
+
+                // Update formatting
+                updated = FormatInputText(sonaRichText.Text, lineStart, lineEnd);
+            }
+            finally
+            {
+                sonaRichText.SelectionLength = 0;
+                sonaRichText.SelectionFont = sonaRichText.Font;
+                modifying = false;
+
+                sonaRichText.ClearUndo();
+                sonaRichText.Modified = false;
+
+                sonaRichText.SelectionStart = selectedStart;
+                sonaRichText.SelectionLength = selectedLength;
+                sonaRichText.ResumeDrawing();
+
+                if(updated)
+                {
+                    sonaRichText.Update();
+                }
+            }
+        }
+
         private void sonaText_TextChanged(object sender, EventArgs e)
         {
             // Compile current text
             Recompile();
+
+            if(modifying)
+            {
+                return;
+            }
+
+            redoCheckpoints.Clear();
+            sonaRichText.ClearUndo();
 
             // Highlighting
             var selectedStart = sonaRichText.SelectionStart;
@@ -207,6 +344,9 @@ ReadKey(true)!";
                 // Select span of what was replaced and extend by 1 character
                 int start = Math.Max(Math.Min(lastSelectedStart - 1, selectedStart - 1), 0);
                 int end = Math.Min(Math.Max(lastSelectedStart + lastSelectedLength + 1, selectedStart + 1), sonaRichText.TextLength);
+
+                // Save current modifications
+                SaveUndo(start, end, selectedStart, selectedLength);
 
                 sonaRichText.SelectionStart = start;
                 sonaRichText.SelectionLength = end - start;
@@ -226,11 +366,14 @@ ReadKey(true)!";
                 sonaRichText.SelectionLength = selectedLength;
                 sonaRichText.SelectionFont = sonaRichText.Font;
                 sonaRichText.ResumeDrawing();
+
                 if(updated)
                 {
                     sonaRichText.Update();
                 }
             }
+
+            sonaRichText.ClearUndo();
 
             // Ignore modifications after selection changed
             sonaRichText.Modified = false;
@@ -260,10 +403,18 @@ ReadKey(true)!";
 
         private void sonaRichText_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
         {
-            if(e.KeyCode == Keys.Tab)
+            switch(e.KeyCode)
             {
-                // Ctrl-Tab is non-input
-                e.IsInputKey = !e.Control;
+                case Keys.Tab:
+                    // Ctrl-Tab is non-input
+                    e.IsInputKey = !e.Control;
+                    break;
+                case Keys.Z when e.Control && e.Shift:
+                    PerformRedo();
+                    break;
+                case Keys.Z when e.Control:
+                    PerformUndo();
+                    break;
             }
         }
 
@@ -1161,7 +1312,7 @@ ReadKey(true)!";
                 sonaRichText.ClearUndo();
                 reformatModifiedText = true;
                 sonaRichText.Text = File.ReadAllText(currentFileName);
-                sonaRichText.ClearUndo();
+                ResetUndo();
             }
         }
 
