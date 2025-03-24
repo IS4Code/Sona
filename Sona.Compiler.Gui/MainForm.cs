@@ -36,7 +36,7 @@ namespace Sona.Compiler.Gui
         {
             InitializeComponent();
 
-            Text = $"{ProductName} v{ProductVersion}";
+            Text = $"{ProductName} Playground v{ProductVersion}";
 
             DoubleBuffered = true;
 
@@ -96,6 +96,12 @@ namespace Sona.Compiler.Gui
             });
 
             compiler = new SonaCompiler();
+
+            adjustLineNumbersButton.Checked = true;
+#if !DEBUG
+            orientationButton.PerformClick();
+            orientationButton.PerformClick();
+#endif
         }
 
         protected override void OnLoad(EventArgs e)
@@ -112,6 +118,15 @@ namespace Sona.Compiler.Gui
             {
                 IsBackground = true
             }.Start();
+
+            reformatModifiedText = true;
+            sonaRichText.Text = @"import System
+import Console.*
+
+let name = ""Sona""
+echo $""Hello, {name}""
+ReadKey(true)!";
+            sonaRichText.ClearUndo();
         }
 
         int lastSelectedStart, lastSelectedLength;
@@ -522,8 +537,9 @@ namespace Sona.Compiler.Gui
             var reader = codeChannel.Reader;
             var stack = new Stack<string>();
 
-            bool showBeginEnd = false;
-            bool adjustLineNumbers = false;
+            var (showBeginEnd, adjustLineNumbers) = Invoke(() => {
+                return (blockDelimitersButton.Checked, adjustLineNumbersButton.Checked);
+            });
 
             BeginWork();
 
@@ -948,12 +964,12 @@ namespace Sona.Compiler.Gui
                             item.Tag = sourceToolStrip;
                         }
 
-                        orientationButton.Text = codeSplit.Orientation.ToString();
+                        orientationButton.Text = $"Source: {codeSplit.Orientation}";
                         orientationButton.Tag = codeSplit.Orientation;
                         break;
                     case Orientation.Vertical:
                         codeSplit.Panel2Collapsed = true;
-                        orientationButton.Text = "Hidden";
+                        orientationButton.Text = "Source: Hidden";
                         orientationButton.Tag = null;
 
                         foreach(var item in editorToolStrip.Items.Cast<ToolStripItem>())
@@ -988,7 +1004,7 @@ namespace Sona.Compiler.Gui
                         sourceToolStrip.Items.Add(progressBar);
                         sourceToolStrip.Visible = true;
 
-                        orientationButton.Text = codeSplit.Orientation.ToString();
+                        orientationButton.Text = $"Source: {codeSplit.Orientation}";
                         orientationButton.Tag = codeSplit.Orientation;
                         break;
                 }
