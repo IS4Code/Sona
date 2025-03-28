@@ -20,15 +20,23 @@
     <PackageTags>sona;language;compiler;cli;tool</PackageTags>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <OutputType>Exe</OutputType>
     <DebugType>embedded</DebugType>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>sonac</ToolCommandName>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <PublishSelfContained>true</PublishSelfContained>
-    <PublishReadyToRun>true</PublishReadyToRun>
-    <PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE" Visible="false">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Sona.Compiler\Sona.Compiler.csproj" />

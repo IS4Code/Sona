@@ -17,6 +17,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>$(RepositoryUrl)/tree/HEAD/Sona.Runtime</PackageProjectUrl>
     <PackageTags>sona;language;runtime</PackageTags>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <DebugType>embedded</DebugType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
@@ -26,8 +27,18 @@
     <DotnetFscCompilerPath>"$(ProgramFiles)\dotnet\sdk\9.0.201\FSharp\fsc.dll"</DotnetFscCompilerPath>
     <FSharpPreferNetFrameworkTools>false</FSharpPreferNetFrameworkTools>
     <FSharpPrefer64BitTools>true</FSharpPrefer64BitTools>
-
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE" Visible="false">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="Elements.fs" />
