@@ -12,7 +12,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sona.Compiler.Grammar.Gener
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sona.Compiler.Gui", "Sona.Compiler.Gui\Sona.Compiler.Gui.csproj", "{82C36DC6-E3E3-4B1A-B479-0FC1CAAA4DAD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sona.Compiler.ConsoleApp", "Sona.Compiler.ConsoleApp\Sona.Compiler.ConsoleApp.csproj", "{C75CD402-6929-4E58-9F25-132E0793E769}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sona.Compiler.Tool", "Sona.Compiler.Tool\Sona.Compiler.Tool.csproj", "{C75CD402-6929-4E58-9F25-132E0793E769}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -7,16 +7,16 @@
     <Product>Sona Language</Product>
     <Authors>IS4</Authors>
     <Copyright>Copyright (c) $(Authors) $([System.DateTime]::UtcNow.ToString('yyyy'))</Copyright>
-    <RootNamespace>Sona.Compiler.ConsoleApp</RootNamespace>
+    <RootNamespace>Sona.Compiler.Tool</RootNamespace>
     <LangVersion>10.0</LangVersion>
     <Nullable>enable</Nullable>
     <AssemblyTitle>$(Product) Compiler Executable</AssemblyTitle>
-    <PackageId>Sona.Compiler.ConsoleApp</PackageId>
+    <PackageId>Sona.Compiler.Tool</PackageId>
     <Title>$(AssemblyTitle)</Title>
     <Description>Provides the $(Product) compiler as a tool.</Description>
     <RepositoryUrl>https://github.com/IS4Code/Sona</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageProjectUrl>$(RepositoryUrl)/tree/HEAD/Sona.Compiler.ConsoleApp</PackageProjectUrl>
+    <PackageProjectUrl>$(RepositoryUrl)/tree/HEAD/Sona.Compiler.Tool</PackageProjectUrl>
     <PackageTags>sona;language;compiler;cli;tool</PackageTags>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
