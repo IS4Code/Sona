@@ -45,22 +45,39 @@ open B")]
         [TestMethod]
         public void TopLevel(string source, string? expected)
         {
-            AssertStatementEquivalence(source, expected);
+            AssertTopLevelStatementEquivalence(source, expected);
         }
 
-        [DataRow("a = b", "a <- b")]
-        [DataRow("a() = b", "a() <- b")]
         [DataRow("a[] = b", null)]
         [DataRow(@""""" = b", null)]
         [DataRow("1 = b", null)]
-        [DataRow("1() = b", "(1)() <- b")]
-        [DataRow("1.a = c", "(1).a <- c")]
-        [DataRow("a.b = c", "a.b <- c")]
         [DataRow("a = b, c", null)]
         [TestMethod]
         public void Assignment(string source, string? expected)
         {
             AssertStatementEquivalence(source, expected);
+        }
+
+        [DataRow("a = b", "do a <- b")]
+        [DataRow("a() = b", "do a() <- b")]
+        [DataRow("1() = b", "do (1)() <- b")]
+        [DataRow("1.a = c", "do (1).a <- c")]
+        [DataRow("a.b = c", "do a.b <- c")]
+        [TestMethod]
+        public void TopLevelAssignment(string source, string? expected)
+        {
+            AssertTopLevelStatementEquivalence(source, expected);
+        }
+
+        [DataRow("a = b", "a <- b")]
+        [DataRow("a() = b", "a() <- b")]
+        [DataRow("1() = b", "(1)() <- b")]
+        [DataRow("1.a = c", "(1).a <- c")]
+        [DataRow("a.b = c", "a.b <- c")]
+        [TestMethod]
+        public void InnerAssignment(string source, string? expected)
+        {
+            AssertInnerStatementEquivalence(source, expected);
         }
 
         const string ignore_begin = "global.Microsoft.FSharp.Core.Operators.ignore (";
@@ -77,13 +94,13 @@ end
         [DataRow("if a then end f(b)", @"if(a)then begin
  ()
 end
-f(b)
+<?do?>f(b)
 ()")]
         [DataRow("if a then f(b) end f(c)", @"if(a)then begin
  f(b)
  ()
 end
-f(c)
+<?do?>f(c)
 ()")]
         [DataRow("if a then f(b) else f(c) end f(d)", @"if(a)then begin
  f(b)
@@ -93,7 +110,7 @@ else begin
  f(c)
  ()
 end
-f(d)
+<?do?>f(d)
 ()")]
         [DataRow("if a then f(b) elseif c then f(d) end f(e)", @"if(a)then begin
  f(b)
@@ -103,7 +120,7 @@ elif(c)then begin
  f(d)
  ()
 end
-f(e)
+<?do?>f(e)
 ()")]
         [DataRow("if a then f(b) elseif c then f(d) else f(e) end f(f)", @"if(a)then begin
  f(b)
@@ -117,7 +134,7 @@ else begin
  f(e)
  ()
 end
-f(f)
+<?do?>f(f)
 ()")]
         [TestMethod]
         public void IfNonReturning(string source, string? expected)
@@ -128,7 +145,7 @@ f(f)
         [DataRow("if a then throw b end f(c)", $@"if(a)then begin
  (b){@throw}
 end
-f(c)
+<?do?>f(c)
 ()")]
         [DataRow("if a then throw b else throw c end", $@"if true then begin
  if(a)then begin

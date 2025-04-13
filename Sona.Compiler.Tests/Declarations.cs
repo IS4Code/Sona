@@ -102,7 +102,7 @@ a) end", $"let rec f([<param:X()>]a) = {emptyBody}")]
         [TestMethod]
         public void Attributes(string source, string? expected)
         {
-            AssertStatementEquivalence(source, expected);
+            AssertTopLevelStatementEquivalence(source, expected);
         }
     }
 }

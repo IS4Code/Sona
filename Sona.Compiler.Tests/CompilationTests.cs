@@ -77,7 +77,7 @@ namespace Sona.Tests
             });
         }
 
-        protected void AssertStatementEquivalence(string source, string? expected)
+        protected void AssertTopLevelStatementEquivalence(string source, string? expected)
         {
             expected = ReplacePlaceholders(expected);
             if(expected != null)
@@ -88,17 +88,42 @@ namespace Sona.Tests
             Assert.AreEqual(expected, actual);
         }
 
-        protected void AssertBlockEquivalence(string source, string? expected)
+        protected void AssertInnerStatementEquivalence(string source, string? expected)
         {
             expected = ReplacePlaceholders(expected);
+            if(expected != null)
+            {
+                var indented = String.Join(Environment.NewLine, expected.Split(Environment.NewLine).Select(l => " " + l));
+                expected = $@"let rec test() = (
+{indented}
+ ()
+)
+()";
+            }
+            source = $"function test() {source} end";
             var actual = CompileToSource(source, expected == null);
             Assert.AreEqual(expected, actual);
+        }
+
+        protected void AssertStatementEquivalence(string source, string? expected)
+        {
+            AssertTopLevelStatementEquivalence(source, expected);
+            AssertInnerStatementEquivalence(source, expected);
+        }
+
+        protected void AssertBlockEquivalence(string source, string? expected)
+        {
+            const string optionalDo = "<?do?>";
+
+            expected = ReplacePlaceholders(expected);
+            var actual = CompileToSource(source, expected == null);
+            Assert.AreEqual(expected?.Replace(optionalDo, "do "), actual);
 
             var source2 = $"function test() {source} end";
             string? expected2 = null;
             if(expected != null)
             {
-                var indented = String.Join(Environment.NewLine, expected.Split(Environment.NewLine).Select(l => " " + l));
+                var indented = String.Join(Environment.NewLine, expected.Split(Environment.NewLine).Select(l => " " + l.Replace(optionalDo, "")));
                 expected = expected + Environment.NewLine + "()";
                 expected2 = $@"let rec test() = (
 {indented}
