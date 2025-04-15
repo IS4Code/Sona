@@ -21,12 +21,10 @@ namespace Sona.Compiler.Grammar.Generator
             { None, "ignored" },
             { Terminating, "terminating" },
             { OpenPath, "open" },
-            { ReturnPath, "returning" },
-            //{ ReturnPath | InterruptPath, "returning" },
-            { OpenPath | ReturnPath, "conditional" },
-            //{ OpenPath | ReturnPath | InterruptPath, "conditional" },
-            //{ InterruptPath, "interrupting" },
-            //{ InterruptPath | OpenPath, "interruptible" },
+            { ReturnPath | InterruptPath, "returning" },
+            { OpenPath | ReturnPath | InterruptPath, "conditional" },
+            { InterruptPath, "interrupting" },
+            { InterruptPath | OpenPath, "interruptible" },
         };
 
         static readonly Dictionary<string, StatementFlags> blockFlags = new()
@@ -34,10 +32,10 @@ namespace Sona.Compiler.Grammar.Generator
             { "ignored_block", None },
             { "terminating_block", Terminating },
             { "open_block", OpenPath },
-            { "returning_block", ReturnPath /*| InterruptPath*/ },
-            { "conditional_block", ReturnPath /*| InterruptPath*/ | OpenPath },
-            //{ "interrupting_block", InterruptPath },
-            //{ "interruptible_block", InterruptPath | OpenPath },
+            { "returning_block", ReturnPath | InterruptPath },
+            { "conditional_block", ReturnPath | InterruptPath | OpenPath },
+            { "interrupting_block", InterruptPath },
+            { "interruptible_block", InterruptPath | OpenPath },
         };
 
         static void Main(string[] args)
