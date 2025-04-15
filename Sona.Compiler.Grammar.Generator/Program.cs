@@ -6,38 +6,18 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Sona.Compiler.States;
 using Microsoft.FSharp.Collections;
 
 namespace Sona.Compiler.Grammar.Generator
 {
     using static StatementFlags;
+    using static Extensions;
+    using CategoryTreeMutable = TreeMutable<Extensions.CategoryKey>;
+    using CategoryTreeImmutable = TreeImmutable<Extensions.CategoryKey>;
 
     static class Program
     {
-        static readonly Dictionary<StatementFlags, string> blockNames = new()
-        {
-            { None, "ignored" },
-            { Terminating, "terminating" },
-            { OpenPath, "open" },
-            { ReturnPath | InterruptPath, "returning" },
-            { OpenPath | ReturnPath | InterruptPath, "conditional" },
-            { InterruptPath, "interrupting" },
-            { InterruptPath | OpenPath, "interruptible" },
-        };
-
-        static readonly Dictionary<string, StatementFlags> blockFlags = new()
-        {
-            { "ignored_block", None },
-            { "terminating_block", Terminating },
-            { "open_block", OpenPath },
-            { "returning_block", ReturnPath | InterruptPath },
-            { "conditional_block", ReturnPath | InterruptPath | OpenPath },
-            { "interrupting_block", InterruptPath },
-            { "interruptible_block", InterruptPath | OpenPath },
-        };
-
         static void Main(string[] args)
         {
             OutputIf();
@@ -47,92 +27,47 @@ namespace Sona.Compiler.Grammar.Generator
         {
             var ifGrammar = LoadGrammar<If<ImmutableList<string>>>("grammar_if.json");
 
-            SimplifyIf(ifGrammar.Conditional, "ifStatementConditional");
+            using var output = new IndentedTextWriter(File.CreateText("out.txt"), "  ");
+
+            WriteGrammar(ifGrammar, output);
         }
 
-        static void SimplifyIf(IReadOnlyCollection<If<ImmutableList<string>>> grammar, string statementName)
+        static void WriteGrammar(IGrammar grammar, IndentedTextWriter output)
+        {
+            WriteRule(grammar.Terminating, output, "Terminating");
+            output.WriteLine();
+            WriteRule(grammar.Interrupting, output, "Interrupting");
+            output.WriteLine();
+            WriteRule(grammar.Interruptible, output, "Interruptible");
+            output.WriteLine();
+            WriteRule(grammar.Returning, output, "Returning");
+            output.WriteLine();
+            WriteRule(grammar.Conditional, output, "Conditional");
+            output.WriteLine();
+        }
+
+        static void WriteRule(IEnumerable<IGrammarElement> grammar, IndentedTextWriter output, string statementCategory)
         {
             // Phase 1 - skip redundant groups
-            var caseSet = new HashSet<If<FSharpList<string>>>();
+            var caseSet = grammar.Select(parts => parts.CollapseParts()).ToHashSet();
 
-            foreach(var parts in grammar)
-            {
-                var flags = ToFlags(parts.Then);
-                string then = FromFlags(flags, parts.Then);
-                var elseifs = new List<string>();
-                foreach(var elseif in parts.ElseIf)
-                {
-                    var newFlags = ToFlags(elseif);
-                    if((newFlags & ~flags) == 0)
-                    {
-                        // Flags are already covered
-                        continue;
-                    }
-                    // Merge new flags
-                    flags |= newFlags;
-                    elseifs.Add(FromFlags(flags, elseif));
-                }
-
-                var elseFlags = ToFlags(parts.Else);
-                if(elseFlags != None)
-                {
-                    // Not ignored - merge
-                    elseFlags |= flags;
-                }
-
-                // Keep trail flags unchanged
-                var trailFlags = ToFlags(parts.Trail);
-
-                var newIf = new If<FSharpList<string>>(
-                    then,
-                    SeqModule.ToList(elseifs),
-                    FromFlags(elseFlags, parts.Else),
-                    FromFlags(trailFlags, parts.Trail)
-                );
-
-                caseSet.Add(newIf);
-            }
-
-            // Phase 2 - form tree from all values
-            var caseTreeBuilder = new CategoryTreeMutable();
-
-            foreach(var parts in caseSet)
-            {
-                // One path ending at trail
-                var path1 = TreePath("if", parts.Then, caseTreeBuilder);
-                foreach(var elseif in parts.ElseIf)
-                {
-                    path1 = TreePath("elseif", elseif, path1);
-                }
-                path1 = TreePath("else", parts.Else, path1);
-                _ = TreePath("trail", parts.Trail, path1);
-
-                // Another path with trail second
-                var path2 = TreePath("if", parts.Then, caseTreeBuilder);
-                path2 = TreePath("trail", parts.Trail, path2);
-                foreach(var elseif in parts.ElseIf)
-                {
-                    path2 = TreePath("elseif", elseif, path2);
-                }
-                _ = TreePath("else", parts.Else, path2);
-            }
-
-            var caseTree = caseTreeBuilder.ToImmutable();
+            // Phase 2 - form tree from all values and group by paths
+            var groups = caseSet.BuildTree().GroupByPaths();
 
             // Phase 3 - construct grammar
-            using var output = new IndentedTextWriter(File.CreateText("out.txt"), "  ");
-            output.Write(statementName);
+            output.Write(caseSet.Sample(e => e.RuleName));
+            output.Write(statementCategory);
             output.Write(':');
             output.WriteLine();
             output.Indent++;
 
-            bool ifFirst = true;
-            // Group by contents regardless of category
-            foreach(var ifGroup in caseTree.GroupBy(p => p.Value))
+            bool firstAlternative = true;
+
+            foreach(var alternative in groups)
             {
-                if(ifFirst)
+                if(firstAlternative)
                 {
-                    ifFirst = false;
+                    firstAlternative = false;
                 }
                 else
                 {
@@ -140,21 +75,32 @@ namespace Sona.Compiler.Grammar.Generator
                     output.WriteLine("|");
                 }
 
-                var ifTree = ifGroup.Key;
+                var mainTree = alternative.Key;
 
-                output.Write("if ");
-                var ifKeys = ifGroup.Select(p => p.Key.Category).ToList();
-                output.WriteAlternativeBlocks(ifKeys);
+                // Write main rule
+                var mainTag = alternative.Sample(p => p.Key.Tag);
+                output.Write(mainTag);
                 output.Write(' ');
 
-                var ifFlags = ToFlags(ifKeys);
-                output.Write("(elseif ");
-                output.WriteAlternativeBlocks(FlagsCoverBlocks(ifFlags));
-                output.Write(")* ");
+                // Write main blocks
+                var mainCategories = alternative.GetCategories();
+                output.WriteAlternativeBlocks(mainCategories);
+                output.Write(' ');
+
+                var mainFlags = ToFlags(mainCategories);
+
+                switch(mainTag)
+                {
+                    case "if":
+                        output.Write("(elseif ");
+                        output.WriteAlternativeBlocks(FlagsCoverBlocks(mainFlags));
+                        output.Write(")* ");
+                        break;
+                }
 
                 // Group by contents regardless of trail
                 // Only used when the middle can be shared
-                var trailGroups = ifTree.Where(p => p.Key.Tag == "trail").GroupBy(p => p.Value).ToList();
+                var trailGroups = mainTree.Where(p => p.Key.Tag == "trail").GroupByPaths().ToList();
 
                 if(trailGroups.Any(g => g.Count() > 1))
                 {
@@ -190,7 +136,7 @@ namespace Sona.Compiler.Grammar.Generator
 
                         // Process else(ifs) inbetween
                         var trailTree = trailGroup.Key;
-                        ProcessElse(trailTree, ifFlags, true);
+                        ProcessMiddle(trailTree, mainFlags, true);
 
                         // Finish trail
                         output.Write("'end' ");
@@ -205,20 +151,14 @@ namespace Sona.Compiler.Grammar.Generator
                         output.Write(") ");
                     }
 
-                    ifTree = CategoryTreeImmutable.Empty;
-                    /*ifTree = ifTree.StripFrom(excludedTrails);
-
-                    if(!ifTree.Categories.IsEmpty)
-                    {
-                        output.WriteLine("|");
-                    }*/
+                    mainTree = CategoryTreeImmutable.Empty;
                 }
                 else
                 {
-                    ProcessElse(ifTree, ifFlags, false);
+                    ProcessMiddle(mainTree, mainFlags, false);
                 }
 
-                void ProcessElse(CategoryTreeImmutable parent, StatementFlags parentFlags, bool noTrail)
+                void ProcessMiddle(CategoryTreeImmutable parent, StatementFlags parentFlags, bool noTrail)
                 {
                     // Group by follow-up
                     var groups = parent.GroupBy(p => (p.Key.Tag, p.Value)).ToList();
@@ -292,7 +232,7 @@ namespace Sona.Compiler.Grammar.Generator
                                     if(noTrail)
                                     {
                                         // Trail was already entered
-                                        if(!tree.Categories.IsEmpty)
+                                        if(!tree.Nodes.IsEmpty)
                                         {
                                             throw new InvalidOperationException("Trail not expected but there are remaining paths.");
                                         }
@@ -307,7 +247,7 @@ namespace Sona.Compiler.Grammar.Generator
                                     output.Write("'end' ");
                                     output.WriteAlternativeTrails(keys);
                                     output.Write(' ');
-                                    if(!tree.Categories.IsEmpty)
+                                    if(!tree.Nodes.IsEmpty)
                                     {
                                         throw new InvalidOperationException("There are remaining paths after trail.");
                                     }
@@ -316,7 +256,7 @@ namespace Sona.Compiler.Grammar.Generator
                             }
 
                             // Process follow-up
-                            ProcessElse(tree, flags, noTrail);
+                            ProcessMiddle(tree, flags, noTrail);
                         }
                     }
                     finally
@@ -330,11 +270,75 @@ namespace Sona.Compiler.Grammar.Generator
                     }
                 }
             }
-            output.Write(";");
+            output.WriteLine(";");
+            output.Indent--;
             output.Flush();
         }
+    }
+        
+    static class Extensions
+    {
+        public static CategoryTreeImmutable BuildTree(this IEnumerable<IGrammarElement> grammar)
+        {
+            var caseTreeBuilder = new CategoryTreeMutable();
 
-        static StatementFlags ToFlags(string str)
+            foreach(var parts in grammar)
+            {
+                foreach(var path in parts.TreePaths())
+                {
+                    // Starting from root
+                    var node = caseTreeBuilder;
+
+                    foreach(var (key, value) in path)
+                    {
+                        // Add node to tree
+
+                        node = node.Add(new(key, value));
+                    }
+                }
+            }
+
+            return caseTreeBuilder.ToImmutable();
+        }
+
+        public static IEnumerable<IGrouping<TreeImmutable<TKey>, KeyValuePair<TKey, TreeImmutable<TKey>>>> GroupByPaths<TKey>(this IEnumerable<KeyValuePair<TKey, TreeImmutable<TKey>>> tree) where TKey : notnull
+        {
+            return tree.GroupBy(p => p.Value);
+        }
+
+        public static TResult Sample<TElement, TResult>(this IEnumerable<TElement> enumerable, Func<TElement, TResult> selector)
+        {
+            return enumerable.Select(selector).Distinct().Single();
+        }
+
+        public static List<string> GetCategories<T>(this IEnumerable<KeyValuePair<CategoryKey, T>> enumerable)
+        {
+            return enumerable.Select(p => p.Key.Category).ToList();
+        }
+
+        static readonly Dictionary<StatementFlags, string> blockNames = new()
+        {
+            { None, "ignored" },
+            { Terminating, "terminating" },
+            { OpenPath, "open" },
+            { ReturnPath | InterruptPath, "returning" },
+            { OpenPath | ReturnPath | InterruptPath, "conditional" },
+            { InterruptPath, "interrupting" },
+            { InterruptPath | OpenPath, "interruptible" },
+        };
+
+        static readonly Dictionary<string, StatementFlags> blockFlags = new()
+        {
+            { "ignored_block", None },
+            { "terminating_block", Terminating },
+            { "open_block", OpenPath },
+            { "returning_block", ReturnPath | InterruptPath },
+            { "conditional_block", ReturnPath | InterruptPath | OpenPath },
+            { "interrupting_block", InterruptPath },
+            { "interruptible_block", InterruptPath | OpenPath },
+        };
+
+        public static StatementFlags ToFlags(string str)
         {
             if(!blockFlags.TryGetValue(str, out var flags))
             {
@@ -344,12 +348,12 @@ namespace Sona.Compiler.Grammar.Generator
             return flags & ~Terminating;
         }
 
-        static StatementFlags ToFlags(IReadOnlyCollection<string> list)
+        public static StatementFlags ToFlags(IReadOnlyCollection<string> list)
         {
             return list.Aggregate(None, (a, c) => a | ToFlags(c));
         }
 
-        static string FromFlags(StatementFlags flags, string original)
+        public static string FromFlags(StatementFlags flags, string original)
         {
             if(ToFlags(original) == flags)
             {
@@ -358,7 +362,7 @@ namespace Sona.Compiler.Grammar.Generator
             return blockNames[flags];
         }
 
-        static string ToBlock(string category)
+        public static string ToBlock(string category)
         {
             if(category == "ignored")
             {
@@ -367,7 +371,7 @@ namespace Sona.Compiler.Grammar.Generator
             return category + "Block";
         }
 
-        static string ToTrail(string category)
+        public static string ToTrail(string category)
         {
             return category + "Trail";
         }
@@ -375,7 +379,7 @@ namespace Sona.Compiler.Grammar.Generator
         /// <summary>
         /// Returns block names that transform <paramref name="originalFlags"/> exactly into <paramref name="flags"/>.
         /// </summary>
-        static IReadOnlyCollection<string> FlagsTransformBlocks(StatementFlags flags, ref StatementFlags originalFlags)
+        public static IReadOnlyCollection<string> FlagsTransformBlocks(StatementFlags flags, ref StatementFlags originalFlags)
         {
             // The flags that must be all set (and no more)
             var targetFlags = flags & ~originalFlags;
@@ -410,7 +414,7 @@ namespace Sona.Compiler.Grammar.Generator
         /// <summary>
         /// Returns block names that are covered by <paramref name="flags"/>.
         /// </summary>
-        static IReadOnlyCollection<string> FlagsCoverBlocks(StatementFlags flags)
+        public static IReadOnlyCollection<string> FlagsCoverBlocks(StatementFlags flags)
         {
             var blocks = new HashSet<string>();
             foreach(var (flag, block) in blockNames)
@@ -433,7 +437,7 @@ namespace Sona.Compiler.Grammar.Generator
             return blocks;
         }
 
-        static void WriteAlternatives(TextWriter output, IReadOnlyCollection<string> blocks, Func<string, string> map)
+        public static void WriteAlternatives(TextWriter output, IReadOnlyCollection<string> blocks, Func<string, string> map)
         {
             switch(blocks.Count)
             {
@@ -462,23 +466,23 @@ namespace Sona.Compiler.Grammar.Generator
             }
         }
 
-        static void WriteAlternativeBlocks(this TextWriter output, IReadOnlyCollection<string> blocks)
+        public static void WriteAlternativeBlocks(this TextWriter output, IReadOnlyCollection<string> blocks)
         {
             WriteAlternatives(output, blocks, ToBlock);
         }
 
-        static void WriteAlternativeTrails(this TextWriter output, IReadOnlyCollection<string> blocks)
+        public static void WriteAlternativeTrails(this TextWriter output, IReadOnlyCollection<string> blocks)
         {
             WriteAlternatives(output, blocks, ToTrail);
         }
 
-        static Grammar<T> LoadGrammar<T>(string path)
+        public static Grammar<T> LoadGrammar<T>(string path) where T : class, IGrammarElement
         {
             using var file = File.Open(path, FileMode.Open);
             return JsonSerializer.Deserialize<Grammar<T>>(file)!;
         }
 
-        record struct CategoryKey(string Tag, string Category) : IComparable<CategoryKey>, IComparable
+        public record struct CategoryKey(string Tag, string Category) : IComparable<CategoryKey>, IComparable
         {
             public int CompareTo(CategoryKey other)
             {
@@ -500,76 +504,49 @@ namespace Sona.Compiler.Grammar.Generator
                 return CompareTo(key);
             }
         }
+    }
 
-        record CategoryTreeMutable : IEnumerable<KeyValuePair<CategoryKey, CategoryTreeMutable>>
+    record TreeMutable<TKey> : IEnumerable<KeyValuePair<TKey, TreeMutable<TKey>>> where TKey : notnull
+    {
+        public Dictionary<TKey, TreeMutable<TKey>> Nodes { get; } = new();
+
+        public IEnumerator<KeyValuePair<TKey, TreeMutable<TKey>>> GetEnumerator()
         {
-            public Dictionary<CategoryKey, CategoryTreeMutable> Categories { get; } = new();
-
-            public IEnumerator<KeyValuePair<CategoryKey, CategoryTreeMutable>> GetEnumerator()
-            {
-                return Categories.GetEnumerator();
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
-
-            public CategoryTreeImmutable ToImmutable()
-            {
-                return new CategoryTreeImmutable(MapModule.OfSeq(Categories.Select(p => Tuple.Create(p.Key, p.Value.ToImmutable()))));
-            }
+            return Nodes.GetEnumerator();
         }
 
-        static CategoryTreeMutable TreePath(string tag, string category, CategoryTreeMutable root)
+        IEnumerator IEnumerable.GetEnumerator()
         {
-            var key = new CategoryKey(tag, category);
-            if(!root.Categories.TryGetValue(key, out var tree))
+            return GetEnumerator();
+        }
+
+        public TreeImmutable<TKey> ToImmutable()
+        {
+            return new TreeImmutable<TKey>(MapModule.OfSeq(Nodes.Select(p => Tuple.Create(p.Key, p.Value.ToImmutable()))));
+        }
+
+        public TreeMutable<TKey> Add(TKey key)
+        {
+            if(!Nodes.TryGetValue(key, out var tree))
             {
-                root.Categories[key] = tree = new();
+                Nodes[key] = tree = new();
             }
             return tree;
         }
-
-        record CategoryTreeImmutable(FSharpMap<CategoryKey, CategoryTreeImmutable> Categories) : IEnumerable<KeyValuePair<CategoryKey, CategoryTreeImmutable>>
-        {
-            public static readonly CategoryTreeImmutable Empty = new(MapModule.Empty<CategoryKey, CategoryTreeImmutable>());
-
-            public IEnumerator<KeyValuePair<CategoryKey, CategoryTreeImmutable>> GetEnumerator()
-            {
-                return ((IReadOnlyDictionary<CategoryKey, CategoryTreeImmutable>)Categories).GetEnumerator();
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
-
-            /*public CategoryTreeImmutable StripFrom(IReadOnlySet<CategoryKey> keys)
-            {
-                return new CategoryTreeImmutable(MapModule.OfSeq(this.Select(p => {
-                    if(keys.Contains(p.Key))
-                    {
-                        return (key: p.Key, map: Empty);
-                    }
-                    return (key: p.Key, map: p.Value.StripFrom(keys));
-                }).Where(t => !t.map.Categories.IsEmpty).Select(t => Tuple.Create(t.key, t.map))));
-            }*/
-        }
     }
 
-    sealed record Grammar<T>(
-        [property: JsonPropertyName("terminating")] ImmutableList<T> Terminating,
-        [property: JsonPropertyName("interrupting")] ImmutableList<T> Interrupting,
-        [property: JsonPropertyName("interruptible")] ImmutableList<T> Interruptible,
-        [property: JsonPropertyName("returning")] ImmutableList<T> Returning,
-        [property: JsonPropertyName("conditional")] ImmutableList<T> Conditional
-    );
+    record TreeImmutable<TKey>(FSharpMap<TKey, TreeImmutable<TKey>> Nodes) : IEnumerable<KeyValuePair<TKey, TreeImmutable<TKey>>> where TKey : notnull
+    {
+        public static readonly TreeImmutable<TKey> Empty = new(MapModule.Empty<TKey, TreeImmutable<TKey>>());
 
-    sealed record If<TCollection>(
-        [property: JsonPropertyName("then")] string Then,
-        [property: JsonPropertyName("elseif")] TCollection ElseIf,
-        [property: JsonPropertyName("else")] string Else,
-        [property: JsonPropertyName("trail")] string Trail
-    ) where TCollection : IReadOnlyCollection<string>;
+        public IEnumerator<KeyValuePair<TKey, TreeImmutable<TKey>>> GetEnumerator()
+        {
+            return ((IReadOnlyDictionary<TKey, TreeImmutable<TKey>>)Nodes).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+    }
 }
