@@ -77,14 +77,12 @@ namespace Sona.Compiler.Grammar.Generator
             // Keep trail flags unchanged
             var trailFlags = ToFlags(Trail);
 
-            var newIf = new If<FSharpList<string>>(
+            return new If<FSharpList<string>>(
                 then,
                 SeqModule.ToList(elseifs),
                 FromFlags(elseFlags, Else),
                 FromFlags(trailFlags, Trail)
             );
-
-            return newIf;
         }
 
         public IEnumerable<IEnumerable<KeyValuePair<string, string>>> TreePaths()
@@ -113,6 +111,94 @@ namespace Sona.Compiler.Grammar.Generator
                 foreach(var elseif in ElseIf)
                 {
                     yield return new("elseif", elseif);
+                }
+                yield return new("else", Else);
+            }
+        }
+    }
+
+    sealed record Switch<TCollection>(
+        [property: JsonPropertyName("case")] TCollection Case,
+        [property: JsonPropertyName("else")] string Else,
+        [property: JsonPropertyName("trail")] string Trail
+    ) : IGrammarElement where TCollection : IReadOnlyCollection<string>
+    {
+        public string RuleName => "switchStatement";
+
+        public IGrammarElement CollapseParts()
+        {
+            StatementFlags? flags = null;
+            var cases = new List<string>();
+            foreach(var @case in Case)
+            {
+                var newFlags = ToFlags(@case);
+                if(flags == null)
+                {
+                    flags = newFlags;
+                }
+                else
+                {
+                    if((newFlags & ~flags) == 0)
+                    {
+                        // Flags are already covered
+                        continue;
+                    }
+                    // Merge new flags
+                    flags |= newFlags;
+                }
+                cases.Add(FromFlags(flags.GetValueOrDefault(), @case));
+            }
+
+            var elseFlags = ToFlags(Else);
+            if(flags == null)
+            {
+                flags = elseFlags;
+            }
+            else
+            {
+                if(elseFlags != None)
+                {
+                    // Not ignored - merge
+                    elseFlags |= flags.GetValueOrDefault();
+                }
+            }
+
+            // Keep trail flags unchanged
+            var trailFlags = ToFlags(Trail);
+
+            return new Switch<FSharpList<string>>(
+                SeqModule.ToList(cases),
+                FromFlags(elseFlags, Else),
+                FromFlags(trailFlags, Trail)
+            );
+        }
+
+        public IEnumerable<IEnumerable<KeyValuePair<string, string>>> TreePaths()
+        {
+            if(Case.Count == 0)
+            {
+                return new[] { Normal() };
+            }
+            return new[] { Normal(), TrailSecond() };
+
+            IEnumerable<KeyValuePair<string, string>> Normal()
+            {
+                yield return new("switch", "unused");
+                foreach(var @case in Case)
+                {
+                    yield return new("case", @case);
+                }
+                yield return new("else", Else);
+                yield return new("trail", Trail);
+            }
+
+            IEnumerable<KeyValuePair<string, string>> TrailSecond()
+            {
+                yield return new("switch", "unused");
+                yield return new("trail", Trail);
+                foreach(var @case in Case)
+                {
+                    yield return new("case", @case);
                 }
                 yield return new("else", Else);
             }

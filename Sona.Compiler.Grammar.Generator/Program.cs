@@ -20,16 +20,13 @@ namespace Sona.Compiler.Grammar.Generator
     {
         static void Main(string[] args)
         {
-            OutputIf();
-        }
-
-        static void OutputIf()
-        {
-            var ifGrammar = LoadGrammar<If<ImmutableList<string>>>("grammar_if.json");
-
             using var output = new IndentedTextWriter(File.CreateText("out.txt"), "  ");
 
-            WriteGrammar(ifGrammar, output);
+            WriteGrammar(LoadGrammar<If<ImmutableList<string>>>("grammar_if.json"), output);
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<Switch<ImmutableList<string>>>("grammar_switch.json"), output);
+            output.WriteLine();
         }
 
         static void WriteGrammar(IGrammar grammar, IndentedTextWriter output)
@@ -84,10 +81,19 @@ namespace Sona.Compiler.Grammar.Generator
 
                 // Write main blocks
                 var mainCategories = alternative.GetCategories();
-                output.WriteAlternativeBlocks(mainCategories);
-                output.Write(' ');
+                StatementFlags mainFlags;
+                if(mainCategories.Count == 1 && mainCategories[0] == "unused")
+                {
+                    // Unused main categories
+                    mainFlags = StatementFlags.None;
+                }
+                else
+                {
+                    output.WriteAlternativeBlocks(mainCategories);
+                    output.Write(' ');
 
-                var mainFlags = ToFlags(mainCategories);
+                    mainFlags = ToFlags(mainCategories);
+                }
 
                 switch(mainTag)
                 {
@@ -136,7 +142,7 @@ namespace Sona.Compiler.Grammar.Generator
 
                         // Process else(ifs) inbetween
                         var trailTree = trailGroup.Key;
-                        ProcessMiddle(trailTree, mainFlags, true);
+                        ProcessMiddle(trailTree, mainFlags, false, true);
 
                         // Finish trail
                         output.Write("'end' ");
@@ -155,10 +161,10 @@ namespace Sona.Compiler.Grammar.Generator
                 }
                 else
                 {
-                    ProcessMiddle(mainTree, mainFlags, false);
+                    ProcessMiddle(mainTree, mainFlags, true, false);
                 }
 
-                void ProcessMiddle(CategoryTreeImmutable parent, StatementFlags parentFlags, bool noTrail)
+                void ProcessMiddle(CategoryTreeImmutable parent, StatementFlags parentFlags, bool ignoreTrail, bool noTrail)
                 {
                     // Group by follow-up
                     var groups = parent.GroupBy(p => (p.Key.Tag, p.Value)).ToList();
@@ -179,6 +185,13 @@ namespace Sona.Compiler.Grammar.Generator
                         bool groupFirst = true;
                         foreach(var group in groups)
                         {
+                            var (tag, tree) = group.Key;
+
+                            if(tag == "trail" && ignoreTrail)
+                            {
+                                continue;
+                            }
+
                             if(groupFirst)
                             {
                                 groupFirst = false;
@@ -189,21 +202,23 @@ namespace Sona.Compiler.Grammar.Generator
                                 output.WriteLine("|");
                             }
 
-                            var (tag, tree) = group.Key;
                             var keys = group.Select(p => p.Key.Category).ToList();
                             var flags = parentFlags;
 
                             switch(tag)
                             {
-                                case "elseif":
+                                case "elseif" or "case":
                                 {
-                                    // Deciding elseif
-                                    output.Write("elseif ");
+                                    // Deciding block
+                                    output.Write(tag);
+                                    output.Write(' ');
                                     output.WriteAlternativeBlocks(FlagsTransformBlocks(ToFlags(keys), ref flags));
                                     output.Write(' ');
 
-                                    // Covering elseifs
-                                    output.Write("(elseif ");
+                                    // Covering block
+                                    output.Write('(');
+                                    output.Write(tag);
+                                    output.Write(' ');
                                     output.WriteAlternativeBlocks(FlagsCoverBlocks(flags));
                                     output.Write(")* ");
                                     break;
@@ -256,7 +271,7 @@ namespace Sona.Compiler.Grammar.Generator
                             }
 
                             // Process follow-up
-                            ProcessMiddle(tree, flags, noTrail);
+                            ProcessMiddle(tree, flags, false, noTrail);
                         }
                     }
                     finally
