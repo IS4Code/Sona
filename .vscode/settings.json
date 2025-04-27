@@ -4,6 +4,6 @@
       "language": "CSharp",
       "listeners": true,
       "visitors": false,
-      "package": "IS4.Sona.Grammar"
+      "package": "Sona.Grammar"
   }
 }
