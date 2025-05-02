@@ -106,13 +106,103 @@ compoundName:
 /* Types */
 /* ----- */
 
+typeArgument:
+  type?;
+
 type:
-  compoundName | primitiveType | unit;
+  atomicType |
+  nullableType |
+  inlineSourceFree;
+
+nullableType:
+  atomicType 'or' 'null' |
+  'null' 'or' (atomicType | 'else');
+
+atomicType:
+  (
+    typeSuffix |
+    namedType |
+    primitiveType |
+    unit |
+    functionType |
+    nestedType |
+    tupleType |
+    classTupleType |
+    structTupleType |
+    anonymousRecordType |
+    anonymousClassRecordType |
+    anonymousStructRecordType
+  ) typeSuffix*;
+
+namedType:
+  name genericArguments? (('.' name | memberName) genericArguments?)*;
 
 primitiveType:
   'bool' | 'int' | 'uint' | 'float' |
   'char' | 'string' | 'object' | 'void' |
   'exception';
+
+functionType:
+  'function' ('(' paramTypesList ')')? ('as' type)?;
+
+paramTypesList:
+  paramTypesTuple (';' paramTypesTuple)*;
+
+paramTypesTuple:
+  (type | typeArgument (',' typeArgument)+)?;
+
+nestedType:
+  '(' type ')';
+
+tupleType:
+  '(' typeArgument (',' typeArgument)+ ')';
+
+classTupleType:
+  '(' 'as' 'class' ';'? typeArgument (',' typeArgument)+ ')';
+
+structTupleType:
+  '(' 'as' 'struct' ';'? typeArgument (',' typeArgument)+ ')';
+
+anonymousRecordType:
+  '{' anonymousRecordMemberDeclaration (',' anonymousRecordMemberDeclaration)* '}';
+
+anonymousClassRecordType:
+  '{' 'as' 'class' ';'? anonymousRecordMemberDeclaration (',' anonymousRecordMemberDeclaration)* '}';
+
+anonymousStructRecordType:
+  '{' 'as' 'struct' ';'? anonymousRecordMemberDeclaration (',' anonymousRecordMemberDeclaration)* '}';
+
+anonymousRecordMemberDeclaration:
+  name ('as' type)?;
+
+typeSuffix:
+  arrayTypeSuffix |
+  optionalTypeSuffix |
+  sequenceTypeSuffix;
+
+arrayTypeSuffix: '[' ','* ']';
+optionalTypeSuffix: '?';
+sequenceTypeSuffix: '..';
+
+genericArguments:
+  '<' genericArgument (',' genericArgument)* '>';
+
+genericArgument:
+  typeArgument |
+  measureArgument |
+  literalArgument;
+
+measureArgument:
+  'unit'? measureExpression;
+
+measureExpression:
+  measureOperand (('*' | '/') measureOperand)*;
+
+measureOperand:
+  (number | compoundName | '(' measureExpression ')') ('^' ('-')? number)?;
+
+literalArgument:
+  'const'? expression;
 
 /* ---------- */
 /* Attributes */
@@ -889,10 +979,10 @@ inlineIfExpr:
   'if' expression 'then' expression 'else' (outerExpr | atomicLogicExpr);
 
 outerExpr:
-  coalesceExpr (('<' | '<=' | '>' | '>=' | '==' | '!=' | '~=' | '&&' | '||') coalesceExpr)*;
+  coalesceExpr (('<' | '<=' | '>' | '>' {combinedOperator}? '=' | '==' | '!=' | '~=' | '&&' | '||') coalesceExpr)*;
 
 coalesceExpr:
-  concatExpr ('??' concatExpr)*;
+  concatExpr ('?' {combinedOperator}? '?' concatExpr)*;
 
 concatExpr:
   concatExpr_Inner ('..' concatExpr_Inner)*;
@@ -909,7 +999,7 @@ bitAndExpr:
   bitShiftExpr ('&' bitShiftExpr)*;
 
 bitShiftExpr:
-  innerExpr (('<<' | '>>') innerExpr)*;
+  innerExpr (('<<' | '>' {combinedOperator}? '>') innerExpr)*;
 
 innerExpr:
   atomicExpr (('+' | '-' | '*' | '/' | '%') atomicExpr)*;

@@ -62,6 +62,11 @@ namespace Sona.Compiler
             writer.WriteNamespacedName("Microsoft.FSharp.Core.Operators", name);
         }
 
+        public static void WriteCollectionName(this ISourceWriter writer, string name)
+        {
+            writer.WriteNamespacedName("Microsoft.FSharp.Collections", name);
+        }
+
         public static void WriteSystemName(this ISourceWriter writer, string name)
         {
             writer.WriteNamespacedName("System", name);

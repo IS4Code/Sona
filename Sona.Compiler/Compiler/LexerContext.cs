@@ -220,6 +220,8 @@ namespace Sona.Compiler
                     return new RecordPragma();
                 case "tuple":
                     return new TuplePragma();
+                case "option":
+                    return new OptionPragma();
                 case "newline":
                     return new NewlinePragma();
             }

@@ -81,6 +81,20 @@ namespace Sona.Compiler.States
         }
     }
 
+    [LexerStateName("option")]
+    internal sealed class OptionPragma : ClassStructPragma
+    {
+        public OptionPragma() : base("option")
+        {
+
+        }
+
+        public override LexerState ForkNew(IToken token)
+        {
+            return new OptionPragma();
+        }
+    }
+
     [LexerStateName("newline")]
     internal sealed class NewlinePragma : LexerState
     {

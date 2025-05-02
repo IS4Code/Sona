@@ -383,6 +383,7 @@ namespace Sona.Compiler.States
 
             switch(node.Symbol.Type)
             {
+                case SonaLexer.ASSIGN:
                 case SonaLexer.EQ:
                 case SonaLexer.NEQ:
                 case SonaLexer.NEQ_ALT:
@@ -395,14 +396,12 @@ namespace Sona.Compiler.States
                 case SonaLexer.LT:
                 case SonaLexer.LTE:
                 case SonaLexer.GT:
-                case SonaLexer.GTE:
-                case SonaLexer.DOUBLE_QUESTION:
+                case SonaLexer.QUESTION:
                 case SonaLexer.DOUBLE_AND:
                 case SonaLexer.DOUBLE_OR:
                 case SonaLexer.SINGLE_AND:
                 case SonaLexer.SINGLE_OR:
                 case SonaLexer.SINGLE_XOR:
-                case SonaLexer.RSHIFT:
                 case SonaLexer.LSHIFT:
                 case SonaLexer.AND:
                 case SonaLexer.OR:
@@ -417,6 +416,14 @@ namespace Sona.Compiler.States
     {
         // Wrap the whole expression in (...) if first operand is generated as =
         bool WrapInParentheses => FirstOperator is null or { Symbol: { Type: SonaLexer.EQ } };
+
+        ITerminalNode? previousOperator;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+            previousOperator = null;
+        }
 
         protected override void OnEnter(TContext context)
         {
@@ -434,12 +441,33 @@ namespace Sona.Compiler.States
             }
         }
 
+        protected override void OnEnterOperand(ParserRuleContext context)
+        {
+            if(previousOperator != null)
+            {
+                if(previousOperator.Symbol.Type == SonaLexer.GT)
+                {
+                    // > with no following =
+                    Out.WriteOperator('>');
+                }
+                previousOperator = null;
+            }
+            base.OnEnterOperand(context);
+        }
+
         protected override void OnOperator(ITerminalNode node)
         {
             var token = node.Symbol;
             string text = token.Text;
             switch(token.Type)
             {
+                case SonaLexer.GT:
+                    previousOperator = node;
+                    return;
+                case SonaLexer.ASSIGN:
+                    // Only as a part of >=
+                    text = ">=";
+                    break;
                 case SonaLexer.EQ:
                     text = "=";
                     break;
@@ -449,13 +477,23 @@ namespace Sona.Compiler.States
                     break;
             }
             Out.WriteOperator(text);
+            previousOperator = null;
         }
     }
 
     internal sealed class SpecialBinaryState<TContext> : BinaryState<TContext> where TContext : ParserRuleContext
     {
+        ITerminalNode? previousOperator;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+            previousOperator = null;
+        }
+
         protected override void OnEnterOperand(ParserRuleContext context)
         {
+            previousOperator = null;
             Out.Write('(');
         }
 
@@ -518,7 +556,16 @@ namespace Sona.Compiler.States
                         Out.WriteSpecialBinaryOperator("LeftShift");
                     }
                     break;
-                case SonaLexer.RSHIFT:
+                case SonaLexer.GT:
+                    if(previousOperator != null)
+                    {
+                        if(node.SourceInterval.a == previousOperator.SourceInterval.b + 1)
+                        {
+                            // Second half of >>
+                            break;
+                        }
+                    }
+                    previousOperator = node;
                     if(IsLiteral)
                     {
                         Out.WriteOperator(">>>");
@@ -534,6 +581,7 @@ namespace Sona.Compiler.States
 
     internal abstract class RightAssociativeBinaryState<TContext> : BinaryState<TContext> where TContext : ParserRuleContext
     {
+        ITerminalNode? previousOperator;
         TContext? operationContext;
         ParserRuleContext? operandContext;
         ISourceCapture? capture;
@@ -544,6 +592,7 @@ namespace Sona.Compiler.States
             capture = null;
             level = 0;
             operationContext = context;
+            previousOperator = null;
             OnNestedEnter(context);
         }
 
@@ -575,6 +624,7 @@ namespace Sona.Compiler.States
 
         protected sealed override void OnEnterOperand(ParserRuleContext context)
         {
+            previousOperator = null;
             if(capture == null)
             {
                 // Direct
@@ -603,6 +653,11 @@ namespace Sona.Compiler.States
 
         protected sealed override void OnOperator(ITerminalNode node)
         {
+            if(previousOperator != null)
+            {
+                return;
+            }
+            previousOperator = node;
             if(capture != null)
             {
                 // Non-final operand is captured
