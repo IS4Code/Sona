@@ -48,32 +48,29 @@ namespace Sona.Compiler.States
 
         public override void EnterPrimitiveType(PrimitiveTypeContext context)
         {
-            Environment.EnableParseTree();
+            var token = context.Start;
+            string text;
+            switch(token.Type)
+            {
+                case SonaLexer.OBJECT:
+                    text = "obj";
+                    break;
+                case SonaLexer.VOID:
+                    Out.WriteSystemName("Void");
+                    return;
+                case SonaLexer.EXCEPTION:
+                    Out.WriteSystemName("Exception");
+                    return;
+                default:
+                    text = token.Text;
+                    break;
+            }
+            Out.WriteCoreName(text);
         }
 
         public override void ExitPrimitiveType(PrimitiveTypeContext context)
         {
-            try
-            {
-                var text = context.GetText();
-                switch(text)
-                {
-                    case "object":
-                        text = "obj";
-                        break;
-                    case "void":
-                        Out.WriteSystemName("Void");
-                        return;
-                    case "exception":
-                        Out.WriteSystemName("Exception");
-                        return;
-                }
-                Out.WriteCoreName(text);
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+
         }
 
         public override void EnterTypeArgument(TypeArgumentContext context)

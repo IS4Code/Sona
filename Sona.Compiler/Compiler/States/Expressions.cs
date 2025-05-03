@@ -1,4 +1,5 @@
-﻿using static Sona.Grammar.SonaParser;
+﻿using Sona.Grammar;
+using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
 {
@@ -50,12 +51,12 @@ namespace Sona.Compiler.States
             EnterState<InlineStatementState>().EnterInlineExpr(context);
         }
 
-        public override void EnterAtomicTypeConvertExpr(AtomicTypeConvertExprContext context)
+        public override void EnterAtomicConvertExpr(AtomicConvertExprContext context)
         {
-            EnterState<TypeConversionState>().EnterAtomicTypeConvertExpr(context);
+            EnterState<ConversionState>().EnterAtomicConvertExpr(context);
         }
 
-        public override void ExitAtomicTypeConvertExpr(AtomicTypeConvertExprContext context)
+        public override void ExitAtomicConvertExpr(AtomicConvertExprContext context)
         {
 
         }
@@ -213,31 +214,6 @@ namespace Sona.Compiler.States
             Out.Write(')');
         }
 
-        public override void EnterAtomicVoidExpr(AtomicVoidExprContext context)
-        {
-            Out.EnterNestedScope(true);
-            Out.Write("(let _");
-            Out.WriteOperator('=');
-        }
-
-        public override void ExitAtomicVoidExpr(AtomicVoidExprContext context)
-        {
-            Out.ExitNestedScope();
-            Out.Write(" in ())");
-        }
-
-        public override void EnterAtomicObjectExpr(AtomicObjectExprContext context)
-        {
-            Out.Write('(');
-        }
-
-        public override void ExitAtomicObjectExpr(AtomicObjectExprContext context)
-        {
-            Out.WriteOperator(":>");
-            Out.WriteCoreName("objnull");
-            Out.Write(')');
-        }
-
         public override void EnterUnit(UnitContext context)
         {
             Out.Write("(()");
@@ -253,35 +229,32 @@ namespace Sona.Compiler.States
 
         public override void EnterPrimitiveType(PrimitiveTypeContext context)
         {
-            Environment.EnableParseTree();
+            var token = context.Start;
+            string text;
+            switch(token.Type)
+            {
+                case SonaLexer.OBJECT:
+                    text = "box";
+                    break;
+                case SonaLexer.VOID:
+                    text = "ignore";
+                    break;
+                case SonaLexer.BOOL:
+                    Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "ToBoolean");
+                    return;
+                case SonaLexer.EXCEPTION:
+                    Out.WriteSystemName("Exception");
+                    return;
+                default:
+                    text = token.Text;
+                    break;
+            }
+            Out.WriteCoreOperatorName(text);
         }
 
         public override void ExitPrimitiveType(PrimitiveTypeContext context)
         {
-            try
-            {
-                var text = context.GetText();
-                switch(text)
-                {
-                    case "object":
-                        text = "box";
-                        break;
-                    case "void":
-                        text = "ignore";
-                        break;
-                    case "bool":
-                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "ToBoolean");
-                        return;
-                    case "exception":
-                        Out.WriteSystemName("Exception");
-                        return;
-                }
-                Out.WriteCoreOperatorName(text);
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+
         }
     }
 

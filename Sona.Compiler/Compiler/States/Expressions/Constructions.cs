@@ -368,45 +368,4 @@ namespace Sona.Compiler.States
 
         }
     }
-
-    internal sealed class TypeConversionState : ExpressionState
-    {
-        public override void EnterMemberTypeConvertExpr(MemberTypeConvertExprContext context)
-        {
-
-        }
-
-        public override void ExitMemberTypeConvertExpr(MemberTypeConvertExprContext context)
-        {
-            Out.Write(')');
-            ExitState().ExitMemberTypeConvertExpr(context);
-        }
-
-        public override void EnterAtomicTypeConvertExpr(AtomicTypeConvertExprContext context)
-        {
-
-        }
-
-        public override void ExitAtomicTypeConvertExpr(AtomicTypeConvertExprContext context)
-        {
-            Out.Write(')');
-            ExitState().ExitAtomicTypeConvertExpr(context);
-        }
-
-        public override void ExitPrimitiveType(PrimitiveTypeContext context)
-        {
-            base.ExitPrimitiveType(context);
-            Out.Write('(');
-        }
-
-        public override void EnterExpression(ExpressionContext context)
-        {
-            EnterState<ExpressionState>().EnterExpression(context);
-        }
-
-        public override void ExitExpression(ExpressionContext context)
-        {
-
-        }
-    }
 }

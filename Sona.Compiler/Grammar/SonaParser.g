@@ -1014,9 +1014,7 @@ atomicExpr:
   hashExpr |
   notExpr |
   unaryOperator atomicExpr |
-  atomicVoidExpr |
-  atomicObjectExpr |
-  atomicTypeConvertExpr;
+  atomicConvertExpr;
 
 hashExpr:
   '#' atomicExpr;
@@ -1024,14 +1022,8 @@ hashExpr:
 notExpr:
   '!' atomicExpr;
 
-atomicVoidExpr:
-  'void' atomicExpr;
-
-atomicObjectExpr:
-  'object' atomicExpr;
-
-atomicTypeConvertExpr:
-  primitiveType atomicExpr;
+atomicConvertExpr:
+  convertOperator atomicExpr;
 
 simpleExpr:
   primitiveExpr |
@@ -1048,7 +1040,7 @@ primitiveExpr:
   namedValue | number | string | unit;
 
 namedValue:
-  'null' | 'false' | 'true';
+  'null' | 'false' | 'true' | 'none';
 
 funcExpr:
   'function' name? funcBody;
@@ -1086,9 +1078,7 @@ memberExpr_Standalone:
 memberExpr_Prefix:
   simpleExpr |
   fullConstructExpr |
-  memberVoidExpr |
-  memberObjectExpr |
-  memberTypeConvertExpr;
+  memberConvertExpr;
 
 memberExpr_Suffix:
   callArguments |
@@ -1129,14 +1119,11 @@ dynamicMemberAccess:
 dynamicExprMemberAccess:
   ':' nestedExpr;
 
-memberVoidExpr:
-  'void' '(' expression ')';
+memberConvertExpr:
+  convertOperator '(' expression ')';
 
-memberObjectExpr:
-  'object' '(' expression ')';
-
-memberTypeConvertExpr:
-  primitiveType '(' expression ')';
+convertOperator:
+  'some' | primitiveType;
 
 // Must indicate construction by having no arguments, at least two arguments, or one named argument.
 memberTypeConstructExpr:

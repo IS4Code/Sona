@@ -77,39 +77,14 @@ namespace Sona.Compiler.States
 
         }
 
-        public override void EnterMemberTypeConvertExpr(MemberTypeConvertExprContext context)
+        public override void EnterMemberConvertExpr(MemberConvertExprContext context)
         {
-            EnterState<TypeConversionState>().EnterMemberTypeConvertExpr(context);
+            EnterState<ConversionState>().EnterMemberConvertExpr(context);
         }
 
-        public override void ExitMemberTypeConvertExpr(MemberTypeConvertExprContext context)
+        public override void ExitMemberConvertExpr(MemberConvertExprContext context)
         {
 
-        }
-
-        public override void EnterMemberVoidExpr(MemberVoidExprContext context)
-        {
-            Out.EnterNestedScope(true);
-            Out.Write("(let _");
-            Out.WriteOperator('=');
-        }
-
-        public override void ExitMemberVoidExpr(MemberVoidExprContext context)
-        {
-            Out.ExitNestedScope();
-            Out.Write(" in ())");
-        }
-
-        public override void EnterMemberObjectExpr(MemberObjectExprContext context)
-        {
-            Out.Write('(');
-        }
-
-        public override void ExitMemberObjectExpr(MemberObjectExprContext context)
-        {
-            Out.WriteOperator(":>");
-            Out.WriteCoreName("objnull");
-            Out.Write(')');
         }
 
         public override void EnterIndexAccess(IndexAccessContext context)

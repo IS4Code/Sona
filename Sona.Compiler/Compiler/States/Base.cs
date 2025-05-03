@@ -70,19 +70,21 @@ namespace Sona.Compiler
 
         public override void EnterNamedValue(NamedValueContext context)
         {
-            Environment.EnableParseTree();
+            var token = context.Start;
+            switch(token.Type)
+            {
+                case SonaLexer.NONE:
+                    Out.WriteCoreName(LexerContext.GetState<OptionPragma>()?.IsStruct ?? true ? "ValueNone" : "None");
+                    break;
+                default:
+                    Out.Write(token.Text);
+                    break;
+            }
         }
 
         public override void ExitNamedValue(NamedValueContext context)
         {
-            try
-            {
-                Out.Write(context.GetText());
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+
         }
 
         public override void EnterNumber(NumberContext context)
