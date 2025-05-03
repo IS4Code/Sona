@@ -78,7 +78,7 @@ namespace Sona.Compiler.States
 
         public override void EnterTypeArgument(TypeArgumentContext context)
         {
-            EnterState<TypeArgument>().EnterTypeArgument(context);
+            EnterState<Argument>().EnterTypeArgument(context);
         }
 
         public override void ExitTypeArgument(TypeArgumentContext context)
@@ -118,12 +118,13 @@ namespace Sona.Compiler.States
 
         public override void EnterFunctionType(FunctionTypeContext context)
         {
+            Out.Write('(');
             EnterState<FunctionType>().EnterFunctionType(context);
         }
 
         public override void ExitFunctionType(FunctionTypeContext context)
         {
-
+            Out.Write(')');
         }
 
         public override void EnterTupleType(TupleTypeContext context)
@@ -246,7 +247,7 @@ namespace Sona.Compiler.States
             Out.WriteCollectionName("seq");
         }
 
-        sealed class TypeArgument : TypeState
+        public sealed class Argument : TypeState
         {
             bool hasType;
 
@@ -517,319 +518,318 @@ namespace Sona.Compiler.States
                 }
             }
         }
+    }
 
-        sealed class FunctionType : NodeState
+    internal sealed class FunctionType : NodeState
+    {
+        bool hasParameters;
+        bool hasReturn;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
-            bool hasParameters;
-            bool hasReturn;
+            base.Initialize(environment, parent);
+
+            hasParameters = false;
+            hasReturn = false;
+        }
+
+        public override void EnterFunctionType(FunctionTypeContext context)
+        {
+
+        }
+
+        public override void ExitFunctionType(FunctionTypeContext context)
+        {
+            if(!hasReturn)
+            {
+                OnReturn();
+                Out.WriteOperator("->");
+                Out.Write('_');
+            }
+            ExitState().ExitFunctionType(context);
+        }
+
+        public override void EnterParamTypesList(ParamTypesListContext context)
+        {
+            hasParameters = true;
+            EnterState<Parameters>().EnterParamTypesList(context);
+        }
+
+        public override void ExitParamTypesList(ParamTypesListContext context)
+        {
+
+        }
+
+        void OnReturn()
+        {
+            if(!hasParameters)
+            {
+                Out.Write('_');
+            }
+        }
+
+        public override void EnterType(TypeContext context)
+        {
+            OnReturn();
+            Out.WriteOperator("->");
+            hasReturn = true;
+            EnterState<TypeState>().EnterType(context);
+        }
+
+        public override void ExitType(TypeContext context)
+        {
+
+        }
+
+        sealed class Parameters : TypeState
+        {
+            bool firstTuple;
+            bool firstParameter;
 
             protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
             {
                 base.Initialize(environment, parent);
 
-                hasParameters = false;
-                hasReturn = false;
-            }
-
-            public override void EnterFunctionType(FunctionTypeContext context)
-            {
-                Out.Write('(');
-            }
-
-            public override void ExitFunctionType(FunctionTypeContext context)
-            {
-                if(!hasReturn)
-                {
-                    OnReturn();
-                    Out.WriteOperator("->");
-                    Out.Write('_');
-                }
-                Out.Write(')');
-                ExitState().ExitFunctionType(context);
+                firstTuple = true;
             }
 
             public override void EnterParamTypesList(ParamTypesListContext context)
             {
-                hasParameters = true;
-                EnterState<Parameters>().EnterParamTypesList(context);
+
             }
 
             public override void ExitParamTypesList(ParamTypesListContext context)
             {
-
+                ExitState().ExitParamTypesList(context);
             }
 
-            void OnReturn()
+            public override void EnterParamTypesTuple(ParamTypesTupleContext context)
             {
-                if(!hasParameters)
+                if(firstTuple)
                 {
-                    Out.Write('_');
+                    firstTuple = false;
+                }
+                else
+                {
+                    Out.WriteOperator("->");
+                }
+                firstParameter = true;
+            }
+
+            public override void ExitParamTypesTuple(ParamTypesTupleContext context)
+            {
+                if(firstParameter)
+                {
+                    // No parameters
+                    Out.WriteCoreName("unit");
+                }
+                else
+                {
+                    Out.Write(')');
                 }
             }
 
-            public override void EnterType(TypeContext context)
+            void OnParameter()
             {
-                OnReturn();
-                Out.WriteOperator("->");
-                hasReturn = true;
-                EnterState<TypeState>().EnterType(context);
-            }
-
-            public override void ExitType(TypeContext context)
-            {
-
-            }
-
-            sealed class Parameters : TypeState
-            {
-                bool firstTuple;
-                bool firstParameter;
-
-                protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+                if(firstParameter)
                 {
-                    base.Initialize(environment, parent);
-
-                    firstTuple = true;
-                }
-
-                public override void EnterParamTypesList(ParamTypesListContext context)
-                {
-
-                }
-
-                public override void ExitParamTypesList(ParamTypesListContext context)
-                {
-                    ExitState().ExitParamTypesList(context);
-                }
-
-                public override void EnterParamTypesTuple(ParamTypesTupleContext context)
-                {
-                    if(firstTuple)
-                    {
-                        firstTuple = false;
-                    }
-                    else
-                    {
-                        Out.WriteOperator("->");
-                    }
-                    firstParameter = true;
-                }
-
-                public override void ExitParamTypesTuple(ParamTypesTupleContext context)
-                {
-                    if(firstParameter)
-                    {
-                        // No parameters
-                        Out.WriteCoreName("unit");
-                    }
-                    else
-                    {
-                        Out.Write(')');
-                    }
-                }
-
-                void OnParameter()
-                {
-                    if(firstParameter)
-                    {
-                        firstParameter = false;
-                        Out.Write('(');
-                    }
-                    else
-                    {
-                        Out.WriteOperator('*');
-                    }
-                }
-
-                public override void EnterType(TypeContext context)
-                {
-                    OnParameter();
-                }
-
-                public override void ExitType(TypeContext context)
-                {
-
-                }
-
-                public override void EnterTypeArgument(TypeArgumentContext context)
-                {
-                    OnParameter();
-                    base.EnterTypeArgument(context);
-                }
-
-                public override void ExitTypeArgument(TypeArgumentContext context)
-                {
-                    base.ExitTypeArgument(context);
-                }
-            }
-        }
-
-        sealed class TupleType : NodeState
-        {
-            bool first, isStruct;
-
-            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
-            {
-                base.Initialize(environment, parent);
-
-                first = true;
-                isStruct = false;
-            }
-
-            public override void EnterTupleType(TupleTypeContext context)
-            {
-                isStruct = LexerContext.GetState<TuplePragma>()?.IsStruct ?? true;
-                OnEnter();
-            }
-
-            public override void ExitTupleType(TupleTypeContext context)
-            {
-                OnExit();
-                ExitState().ExitTupleType(context);
-            }
-
-            public override void EnterClassTupleType(ClassTupleTypeContext context)
-            {
-                OnEnter();
-            }
-
-            public override void ExitClassTupleType(ClassTupleTypeContext context)
-            {
-                OnExit();
-                ExitState().ExitClassTupleType(context);
-            }
-
-            public override void EnterStructTupleType(StructTupleTypeContext context)
-            {
-                isStruct = true;
-                OnEnter();
-            }
-
-            public override void ExitStructTupleType(StructTupleTypeContext context)
-            {
-                OnExit();
-                ExitState().ExitStructTupleType(context);
-            }
-
-            void OnEnter()
-            {
-                Out.Write(isStruct ? "(struct(" : "(");
-            }
-
-            void OnExit()
-            {
-                Out.Write(isStruct ? "))" : ")");
-            }
-
-            public override void EnterTypeArgument(TypeArgumentContext context)
-            {
-                if(first)
-                {
-                    first = false;
+                    firstParameter = false;
+                    Out.Write('(');
                 }
                 else
                 {
                     Out.WriteOperator('*');
                 }
-                EnterState<TypeArgument>().EnterTypeArgument(context);
-            }
-
-            public override void ExitTypeArgument(TypeArgumentContext context)
-            {
-
-            }
-        }
-
-        sealed class AnonymousRecordType : NodeState
-        {
-            bool first, isStruct, hasType;
-
-            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
-            {
-                base.Initialize(environment, parent);
-
-                first = true;
-                isStruct = false;
-            }
-
-            public override void EnterAnonymousRecordType(AnonymousRecordTypeContext context)
-            {
-                isStruct = LexerContext.GetState<RecordPragma>()?.IsStruct ?? false;
-                OnEnter();
-            }
-
-            public override void ExitAnonymousRecordType(AnonymousRecordTypeContext context)
-            {
-                OnExit();
-                ExitState().ExitAnonymousRecordType(context);
-            }
-
-            public override void EnterAnonymousClassRecordType(AnonymousClassRecordTypeContext context)
-            {
-                OnEnter();
-            }
-
-            public override void ExitAnonymousClassRecordType(AnonymousClassRecordTypeContext context)
-            {
-                OnExit();
-                ExitState().ExitAnonymousClassRecordType(context);
-            }
-
-            public override void EnterAnonymousStructRecordType(AnonymousStructRecordTypeContext context)
-            {
-                isStruct = true;
-                OnEnter();
-            }
-
-            public override void ExitAnonymousStructRecordType(AnonymousStructRecordTypeContext context)
-            {
-                OnExit();
-                ExitState().ExitAnonymousStructRecordType(context);
-            }
-
-            void OnEnter()
-            {
-                Out.Write(isStruct ? "(struct{| " : "{| ");
-            }
-
-            void OnExit()
-            {
-                Out.Write(isStruct ? " |})" : " |}");
-            }
-
-            public override void EnterAnonymousRecordMemberDeclaration(AnonymousRecordMemberDeclarationContext context)
-            {
-                if(first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    Out.Write(';');
-                }
-                hasType = false;
-            }
-
-            public override void ExitAnonymousRecordMemberDeclaration(AnonymousRecordMemberDeclarationContext context)
-            {
-                if(!hasType)
-                {
-                    Out.WriteOperator(':');
-                    Out.Write('_');
-                }
             }
 
             public override void EnterType(TypeContext context)
             {
-                hasType = true;
-                Out.WriteOperator(':');
-                EnterState<TypeState>().EnterType(context);
+                OnParameter();
             }
 
             public override void ExitType(TypeContext context)
             {
 
             }
+
+            public override void EnterTypeArgument(TypeArgumentContext context)
+            {
+                OnParameter();
+                base.EnterTypeArgument(context);
+            }
+
+            public override void ExitTypeArgument(TypeArgumentContext context)
+            {
+                base.ExitTypeArgument(context);
+            }
+        }
+    }
+
+    internal sealed class TupleType : NodeState
+    {
+        bool first, isStruct;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            first = true;
+            isStruct = false;
+        }
+
+        public override void EnterTupleType(TupleTypeContext context)
+        {
+            isStruct = LexerContext.GetState<TuplePragma>()?.IsStruct ?? true;
+            OnEnter();
+        }
+
+        public override void ExitTupleType(TupleTypeContext context)
+        {
+            OnExit();
+            ExitState().ExitTupleType(context);
+        }
+
+        public override void EnterClassTupleType(ClassTupleTypeContext context)
+        {
+            OnEnter();
+        }
+
+        public override void ExitClassTupleType(ClassTupleTypeContext context)
+        {
+            OnExit();
+            ExitState().ExitClassTupleType(context);
+        }
+
+        public override void EnterStructTupleType(StructTupleTypeContext context)
+        {
+            isStruct = true;
+            OnEnter();
+        }
+
+        public override void ExitStructTupleType(StructTupleTypeContext context)
+        {
+            OnExit();
+            ExitState().ExitStructTupleType(context);
+        }
+
+        void OnEnter()
+        {
+            Out.Write(isStruct ? "(struct(" : "(");
+        }
+
+        void OnExit()
+        {
+            Out.Write(isStruct ? "))" : ")");
+        }
+
+        public override void EnterTypeArgument(TypeArgumentContext context)
+        {
+            if(first)
+            {
+                first = false;
+            }
+            else
+            {
+                Out.WriteOperator('*');
+            }
+            EnterState<TypeState.Argument>().EnterTypeArgument(context);
+        }
+
+        public override void ExitTypeArgument(TypeArgumentContext context)
+        {
+
+        }
+    }
+
+    internal sealed class AnonymousRecordType : NodeState
+    {
+        bool first, isStruct, hasType;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            first = true;
+            isStruct = false;
+        }
+
+        public override void EnterAnonymousRecordType(AnonymousRecordTypeContext context)
+        {
+            isStruct = LexerContext.GetState<RecordPragma>()?.IsStruct ?? false;
+            OnEnter();
+        }
+
+        public override void ExitAnonymousRecordType(AnonymousRecordTypeContext context)
+        {
+            OnExit();
+            ExitState().ExitAnonymousRecordType(context);
+        }
+
+        public override void EnterAnonymousClassRecordType(AnonymousClassRecordTypeContext context)
+        {
+            OnEnter();
+        }
+
+        public override void ExitAnonymousClassRecordType(AnonymousClassRecordTypeContext context)
+        {
+            OnExit();
+            ExitState().ExitAnonymousClassRecordType(context);
+        }
+
+        public override void EnterAnonymousStructRecordType(AnonymousStructRecordTypeContext context)
+        {
+            isStruct = true;
+            OnEnter();
+        }
+
+        public override void ExitAnonymousStructRecordType(AnonymousStructRecordTypeContext context)
+        {
+            OnExit();
+            ExitState().ExitAnonymousStructRecordType(context);
+        }
+
+        void OnEnter()
+        {
+            Out.Write(isStruct ? "(struct{| " : "{| ");
+        }
+
+        void OnExit()
+        {
+            Out.Write(isStruct ? " |})" : " |}");
+        }
+
+        public override void EnterAnonymousRecordMemberDeclaration(AnonymousRecordMemberDeclarationContext context)
+        {
+            if(first)
+            {
+                first = false;
+            }
+            else
+            {
+                Out.Write(';');
+            }
+            hasType = false;
+        }
+
+        public override void ExitAnonymousRecordMemberDeclaration(AnonymousRecordMemberDeclarationContext context)
+        {
+            if(!hasType)
+            {
+                Out.WriteOperator(':');
+                Out.Write('_');
+            }
+        }
+
+        public override void EnterType(TypeContext context)
+        {
+            hasType = true;
+            Out.WriteOperator(':');
+            EnterState<TypeState>().EnterType(context);
+        }
+
+        public override void ExitType(TypeContext context)
+        {
+
         }
     }
 }

@@ -434,7 +434,7 @@ namespace Sona.Compiler.States
         {
             CloseLambda();
             Out.WriteOperator("|>");
-            EnterState<ConstrainedMemberState>().EnterConstrainedMemberAccess(context);
+            EnterState<ImplicitConstrainedMemberState>().EnterConstrainedMemberAccess(context);
         }
 
         public override void ExitConstrainedMemberAccess(ConstrainedMemberAccessContext context)
@@ -442,27 +442,46 @@ namespace Sona.Compiler.States
 
         }
 
-        class ConstrainedMemberState : AltMemberExprState
+        public override void EnterConstrainedFunctionAccess(ConstrainedFunctionAccessContext context)
         {
-            bool property, first;
-            string? paramName;
-            ISourceCapture? argsCapture;
-            readonly List<int> arities = new();
+            CloseLambda();
+            Out.WriteOperator("|>");
+            EnterState<FunctionConstrainedMemberState>().EnterConstrainedFunctionAccess(context);
+        }
 
-            string ParamName(ParserRuleContext context) => paramName ?? Error("COMPILER ERROR: Missing constrained member access parameter name.", context);
+        public override void ExitConstrainedFunctionAccess(ConstrainedFunctionAccessContext context)
+        {
+
+        }
+
+        public override void EnterConstrainedPropertyAccess(ConstrainedPropertyAccessContext context)
+        {
+            CloseLambda();
+            Out.WriteOperator("|>");
+            EnterState<PropertyConstrainedMemberState>().EnterConstrainedPropertyAccess(context);
+        }
+
+        public override void ExitConstrainedPropertyAccess(ConstrainedPropertyAccessContext context)
+        {
+
+        }
+
+        abstract class ConstrainedMemberState : AltMemberExprState
+        {
+            protected bool first;
+            string? paramName;
+
+            protected string ParamName(ParserRuleContext context) => paramName ?? Error("COMPILER ERROR: Missing constrained member access parameter name.", context);
 
             protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
             {
                 base.Initialize(environment, parent);
 
-                property = true;
                 first = true;
                 paramName = null;
-                argsCapture = null;
-                arities.Clear();
             }
 
-            public override void EnterConstrainedMemberAccess(ConstrainedMemberAccessContext context)
+            protected void OnEnter()
             {
                 paramName = Out.CreateTemporaryIdentifier();
                 Out.Write("(fun ");
@@ -472,6 +491,70 @@ namespace Sona.Compiler.States
                 Out.WriteIdentifier(Out.CreateTemporaryIdentifier());
                 Out.WriteOperator(':');
                 Out.Write("(member ");
+            }
+
+            protected abstract void OpenArgTuple(ParserRuleContext context);
+            protected abstract void CloseArgTuple(ParserRuleContext context);
+
+            public sealed override void EnterSimpleCallArgTuple(SimpleCallArgTupleContext context)
+            {
+                OpenArgTuple(context);
+            }
+
+            public sealed override void ExitSimpleCallArgTuple(SimpleCallArgTupleContext context)
+            {
+                CloseArgTuple(context);
+            }
+
+            public sealed override void EnterComplexCallArgTuple(ComplexCallArgTupleContext context)
+            {
+                OpenArgTuple(context);
+            }
+
+            public sealed override void ExitComplexCallArgTuple(ComplexCallArgTupleContext context)
+            {
+                CloseArgTuple(context);
+            }
+
+            public sealed override void EnterSpreadExpression(SpreadExpressionContext context)
+            {
+                Error("A call to a constrained member expression cannot contain spread expressions.", context);
+            }
+
+            public sealed override void ExitSpreadExpression(SpreadExpressionContext context)
+            {
+
+            }
+
+            public sealed override void EnterFieldAssignment(FieldAssignmentContext context)
+            {
+                Error("A call to a constrained member expression cannot contain named arguments.", context);
+            }
+
+            public sealed override void ExitFieldAssignment(FieldAssignmentContext context)
+            {
+
+            }
+        }
+
+        sealed class ImplicitConstrainedMemberState : ConstrainedMemberState
+        {
+            bool property;
+            ISourceCapture? argsCapture;
+            readonly List<int> arities = new();
+
+            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+            {
+                base.Initialize(environment, parent);
+
+                property = true;
+                argsCapture = null;
+                arities.Clear();
+            }
+
+            public override void EnterConstrainedMemberAccess(ConstrainedMemberAccessContext context)
+            {
+                OnEnter();
             }
 
             public override void ExitConstrainedMemberAccess(ConstrainedMemberAccessContext context)
@@ -495,7 +578,7 @@ namespace Sona.Compiler.States
 
             public override void ExitCallArguments(CallArgumentsContext context)
             {
-                var argsCapture = this.argsCapture ?? ErrorCapture("COMPILER ERROR: Missing constraint expression captured state.", context);
+                var argsCapture = this.argsCapture ?? ErrorCapture("COMPILER ERROR: Missing constrained expression captured state.", context);
                 Out.StopCapture(argsCapture);
                 if(arities.Count == 0)
                 {
@@ -535,7 +618,7 @@ namespace Sona.Compiler.States
                 Out.Write(')');
             }
 
-            private void OpenArgTuple(ParserRuleContext context)
+            protected override void OpenArgTuple(ParserRuleContext context)
             {
                 if(first)
                 {
@@ -551,7 +634,7 @@ namespace Sona.Compiler.States
                 arities.Add(0);
             }
 
-            private void CloseArgTuple(ParserRuleContext context)
+            protected override void CloseArgTuple(ParserRuleContext context)
             {
                 if(first)
                 {
@@ -566,26 +649,6 @@ namespace Sona.Compiler.States
                     // Unit argument
                     Out.Write(",()");
                 }
-            }
-
-            public override void EnterSimpleCallArgTuple(SimpleCallArgTupleContext context)
-            {
-                OpenArgTuple(context);
-            }
-
-            public override void ExitSimpleCallArgTuple(SimpleCallArgTupleContext context)
-            {
-                CloseArgTuple(context);
-            }
-
-            public override void EnterComplexCallArgTuple(ComplexCallArgTupleContext context)
-            {
-                OpenArgTuple(context);
-            }
-
-            public override void ExitComplexCallArgTuple(ComplexCallArgTupleContext context)
-            {
-                CloseArgTuple(context);
             }
 
             public override void EnterExpression(ExpressionContext context)
@@ -608,23 +671,139 @@ namespace Sona.Compiler.States
 
                 base.EnterExpression(context);
             }
+        }
+        
+        sealed class FunctionConstrainedMemberState : ConstrainedMemberState
+        {
+            bool emptyTuple;
+            int tupleIndex;
 
-            public override void EnterSpreadExpression(SpreadExpressionContext context)
+            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
             {
-                Error("A call to a constraint member expression cannot contain spread expressions.", context);
+                base.Initialize(environment, parent);
+
+                emptyTuple = true;
+                tupleIndex = -1;
             }
 
-            public override void ExitSpreadExpression(SpreadExpressionContext context)
+            public override void EnterConstrainedFunctionAccess(ConstrainedFunctionAccessContext context)
+            {
+                OnEnter();
+            }
+
+            public override void ExitConstrainedFunctionAccess(ConstrainedFunctionAccessContext context)
+            {
+                if(tupleIndex == -1)
+                {
+                    Error("Function-constrained members must be immediately called.", context);
+                }
+                Out.Write("))");
+                ExitState().ExitConstrainedFunctionAccess(context);
+            }
+
+            public override void EnterFunctionType(FunctionTypeContext context)
+            {
+                Out.WriteOperator(':');
+                EnterState<FunctionType>().EnterFunctionType(context);
+            }
+
+            public override void ExitFunctionType(FunctionTypeContext context)
+            {
+                Out.Write(')');
+            }
+
+            public override void EnterCallArguments(CallArgumentsContext context)
+            {
+                Out.Write('(');
+            }
+
+            public override void ExitCallArguments(CallArgumentsContext context)
+            {
+                Out.Write(')');
+            }
+
+            protected override void OpenArgTuple(ParserRuleContext context)
+            {
+                tupleIndex++;
+                if(first)
+                {
+                    // May be empty yet
+                    emptyTuple = true;
+                    return;
+                }
+                if(tupleIndex == 1 && emptyTuple)
+                {
+                    // Unit argument
+                    Out.Write(",()");
+                }
+                emptyTuple = true;
+            }
+
+            protected override void CloseArgTuple(ParserRuleContext context)
+            {
+                if(first)
+                {
+                    // First tuple is empty
+                    Out.WriteIdentifier(ParamName(context));
+                    first = false;
+                }
+                if(tupleIndex >= 1 && emptyTuple)
+                {
+                    // Unit argument
+                    Out.Write(",()");
+                }
+            }
+
+            public override void EnterExpression(ExpressionContext context)
+            {
+                if(first)
+                {
+                    Out.WriteIdentifier(ParamName(context));
+                    first = false;
+                }
+
+                // Always next expression
+                Out.Write(',');
+
+                emptyTuple = false;
+
+                base.EnterExpression(context);
+            }
+        }
+        
+        
+        sealed class PropertyConstrainedMemberState : ConstrainedMemberState
+        {
+            public override void EnterConstrainedPropertyAccess(ConstrainedPropertyAccessContext context)
+            {
+                OnEnter();
+            }
+
+            public override void ExitConstrainedPropertyAccess(ConstrainedPropertyAccessContext context)
+            {
+                Out.WriteIdentifier(ParamName(context));
+                Out.Write("))");
+                ExitState().ExitConstrainedPropertyAccess(context);
+            }
+
+            public override void EnterType(TypeContext context)
+            {
+                Out.WriteOperator(':');
+                base.EnterType(context);
+            }
+
+            public override void ExitType(TypeContext context)
+            {
+                base.ExitType(context);
+                Out.Write(')');
+            }
+
+            protected override void OpenArgTuple(ParserRuleContext context)
             {
 
             }
 
-            public override void EnterFieldAssignment(FieldAssignmentContext context)
-            {
-                Error("A call to a constraint member expression cannot contain named arguments.", context);
-            }
-
-            public override void ExitFieldAssignment(FieldAssignmentContext context)
+            protected override void CloseArgTuple(ParserRuleContext context)
             {
 
             }

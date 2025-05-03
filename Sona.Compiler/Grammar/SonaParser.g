@@ -1101,13 +1101,21 @@ altMemberExpr:
     memberExpr_Suffix* (conditionalMember memberExpr_Suffix | conditionalMember? altMemberExpr_Suffix) (conditionalMember? (memberExpr_Suffix | altMemberExpr_Suffix))*;
 
 altMemberExpr_Suffix:
-  constrainedMemberAccess;
+  constrainedMemberAccess |
+  constrainedFunctionAccess |
+  constrainedPropertyAccess;
 
 conditionalMember:
   '?';
 
 constrainedMemberAccess:
   '.' '(' name ')' callArguments?;
+
+constrainedFunctionAccess:
+  '.' '(' name 'as' functionType ')' callArguments?;
+
+constrainedPropertyAccess:
+  '.' '(' name 'as' type ')';
 
 indexAccess:
   '[' (expression (',' expression)* | errorMissingExpression) ']';
