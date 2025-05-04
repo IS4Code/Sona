@@ -313,12 +313,12 @@ namespace Sona.Compiler.States
 
         public override void EnterMemberTypeConstructExpr(MemberTypeConstructExprContext context)
         {
-            Out.Write("new ");
+            Out.Write("(new ");
         }
 
         public override void ExitMemberTypeConstructExpr(MemberTypeConstructExprContext context)
         {
-            Out.Write(')');
+            Out.Write("))");
             ExitState().ExitMemberTypeConstructExpr(context);
         }
 

@@ -21,12 +21,14 @@ namespace Sona.Compiler.States
 
         public override void EnterMemberConvertExpr(MemberConvertExprContext context)
         {
+            Out.Write('(');
             OnEnter(context);
         }
 
         public override void ExitMemberConvertExpr(MemberConvertExprContext context)
         {
             OnExit();
+            Out.Write(')');
             ExitState().ExitMemberConvertExpr(context);
         }
 
