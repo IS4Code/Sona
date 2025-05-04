@@ -1123,7 +1123,12 @@ memberConvertExpr:
   convertOperator '(' expression ')';
 
 convertOperator:
-  'some' | primitiveType;
+  'some' |
+  ('widen' | 'narrow') ('<' type '>')? testConversion? |
+  primitiveType;
+
+testConversion:
+  '?';
 
 // Must indicate construction by having no arguments, at least two arguments, or one named argument.
 memberTypeConstructExpr:
