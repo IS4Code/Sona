@@ -233,6 +233,14 @@ module Operators =
   
   let inline ConvertInvariant(y)(x) =
     ((^self1 or ^self2 or ^x) : (static member ``operator ConvertInvariant``: ^self1 * ^self2 * ^x * ^y -> ^y) (null : Operators1), (null : Operators2), x, y)
+  
+  let inline TryConversion(x: ^T)(f : ^T -> ^U) =
+    try Some(f(x)) with
+    | (:? FormatException) | (:? OverflowException) | (:? InvalidCastException) -> None
+  
+  let inline TryConversionValue(x: ^T)(f : ^T -> ^U) =
+    try ValueSome(f(x)) with
+    | (:? FormatException) | (:? OverflowException) | (:? InvalidCastException) -> ValueNone
 
 module Patterns =
   [<return: Struct>]

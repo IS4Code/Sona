@@ -34,12 +34,14 @@ namespace Sona.Compiler.States
 
         public override void EnterAtomicConvertExpr(AtomicConvertExprContext context)
         {
+            Out.Write('(');
             OnEnter(context);
         }
 
         public override void ExitAtomicConvertExpr(AtomicConvertExprContext context)
         {
             OnExit();
+            Out.Write(')');
             ExitState().ExitAtomicConvertExpr(context);
         }
 
@@ -56,7 +58,6 @@ namespace Sona.Compiler.States
             if(type == null)
             {
                 base.ExitPrimitiveType(context);
-                Out.Write('(');
             }
         }
 
@@ -109,6 +110,15 @@ namespace Sona.Compiler.States
 
         public override void EnterTestConversion(TestConversionContext context)
         {
+            switch(type)
+            {
+                case null or SonaLexer.NARROW:
+                    break;
+                default:
+                    Error("This conversion always succeeds; use `some` to wrap the value in an option type.", context);
+                    return;
+            }
+
             testConversion = true;
         }
 
@@ -151,11 +161,15 @@ namespace Sona.Compiler.States
                 // An option type is requested
                 switch(type)
                 {
-                    case SonaLexer.WIDEN:
-                        Error("A widening conversion always succeeds; use `some` to wrap the value in an option type.", context);
-                        return;
                     case SonaLexer.NARROW:
                         Out.Write("(match(");
+                        return;
+                    case null:
+                        // An arbitrary type constructor
+                        Out.WriteOperator("|>");
+                        bool isStruct = LexerContext.GetState<OptionPragma>()?.IsStruct ?? true;
+                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", isStruct ? "TryConversionValue" : "TryConversion");
+                        Out.Write('(');
                         return;
                 }
             }
@@ -179,6 +193,9 @@ namespace Sona.Compiler.States
                         return;
                     case SonaLexer.NARROW:
                         Out.Write("downcast(");
+                        return;
+                    case null:
+                        Out.Write('(');
                         return;
                 }
             }

@@ -1128,8 +1128,10 @@ memberConvertExpr:
 
 convertOperator:
   'some' |
-  ('widen' | 'narrow') ('<' type '>')? testConversion? |
-  primitiveType;
+  (
+    ('widen' | 'narrow') ('<' type '>')? |
+    primitiveType
+  ) testConversion?;
 
 testConversion:
   '?';
