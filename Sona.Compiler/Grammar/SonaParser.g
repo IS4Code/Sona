@@ -138,7 +138,11 @@ namedType:
   name genericArguments? (('.' name | memberName) genericArguments?)*;
 
 primitiveType:
-  'bool' | 'int' | 'uint' | 'float' |
+  'bool' | 'byte' | 'sbyte' |
+  'int' | 'int16' | 'int32' | 'int64' | 'int128' |
+  'uint' | 'uint16' | 'uint32' | 'uint64' | 'uint128' |
+  'nativeint' | 'unativeint' | 'bigint' |
+  'float' | 'float16' | 'float32' | 'float64' | 'decimal' |
   'char' | 'string' | 'object' | 'void' |
   'exception';
 

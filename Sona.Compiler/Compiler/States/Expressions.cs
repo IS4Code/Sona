@@ -239,9 +239,52 @@ namespace Sona.Compiler.States
                 case SonaLexer.VOID:
                     text = "ignore";
                     break;
+                case SonaLexer.BYTE:
+                    // Might be uint8
+                    text = "byte";
+                    break;
+                case SonaLexer.SBYTE:
+                    // Might be int8
+                    text = "sbyte";
+                    break;
                 case SonaLexer.BOOL:
-                    Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "ToBoolean");
+                case SonaLexer.BIGINT:
+                case SonaLexer.INT128:
+                case SonaLexer.UINT128:
+                case SonaLexer.FLOAT16:
+                    if(token.Type == SonaLexer.BOOL)
+                    {
+                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Convert");
+                        Out.Write("(true)");
+                        return;
+                    }
+
+                    Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "ConvertInvariant");
+                    Out.Write('(');
+                    Out.WriteCoreOperatorName("Unchecked");
+                    Out.Write(".defaultof<");
+
+                    switch(token.Type)
+                    {
+                        case SonaLexer.BIGINT:
+                            Out.WriteCoreName("bigint");
+                            break;
+                        case SonaLexer.INT128:
+                            Out.WriteSystemName("Int128");
+                            break;
+                        case SonaLexer.UINT128:
+                            Out.WriteSystemName("UInt128");
+                            break;
+                        case SonaLexer.FLOAT16:
+                            Out.WriteSystemName("Half");
+                            break;
+                    }
+
+                    Out.Write(">)");
                     return;
+                case SonaLexer.FLOAT64:
+                    text = "float";
+                    break;
                 case SonaLexer.EXCEPTION:
                     Out.WriteSystemName("Exception");
                     return;

@@ -165,11 +165,17 @@ type Operators1 with
     | Ok value -> struct(true, value)
     | Error _ -> struct(false, Unchecked.defaultof<_>)
   
+  static member inline ``operator Convert``(_:Operators1, _:Operators2, x : ^T, y : ^U) =
+    ((^T or ^U) : (static member op_Explicit : ^T -> ^U) x)
+  
+  static member inline ``operator ConvertInvariant``(_:Operators1, _:Operators2, x : ^T, y : ^U) =
+    ((^T or ^U) : (static member op_Explicit : ^T -> ^U) x)
+  
   // Impossible overloads needed with the same signature as the one in Operators2
   static member inline ``operator BindToLiftedResult``(_:Operators1, _:Operators2, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T), _) = ()
   
   static member inline ``operator BindToResult``(_:Operators1, _:Operators2, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T)) = ()
-  
+
 type Operators2 with
   static member inline ``operator Throw``(_:Operators1, _:Operators2, x : #Exception) =
     raise x
@@ -196,6 +202,12 @@ type Operators2 with
     match x with
     | NonNull value -> struct(true, value)
     | Null -> struct(false, Unchecked.defaultof<_>)
+  
+  static member inline ``operator Convert``(_:Operators1, _:Operators2, x : ^T, y : ^U) =
+    ((^T or ^U) : (static member Parse : ^T -> ^U) x)
+    
+  static member inline ``operator ConvertInvariant``(_:Operators1, _:Operators2, x : ^T, y : ^U) =
+    ((^T or ^U) : (static member Parse : ^T * IFormatProvider -> ^U) x, System.Globalization.CultureInfo.InvariantCulture)
 
 module Operators =
   let inline Throw(x) =
@@ -216,7 +228,11 @@ module Operators =
   let inline BindToResult x =
     ((^self1 or ^self2 or ^x) : (static member ``operator BindToResult``: ^self1 * ^self2 * ^x -> struct(bool * _)) (null : Operators1), (null : Operators2), x)
   
-  let inline ToBoolean x = (^T : (static member op_Explicit : ^T -> bool) x)
+  let inline Convert(y)(x) =
+    ((^self1 or ^self2 or ^x) : (static member ``operator Convert``: ^self1 * ^self2 * ^x * ^y -> ^y) (null : Operators1), (null : Operators2), x, y)
+  
+  let inline ConvertInvariant(y)(x) =
+    ((^self1 or ^self2 or ^x) : (static member ``operator ConvertInvariant``: ^self1 * ^self2 * ^x * ^y -> ^y) (null : Operators1), (null : Operators2), x, y)
 
 module Patterns =
   [<return: Struct>]
