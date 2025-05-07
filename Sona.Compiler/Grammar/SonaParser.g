@@ -1009,7 +1009,18 @@ bitShiftExpr:
   innerExpr (('<<' | '>' {combinedOperator}? '>') innerExpr)*;
 
 innerExpr:
-  atomicExpr (('+' | '-' | '*' | '/' | '%') atomicExpr)*;
+  annotationExpr (('+' | '-' | '*' | '/' | '%') annotationExpr)*;
+
+annotationExpr:
+  atomicExpr (
+    'as' type |
+    'with' (
+      recordConstructor |
+      anonymousRecordConstructor |
+      anonymousClassRecordConstructor |
+      anonymousStructRecordConstructor
+    )
+  )*;
 
 atomicExpr:
   altMemberExpr |

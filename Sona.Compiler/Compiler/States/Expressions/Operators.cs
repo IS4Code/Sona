@@ -248,6 +248,19 @@ namespace Sona.Compiler.States
             }
         }
 
+        public sealed override void EnterAnnotationExpr(AnnotationExprContext context)
+        {
+            if(context is TContext ctx)
+            {
+                EnterOperation(ctx);
+            }
+            else
+            {
+                EnterOperand(context);
+                base.EnterAnnotationExpr(context);
+            }
+        }
+
         public override void ExitLogicExpr(LogicExprContext context)
         {
             if(context is TContext ctx)
@@ -388,6 +401,20 @@ namespace Sona.Compiler.States
             }
         }
 
+        public sealed override void ExitAnnotationExpr(AnnotationExprContext context)
+        {
+            if(context is TContext ctx)
+            {
+                ExitOperation(ctx);
+                ExitState().ExitAnnotationExpr(context);
+            }
+            else
+            {
+                base.ExitAnnotationExpr(context);
+                ExitOperand(context);
+            }
+        }
+
         // Ignore terminals in atomic expressions
         public sealed override void EnterAtomicExpr(AtomicExprContext context)
         {
@@ -433,6 +460,8 @@ namespace Sona.Compiler.States
                 case SonaLexer.AND:
                 case SonaLexer.OR:
                 case SonaLexer.NOT:
+                case SonaLexer.AS:
+                case SonaLexer.WITH:
                     Operator(node);
                     break;
             }
@@ -795,6 +824,128 @@ namespace Sona.Compiler.States
         protected override void OnNestedExit(CoalesceExprContext context)
         {
             Out.Write(")))");
+        }
+    }
+
+    internal sealed class AnnotationState : BinaryState<AnnotationExprContext>
+    {
+        ISourceCapture? capture;
+
+        protected sealed override void OnEnter(AnnotationExprContext context)
+        {
+            // Capture the operand
+            capture = Out.StartCapture();
+        }
+
+        protected sealed override void OnExit(AnnotationExprContext context)
+        {
+            if(capture != null)
+            {
+                // Replay the expression
+                Out.StopCapture(capture);
+                capture.Play(Out);
+                capture = null;
+            }
+        }
+
+        protected sealed override void OnOperator(ITerminalNode node)
+        {
+            // Operator not important - the next rule affects the result
+        }
+
+        private ISourceCapture? OnNestedOperand()
+        {
+            if(capture is not { } operandCapture)
+            {
+                return null;
+            }
+            // Finalize the inner operand
+            Out.StopCapture(operandCapture);
+
+            // Start a new operand
+            capture = Out.StartCapture();
+
+            return operandCapture;
+        }
+
+        public override void EnterType(TypeContext context)
+        {
+            if(OnNestedOperand() is { } operandCapture)
+            {
+                Out.Write('(');
+                operandCapture.Play(Out);
+                Out.WriteOperator(':');
+            }
+            base.EnterType(context);
+        }
+
+        public override void ExitType(TypeContext context)
+        {
+            base.ExitType(context);
+            if(capture != null)
+            {
+                Out.Write(')');
+            }
+        }
+
+        public override void EnterRecordConstructor(RecordConstructorContext context)
+        {
+            if(OnNestedOperand() is { } operandCapture)
+            {
+                base.EnterRecordConstructor(context);
+                Out.Write('(');
+                operandCapture.Play(Out);
+                Out.Write(")with ");
+            }
+            else
+            {
+                base.EnterRecordConstructor(context);
+            }
+        }
+
+        public override void EnterAnonymousRecordConstructor(AnonymousRecordConstructorContext context)
+        {
+            if(OnNestedOperand() is { } operandCapture)
+            {
+                base.EnterAnonymousRecordConstructor(context);
+                Out.Write('(');
+                operandCapture.Play(Out);
+                Out.Write(")with ");
+            }
+            else
+            {
+                base.EnterAnonymousRecordConstructor(context);
+            }
+        }
+
+        public override void EnterAnonymousClassRecordConstructor(AnonymousClassRecordConstructorContext context)
+        {
+            if(OnNestedOperand() is { } operandCapture)
+            {
+                base.EnterAnonymousClassRecordConstructor(context);
+                Out.Write('(');
+                operandCapture.Play(Out);
+                Out.Write(")with ");
+            }
+            else
+            {
+                base.EnterAnonymousClassRecordConstructor(context);
+            }
+        }
+
+        public override void EnterAnonymousStructRecordConstructor(AnonymousStructRecordConstructorContext context)
+        {
+            if(OnNestedOperand() is { } operandCapture)
+            {
+                base.EnterAnonymousStructRecordConstructor(context);
+                Out.Write('(');
+                operandCapture.Play(Out);
+                Out.Write(")with ");
+            }
+            else
+            {
+                base.EnterAnonymousStructRecordConstructor(context);
+            }
         }
     }
 }

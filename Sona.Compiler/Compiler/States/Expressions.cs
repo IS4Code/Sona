@@ -195,6 +195,16 @@ namespace Sona.Compiler.States
 
         }
 
+        public override void EnterAnnotationExpr(AnnotationExprContext context)
+        {
+            EnterState<AnnotationState>().EnterAnnotationExpr(context);
+        }
+
+        public override void ExitAnnotationExpr(AnnotationExprContext context)
+        {
+
+        }
+
         public override void EnterHashExpr(HashExprContext context)
         {
             Out.Write('(');
