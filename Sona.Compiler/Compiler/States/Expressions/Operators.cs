@@ -131,7 +131,7 @@ namespace Sona.Compiler.States
             }
         }
 
-        public sealed override void EnterOuterExpr(OuterExprContext context)
+        public sealed override void EnterBooleanExpr(BooleanExprContext context)
         {
             if(context is TContext ctx)
             {
@@ -140,7 +140,20 @@ namespace Sona.Compiler.States
             else
             {
                 EnterOperand(context);
-                base.EnterOuterExpr(context);
+                base.EnterBooleanExpr(context);
+            }
+        }
+
+        public sealed override void EnterRelationalExpr(RelationalExprContext context)
+        {
+            if(context is TContext ctx)
+            {
+                EnterOperation(ctx);
+            }
+            else
+            {
+                EnterOperand(context);
+                base.EnterRelationalExpr(context);
             }
         }
 
@@ -249,16 +262,30 @@ namespace Sona.Compiler.States
             }
         }
 
-        public sealed override void ExitOuterExpr(OuterExprContext context)
+        public sealed override void ExitBooleanExpr(BooleanExprContext context)
         {
             if(context is TContext ctx)
             {
                 ExitOperation(ctx);
-                ExitState().ExitOuterExpr(context);
+                ExitState().ExitBooleanExpr(context);
             }
             else
             {
-                base.ExitOuterExpr(context);
+                base.ExitBooleanExpr(context);
+                ExitOperand(context);
+            }
+        }
+
+        public sealed override void ExitRelationalExpr(RelationalExprContext context)
+        {
+            if(context is TContext ctx)
+            {
+                ExitOperation(ctx);
+                ExitState().ExitRelationalExpr(context);
+            }
+            else
+            {
+                base.ExitRelationalExpr(context);
                 ExitOperand(context);
             }
         }
@@ -411,8 +438,23 @@ namespace Sona.Compiler.States
             }
         }
     }
-
+    
     internal sealed class StandardBinaryState<TContext> : BinaryState<TContext> where TContext : ParserRuleContext
+    {
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+        }
+
+        protected override void OnOperator(ITerminalNode node)
+        {
+            var token = node.Symbol;
+            string text = token.Text;
+            Out.WriteOperator(text);
+        }
+    }
+
+    internal sealed class RelationalBinaryState<TContext> : BinaryState<TContext> where TContext : ParserRuleContext
     {
         // Wrap the whole expression in (...) if first operand is generated as =
         bool WrapInParentheses => FirstOperator is null or { Symbol: { Type: SonaLexer.EQ } };
@@ -457,6 +499,11 @@ namespace Sona.Compiler.States
 
         protected override void OnOperator(ITerminalNode node)
         {
+            if(previousOperator == null && FirstOperator != null && node != FirstOperator)
+            {
+                Error("Relational operators cannot be written in sequence. Use parentheses to indicate precedence.", node);
+            }
+
             var token = node.Symbol;
             string text = token.Text;
             switch(token.Type)

@@ -105,12 +105,22 @@ namespace Sona.Compiler.States
             Out.Write(')');
         }
 
-        public override void EnterOuterExpr(OuterExprContext context)
+        public override void EnterBooleanExpr(BooleanExprContext context)
         {
-            EnterState<StandardBinaryState<OuterExprContext>>().EnterOuterExpr(context);
+            EnterState<StandardBinaryState<BooleanExprContext>>().EnterBooleanExpr(context);
         }
 
-        public override void ExitOuterExpr(OuterExprContext context)
+        public override void ExitBooleanExpr(BooleanExprContext context)
+        {
+
+        }
+
+        public override void EnterRelationalExpr(RelationalExprContext context)
+        {
+            EnterState<RelationalBinaryState<RelationalExprContext>>().EnterRelationalExpr(context);
+        }
+
+        public override void ExitRelationalExpr(RelationalExprContext context)
         {
 
         }

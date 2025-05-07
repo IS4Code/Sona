@@ -969,21 +969,24 @@ expression:
   inlineSourceFree;
 
 atomicLogicExpr:
-  'not'* ('not' outerExpr | inlineIfExpr);
+  'not'* ('not' booleanExpr | inlineIfExpr);
 
 logicExpr:
-  outerExpr (
+  booleanExpr (
     (
-      'and' (outerExpr 'and')* |
-      'or' (outerExpr 'or')*
-    ) (outerExpr | atomicLogicExpr)
+      'and' (booleanExpr 'and')* |
+      'or' (booleanExpr 'or')*
+    ) (booleanExpr | atomicLogicExpr)
   )?;
 
 inlineIfExpr:
-  'if' expression 'then' expression 'else' (outerExpr | atomicLogicExpr);
+  'if' expression 'then' expression 'else' (booleanExpr | atomicLogicExpr);
 
-outerExpr:
-  coalesceExpr (('<' | '<=' | '>' | '>' {combinedOperator}? '=' | '==' | '!=' | '~=' | '&&' | '||') coalesceExpr)*;
+booleanExpr:
+  relationalExpr (('&&' | '||') relationalExpr)*;
+
+relationalExpr:
+  coalesceExpr (('<' | '<=' | '>' | '>' {combinedOperator}? '=' | '==' | '!=' | '~=') coalesceExpr)*;
 
 coalesceExpr:
   concatExpr ('?' {combinedOperator}? '?' concatExpr)*;
