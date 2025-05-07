@@ -175,6 +175,10 @@ type Operators1 with
   static member inline ``operator BindToLiftedResult``(_:Operators1, _:Operators2, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T), _) = ()
   
   static member inline ``operator BindToResult``(_:Operators1, _:Operators2, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T)) = ()
+  
+  static member inline ``operator TryConversion``(_:Operators1, _:Operators2, x : ^T, f : ^T -> ^U when ^U :> Enum and ^U : not struct and ^U : (new : unit -> ^U)) = ()
+  
+  static member inline ``operator TryConversionValue``(_:Operators1, _:Operators2, x : ^T, f : ^T -> ^U when ^U :> Enum and ^U : not struct and ^U : (new : unit -> ^U)) = ()
 
 type Operators2 with
   static member inline ``operator Throw``(_:Operators1, _:Operators2, x : #Exception) =
@@ -208,6 +212,52 @@ type Operators2 with
     
   static member inline ``operator ConvertInvariant``(_:Operators1, _:Operators2, x : ^T, y : ^U) =
     ((^T or ^U) : (static member Parse : ^T * IFormatProvider -> ^U) x, System.Globalization.CultureInfo.InvariantCulture)
+  
+  static member inline ``operator TryConversion``(_:Operators1, _:Operators2, x : ^T, f : ^T -> ^U) =
+    try Some(f(x)) with
+    | (:? FormatException) | (:? OverflowException) | (:? InvalidCastException) -> None
+  
+  static member inline ``operator TryConversion``(_:Operators1, _:Operators2, n : Nullable<^T>, f : _ -> ^U) =
+    if n.HasValue then ((^self1 or ^self2 or ^T) : (static member ``operator TryConversion``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U option) (null : Operators1), (null : Operators2), n.GetValueOrDefault(), f)
+    else None
+  
+  static member inline ``operator TryConversion``(_:Operators1, _:Operators2, o : ^T option, f : _ -> ^U) =
+    match o with
+    | Some x -> ((^self1 or ^self2 or ^T) : (static member ``operator TryConversion``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U option) (null : Operators1), (null : Operators2), x, f)
+    | _ -> None
+  
+  static member inline ``operator TryConversion``(_:Operators1, _:Operators2, o : ^T voption, f : _ -> ^U) =
+    match o with
+    | ValueSome x -> ((^self1 or ^self2 or ^T) : (static member ``operator TryConversion``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U option) (null : Operators1), (null : Operators2), x, f)
+    | _ -> None
+  
+  static member inline ``operator TryConversion``(_:Operators1, _:Operators2, r : Result<^T, _>, f : _ -> ^U) =
+    match r with
+    | Ok x -> ((^self1 or ^self2 or ^T) : (static member ``operator TryConversion``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U option) (null : Operators1), (null : Operators2), x, f)
+    | _ -> None
+  
+  static member inline ``operator TryConversionValue``(_:Operators1, _:Operators2, x : ^T, f : ^T -> ^U) =
+    try ValueSome(f(x)) with
+    | (:? FormatException) | (:? OverflowException) | (:? InvalidCastException) -> ValueNone
+  
+  static member inline ``operator TryConversionValue``(_:Operators1, _:Operators2, n : Nullable<^T>, f : _ -> ^U) =
+    if n.HasValue then ((^self1 or ^self2 or ^T) : (static member ``operator TryConversionValue``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U voption) (null : Operators1), (null : Operators2), n.GetValueOrDefault(), f)
+    else ValueNone
+  
+  static member inline ``operator TryConversionValue``(_:Operators1, _:Operators2, o : ^T option, f : _ -> ^U) =
+    match o with
+    | Some x -> ((^self1 or ^self2 or ^T) : (static member ``operator TryConversionValue``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U voption) (null : Operators1), (null : Operators2), x, f)
+    | _ -> ValueNone
+  
+  static member inline ``operator TryConversionValue``(_:Operators1, _:Operators2, o : ^T voption, f : _ -> ^U) =
+    match o with
+    | ValueSome x -> ((^self1 or ^self2 or ^T) : (static member ``operator TryConversionValue``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U voption) (null : Operators1), (null : Operators2), x, f)
+    | _ -> ValueNone
+  
+  static member inline ``operator TryConversionValue``(_:Operators1, _:Operators2, r : Result<^T, _>, f : _ -> ^U) =
+    match r with
+    | Ok x -> ((^self1 or ^self2 or ^T) : (static member ``operator TryConversionValue``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U voption) (null : Operators1), (null : Operators2), x, f)
+    | _ -> ValueNone
 
 module Operators =
   let inline Throw(x) =
@@ -234,13 +284,11 @@ module Operators =
   let inline ConvertInvariant(y)(x) =
     ((^self1 or ^self2 or ^x) : (static member ``operator ConvertInvariant``: ^self1 * ^self2 * ^x * ^y -> ^y) (null : Operators1), (null : Operators2), x, y)
   
-  let inline TryConversion(x: ^T)(f : ^T -> ^U) =
-    try Some(f(x)) with
-    | (:? FormatException) | (:? OverflowException) | (:? InvalidCastException) -> None
+  let inline TryConversion(x: ^T)(f : _ -> ^U) =
+    ((^self1 or ^self2 or ^T) : (static member ``operator TryConversion``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U option) (null : Operators1), (null : Operators2), x, f)
   
-  let inline TryConversionValue(x: ^T)(f : ^T -> ^U) =
-    try ValueSome(f(x)) with
-    | (:? FormatException) | (:? OverflowException) | (:? InvalidCastException) -> ValueNone
+  let inline TryConversionValue(x: ^T)(f : _ -> ^U) =
+    ((^self1 or ^self2 or ^T) : (static member ``operator TryConversionValue``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U voption) (null : Operators1), (null : Operators2), x, f)
 
 module Patterns =
   [<return: Struct>]
