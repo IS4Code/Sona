@@ -170,8 +170,8 @@ namespace Sona.Compiler.Gui
             adjustLineNumbersButton.Image = (Image)resources.GetObject("adjustLineNumbersButton.Image");
             adjustLineNumbersButton.ImageTransparentColor = Color.Magenta;
             adjustLineNumbersButton.Name = "adjustLineNumbersButton";
-            adjustLineNumbersButton.Size = new Size(150, 22);
-            adjustLineNumbersButton.Text = "Show source line numbers";
+            adjustLineNumbersButton.Size = new Size(165, 22);
+            adjustLineNumbersButton.Text = "Preserve source line numbers";
             adjustLineNumbersButton.CheckedChanged += adjustLineNumbersButton_CheckedChanged;
             // 
             // progressBar

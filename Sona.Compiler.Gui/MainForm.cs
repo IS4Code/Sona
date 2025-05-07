@@ -112,7 +112,6 @@ namespace Sona.Compiler.Gui
 
             compiler = new SonaCompiler();
 
-            adjustLineNumbersButton.Checked = true;
 #if !DEBUG
             orientationButton.PerformClick();
             orientationButton.PerformClick();
