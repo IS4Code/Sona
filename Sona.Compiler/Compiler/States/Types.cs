@@ -123,6 +123,16 @@ namespace Sona.Compiler.States
 
         }
 
+        public override void EnterConjunctionType(ConjunctionTypeContext context)
+        {
+            EnterState<ConjunctionType>().EnterConjunctionType(context);
+        }
+
+        public override void ExitConjunctionType(ConjunctionTypeContext context)
+        {
+
+        }
+
         public override void EnterNestedType(NestedTypeContext context)
         {
             EnterState<NestedType>().EnterNestedType(context);
@@ -349,6 +359,47 @@ namespace Sona.Compiler.States
             public override void ExitAtomicType(AtomicTypeContext context)
             {
 
+            }
+        }
+
+        sealed class ConjunctionType : TypeState
+        {
+            bool first;
+
+            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+            {
+                base.Initialize(environment, parent);
+
+                first = true;
+            }
+
+            public override void EnterConjunctionType(ConjunctionTypeContext context)
+            {
+                Out.Write('(');
+            }
+
+            public override void ExitConjunctionType(ConjunctionTypeContext context)
+            {
+                Out.Write(')');
+                ExitState().ExitConjunctionType(context);
+            }
+
+            public override void EnterAtomicType(AtomicTypeContext context)
+            {
+                if(first)
+                {
+                    first = false;
+                }
+                else
+                {
+                    Out.WriteOperator('&');
+                }
+                Out.Write("#(");
+            }
+
+            public override void ExitAtomicType(AtomicTypeContext context)
+            {
+                Out.Write(')');
             }
         }
 

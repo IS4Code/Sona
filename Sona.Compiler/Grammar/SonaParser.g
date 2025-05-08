@@ -112,11 +112,15 @@ typeArgument:
 type:
   atomicType |
   nullableType |
+  conjunctionType |
   inlineSourceFree;
 
 nullableType:
   atomicType 'or' 'null' |
   'null' 'or' (atomicType | 'else');
+
+conjunctionType:
+  atomicType ('and' atomicType)* ('and' (atomicType | 'else'));
 
 atomicType:
   (
