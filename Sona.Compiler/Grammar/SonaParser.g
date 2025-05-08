@@ -1114,7 +1114,7 @@ altMemberExpr_Suffix:
   constrainedPropertyAccess;
 
 conditionalMember:
-  '?';
+  '?' {combinedOperator}?;
 
 constrainedMemberAccess:
   '.' '(' name ')' callArguments?;
