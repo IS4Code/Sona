@@ -7,16 +7,20 @@ namespace Sona.Compiler.States
     internal sealed class ConversionState : ExpressionState
     {
         int? type;
+        bool typePresent;
         ISourceCapture? typeCapture;
         bool testConversion;
+        bool optionIsStruct;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             type = null;
+            typePresent = false;
             typeCapture = null;
             testConversion = false;
+            optionIsStruct = false;
         }
 
         public override void EnterMemberConvertExpr(MemberConvertExprContext context)
@@ -98,14 +102,42 @@ namespace Sona.Compiler.States
 
         public override void EnterType(TypeContext context)
         {
-            typeCapture = Out.StartCapture();
+            typePresent = true;
+            switch(type)
+            {
+                case SonaLexer.SOME:
+                    Out.WriteCoreName(optionIsStruct ? "ValueOption" : "Option");
+                    Out.Write('<');
+                    break;
+                case SonaLexer.ENUM:
+                    Out.WriteCoreName("LanguagePrimitives");
+                    Out.Write(".EnumOfValue<_,");
+                    break;
+                case SonaLexer.WIDEN:
+                case SonaLexer.NARROW:
+                    typeCapture = Out.StartCapture();
+                    break;
+            }
             base.EnterType(context);
         }
 
         public override void ExitType(TypeContext context)
         {
             base.ExitType(context);
-            Out.StopCapture(typeCapture ?? ErrorCapture("COMPILER ERROR: Missing type capture.", context));
+            switch(type)
+            {
+                case SonaLexer.SOME:
+                    Out.Write(">.");
+                    Out.WriteIdentifier(optionIsStruct ? "ValueSome" : "Some");
+                    break;
+                case SonaLexer.ENUM:
+                    Out.Write('>');
+                    break;
+                case SonaLexer.WIDEN:
+                case SonaLexer.NARROW:
+                    Out.StopCapture(typeCapture ?? ErrorCapture("COMPILER ERROR: Missing type capture.", context));
+                    break;
+            }
         }
 
         public override void EnterTestConversion(TestConversionContext context)
@@ -133,10 +165,6 @@ namespace Sona.Compiler.States
             type = token.Type;
             switch(type)
             {
-                case SonaLexer.SOME:
-                    Out.WriteCoreName(LexerContext.GetState<OptionPragma>()?.IsStruct ?? true ? "ValueSome" : "Some");
-                    Out.Write('(');
-                    return;
                 case SonaLexer.VOID:
                     Out.EnterNestedScope(true);
                     Out.Write("(let _");
@@ -145,13 +173,18 @@ namespace Sona.Compiler.States
                 case SonaLexer.OBJECT:
                     Out.Write('(');
                     return;
+                case SonaLexer.SOME:
+                case SonaLexer.ENUM:
                 case SonaLexer.WIDEN:
                 case SonaLexer.NARROW:
-                    // Wait for the rest
-                    return;
+                    // Wait for type/operand
+                    break;
+                default:
+                    // Normal primitive type
+                    type = null;
+                    break;
             }
-            // Normal primitive type
-            type = null;
+            optionIsStruct = LexerContext.GetState<OptionPragma>()?.IsStruct ?? true;
         }
 
         void OnOperand(ParserRuleContext context)
@@ -167,8 +200,7 @@ namespace Sona.Compiler.States
                     case null:
                         // An arbitrary type constructor
                         Out.WriteOperator("|>");
-                        bool isStruct = LexerContext.GetState<OptionPragma>()?.IsStruct ?? true;
-                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", isStruct ? "TryConversionValue" : "TryConversion");
+                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", optionIsStruct ? "TryConversionValue" : "TryConversion");
                         Out.Write('(');
                         return;
                 }
@@ -188,6 +220,21 @@ namespace Sona.Compiler.States
             {
                 switch(type)
                 {
+                    case SonaLexer.SOME:
+                        if(!typePresent)
+                        {
+                            Out.WriteCoreName(optionIsStruct ? "ValueSome" : "Some");
+                        }
+                        Out.Write('(');
+                        return;
+                    case SonaLexer.ENUM:
+                        if(!typePresent)
+                        {
+                            Out.WriteCoreName("LanguagePrimitives");
+                            Out.Write(".EnumOfValue");
+                        }
+                        Out.Write('(');
+                        return;
                     case SonaLexer.WIDEN:
                         Out.Write("upcast(");
                         return;
@@ -238,13 +285,12 @@ namespace Sona.Compiler.States
                         var id = Out.CreateTemporaryIdentifier();
                         Out.WriteIdentifier(id);
                         Out.WriteOperator("->");
-                        bool isStruct = LexerContext.GetState<OptionPragma>()?.IsStruct ?? true;
-                        Out.WriteCoreName(isStruct ? "ValueSome" : "Some");
+                        Out.WriteCoreName(optionIsStruct ? "ValueSome" : "Some");
                         Out.Write(' ');
                         Out.WriteIdentifier(id);
                         Out.Write("|_");
                         Out.WriteOperator("->");
-                        Out.WriteCoreName(isStruct ? "ValueNone" : "None");
+                        Out.WriteCoreName(optionIsStruct ? "ValueNone" : "None");
                         Out.Write(')');
                         return;
                     }
