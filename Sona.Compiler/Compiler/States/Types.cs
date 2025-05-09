@@ -59,11 +59,11 @@ namespace Sona.Compiler.States
                     Out.WriteSystemName("Void");
                     return;
                 case SonaLexer.BYTE:
-                    // Might be uint8
+                    // Might be 'uint8'
                     text = "byte";
                     break;
                 case SonaLexer.SBYTE:
-                    // Might be int8
+                    // Might be 'int8'
                     text = "sbyte";
                     break;
                 case SonaLexer.INT128:
@@ -75,7 +75,12 @@ namespace Sona.Compiler.States
                 case SonaLexer.FLOAT16:
                     Out.WriteSystemName("Half");
                     return;
+                case SonaLexer.FLOAT32:
+                    // Might be 'single'
+                    text = "float32";
+                    break;
                 case SonaLexer.FLOAT64:
+                    // Might be 'double'
                     text = "float";
                     break;
                 case SonaLexer.EXCEPTION:

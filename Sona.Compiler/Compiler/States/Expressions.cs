@@ -260,11 +260,11 @@ namespace Sona.Compiler.States
                     text = "ignore";
                     break;
                 case SonaLexer.BYTE:
-                    // Might be uint8
+                    // Might be 'uint8'
                     text = "byte";
                     break;
                 case SonaLexer.SBYTE:
-                    // Might be int8
+                    // Might be 'int8'
                     text = "sbyte";
                     break;
                 case SonaLexer.BOOL:
@@ -302,7 +302,12 @@ namespace Sona.Compiler.States
 
                     Out.Write(">)");
                     return;
+                case SonaLexer.FLOAT32:
+                    // Might be 'single'
+                    text = "float32";
+                    break;
                 case SonaLexer.FLOAT64:
+                    // Might be 'double'
                     text = "float";
                     break;
                 case SonaLexer.EXCEPTION:
