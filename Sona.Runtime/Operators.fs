@@ -69,6 +69,9 @@ type BinaryOperators1 with
   static member inline ``operator Pipe``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
     x |> y
    
+  static member inline ``operator Hat``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
+    x ** y
+   
   static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
     curry1(x, y)
   static member inline ``operator And``(_:BinaryOperators1, _:BinaryOperators2, x, y) =
