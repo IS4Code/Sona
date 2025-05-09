@@ -87,10 +87,13 @@ namespace Sona.Tests
         [DataRow("a or b < c", "(a) || (b < c)")]
         [DataRow("a && b < c", "a && b < c")]
         [DataRow("a || b < c", "a || b < c")]
-        [DataRow("a < b <= c > d >= e == f != g ~= h", "a < b <= c > d >= e = f <> g <> h")]
-        [DataRow("a ~= b != c == d >= e > f <= g < h", "a <> b <> c = d >= e > f <= g < h")]
-        [DataRow("a == b != c ~= d", "(a = b <> c <> d)")]
-        [DataRow("a == b >= c > d <= e < f", "(a = b >= c > d <= e < f)")]
+        [DataRow("a < b <= c > d >= e == f != g ~= h", null)]
+        [DataRow("a ~= b != c == d >= e > f <= g < h", null)]
+        [DataRow("a == b != c ~= d", null)]
+        [DataRow("a == b >= c > d <= e < f", null)]
+        [DataRow("a < b && b <= c && c > d && d >= e && e == f && f != g && g ~= h", "a < b && b <= c && c > d && d >= e && (e = f) && f <> g && g <> h")]
+        [DataRow("a ~= b", "a <> b")]
+        [DataRow("a == b", "(a = b)")]
         [TestMethod]
         public void RelationalOperators(string source, string? expected)
         {
