@@ -1145,7 +1145,7 @@ memberConvertExpr:
   convertOperator '(' expression ')';
 
 convertOperator:
-  ('some' | 'enum') ('<' type '>')? |
+  ('some' | 'enum' | 'implicit' | 'explicit') ('<' type '>')? |
   (
     ('widen' | 'narrow') ('<' type '>')? |
     primitiveType

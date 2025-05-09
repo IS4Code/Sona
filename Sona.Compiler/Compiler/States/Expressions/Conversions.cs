@@ -113,6 +113,14 @@ namespace Sona.Compiler.States
                     Out.WriteCoreName("LanguagePrimitives");
                     Out.Write(".EnumOfValue<_,");
                     break;
+                case SonaLexer.IMPLICIT:
+                    Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Implicit");
+                    Out.Write("<_,");
+                    break;
+                case SonaLexer.EXPLICIT:
+                    Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Explicit");
+                    Out.Write("<_,");
+                    break;
                 case SonaLexer.WIDEN:
                 case SonaLexer.NARROW:
                     typeCapture = Out.StartCapture();
@@ -131,6 +139,8 @@ namespace Sona.Compiler.States
                     Out.WriteIdentifier(optionIsStruct ? "ValueSome" : "Some");
                     break;
                 case SonaLexer.ENUM:
+                case SonaLexer.IMPLICIT:
+                case SonaLexer.EXPLICIT:
                     Out.Write('>');
                     break;
                 case SonaLexer.WIDEN:
@@ -175,6 +185,8 @@ namespace Sona.Compiler.States
                     return;
                 case SonaLexer.SOME:
                 case SonaLexer.ENUM:
+                case SonaLexer.IMPLICIT:
+                case SonaLexer.EXPLICIT:
                 case SonaLexer.WIDEN:
                 case SonaLexer.NARROW:
                     // Wait for type/operand
@@ -232,6 +244,20 @@ namespace Sona.Compiler.States
                         {
                             Out.WriteCoreName("LanguagePrimitives");
                             Out.Write(".EnumOfValue");
+                        }
+                        Out.Write('(');
+                        return;
+                    case SonaLexer.IMPLICIT:
+                        if(!typePresent)
+                        {
+                            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Implicit");
+                        }
+                        Out.Write('(');
+                        return;
+                    case SonaLexer.EXPLICIT:
+                        if(!typePresent)
+                        {
+                            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Explicit");
                         }
                         Out.Write('(');
                         return;

@@ -289,6 +289,10 @@ module Operators =
   
   let inline TryConversionValue(x: ^T)(f : _ -> ^U) =
     ((^self1 or ^self2 or ^T) : (static member ``operator TryConversionValue``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U voption) (null : Operators1), (null : Operators2), x, f)
+  
+  let inline Implicit<^T, ^U when (^T or ^U) : (static member op_Implicit: ^T -> ^U)> x = ((^T or ^U) : (static member op_Implicit: ^T -> ^U) x)
+
+  let inline Explicit<^T, ^U when (^T or ^U) : (static member op_Explicit: ^T -> ^U)> x = ((^T or ^U) : (static member op_Explicit: ^T -> ^U) x)
 
 module Patterns =
   [<return: Struct>]
