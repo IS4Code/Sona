@@ -68,6 +68,26 @@ namespace Sona.Compiler
 
         }
 
+        public override void EnterCompoundNameGeneric(CompoundNameGenericContext context)
+        {
+            EnterState<CompoundNameState>().EnterCompoundNameGeneric(context);
+        }
+
+        public override void ExitCompoundNameGeneric(CompoundNameGenericContext context)
+        {
+
+        }
+
+        public override void EnterGenericArguments(GenericArgumentsContext context)
+        {
+            EnterState<GenericArgumentsState>().EnterGenericArguments(context);
+        }
+
+        public override void ExitGenericArguments(GenericArgumentsContext context)
+        {
+
+        }
+
         public override void EnterNamedValue(NamedValueContext context)
         {
             var token = context.Start;
@@ -382,6 +402,16 @@ namespace Sona.Compiler
             public override void ExitCompoundName(CompoundNameContext context)
             {
                 ExitState().ExitCompoundName(context);
+            }
+
+            public override void EnterCompoundNameGeneric(CompoundNameGenericContext context)
+            {
+
+            }
+
+            public override void ExitCompoundNameGeneric(CompoundNameGenericContext context)
+            {
+                ExitState().ExitCompoundNameGeneric(context);
             }
 
             void OnName()

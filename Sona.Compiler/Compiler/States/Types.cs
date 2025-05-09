@@ -108,16 +108,6 @@ namespace Sona.Compiler.States
 
         }
 
-        public override void EnterNamedType(NamedTypeContext context)
-        {
-            EnterState<NamedType>().EnterNamedType(context);
-        }
-
-        public override void ExitNamedType(NamedTypeContext context)
-        {
-
-        }
-
         public override void EnterNullableType(NullableTypeContext context)
         {
             EnterState<NullableType>().EnterNullableType(context);
@@ -451,143 +441,107 @@ namespace Sona.Compiler.States
                 Out.Write(node.Symbol.Text);
             }
         }
+    }
+    
+    internal sealed class GenericArgumentsState : TypeState, IExpressionContext
+    {
+        bool first;
 
-        sealed class NamedType : TypeState, IExpressionContext
+        bool IExpressionContext.IsLiteral => true;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
-            bool firstName;
-            bool firstArgument;
+            base.Initialize(environment, parent);
 
-            bool IExpressionContext.IsLiteral => true;
+            first = true;
+        }
 
-            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        public override void EnterGenericArguments(GenericArgumentsContext context)
+        {
+            Out.Write('<');
+        }
+
+        public override void ExitGenericArguments(GenericArgumentsContext context)
+        {
+            Out.Write('>');
+            ExitState().ExitGenericArguments(context);
+        }
+
+        public override void EnterGenericArgument(GenericArgumentContext context)
+        {
+            if(first)
             {
-                base.Initialize(environment, parent);
-
-                firstName = true;
-                firstArgument = true;
+                first = false;
             }
-
-            public override void EnterNamedType(NamedTypeContext context)
+            else
             {
-
+                Out.Write(',');
             }
+        }
 
-            public override void ExitNamedType(NamedTypeContext context)
-            {
-                ExitState().ExitNamedType(context);
-            }
+        public override void ExitGenericArgument(GenericArgumentContext context)
+        {
 
-            void OnName()
-            {
-                if(firstName)
-                {
-                    firstName = false;
-                    firstArgument = true;
-                }
-                else
-                {
-                    Out.Write('.');
-                }
-            }
+        }
 
-            public override void EnterName(NameContext context)
-            {
-                OnName();
-                base.EnterName(context);
-            }
+        public override void EnterMeasureArgument(MeasureArgumentContext context)
+        {
+            Out.Write("1*(");
+            EnterState<Measure>().EnterMeasureArgument(context);
+        }
 
-            public override void EnterMemberName(MemberNameContext context)
-            {
-                OnName();
-                base.EnterMemberName(context);
-            }
+        public override void ExitMeasureArgument(MeasureArgumentContext context)
+        {
+            Out.Write(')');
+        }
 
-            public override void EnterGenericArguments(GenericArgumentsContext context)
-            {
-                Out.Write('<');
-            }
+        public override void EnterLiteralArgument(LiteralArgumentContext context)
+        {
+            Out.Write("const(");
+        }
 
-            public override void ExitGenericArguments(GenericArgumentsContext context)
-            {
-                Out.Write('>');
-            }
+        public override void ExitLiteralArgument(LiteralArgumentContext context)
+        {
+            Out.Write(')');
+        }
 
-            public override void EnterGenericArgument(GenericArgumentContext context)
-            {
-                if(firstArgument)
-                {
-                    firstArgument = false;
-                }
-                else
-                {
-                    Out.Write(',');
-                }
-            }
+        public override void EnterExpression(ExpressionContext context)
+        {
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
 
-            public override void ExitGenericArgument(GenericArgumentContext context)
-            {
+        public override void ExitExpression(ExpressionContext context)
+        {
 
-            }
+        }
 
+        class Measure : NodeState
+        {
             public override void EnterMeasureArgument(MeasureArgumentContext context)
             {
-                Out.Write("1*(");
-                EnterState<Measure>().EnterMeasureArgument(context);
+
             }
 
             public override void ExitMeasureArgument(MeasureArgumentContext context)
             {
-                Out.Write(')');
+                ExitState().ExitMeasureArgument(context);
             }
 
-            public override void EnterLiteralArgument(LiteralArgumentContext context)
+            public override void VisitTerminal(ITerminalNode node)
             {
-                Out.Write("const(");
-            }
+                base.VisitTerminal(node);
 
-            public override void ExitLiteralArgument(LiteralArgumentContext context)
-            {
-                Out.Write(')');
-            }
-
-            public override void EnterExpression(ExpressionContext context)
-            {
-                EnterState<ExpressionState>().EnterExpression(context);
-            }
-
-            public override void ExitExpression(ExpressionContext context)
-            {
-
-            }
-
-            class Measure : NodeState
-            {
-                public override void EnterMeasureArgument(MeasureArgumentContext context)
+                var token = node.Symbol;
+                switch(token.Type)
                 {
-
-                }
-
-                public override void ExitMeasureArgument(MeasureArgumentContext context)
-                {
-                    ExitState().ExitMeasureArgument(context);
-                }
-
-                public override void VisitTerminal(ITerminalNode node)
-                {
-                    base.VisitTerminal(node);
-
-                    var token = node.Symbol;
-                    switch(token.Type)
-                    {
-                        case SonaLexer.OPENP:
-                        case SonaLexer.CLOSEP:
-                        case SonaLexer.ASTERISK:
-                        case SonaLexer.SLASH:
-                        case SonaLexer.SINGLE_XOR:
-                        case SonaLexer.MINUS:
-                            Out.Write(token.Text);
-                            break;
-                    }
+                    case SonaLexer.OPENP:
+                    case SonaLexer.CLOSEP:
+                    case SonaLexer.ASTERISK:
+                    case SonaLexer.SLASH:
+                    case SonaLexer.SINGLE_XOR:
+                    case SonaLexer.MINUS:
+                        Out.Write(token.Text);
+                        break;
                 }
             }
         }

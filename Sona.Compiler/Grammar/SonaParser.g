@@ -102,6 +102,9 @@ dynamicMemberName:
 compoundName:
   name ('.' name | memberName)*;
 
+compoundNameGeneric:
+  name genericArguments? (('.' name | memberName) genericArguments?)*;
+
 /* ----- */
 /* Types */
 /* ----- */
@@ -125,7 +128,7 @@ conjunctionType:
 atomicType:
   (
     typeSuffix |
-    namedType |
+    compoundNameGeneric |
     primitiveType |
     unit |
     functionType |
@@ -137,9 +140,6 @@ atomicType:
     anonymousClassRecordType |
     anonymousStructRecordType
   ) typeSuffix*;
-
-namedType:
-  name genericArguments? (('.' name | memberName) genericArguments?)*;
 
 primitiveType:
   'bool' | 'byte' | 'sbyte' |
@@ -207,7 +207,7 @@ measureExpression:
   measureOperand (('*' | '/') measureOperand)*;
 
 measureOperand:
-  (number | compoundName | '(' measureExpression ')') ('^' ('-')? number)?;
+  (number | compoundNameGeneric | '(' measureExpression ')') ('^' ('-')? number)?;
 
 literalArgument:
   'const'? expression;
@@ -884,7 +884,7 @@ importTypeStatement:
   'import' symbolContentsArg;
 
 symbolContentsArg:
-  compoundName '.' '*' |
+  compoundNameGeneric '.' '*' |
   '(' symbolContentsArg ')';
 
 importFileStatement:
@@ -1092,7 +1092,7 @@ memberExpr:
     memberExpr_Suffix*;
 
 memberExpr_Standalone:
-  name simpleCallArgument?? |
+  name genericArguments? simpleCallArgument?? |
   memberTypeConstructExpr |
   nestedExpr |
   nestedAssignment;
@@ -1133,7 +1133,7 @@ indexAccess:
   '[' (expression (',' expression)* | errorMissingExpression) ']';
   
 memberAccess:
-  '.' name | memberName;
+  ('.' name | memberName) genericArguments?;
 
 dynamicMemberAccess:
   ':' name | dynamicMemberName;
