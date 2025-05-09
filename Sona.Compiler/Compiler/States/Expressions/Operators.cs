@@ -602,16 +602,6 @@ namespace Sona.Compiler.States
                         Out.WriteSpecialBinaryOperator("Pipe");
                     }
                     break;
-                case SonaLexer.SINGLE_XOR:
-                    if(IsLiteral)
-                    {
-                        Out.WriteOperator("^^^");
-                    }
-                    else
-                    {
-                        Out.WriteSpecialBinaryOperator("Hat");
-                    }
-                    break;
                 case SonaLexer.SINGLE_AND:
                     if(IsLiteral)
                     {
@@ -824,6 +814,31 @@ namespace Sona.Compiler.States
         protected override void OnNestedExit(CoalesceExprContext context)
         {
             Out.Write(")))");
+        }
+    }
+
+    internal sealed class BitXorState : RightAssociativeBinaryState<BitXorExprContext>
+    {
+        protected override void OnNestedEnterOperand(ParserRuleContext context)
+        {
+            Out.Write('(');
+        }
+
+        protected override void OnNestedOperator(ITerminalNode node)
+        {
+            if(IsLiteral)
+            {
+                Out.WriteOperator("^^^");
+            }
+            else
+            {
+                Out.WriteSpecialBinaryOperator("Hat");
+            }
+        }
+
+        protected override void OnNestedExitOperand(ParserRuleContext context)
+        {
+            Out.Write(')');
         }
     }
 

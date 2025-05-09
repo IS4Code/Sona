@@ -157,7 +157,7 @@ namespace Sona.Compiler.States
 
         public override void EnterBitXorExpr(BitXorExprContext context)
         {
-            EnterState<SpecialBinaryState<BitXorExprContext>>().EnterBitXorExpr(context);
+            EnterState<BitXorState>().EnterBitXorExpr(context);
         }
 
         public override void ExitBitXorExpr(BitXorExprContext context)
