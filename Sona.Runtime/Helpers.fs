@@ -83,11 +83,14 @@ module SequenceHelpers =
   [<Literal>]
   let Marker : Priority4 = null
 
-[<Sealed; AbstractClass; AllowNullLiteral>]
-type Operators1 = class end
+[<AbstractClass; AllowNullLiteral>]
+type OperatorsBase internal() = class end
 
 [<Sealed; AbstractClass; AllowNullLiteral>]
-type Operators2 = class end
+type Operators1 = class inherit OperatorsBase end
+
+[<Sealed; AbstractClass; AllowNullLiteral>]
+type Operators2 = class inherit OperatorsBase end
 
 type Operators1 with
   static member inline ``operator Throw``(_:Operators1, _:Operators2, x) =
@@ -179,6 +182,9 @@ type Operators1 with
   
   static member inline ``operator Default``(_:Operators1, _:Operators2, _ : ^T voption) : ^T voption =
     ValueNone
+  
+  static member inline ``operator Default``(_:Operators1, _:OperatorsBase, _ : ^T when ^T : unmanaged and ^T : struct and ^T : (new : unit -> ^T)) : ^T =
+    Unchecked.defaultof<^T>
   
   // Impossible overloads needed with the same signature as the one in Operators2
   static member inline ``operator BindToLiftedResult``(_:Operators1, _:Operators2, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T), _) = ()
