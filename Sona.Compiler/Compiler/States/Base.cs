@@ -96,6 +96,9 @@ namespace Sona.Compiler
                 case SonaLexer.NONE:
                     Out.WriteCoreName(LexerContext.GetState<OptionPragma>()?.IsStruct ?? true ? "ValueNone" : "None");
                     break;
+                case SonaLexer.DEFAULT:
+                    Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Default");
+                    break;
                 default:
                     Out.Write(token.Text);
                     break;

@@ -171,6 +171,15 @@ type Operators1 with
   static member inline ``operator ConvertInvariant``(_:Operators1, _:Operators2, x : ^T, y : ^U) =
     ((^T or ^U) : (static member op_Explicit : ^T -> ^U) x)
   
+  static member inline ``operator Default``(_:Operators1, _:Operators2, _ : Nullable<^T>) : Nullable<^T> =
+    Nullable()
+  
+  static member inline ``operator Default``(_:Operators1, _:Operators2, _ : ^T option) : ^T option =
+    None
+  
+  static member inline ``operator Default``(_:Operators1, _:Operators2, _ : ^T voption) : ^T voption =
+    ValueNone
+  
   // Impossible overloads needed with the same signature as the one in Operators2
   static member inline ``operator BindToLiftedResult``(_:Operators1, _:Operators2, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T), _) = ()
   
@@ -179,6 +188,8 @@ type Operators1 with
   static member inline ``operator TryConversion``(_:Operators1, _:Operators2, x : ^T, f : ^T -> ^U when ^U :> Enum and ^U : not struct and ^U : (new : unit -> ^U)) = ()
   
   static member inline ``operator TryConversionValue``(_:Operators1, _:Operators2, x : ^T, f : ^T -> ^U when ^U :> Enum and ^U : not struct and ^U : (new : unit -> ^U)) = ()
+  
+  static member inline ``operator Default``(_:Operators1, _:Operators2, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T)) = ()
 
 type Operators2 with
   static member inline ``operator Throw``(_:Operators1, _:Operators2, x : #Exception) =
@@ -258,6 +269,9 @@ type Operators2 with
     match r with
     | Ok x -> ((^self1 or ^self2 or ^T) : (static member ``operator TryConversionValue``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U voption) (null : Operators1), (null : Operators2), x, f)
     | _ -> ValueNone
+  
+  static member inline ``operator Default``(_:Operators1, _:Operators2, _ : ^T) : ^T =
+    null
 
 module Operators =
   let inline Throw(x) =
@@ -290,9 +304,15 @@ module Operators =
   let inline TryConversionValue(x: ^T)(f : _ -> ^U) =
     ((^self1 or ^self2 or ^T) : (static member ``operator TryConversionValue``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U voption) (null : Operators1), (null : Operators2), x, f)
   
-  let inline Implicit<^T, ^U when (^T or ^U) : (static member op_Implicit: ^T -> ^U)> x = ((^T or ^U) : (static member op_Implicit: ^T -> ^U) x)
+  let inline Implicit<^T, ^U when (^T or ^U) : (static member op_Implicit: ^T -> ^U)> x =
+    ((^T or ^U) : (static member op_Implicit: ^T -> ^U) x)
 
-  let inline Explicit<^T, ^U when (^T or ^U) : (static member op_Explicit: ^T -> ^U)> x = ((^T or ^U) : (static member op_Explicit: ^T -> ^U) x)
+  let inline Explicit<^T, ^U when (^T or ^U) : (static member op_Explicit: ^T -> ^U)> x =
+    ((^T or ^U) : (static member op_Explicit: ^T -> ^U) x)
+    
+  [<GeneralizableValue>]
+  let inline Default<^T when (Operators1 or Operators2 or ^T) : (static member ``operator Default``: Operators1 * Operators2 * ^T -> ^T)> : ^T =
+    ((^self1 or ^self2 or ^T) : (static member ``operator Default``: ^self1 * ^self2 * ^T -> ^T) (null : Operators1), (null : Operators2), Unchecked.defaultof<^T>)
 
 module Patterns =
   [<return: Struct>]

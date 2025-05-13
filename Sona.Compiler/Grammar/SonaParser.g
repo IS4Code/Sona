@@ -1062,7 +1062,7 @@ primitiveExpr:
   namedValue | number | string | unit;
 
 namedValue:
-  'null' | 'false' | 'true' | 'none';
+  'null' | 'false' | 'true' | 'none' | 'default';
 
 funcExpr:
   'function' name? funcBody;
