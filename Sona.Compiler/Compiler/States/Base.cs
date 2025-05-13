@@ -97,7 +97,14 @@ namespace Sona.Compiler
                     Out.WriteCoreName(LexerContext.GetState<OptionPragma>()?.IsStruct ?? true ? "ValueNone" : "None");
                     break;
                 case SonaLexer.DEFAULT:
-                    Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Default");
+                    if(GetExpressionContext()?.IsLiteral ?? false)
+                    {
+                        Out.Write("(new _())");
+                    }
+                    else
+                    {
+                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Default");
+                    }
                     break;
                 default:
                     Out.Write(token.Text);
