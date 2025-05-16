@@ -391,7 +391,7 @@ namespace Sona.Compiler
             "--nowarn:3220,3559",
             // 3559 is triggered by unused generic returns
             "--warnon:21,52,1178,1182,3387,3388,3389,3397,3390,3517",
-            "--warnaserror+:20,25,193,3517,3388",
+            "--warnaserror+:20,25,193,3261,3517,3388",
             "--checknulls+",
         };
 
