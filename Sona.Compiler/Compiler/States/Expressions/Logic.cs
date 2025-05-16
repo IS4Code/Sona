@@ -120,6 +120,9 @@ namespace Sona.Compiler.States
                 case SonaLexer.ELSE:
                     Out.Write(")else(");
                     break;
+                case SonaLexer.ELSEIF:
+                    Out.Write(")elif(");
+                    break;
             }
         }
 

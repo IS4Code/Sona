@@ -984,7 +984,7 @@ logicExpr:
   )?;
 
 inlineIfExpr:
-  'if' expression 'then' expression 'else' (booleanExpr | atomicLogicExpr);
+  'if' expression 'then' expression ('elseif' expression 'then' expression)* 'else' (booleanExpr | atomicLogicExpr);
 
 booleanExpr:
   relationalExpr (('&&' | '||') relationalExpr)*;
