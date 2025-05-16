@@ -349,11 +349,12 @@ namespace Sona.Compiler.States
             public override void EnterAtomicType(AtomicTypeContext context)
             {
                 hasType = true;
+                base.EnterAtomicType(context);
             }
 
             public override void ExitAtomicType(AtomicTypeContext context)
             {
-
+                base.ExitAtomicType(context);
             }
         }
 
@@ -390,10 +391,12 @@ namespace Sona.Compiler.States
                     Out.WriteOperator('&');
                 }
                 Out.Write("#(");
+                base.EnterAtomicType(context);
             }
 
             public override void ExitAtomicType(AtomicTypeContext context)
             {
+                base.ExitAtomicType(context);
                 Out.Write(')');
             }
         }
