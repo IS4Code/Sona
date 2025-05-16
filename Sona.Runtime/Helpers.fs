@@ -190,7 +190,7 @@ type Operators1 with
     Unchecked.defaultof<^T>
   
   // Impossible overloads needed with the same signature as the one in Operators2
-  static member inline ``operator BindToLiftedResult``(_:Operators1, _:Operators2, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T), _) = ()
+  static member inline ``operator BindToLiftedResult``(_:Operators1, _:OperatorsBase, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T), _) = ()
   
   static member inline ``operator BindToResult``(_:Operators1, _:Operators2, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T)) = ()
   
@@ -217,7 +217,7 @@ type Operators2 with
   static member inline ``operator LiftResult``(_:Operators1, _:Operators2, _ : ^T, x : ^T) =
     x
   
-  static member inline ``operator BindToLiftedResult``(_:Operators1, _:Operators2, x : ^T when ^T : null, y) =
+  static member inline ``operator BindToLiftedResult``(_:Operators1, _:OperatorsBase, x, y) =
     match x with
     | NonNull value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator LiftResult``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
     | Null -> struct(false, Unchecked.defaultof<_>)
