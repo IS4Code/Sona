@@ -183,6 +183,9 @@ namespace Sona.Compiler.States
                 case SonaLexer.OBJECT:
                     Out.Write('(');
                     return;
+                case SonaLexer.NEW:
+                    Out.Write("new ");
+                    return;
                 case SonaLexer.SOME:
                 case SonaLexer.ENUM:
                 case SonaLexer.IMPLICIT:
@@ -266,6 +269,13 @@ namespace Sona.Compiler.States
                         return;
                     case SonaLexer.NARROW:
                         Out.Write("downcast(");
+                        return;
+                    case SonaLexer.NEW:
+                        if(!typePresent)
+                        {
+                            Out.Write('_');
+                        }
+                        Out.Write('(');
                         return;
                     case null:
                         Out.Write('(');

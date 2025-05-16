@@ -298,7 +298,7 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal sealed class TypeConstructionState : TypeState
+    internal abstract class ConstructionState : TypeState
     {
         bool namedArg;
         bool first;
@@ -311,24 +311,19 @@ namespace Sona.Compiler.States
             first = true;
         }
 
-        public override void EnterMemberTypeConstructExpr(MemberTypeConstructExprContext context)
+        public sealed override void EnterComplexCallArgTuple(ComplexCallArgTupleContext context)
         {
-            Out.Write("(new ");
-        }
-
-        public override void ExitMemberTypeConstructExpr(MemberTypeConstructExprContext context)
-        {
-            Out.Write("))");
-            ExitState().ExitMemberTypeConstructExpr(context);
-        }
-
-        public override void ExitPrimitiveType(PrimitiveTypeContext context)
-        {
-            base.ExitPrimitiveType(context);
+            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples", "FromTree");
             Out.Write('(');
+            EnterState<TupleAppendState>().EnterComplexCallArgTuple(context);
         }
 
-        public override void EnterExpression(ExpressionContext context)
+        public sealed override void ExitComplexCallArgTuple(ComplexCallArgTupleContext context)
+        {
+            Out.Write(')');
+        }
+
+        public sealed override void EnterExpression(ExpressionContext context)
         {
             if(namedArg)
             {
@@ -345,12 +340,12 @@ namespace Sona.Compiler.States
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
-        public override void ExitExpression(ExpressionContext context)
+        public sealed override void ExitExpression(ExpressionContext context)
         {
             namedArg = false;
         }
 
-        public override void EnterFieldAssignment(FieldAssignmentContext context)
+        public sealed override void EnterFieldAssignment(FieldAssignmentContext context)
         {
             if(first)
             {
@@ -363,9 +358,80 @@ namespace Sona.Compiler.States
             namedArg = true;
         }
 
-        public override void ExitFieldAssignment(FieldAssignmentContext context)
+        public sealed override void ExitFieldAssignment(FieldAssignmentContext context)
         {
 
+        }
+    }
+
+    internal sealed class TypeConstructionState : ConstructionState
+    {
+        public override void EnterMemberTypeConstructExpr(MemberTypeConstructExprContext context)
+        {
+            Out.Write("(new ");
+        }
+
+        public override void ExitMemberTypeConstructExpr(MemberTypeConstructExprContext context)
+        {
+            Out.Write(')');
+            ExitState().ExitMemberTypeConstructExpr(context);
+        }
+
+        public override void EnterConstructArguments(ConstructArgumentsContext context)
+        {
+            Out.Write('(');
+        }
+
+        public override void ExitConstructArguments(ConstructArgumentsContext context)
+        {
+            Out.Write(')');
+        }
+    }
+
+    internal sealed class NewState : ConstructionState
+    {
+        bool hasType;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            hasType = false;
+        }
+
+        public override void EnterMemberNewExpr(MemberNewExprContext context)
+        {
+            Out.Write("(new ");
+        }
+
+        public override void ExitMemberNewExpr(MemberNewExprContext context)
+        {
+            Out.Write(')');
+            ExitState().ExitMemberNewExpr(context);
+        }
+
+        public override void EnterType(TypeContext context)
+        {
+            EnterState<TypeState>().EnterType(context);
+        }
+
+        public override void ExitType(TypeContext context)
+        {
+            hasType = true;
+        }
+
+        public override void EnterConstructArguments(ConstructArgumentsContext context)
+        {
+            if(!hasType)
+            {
+                Out.Write('_');
+            }
+            Out.Write('(');
+        }
+
+        public override void ExitConstructArguments(ConstructArgumentsContext context)
+        {
+            Out.Write(')');
         }
     }
 }

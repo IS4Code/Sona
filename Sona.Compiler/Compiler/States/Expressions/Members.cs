@@ -77,6 +77,16 @@ namespace Sona.Compiler.States
 
         }
 
+        public override void EnterMemberNewExpr(MemberNewExprContext context)
+        {
+            EnterState<NewState>().EnterMemberNewExpr(context);
+        }
+
+        public override void ExitMemberNewExpr(MemberNewExprContext context)
+        {
+
+        }
+
         public override void EnterMemberConvertExpr(MemberConvertExprContext context)
         {
             EnterState<ConversionState>().EnterMemberConvertExpr(context);

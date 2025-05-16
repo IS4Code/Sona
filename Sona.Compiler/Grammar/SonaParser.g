@@ -1094,6 +1094,7 @@ memberExpr:
 memberExpr_Standalone:
   name genericArguments? simpleCallArgument?? |
   memberTypeConstructExpr |
+  memberNewExpr |
   nestedExpr |
   nestedAssignment;
 
@@ -1145,7 +1146,7 @@ memberConvertExpr:
   convertOperator '(' expression ')';
 
 convertOperator:
-  ('some' | 'enum' | 'implicit' | 'explicit') ('<' type '>')? |
+  ('some' | 'enum' | 'implicit' | 'explicit' | 'new') ('<' type '>')? |
   (
     ('widen' | 'narrow') ('<' type '>')? |
     primitiveType
@@ -1154,9 +1155,18 @@ convertOperator:
 testConversion:
   '?';
 
-// Must indicate construction by having no arguments, at least two arguments, or one named argument.
 memberTypeConstructExpr:
-  primitiveType '(' ((expression ',' expression | (expression ',')* fieldAssignment) (',' (fieldAssignment | expression))*)? ')';
+  primitiveType constructArguments;
+
+memberNewExpr:
+  'new' ('<' type '>')? constructArguments;
+
+// Must indicate construction by having no arguments, at least two arguments, or one named argument.
+constructArguments:
+  '(' (constructCallArgTuple | complexCallArgTuple) ')';
+
+constructCallArgTuple:
+  ((expression ',' expression | (expression ',')* fieldAssignment) (',' (fieldAssignment | expression))*)?;
 
 fieldAssignment:
   name '=' expression;
