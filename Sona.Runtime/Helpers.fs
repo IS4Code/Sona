@@ -183,6 +183,9 @@ type Operators1 with
   static member inline ``operator Default``(_:Operators1, _:Operators2, _ : ^T voption) : ^T voption =
     ValueNone
   
+  static member inline ``operator Default``(_:Operators1, _:Operators2, ()) =
+    ()
+  
   static member inline ``operator Default``(_:Operators1, _:OperatorsBase, _ : ^T when ^T : unmanaged and ^T : struct and ^T : (new : unit -> ^T)) : ^T =
     Unchecked.defaultof<^T>
   
