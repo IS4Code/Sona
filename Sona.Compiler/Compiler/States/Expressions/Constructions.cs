@@ -362,6 +362,16 @@ namespace Sona.Compiler.States
         {
 
         }
+
+        public sealed override void EnterOptionSuffix(OptionSuffixContext context)
+        {
+
+        }
+
+        public sealed override void ExitOptionSuffix(OptionSuffixContext context)
+        {
+            Error("Optional construction of instances from multiple arguments is not supported.", context);
+        }
     }
 
     internal sealed class TypeConstructionState : ConstructionState

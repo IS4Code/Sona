@@ -1157,10 +1157,10 @@ optionSuffix:
   '?';
 
 memberTypeConstructExpr:
-  primitiveType constructArguments;
+  primitiveType optionSuffix? constructArguments;
 
 memberNewExpr:
-  'new' ('<' type '>')? constructArguments;
+  'new' ('<' type '>')? optionSuffix? constructArguments;
 
 // Must indicate construction by having no arguments, at least two arguments, or one named argument.
 constructArguments:
