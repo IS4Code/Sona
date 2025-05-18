@@ -9,7 +9,7 @@ namespace Sona.Compiler.States
         int? type;
         bool typePresent;
         ISourceCapture? typeCapture;
-        bool testConversion;
+        bool asOption;
         bool optionIsStruct;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
@@ -19,7 +19,7 @@ namespace Sona.Compiler.States
             type = null;
             typePresent = false;
             typeCapture = null;
-            testConversion = false;
+            asOption = false;
             optionIsStruct = false;
         }
 
@@ -105,10 +105,6 @@ namespace Sona.Compiler.States
             typePresent = true;
             switch(type)
             {
-                case SonaLexer.SOME:
-                    Out.WriteCoreName(optionIsStruct ? "ValueOption" : "Option");
-                    Out.Write('<');
-                    break;
                 case SonaLexer.ENUM:
                     Out.WriteCoreName("LanguagePrimitives");
                     Out.Write(".EnumOfValue<_,");
@@ -121,6 +117,8 @@ namespace Sona.Compiler.States
                     Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Explicit");
                     Out.Write("<_,");
                     break;
+                case SonaLexer.SOME:
+                case SonaLexer.NEW:
                 case SonaLexer.WIDEN:
                 case SonaLexer.NARROW:
                     typeCapture = Out.StartCapture();
@@ -134,15 +132,13 @@ namespace Sona.Compiler.States
             base.ExitType(context);
             switch(type)
             {
-                case SonaLexer.SOME:
-                    Out.Write(">.");
-                    Out.WriteIdentifier(optionIsStruct ? "ValueSome" : "Some");
-                    break;
                 case SonaLexer.ENUM:
                 case SonaLexer.IMPLICIT:
                 case SonaLexer.EXPLICIT:
                     Out.Write('>');
                     break;
+                case SonaLexer.SOME:
+                case SonaLexer.NEW:
                 case SonaLexer.WIDEN:
                 case SonaLexer.NARROW:
                     Out.StopCapture(typeCapture ?? ErrorCapture("COMPILER ERROR: Missing type capture.", context));
@@ -150,21 +146,12 @@ namespace Sona.Compiler.States
             }
         }
 
-        public override void EnterTestConversion(TestConversionContext context)
+        public override void EnterOptionSuffix(OptionSuffixContext context)
         {
-            switch(type)
-            {
-                case null or SonaLexer.NARROW:
-                    break;
-                default:
-                    Error("This conversion always succeeds; use `some` to wrap the value in an option type.", context);
-                    return;
-            }
-
-            testConversion = true;
+            asOption = true;
         }
 
-        public override void ExitTestConversion(TestConversionContext context)
+        public override void ExitOptionSuffix(OptionSuffixContext context)
         {
 
         }
@@ -184,8 +171,6 @@ namespace Sona.Compiler.States
                     Out.Write('(');
                     return;
                 case SonaLexer.NEW:
-                    Out.Write("new ");
-                    return;
                 case SonaLexer.SOME:
                 case SonaLexer.ENUM:
                 case SonaLexer.IMPLICIT:
@@ -204,83 +189,106 @@ namespace Sona.Compiler.States
 
         void OnOperand(ParserRuleContext context)
         {
-            if(testConversion)
+            if(!typePresent)
+            {
+                switch(type)
+                {
+                    case SonaLexer.ENUM:
+                        Out.WriteCoreName("LanguagePrimitives");
+                        Out.Write(".EnumOfValue");
+                        break;
+                    case SonaLexer.IMPLICIT:
+                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Implicit");
+                        break;
+                    case SonaLexer.EXPLICIT:
+                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Explicit");
+                        break;
+                }
+            }
+            if(asOption)
             {
                 // An option type is requested
                 switch(type)
                 {
-                    case SonaLexer.NARROW:
-                        Out.Write("(match(");
+                    case SonaLexer.NEW:
+                    case SonaLexer.SOME:
+                    case SonaLexer.WIDEN:
+                        // Bind to result first
+                        Out.Write("(match ");
+                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "BindToResult");
+                        Out.Write('(');
                         return;
+                    case SonaLexer.NARROW:
+                        // Optionally bind to result first
+                        Out.Write("(match ");
+                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "OptionalBindToResult");
+                        Out.Write('(');
+                        return;
+                    case SonaLexer.ENUM:
+                    case SonaLexer.IMPLICIT:
+                    case SonaLexer.EXPLICIT:
                     case null:
-                        // An arbitrary type constructor
+                        // Conversion through function
                         Out.WriteOperator("|>");
                         Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", optionIsStruct ? "TryConversionValue" : "TryConversion");
                         Out.Write('(');
                         return;
                 }
+                Error("This conversion does not support returning an option type.", context);
             }
-            else if(typeCapture != null)
+            if(typeCapture != null)
             {
                 // A type was captured
                 switch(type)
                 {
+                    case SonaLexer.NEW:
+                        Out.Write("new ");
+                        typeCapture.Play(Out);
+                        typeCapture = null;
+                        break;
+                    case SonaLexer.SOME:
+                        Out.WriteCoreName(optionIsStruct ? "ValueOption" : "Option");
+                        Out.Write('<');
+                        typeCapture.Play(Out);
+                        typeCapture = null;
+                        Out.Write(">.");
+                        Out.WriteIdentifier(optionIsStruct ? "ValueSome" : "Some");
+                        break;
                     case SonaLexer.WIDEN:
                     case SonaLexer.NARROW:
+                        // Different operator path
                         Out.Write('(');
                         return;
                 }
             }
-            else
+            switch(type)
             {
-                switch(type)
-                {
-                    case SonaLexer.SOME:
-                        if(!typePresent)
-                        {
-                            Out.WriteCoreName(optionIsStruct ? "ValueSome" : "Some");
-                        }
-                        Out.Write('(');
-                        return;
-                    case SonaLexer.ENUM:
-                        if(!typePresent)
-                        {
-                            Out.WriteCoreName("LanguagePrimitives");
-                            Out.Write(".EnumOfValue");
-                        }
-                        Out.Write('(');
-                        return;
-                    case SonaLexer.IMPLICIT:
-                        if(!typePresent)
-                        {
-                            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Implicit");
-                        }
-                        Out.Write('(');
-                        return;
-                    case SonaLexer.EXPLICIT:
-                        if(!typePresent)
-                        {
-                            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Explicit");
-                        }
-                        Out.Write('(');
-                        return;
-                    case SonaLexer.WIDEN:
-                        Out.Write("upcast(");
-                        return;
-                    case SonaLexer.NARROW:
-                        Out.Write("downcast(");
-                        return;
-                    case SonaLexer.NEW:
-                        if(!typePresent)
-                        {
-                            Out.Write('_');
-                        }
-                        Out.Write('(');
-                        return;
-                    case null:
-                        Out.Write('(');
-                        return;
-                }
+                case SonaLexer.SOME:
+                    if(!typePresent)
+                    {
+                        Out.WriteCoreName(optionIsStruct ? "ValueSome" : "Some");
+                    }
+                    Out.Write('(');
+                    return;
+                case SonaLexer.WIDEN:
+                    Out.Write("upcast(");
+                    return;
+                case SonaLexer.NARROW:
+                    Out.Write("downcast(");
+                    return;
+                case SonaLexer.NEW:
+                    if(!typePresent)
+                    {
+                        Out.Write("new _");
+                    }
+                    Out.Write('(');
+                    return;
+                case SonaLexer.ENUM:
+                case SonaLexer.IMPLICIT:
+                case SonaLexer.EXPLICIT:
+                case null:
+                    Out.Write('(');
+                    return;
             }
         }
 
@@ -297,15 +305,98 @@ namespace Sona.Compiler.States
                     Out.WriteCoreName("objnull");
                     Out.Write(')');
                     return;
-                case SonaLexer.WIDEN when typeCapture != null:
-                    Out.WriteOperator(":>");
-                    typeCapture.Play(Out);
+                case SonaLexer.NEW when asOption:
+                {
+                    Out.Write(")with|struct(true,");
+                    var id = Out.CreateTemporaryIdentifier();
+                    Out.WriteIdentifier(id);
+                    Out.Write(')');
+                    Out.WriteOperator("->");
+                    Out.WriteCoreName(optionIsStruct ? "ValueSome" : "Some");
+                    Out.Write('(');
+                    Out.Write("new ");
+                    if(typeCapture != null)
+                    {
+                        typeCapture.Play(Out);
+                    }
+                    else
+                    {
+                        Out.Write('_');
+                    }
+                    Out.Write('(');
+                    Out.WriteIdentifier(id);
+                    Out.Write("))|_");
+                    Out.WriteOperator("->");
+                    Out.WriteCoreName(optionIsStruct ? "ValueNone" : "None");
                     Out.Write(')');
                     return;
-                case SonaLexer.NARROW:
-                    if(testConversion)
+                }
+                case SonaLexer.SOME when asOption:
+                {
+                    Out.Write(")with|struct(true,");
+                    var id = Out.CreateTemporaryIdentifier();
+                    Out.WriteIdentifier(id);
+                    Out.Write(')');
+                    Out.WriteOperator("->");
+                    if(typeCapture != null)
                     {
-                        Out.Write(")with|");
+                        Out.WriteCoreName(optionIsStruct ? "ValueOption" : "Option");
+                        Out.Write('<');
+                        typeCapture.Play(Out);
+                        Out.Write(">.");
+                        Out.WriteIdentifier(optionIsStruct ? "ValueSome" : "Some");
+                    }
+                    else
+                    {
+                        Out.WriteCoreName(optionIsStruct ? "ValueSome" : "Some");
+                    }
+                    Out.Write(' ');
+                    Out.WriteIdentifier(id);
+                    Out.Write("|_");
+                    Out.WriteOperator("->");
+                    Out.WriteCoreName(optionIsStruct ? "ValueNone" : "None");
+                    Out.Write(')');
+                    return;
+                }
+                case SonaLexer.WIDEN:
+                    if(asOption)
+                    {
+                        Out.Write(")with|struct(true,");
+                        var id = Out.CreateTemporaryIdentifier();
+                        Out.WriteIdentifier(id);
+                        Out.Write(')');
+                        Out.WriteOperator("->");
+                        Out.WriteCoreName(optionIsStruct ? "ValueSome" : "Some");
+                        Out.Write('(');
+                        if(typeCapture != null)
+                        {
+                            Out.WriteIdentifier(id);
+                            Out.WriteOperator(":>");
+                            typeCapture.Play(Out);
+                        }
+                        else
+                        {
+                            Out.Write("upcast ");
+                            Out.WriteIdentifier(id);
+                        }
+                        Out.Write(")|_");
+                        Out.WriteOperator("->");
+                        Out.WriteCoreName(optionIsStruct ? "ValueNone" : "None");
+                        Out.Write(')');
+                        return;
+                    }
+                    else if(typeCapture != null)
+                    {
+                        Out.WriteOperator(":>");
+                        typeCapture.Play(Out);
+                        Out.Write(')');
+                        return;
+                    }
+                    goto default;
+                case SonaLexer.NARROW:
+                    if(asOption)
+                    {
+                        Out.Write(")with|struct(true,(");
                         Out.WriteOperator(":?");
                         if(typeCapture != null)
                         {
@@ -320,6 +411,7 @@ namespace Sona.Compiler.States
                         Out.Write("as ");
                         var id = Out.CreateTemporaryIdentifier();
                         Out.WriteIdentifier(id);
+                        Out.Write("))");
                         Out.WriteOperator("->");
                         Out.WriteCoreName(optionIsStruct ? "ValueSome" : "Some");
                         Out.Write(' ');

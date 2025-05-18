@@ -168,6 +168,26 @@ type Operators1 with
     | Ok value -> struct(true, value)
     | Error _ -> struct(false, Unchecked.defaultof<_>)
   
+  static member inline ``operator OptionalBindToResult``(_:Operators1, _:Operators2, x : Nullable<_>) =
+    match x with
+    | NonNullV value -> struct(true, value)
+    | NullV -> struct(false, Unchecked.defaultof<_>)
+  
+  static member inline ``operator OptionalBindToResult``(_:Operators1, _:Operators2, x : _ option) =
+    match x with
+    | Some value -> struct(true, value)
+    | None -> struct(false, Unchecked.defaultof<_>)
+  
+  static member inline ``operator OptionalBindToResult``(_:Operators1, _:Operators2, x : _ voption) =
+    match x with
+    | ValueSome value -> struct(true, value)
+    | ValueNone -> struct(false, Unchecked.defaultof<_>)
+  
+  static member inline ``operator OptionalBindToResult``(_:Operators1, _:Operators2, x : Result<_, _>) =
+    match x with
+    | Ok value -> struct(true, value)
+    | Error _ -> struct(false, Unchecked.defaultof<_>)
+  
   static member inline ``operator Convert``(_:Operators1, _:Operators2, x : ^T, y : ^U) =
     ((^T or ^U) : (static member op_Explicit : ^T -> ^U) x)
   
@@ -193,6 +213,10 @@ type Operators1 with
   static member inline ``operator BindToLiftedResult``(_:Operators1, _:OperatorsBase, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T), _) = ()
   
   static member inline ``operator BindToResult``(_:Operators1, _:Operators2, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T)) = ()
+  
+  static member inline ``operator OptionalBindToResult``(_:Operators1, _:Operators2, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T)) = ()
+  
+  static member inline ``operator OptionalBindToResult``(_:Operators1, _:OperatorsBase, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T)) = ()
   
   static member inline ``operator TryConversion``(_:Operators1, _:Operators2, x : ^T, f : ^T -> ^U when ^U :> Enum and ^U : not struct and ^U : (new : unit -> ^U)) = ()
   
@@ -226,6 +250,14 @@ type Operators2 with
     match x with
     | NonNull value -> struct(true, value)
     | Null -> struct(false, Unchecked.defaultof<_>)
+  
+  static member inline ``operator OptionalBindToResult``(_:Operators1, _:Operators2, x) =
+    match x with
+    | NonNull value -> struct(true, value)
+    | Null -> struct(false, Unchecked.defaultof<_>)
+  
+  static member inline ``operator OptionalBindToResult``(_:Operators1, _:OperatorsBase, x : ^T when ^T : struct) =
+    struct(true, x)
   
   static member inline ``operator Convert``(_:Operators1, _:Operators2, x : ^T, y : ^U) =
     ((^T or ^U) : (static member Parse : ^T -> ^U) x)
@@ -300,6 +332,9 @@ module Operators =
   
   let inline BindToResult x =
     ((^self1 or ^self2 or ^x) : (static member ``operator BindToResult``: ^self1 * ^self2 * ^x -> struct(bool * _)) (null : Operators1), (null : Operators2), x)
+  
+  let inline OptionalBindToResult x =
+    ((^self1 or ^self2 or ^x) : (static member ``operator OptionalBindToResult``: ^self1 * ^self2 * ^x -> struct(bool * _)) (null : Operators1), (null : Operators2), x)
   
   let inline Convert(y)(x) =
     ((^self1 or ^self2 or ^x) : (static member ``operator Convert``: ^self1 * ^self2 * ^x * ^y -> ^y) (null : Operators1), (null : Operators2), x, y)

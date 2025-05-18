@@ -1146,13 +1146,14 @@ memberConvertExpr:
   convertOperator '(' expression ')';
 
 convertOperator:
-  ('some' | 'enum' | 'implicit' | 'explicit' | 'new') ('<' type '>')? |
   (
-    ('widen' | 'narrow') ('<' type '>')? |
+    (
+      'some' | 'enum' | 'implicit' | 'explicit' | 'new' | 'widen' | 'narrow'
+    ) ('<' type '>')? |
     primitiveType
-  ) testConversion?;
+  ) optionSuffix?;
 
-testConversion:
+optionSuffix:
   '?';
 
 memberTypeConstructExpr:
