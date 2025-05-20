@@ -100,3 +100,26 @@ type ``trait enum``<^T, ^TBase when ^T : enum<^TBase>> = ^T
 type ``trait comparable``<^T when ^T : comparison> = ^T
 type ``trait equatable``<^T when ^T : equality> = ^T
 type ``trait unmanaged``<^T when ^T : unmanaged> = ^T
+
+namespace Sona.Runtime.Core
+
+type object = obj
+type ``exception`` = System.Exception
+type ``void`` = System.Void
+
+[<MeasureAnnotatedAbbreviation>]
+type unit<[<Measure>]'M> = unit
+
+type float64 = double
+
+type float64<[<Measure>]'M> = double<'M>
+
+type bigint = System.Numerics.BigInteger
+
+[<MeasureAnnotatedAbbreviation>]
+type bigint<[<Measure>]'M> = bigint
+
+type complex = System.Numerics.Complex
+
+[<MeasureAnnotatedAbbreviation>]
+type complex<[<Measure>]'M> = complex
