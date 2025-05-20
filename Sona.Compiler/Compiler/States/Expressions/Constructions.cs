@@ -148,7 +148,7 @@ namespace Sona.Compiler.States
 
         public override void EnterComplexTupleContents(ComplexTupleContentsContext context)
         {
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples", isStruct ? "FromTreeValue" : "FromTree");
+            Out.WriteCustomTupleOperator(isStruct ? "FromTreeValue" : "FromTree");
             Out.Write('(');
             EnterState<TupleAppendState>().EnterComplexTupleContents(context);
         }
@@ -226,7 +226,7 @@ namespace Sona.Compiler.States
 
         private void AppendTuples()
         {
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples", "Append");
+            Out.WriteCustomTupleOperator("Append");
             appendDepth++;
             Out.Write('(');
         }
@@ -286,7 +286,7 @@ namespace Sona.Compiler.States
         {
             public override void EnterSpreadExpression(SpreadExpressionContext context)
             {
-                Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples", "ToTree");
+                Out.WriteCustomTupleOperator("ToTree");
                 Out.Write('(');
             }
 
@@ -313,7 +313,7 @@ namespace Sona.Compiler.States
 
         public sealed override void EnterComplexCallArgTuple(ComplexCallArgTupleContext context)
         {
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples", "FromTree");
+            Out.WriteCustomTupleOperator("FromTree");
             Out.Write('(');
             EnterState<TupleAppendState>().EnterComplexCallArgTuple(context);
         }

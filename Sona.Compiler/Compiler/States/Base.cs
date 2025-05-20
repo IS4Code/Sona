@@ -103,7 +103,7 @@ namespace Sona.Compiler
                     }
                     else
                     {
-                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Default");
+                        Out.WriteCustomOperator("Default");
                     }
                     break;
                 default:

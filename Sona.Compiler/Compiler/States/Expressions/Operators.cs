@@ -791,7 +791,7 @@ namespace Sona.Compiler.States
             Out.WriteOperator('=');
             Out.WriteCoreOperatorName("Unchecked");
             Out.Write(".defaultof<_> in match ");
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "BindToLiftedResult");
+            Out.WriteCustomOperator("BindToLiftedResult");
             Out.Write('(');
             Out.WriteIdentifier(alternativeName);
             Out.Write(")(");

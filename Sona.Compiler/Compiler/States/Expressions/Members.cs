@@ -150,7 +150,7 @@ namespace Sona.Compiler.States
         public override void EnterComplexCallArgTuple(ComplexCallArgTupleContext context)
         {
             Out.Write('(');
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples", "FromTree");
+            Out.WriteCustomTupleOperator("FromTree");
             Out.Write('(');
             EnterState<TupleAppendState>().EnterComplexCallArgTuple(context);
         }
@@ -400,7 +400,7 @@ namespace Sona.Compiler.States
             Out.WriteIdentifier(arg);
             Out.WriteOperator("->");
             Out.Write("match ");
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "BindToResult");
+            Out.WriteCustomOperator("BindToResult");
             Out.Write('(');
             Out.WriteIdentifier(arg);
             Out.Write(")with|struct(false,_)->");

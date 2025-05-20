@@ -2286,7 +2286,7 @@ namespace Sona.Compiler.States
         {
             Out.WriteSpecialMember("operator AsEnumerable");
             Out.Write('(');
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "SequenceHelpers", "Marker");
+            Out.WriteCustomSequenceOperator("Marker");
             Out.WriteLine(").GetEnumerator()");
             Out.WriteLine("try");
             Out.EnterScope();
@@ -2313,9 +2313,9 @@ namespace Sona.Compiler.States
             Out.ExitScope();
             Out.WriteLine();
             Out.Write("finally ");
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "SequenceHelpers", "DisposeEnumerator");
+            Out.WriteCustomSequenceOperator("DisposeEnumerator");
             Out.Write('(');
-            Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "SequenceHelpers", "Marker");
+            Out.WriteCustomSequenceOperator("Marker");
             Out.Write(",&");
             Out.WriteIdentifier(enumeratorVariable ?? Error(enumeratorError, context));
             Out.Write(")");

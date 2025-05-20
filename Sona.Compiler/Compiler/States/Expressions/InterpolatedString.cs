@@ -178,9 +178,7 @@ namespace Sona.Compiler.States
         public sealed override void EnterInterpStrNumberFormat(InterpStrNumberFormatContext context)
         {
             AddFill();
-            Out.WriteOperator(':');
-            Out.WriteNamespacedName("Sona.Runtime.Traits", "trait number");
-            Out.Write("<_>");
+            Out.WriteTraitAssertion("number");
             Environment.EnableParseTree();
         }
 
@@ -330,22 +328,17 @@ namespace Sona.Compiler.States
                     else if(instantState.Traits == Traits.Invalid)
                     {
                         // Duration is valid
-                        Out.WriteOperator(':');
-                        Out.WriteNamespacedName("Sona.Runtime.Traits", "trait " + durationState.TraitName);
-                        Out.Write("<_>");
+                        Out.WriteTraitAssertion(durationState.TraitName);
                     }
                     else if(durationState.Traits == Traits.Invalid)
                     {
                         // Instant is valid
-                        Out.WriteOperator(':');
-                        Out.WriteNamespacedName("Sona.Runtime.Traits", "trait " + instantState.TraitName);
-                        Out.Write("<_>");
+                        Out.WriteTraitAssertion(instantState.TraitName);
                     }
                     else
                     {
                         // Both are valid
-                        Out.WriteOperator("|>");
-                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Inference", instantState.TraitName + "|" + durationState.TraitName);
+                        Out.WriteTraitAssertion(instantState.TraitName, durationState.TraitName);
                     }
                 }
                 finally

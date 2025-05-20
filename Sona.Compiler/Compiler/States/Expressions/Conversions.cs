@@ -114,15 +114,15 @@ namespace Sona.Compiler.States
                     Out.Write(".EnumOfValue<_,");
                     break;
                 case SonaLexer.IMPLICIT:
-                    Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Implicit");
+                    Out.WriteCustomOperator("Implicit");
                     Out.Write("<_,");
                     break;
                 case SonaLexer.EXPLICIT:
-                    Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Explicit");
+                    Out.WriteCustomOperator("Explicit");
                     Out.Write("<_,");
                     break;
                 case SonaLexer.UNIT:
-                    Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "ConvertUnit");
+                    Out.WriteCustomOperator("ConvertUnit");
                     Out.Write("<_,_,");
                     break;
                 case SonaLexer.SOME:
@@ -206,13 +206,13 @@ namespace Sona.Compiler.States
                         Out.Write(".EnumOfValue");
                         break;
                     case SonaLexer.IMPLICIT:
-                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Implicit");
+                        Out.WriteCustomOperator("Implicit");
                         break;
                     case SonaLexer.EXPLICIT:
-                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Explicit");
+                        Out.WriteCustomOperator("Explicit");
                         break;
                     case SonaLexer.UNIT:
-                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "ConvertUnit");
+                        Out.WriteCustomOperator("ConvertUnit");
                         break;
                 }
                 // Continue next
@@ -231,13 +231,13 @@ namespace Sona.Compiler.States
                     case SonaLexer.WIDEN:
                         // Bind to result first
                         Out.Write("match ");
-                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "BindToResult");
+                        Out.WriteCustomOperator("BindToResult");
                         Out.Write('(');
                         return;
                     case SonaLexer.NARROW:
                         // Optionally bind to result first
                         Out.Write("match ");
-                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "OptionalBindToResult");
+                        Out.WriteCustomOperator("OptionalBindToResult");
                         Out.Write('(');
                         return;
                     case SonaLexer.ENUM:
@@ -247,7 +247,7 @@ namespace Sona.Compiler.States
                     case null:
                         // Conversion through function
                         Out.WriteOperator("|>");
-                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", optionIsStruct ? "TryConversionValue" : "TryConversion");
+                        Out.WriteCustomOperator(optionIsStruct ? "TryConversionValue" : "TryConversion");
                         Out.Write('(');
                         return;
                 }

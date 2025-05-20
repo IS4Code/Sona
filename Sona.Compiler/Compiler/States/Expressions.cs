@@ -274,12 +274,12 @@ namespace Sona.Compiler.States
                 case SonaLexer.FLOAT16:
                     if(token.Type == SonaLexer.BOOL)
                     {
-                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Convert");
+                        Out.WriteCustomOperator("Convert");
                         Out.Write("(true)");
                         return;
                     }
 
-                    Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "ConvertInvariant");
+                    Out.WriteCustomOperator("ConvertInvariant");
                     Out.Write('(');
                     Out.WriteCoreOperatorName("Unchecked");
                     Out.Write(".defaultof<");

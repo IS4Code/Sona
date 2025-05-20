@@ -72,6 +72,31 @@ namespace Sona.Compiler
             writer.WriteNamespacedName("System", name);
         }
 
+        public static void WriteCustomOperator(this ISourceWriter writer, string name)
+        {
+            writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", name);
+        }
+
+        public static void WriteCustomUnaryOperator(this ISourceWriter writer, string name)
+        {
+            writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "UnaryOperators", name);
+        }
+
+        public static void WriteCustomBinaryOperator(this ISourceWriter writer, string name)
+        {
+            writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "BinaryOperators", name);
+        }
+
+        public static void WriteCustomSequenceOperator(this ISourceWriter writer, string name)
+        {
+            writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "SequenceHelpers", name);
+        }
+
+        public static void WriteCustomTupleOperator(this ISourceWriter writer, string name)
+        {
+            writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples", name);
+        }
+
         public static void WriteSpecialMember(this ISourceWriter writer, string name)
         {
             writer.Write('.');
@@ -81,19 +106,32 @@ namespace Sona.Compiler
         public static void WriteSpecialOperator(this ISourceWriter writer, string name)
         {
             writer.WriteOperator("|>");
-            writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", name);
+            writer.WriteCustomOperator(name);
         }
 
         public static void WriteSpecialUnaryOperator(this ISourceWriter writer, string name)
         {
             writer.WriteOperator("|>");
-            writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "UnaryOperators", name);
+            writer.WriteCustomUnaryOperator(name);
         }
 
         public static void WriteSpecialBinaryOperator(this ISourceWriter writer, string name)
         {
             writer.WriteOperator("|>");
-            writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "BinaryOperators", name);
+            writer.WriteCustomBinaryOperator(name);
+        }
+
+        public static void WriteTraitAssertion(this ISourceWriter writer, string name)
+        {
+            writer.WriteOperator(':');
+            writer.WriteNamespacedName("Sona.Runtime.Traits", "trait " + name);
+            writer.Write("<_>");
+        }
+
+        public static void WriteTraitAssertion(this ISourceWriter writer, string name1, string name2)
+        {
+            writer.WriteOperator("|>");
+            writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "Inference", name1 + "|" + name2);
         }
 
         static readonly string space32 = new string(' ', 32);
