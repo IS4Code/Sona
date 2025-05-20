@@ -12,6 +12,10 @@ namespace Sona.Compiler.States
         bool asOption;
         bool optionIsStruct;
 
+        string Option => optionIsStruct ? "ValueOption" : "Option";
+        string Some => optionIsStruct ? "ValueSome" : "Some";
+        string None => optionIsStruct ? "ValueNone" : "None";
+
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
@@ -168,12 +172,10 @@ namespace Sona.Compiler.States
             {
                 case SonaLexer.VOID:
                     Out.EnterNestedScope(true);
-                    Out.Write("(let _");
+                    Out.Write("let _");
                     Out.WriteOperator('=');
-                    return;
+                    break;
                 case SonaLexer.OBJECT:
-                    Out.Write('(');
-                    return;
                 case SonaLexer.NEW:
                 case SonaLexer.SOME:
                 case SonaLexer.ENUM:
@@ -196,6 +198,7 @@ namespace Sona.Compiler.States
         {
             if(!typePresent)
             {
+                // Same as with a type, just without arguments
                 switch(type)
                 {
                     case SonaLexer.ENUM:
@@ -212,23 +215,28 @@ namespace Sona.Compiler.States
                         Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "ConvertUnit");
                         break;
                 }
+                // Continue next
             }
             if(asOption)
             {
                 // An option type is requested
                 switch(type)
                 {
+                    case SonaLexer.VOID:
+                        // Doesn't affect the operation
+                        return;
+                    case SonaLexer.OBJECT:
                     case SonaLexer.NEW:
                     case SonaLexer.SOME:
                     case SonaLexer.WIDEN:
                         // Bind to result first
-                        Out.Write("(match ");
+                        Out.Write("match ");
                         Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "BindToResult");
                         Out.Write('(');
                         return;
                     case SonaLexer.NARROW:
                         // Optionally bind to result first
-                        Out.Write("(match ");
+                        Out.Write("match ");
                         Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "OptionalBindToResult");
                         Out.Write('(');
                         return;
@@ -256,12 +264,12 @@ namespace Sona.Compiler.States
                         typeCapture = null;
                         break;
                     case SonaLexer.SOME:
-                        Out.WriteCoreName(optionIsStruct ? "ValueOption" : "Option");
+                        Out.WriteCoreName(Option);
                         Out.Write('<');
                         typeCapture.Play(Out);
                         typeCapture = null;
                         Out.Write(">.");
-                        Out.WriteIdentifier(optionIsStruct ? "ValueSome" : "Some");
+                        Out.WriteIdentifier(Some);
                         break;
                     case SonaLexer.WIDEN:
                     case SonaLexer.NARROW:
@@ -269,13 +277,14 @@ namespace Sona.Compiler.States
                         Out.Write('(');
                         return;
                 }
+                // Continue next
             }
             switch(type)
             {
                 case SonaLexer.SOME:
                     if(!typePresent)
                     {
-                        Out.WriteCoreName(optionIsStruct ? "ValueSome" : "Some");
+                        Out.WriteCoreName(Some);
                     }
                     Out.Write('(');
                     return;
@@ -308,21 +317,39 @@ namespace Sona.Compiler.States
             {
                 case SonaLexer.VOID:
                     Out.ExitNestedScope();
-                    Out.Write(" in ())");
+                    Out.Write(" in ");
+                    if(asOption)
+                    {
+                        Out.WriteCoreName(None);
+                    }
+                    else
+                    {
+                        Out.Write("()");
+                    }
                     return;
                 case SonaLexer.OBJECT:
-                    Out.WriteOperator(":>");
-                    Out.WriteCoreName("objnull");
-                    Out.Write(')');
+                    if(asOption)
+                    {
+                        var id = MatchSome();
+                        Out.WriteCoreName(Some);
+                        Out.Write('(');
+                        Out.WriteIdentifier(id);
+                        Out.WriteOperator(":>");
+                        Out.WriteCoreName("objnull");
+                        Out.Write(')');
+                        MatchNone();
+                        Out.WriteCoreName(None);
+                    }
+                    else
+                    {
+                        Out.WriteOperator(":>");
+                        Out.WriteCoreName("objnull");
+                    }
                     return;
                 case SonaLexer.NEW when asOption:
                 {
-                    Out.Write(")with|struct(true,");
-                    var id = Out.CreateTemporaryIdentifier();
-                    Out.WriteIdentifier(id);
-                    Out.Write(')');
-                    Out.WriteOperator("->");
-                    Out.WriteCoreName(optionIsStruct ? "ValueSome" : "Some");
+                    var id = MatchSome();
+                    Out.WriteCoreName(Some);
                     Out.Write('(');
                     Out.Write("new ");
                     if(typeCapture != null)
@@ -335,48 +362,37 @@ namespace Sona.Compiler.States
                     }
                     Out.Write('(');
                     Out.WriteIdentifier(id);
-                    Out.Write("))|_");
-                    Out.WriteOperator("->");
-                    Out.WriteCoreName(optionIsStruct ? "ValueNone" : "None");
-                    Out.Write(')');
+                    Out.Write("))");
+                    MatchNone();
+                    Out.WriteCoreName(None);
                     return;
                 }
                 case SonaLexer.SOME when asOption:
                 {
-                    Out.Write(")with|struct(true,");
-                    var id = Out.CreateTemporaryIdentifier();
-                    Out.WriteIdentifier(id);
-                    Out.Write(')');
-                    Out.WriteOperator("->");
+                    var id = MatchSome();
                     if(typeCapture != null)
                     {
-                        Out.WriteCoreName(optionIsStruct ? "ValueOption" : "Option");
+                        Out.WriteCoreName(Option);
                         Out.Write('<');
                         typeCapture.Play(Out);
                         Out.Write(">.");
-                        Out.WriteIdentifier(optionIsStruct ? "ValueSome" : "Some");
+                        Out.WriteIdentifier(Some);
                     }
                     else
                     {
-                        Out.WriteCoreName(optionIsStruct ? "ValueSome" : "Some");
+                        Out.WriteCoreName(Some);
                     }
                     Out.Write(' ');
                     Out.WriteIdentifier(id);
-                    Out.Write("|_");
-                    Out.WriteOperator("->");
-                    Out.WriteCoreName(optionIsStruct ? "ValueNone" : "None");
-                    Out.Write(')');
+                    MatchNone();
+                    Out.WriteCoreName(None);
                     return;
                 }
                 case SonaLexer.WIDEN:
                     if(asOption)
                     {
-                        Out.Write(")with|struct(true,");
-                        var id = Out.CreateTemporaryIdentifier();
-                        Out.WriteIdentifier(id);
-                        Out.Write(')');
-                        Out.WriteOperator("->");
-                        Out.WriteCoreName(optionIsStruct ? "ValueSome" : "Some");
+                        var id = MatchSome();
+                        Out.WriteCoreName(Some);
                         Out.Write('(');
                         if(typeCapture != null)
                         {
@@ -389,60 +405,77 @@ namespace Sona.Compiler.States
                             Out.Write("upcast ");
                             Out.WriteIdentifier(id);
                         }
-                        Out.Write(")|_");
-                        Out.WriteOperator("->");
-                        Out.WriteCoreName(optionIsStruct ? "ValueNone" : "None");
                         Out.Write(')');
+                        MatchNone();
+                        Out.WriteCoreName(None);
                         return;
                     }
                     else if(typeCapture != null)
                     {
                         Out.WriteOperator(":>");
                         typeCapture.Play(Out);
-                        Out.Write(')');
                         return;
                     }
                     goto default;
                 case SonaLexer.NARROW:
                     if(asOption)
                     {
-                        Out.Write(")with|struct(true,(");
-                        Out.WriteOperator(":?");
-                        if(typeCapture != null)
-                        {
-                            Out.Write('(');
-                            typeCapture.Play(Out);
-                            Out.Write(')');
-                        }
-                        else
-                        {
-                            Out.Write("_ ");
-                        }
-                        Out.Write("as ");
-                        var id = Out.CreateTemporaryIdentifier();
-                        Out.WriteIdentifier(id);
-                        Out.Write("))");
-                        Out.WriteOperator("->");
-                        Out.WriteCoreName(optionIsStruct ? "ValueSome" : "Some");
+                        var id = MatchDerivedSome();
+                        Out.WriteCoreName(Some);
                         Out.Write(' ');
                         Out.WriteIdentifier(id);
-                        Out.Write("|_");
-                        Out.WriteOperator("->");
-                        Out.WriteCoreName(optionIsStruct ? "ValueNone" : "None");
-                        Out.Write(')');
+                        MatchNone();
+                        Out.WriteCoreName(None);
                         return;
                     }
                     else if(typeCapture != null)
                     {
                         Out.WriteOperator(":?>");
                         typeCapture.Play(Out);
-                        Out.Write(')');
                         return;
                     }
                     goto default;
                 default:
                     Out.Write(')');
                     return;
+            }
+
+            string MatchSome()
+            {
+                Out.Write(")with|struct(true,");
+                var id = Out.CreateTemporaryIdentifier();
+                Out.WriteIdentifier(id);
+                Out.Write(')');
+                Out.WriteOperator("->");
+                return id;
+            }
+
+            string MatchDerivedSome()
+            {
+                Out.Write(")with|struct(true,(");
+                Out.WriteOperator(":?");
+                if(typeCapture != null)
+                {
+                    Out.Write('(');
+                    typeCapture.Play(Out);
+                    Out.Write(')');
+                }
+                else
+                {
+                    Out.Write("_ ");
+                }
+                Out.Write("as ");
+                var id = Out.CreateTemporaryIdentifier();
+                Out.WriteIdentifier(id);
+                Out.Write("))");
+                Out.WriteOperator("->");
+                return id;
+            }
+
+            void MatchNone()
+            {
+                Out.Write("|_");
+                Out.WriteOperator("->");
             }
         }
     }
