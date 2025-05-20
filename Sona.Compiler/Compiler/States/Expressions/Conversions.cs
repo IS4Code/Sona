@@ -100,7 +100,7 @@ namespace Sona.Compiler.States
             }
         }
 
-        public override void EnterType(TypeContext context)
+        public override void EnterGenericArgument(GenericArgumentContext context)
         {
             typePresent = true;
             switch(type)
@@ -117,6 +117,10 @@ namespace Sona.Compiler.States
                     Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Explicit");
                     Out.Write("<_,");
                     break;
+                case SonaLexer.UNIT:
+                    Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "ConvertUnit");
+                    Out.Write("<_,_,");
+                    break;
                 case SonaLexer.SOME:
                 case SonaLexer.NEW:
                 case SonaLexer.WIDEN:
@@ -124,17 +128,17 @@ namespace Sona.Compiler.States
                     typeCapture = Out.StartCapture();
                     break;
             }
-            base.EnterType(context);
+            EnterState<GenericArgumentState>().EnterGenericArgument(context);
         }
 
-        public override void ExitType(TypeContext context)
+        public override void ExitGenericArgument(GenericArgumentContext context)
         {
-            base.ExitType(context);
             switch(type)
             {
                 case SonaLexer.ENUM:
                 case SonaLexer.IMPLICIT:
                 case SonaLexer.EXPLICIT:
+                case SonaLexer.UNIT:
                     Out.Write('>');
                     break;
                 case SonaLexer.SOME:
@@ -175,6 +179,7 @@ namespace Sona.Compiler.States
                 case SonaLexer.ENUM:
                 case SonaLexer.IMPLICIT:
                 case SonaLexer.EXPLICIT:
+                case SonaLexer.UNIT:
                 case SonaLexer.WIDEN:
                 case SonaLexer.NARROW:
                     // Wait for type/operand
@@ -203,6 +208,9 @@ namespace Sona.Compiler.States
                     case SonaLexer.EXPLICIT:
                         Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "Explicit");
                         break;
+                    case SonaLexer.UNIT:
+                        Out.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", "ConvertUnit");
+                        break;
                 }
             }
             if(asOption)
@@ -227,6 +235,7 @@ namespace Sona.Compiler.States
                     case SonaLexer.ENUM:
                     case SonaLexer.IMPLICIT:
                     case SonaLexer.EXPLICIT:
+                    case SonaLexer.UNIT:
                     case null:
                         // Conversion through function
                         Out.WriteOperator("|>");
@@ -286,6 +295,7 @@ namespace Sona.Compiler.States
                 case SonaLexer.ENUM:
                 case SonaLexer.IMPLICIT:
                 case SonaLexer.EXPLICIT:
+                case SonaLexer.UNIT:
                 case null:
                     Out.Write('(');
                     return;

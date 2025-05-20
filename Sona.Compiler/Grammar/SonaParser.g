@@ -1036,7 +1036,8 @@ atomicExpr:
   hashExpr |
   notExpr |
   unaryOperator atomicExpr |
-  atomicConvertExpr;
+  atomicConvertExpr |
+  unit;
 
 hashExpr:
   '#' atomicExpr;
@@ -1059,7 +1060,7 @@ nestedAssignment:
   '(' (altMemberExpr | memberExpr) assignment ')';
 
 primitiveExpr:
-  namedValue | number | string | unit;
+  namedValue | number | string;
 
 namedValue:
   'null' | 'false' | 'true' | 'none' | 'default';
@@ -1148,8 +1149,8 @@ memberConvertExpr:
 convertOperator:
   (
     (
-      'some' | 'enum' | 'implicit' | 'explicit' | 'new' | 'widen' | 'narrow'
-    ) ('<' type '>')? |
+      'some' | 'enum' | 'implicit' | 'explicit' | 'new' | 'widen' | 'narrow' | 'unit'
+    ) ('<' genericArgument '>')? |
     primitiveType
   ) optionSuffix?;
 

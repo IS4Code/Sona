@@ -446,11 +446,9 @@ namespace Sona.Compiler.States
         }
     }
     
-    internal sealed class GenericArgumentsState : TypeState, IExpressionContext
+    internal sealed class GenericArgumentsState : GenericArgumentState
     {
         bool first;
-
-        bool IExpressionContext.IsLiteral => true;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -485,6 +483,21 @@ namespace Sona.Compiler.States
         public override void ExitGenericArgument(GenericArgumentContext context)
         {
 
+        }
+    }
+
+    internal class GenericArgumentState : TypeState, IExpressionContext
+    {
+        bool IExpressionContext.IsLiteral => true;
+
+        public override void EnterGenericArgument(GenericArgumentContext context)
+        {
+
+        }
+
+        public override void ExitGenericArgument(GenericArgumentContext context)
+        {
+            ExitState().ExitGenericArgument(context);
         }
 
         public override void EnterMeasureArgument(MeasureArgumentContext context)

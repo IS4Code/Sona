@@ -15,6 +15,9 @@ type Priority3 internal() =
 type Priority4 internal() =
   inherit Priority3()
 
+[<Sealed; AbstractClass; AllowNullLiteral>]
+type UnitMarker<[<Measure>]'M> = class end
+
 namespace Sona.Runtime.CompilerServices.Extensions
 [<AutoOpen(path = "Sona.Runtime.CompilerServices.Extensions")>]do()
 
@@ -60,6 +63,7 @@ namespace Sona.Runtime.CompilerServices
 open System
 open System.Runtime.CompilerServices
 open System.Runtime.ExceptionServices
+open Sona.Runtime.Core
 open Sona.Runtime.Traits
 open Sona.Runtime.CompilerServices.Internal
 
@@ -194,6 +198,54 @@ type Operators1 with
   static member inline ``operator ConvertInvariant``(_:Operators1, _:Operators2, x : ^T, y : ^U) =
     ((^T or ^U) : (static member op_Explicit : ^T -> ^U) x)
   
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : float<^M1>, _ : UnitMarker<^M2>, _ : float<^M2>) : float<^M2> =
+    (# "" x : _ #)
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : float32<^M1>, _ : UnitMarker<^M2>, _ : float32<^M2>) : float32<^M2> =
+    (# "" x : _ #)
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : decimal<^M1>, _ : UnitMarker<^M2>, _ : decimal<^M2>) : decimal<^M2> =
+    (# "" x : _ #)
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : int<^M1>, _ : UnitMarker<^M2>, _ : int<^M2>) : int<^M2> =
+    (# "" x : _ #)
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : sbyte<^M1>, _ : UnitMarker<^M2>, _ : sbyte<^M2>) : sbyte<^M2> =
+    (# "" x : _ #)
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : int16<^M1>, _ : UnitMarker<^M2>, _ : int16<^M2>) : int16<^M2> =
+    (# "" x : _ #)
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : int64<^M1>, _ : UnitMarker<^M2>, _ : int64<^M2>) : int64<^M2> =
+    (# "" x : _ #)
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : nativeint<^M1>, _ : UnitMarker<^M2>, _ : nativeint<^M2>) : nativeint<^M2> =
+    (# "" x : _ #)
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : uint<^M1>, _ : UnitMarker<^M2>, _ : uint<^M2>) : uint<^M2> =
+    (# "" x : _ #)
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : byte<^M1>, _ : UnitMarker<^M2>, _ : byte<^M2>) : byte<^M2> =
+    (# "" x : _ #)
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : uint16<^M1>, _ : UnitMarker<^M2>, _ : uint16<^M2>) : uint16<^M2> =
+    (# "" x : _ #)
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : uint64<^M1>, _ : UnitMarker<^M2>, _ : uint64<^M2>) : uint64<^M2> =
+    (# "" x : _ #)
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : unativeint<^M1>, _ : UnitMarker<^M2>, _ : unativeint<^M2>) : unativeint<^M2> =
+    (# "" x : _ #)
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : unit<^M1>, _ : UnitMarker<^M2>, _ : unit<^M2>) : unit<^M2> =
+    (# "" x : _ #)
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : bigint<^M1>, _ : UnitMarker<^M2>, _ : bigint<^M2>) : bigint<^M2> =
+    (# "" x : _ #)
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : complex<^M1>, _ : UnitMarker<^M2>, _ : complex<^M2>) : complex<^M2> =
+    (# "" x : _ #)
+  
   static member inline ``operator Default``(_:Operators1, _:Operators2, _ : Nullable<^T>) : Nullable<^T> =
     Nullable()
   
@@ -218,9 +270,13 @@ type Operators1 with
   
   static member inline ``operator OptionalBindToResult``(_:Operators1, _:OperatorsBase, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T)) = ()
   
-  static member inline ``operator TryConversion``(_:Operators1, _:Operators2, x : ^T, f : ^T -> ^U when ^U :> Enum and ^U : not struct and ^U : (new : unit -> ^U)) = ()
+  static member inline ``operator TryConversion``(_:Operators1, _:Operators2, _ : ^T, _ : ^T -> ^U when ^U :> Enum and ^U : not struct and ^U : (new : unit -> ^U)) = ()
   
-  static member inline ``operator TryConversionValue``(_:Operators1, _:Operators2, x : ^T, f : ^T -> ^U when ^U :> Enum and ^U : not struct and ^U : (new : unit -> ^U)) = ()
+  static member inline ``operator TryConversionValue``(_:Operators1, _:Operators2, _ : ^T, _ : ^T -> ^U when ^U :> Enum and ^U : not struct and ^U : (new : unit -> ^U)) = ()
+  
+  static member inline ``operator ConvertUnit``(_:OperatorsBase, _:Operators2, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T), _ : UnitMarker<_>, _) = ()
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:OperatorsBase, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T), _ : UnitMarker<_>, _) = ()
   
   static member inline ``operator Default``(_:Operators1, _:Operators2, _ : ^T when ^T :> Enum and ^T : not struct and ^T : (new : unit -> ^T)) = ()
 
@@ -311,6 +367,14 @@ type Operators2 with
     | Ok x -> ((^self1 or ^self2 or ^T) : (static member ``operator TryConversionValue``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U voption) (null : Operators1), (null : Operators2), x, f)
     | _ -> ValueNone
   
+  static member inline ``operator ConvertUnit``(_:OperatorsBase, _:Operators2, x : ^T, m : UnitMarker<_>, y : ^U) : ^U =
+    if true then (# "" x : _ #)
+    else ((^T or ^U) : (static member ``operator UnitCompatibility``: _ * _ * _ -> unit) x, m, y) ; Unchecked.defaultof<_>
+  
+  static member inline ``operator ConvertUnit``(_:Operators1, _:OperatorsBase, x : ^T, m : UnitMarker<_>, y : ^U) : ^U =
+    if true then (# "" x : _ #)
+    else ((^T or ^U) : (static member ``operator UnitCompatibility``: _ * _ * _ -> unit) y, m, x) ; Unchecked.defaultof<_>
+  
   static member inline ``operator Default``(_:Operators1, _:Operators2, _ : ^T) : ^T =
     null
 
@@ -342,10 +406,10 @@ module Operators =
   let inline ConvertInvariant(y)(x) =
     ((^self1 or ^self2 or ^x) : (static member ``operator ConvertInvariant``: ^self1 * ^self2 * ^x * ^y -> ^y) (null : Operators1), (null : Operators2), x, y)
   
-  let inline TryConversion(x: ^T)(f : _ -> ^U) =
+  let inline TryConversion(x : ^T)(f : _ -> ^U) =
     ((^self1 or ^self2 or ^T) : (static member ``operator TryConversion``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U option) (null : Operators1), (null : Operators2), x, f)
   
-  let inline TryConversionValue(x: ^T)(f : _ -> ^U) =
+  let inline TryConversionValue(x : ^T)(f : _ -> ^U) =
     ((^self1 or ^self2 or ^T) : (static member ``operator TryConversionValue``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U voption) (null : Operators1), (null : Operators2), x, f)
   
   let inline Implicit<^T, ^U when (^T or ^U) : (static member op_Implicit: ^T -> ^U)> x =
@@ -353,6 +417,9 @@ module Operators =
 
   let inline Explicit<^T, ^U when (^T or ^U) : (static member op_Explicit: ^T -> ^U)> x =
     ((^T or ^U) : (static member op_Explicit: ^T -> ^U) x)
+  
+  let inline ConvertUnit<^T, ^U, [<Measure>]^M when (Operators1 or Operators2 or ^T) : (static member ``operator ConvertUnit`` : Operators1 * Operators2 * ^T * UnitMarker<^M> * ^U -> ^U)>(x : ^T) : ^U =
+    ((^self1 or ^self2 or ^T) : (static member ``operator ConvertUnit``: ^self1 * ^self2 * ^T * _ * ^U -> ^U) (null : Operators1), (null : Operators2), x, (null : UnitMarker<^M>), Unchecked.defaultof<^U>)
     
   [<GeneralizableValue>]
   let inline Default<^T when (Operators1 or Operators2 or ^T) : (static member ``operator Default``: Operators1 * Operators2 * ^T -> ^T)> : ^T =
