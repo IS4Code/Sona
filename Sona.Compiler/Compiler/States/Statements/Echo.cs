@@ -8,7 +8,7 @@ namespace Sona.Compiler.States
     internal sealed class EchoState : NodeState
     {
         readonly List<string> variables = new();
-        bool hasFormat, first;
+        bool hasPercent;
         ISourceCapture? stringCapture;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
@@ -16,8 +16,7 @@ namespace Sona.Compiler.States
             base.Initialize(environment, parent);
 
             variables.Clear();
-            hasFormat = false;
-            first = true;
+            hasPercent = false;
             stringCapture = null;
         }
 
@@ -33,19 +32,29 @@ namespace Sona.Compiler.States
             Out.WriteCoreName("ExtraTopLevelOperators");
             Out.Write('.');
             Out.WriteIdentifier(identifier);
+            Out.Write('(');
         }
 
         public override void ExitEchoStatement(EchoStatementContext context)
         {
             if(stringCapture != null)
             {
-                // Has sole string argument - treat as format
-                Out.Write('(');
-                stringCapture.Play(Out);
-                stringCapture = null;
-                Out.Write(')');
+                // Has sole string argument
+                if(hasPercent)
+                {
+                    // Needs to be "escaped" through a variable to be treated as literal string
+                    EnterVariable();
+                    stringCapture.Play(Out);
+                    stringCapture = null;
+                    ExitVariable();
+                }
+                else
+                {
+                    stringCapture.Play(Out);
+                    stringCapture = null;
+                }
             }
-            else if(!hasFormat)
+            if(variables.Count != 0)
             {
                 Out.Write("$\"");
                 foreach(var name in variables)
@@ -54,8 +63,9 @@ namespace Sona.Compiler.States
                     Out.WriteIdentifier(name);
                     Out.Write('}');
                 }
-                Out.Write("\")");
+                Out.Write('"');
             }
+            Out.Write(')');
             ExitState().ExitEchoStatement(context);
         }
 
@@ -86,67 +96,37 @@ namespace Sona.Compiler.States
         {
             if(stringCapture != null)
             {
-                // Has string argument
-                if(hasFormat)
-                {
-                    // Does formatting - first argument
-                    Out.Write('(');
-                    stringCapture.Play(Out);
-                    stringCapture = null;
-                    Out.Write(')');
-                }
-                else
-                {
-                    // Part of interpolated string
-                    Out.Write("(");
-                    AddVariable();
-                    stringCapture.Play(Out);
-                    stringCapture = null;
-                    Out.Write(") ");
-                    Out.ExitNestedScope();
-                    Out.Write("in ");
-                    first = false;
-                }
+                // Always part of interpolated string since it is followed by an expression
+                EnterVariable();
+                stringCapture.Play(Out);
+                stringCapture = null;
+                ExitVariable();
             }
-            if(hasFormat)
-            {
-                Out.Write('(');
-            }
-            else
-            {
-                if(first)
-                {
-                    Out.Write("(");
-                    first = false;
-                }
-                AddVariable();
-            }
+            EnterVariable();
             EnterState<ExpressionState>().EnterExpression(context);
+        }
 
-            void AddVariable()
-            {
-                var name = Out.CreateTemporaryIdentifier();
-                variables.Add(name);
-                Out.EnterNestedScope(true);
-                Out.Write("let ");
-                Out.WriteIdentifier(name);
-                Out.WriteOperator('=');
-                Out.Write('(');
-            }
+        void EnterVariable()
+        {
+            var name = Out.CreateTemporaryIdentifier();
+            variables.Add(name);
+            Out.EnterNestedScope(true);
+            Out.Write("let ");
+            Out.WriteIdentifier(name);
+            Out.WriteOperator('=');
+            Out.Write('(');
+        }
+
+        void ExitVariable()
+        {
+            Out.Write(") ");
+            Out.ExitNestedScope();
+            Out.Write("in ");
         }
 
         public override void ExitExpression(ExpressionContext context)
         {
-            if(hasFormat)
-            {
-                Out.Write(')');
-            }
-            else
-            {
-                Out.Write(") ");
-                Out.ExitNestedScope();
-                Out.Write("in ");
-            }
+            ExitVariable();
         }
 
         sealed class String : StringState
@@ -161,7 +141,7 @@ namespace Sona.Compiler.States
                     case SonaLexer.STRING_PART:
                         if(token.Text.Contains('%') && FindContext<EchoState>() is { } context)
                         {
-                            context.hasFormat = true;
+                            context.hasPercent = true;
                         }
                         break;
                 }
