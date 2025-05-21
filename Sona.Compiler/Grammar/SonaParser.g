@@ -278,7 +278,12 @@ closingStatement:
 // Special statements
 
 echoStatement:
-  'echo' expression (',' expression)*;
+  'echo' (echoStatement_Arg | expression) (',' expression)*;
+
+echoStatement_Arg:
+  string |
+  interpolatedString |
+  '(' echoStatement_Arg ')';
 
 // Simple control statements
 
@@ -1050,8 +1055,7 @@ atomicConvertExpr:
 
 simpleExpr:
   primitiveExpr |
-  interpolatedString |
-  verbatimInterpolatedString;
+  interpolatedString;
 
 nestedExpr:
   '(' expression ')';
@@ -1060,7 +1064,7 @@ nestedAssignment:
   '(' (altMemberExpr | memberExpr) assignment ')';
 
 primitiveExpr:
-  namedValue | number | string;
+  namedValue | number | string | char;
 
 namedValue:
   'null' | 'false' | 'true' | 'none' | 'default';
@@ -1180,9 +1184,9 @@ callArguments:
 
 simpleCallArgument:
   basicConstructExpr |
+  char |
   string |
-  interpolatedString |
-  verbatimInterpolatedString;
+  interpolatedString;
 
 callArgList:
   (simpleCallArgTuple | complexCallArgTuple) (';' (simpleCallArgTuple | complexCallArgTuple))*;
@@ -1263,6 +1267,10 @@ spreadExpression:
 /* -------------------- */
 
 interpolatedString:
+  plainInterpolatedString |
+  verbatimInterpolatedString;
+
+plainInterpolatedString:
   BEGIN_INTERPOLATED_STRING interpStrComponent* (END_STRING | errorUnsupportedEndStringSuffix);
 
 verbatimInterpolatedString:
@@ -1359,8 +1367,11 @@ unaryOperator:
 number:
   INT_LITERAL | FLOAT_LITERAL | EXP_LITERAL | HEX_LITERAL | errorUnsupportedNumberSuffix;
 
+char:
+  BEGIN_CHAR CHAR_PART (END_CHAR | errorUnsupportedEndCharSuffix);
+
 string:
-  BEGIN_CHAR CHAR_PART END_CHAR | (BEGIN_STRING | BEGIN_VERBATIM_STRING) (STRING_PART | LITERAL_NEWLINE | LITERAL_ESCAPE_NEWLINE)* END_STRING | errorUnsupportedStringSuffix;
+  (BEGIN_STRING | BEGIN_VERBATIM_STRING) (STRING_PART | LITERAL_NEWLINE | LITERAL_ESCAPE_NEWLINE)* (END_STRING | errorUnsupportedEndStringSuffix);
 
 unit:
   'unit';
@@ -1374,8 +1385,8 @@ errorMissingExpression:;
 errorUnsupportedNumberSuffix:
   INT_SUFFIX | FLOAT_SUFFIX | EXP_SUFFIX | HEX_SUFFIX;
 
-errorUnsupportedStringSuffix:
-  BEGIN_CHAR CHAR_PART END_CHAR_SUFFIX | (BEGIN_STRING | BEGIN_VERBATIM_STRING) STRING_PART* END_STRING_SUFFIX;
+errorUnsupportedEndCharSuffix:
+  END_CHAR_SUFFIX;
 
 errorUnsupportedEndStringSuffix:
   END_STRING_SUFFIX;

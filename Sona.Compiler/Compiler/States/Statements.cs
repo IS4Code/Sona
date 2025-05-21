@@ -801,34 +801,6 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal sealed class EchoState : NodeState
-    {
-        public override void EnterEchoStatement(EchoStatementContext context)
-        {
-            var identifier = LexerContext.GetState<EchoPragma>()?.Identifier ?? "printfn";
-
-            Out.WriteCoreName("ExtraTopLevelOperators");
-            Out.Write('.');
-            Out.WriteIdentifier(identifier);
-        }
-
-        public override void ExitEchoStatement(EchoStatementContext context)
-        {
-            ExitState().ExitEchoStatement(context);
-        }
-
-        public override void EnterExpression(ExpressionContext context)
-        {
-            Out.Write('(');
-            EnterState<ExpressionState>().EnterExpression(context);
-        }
-
-        public override void ExitExpression(ExpressionContext context)
-        {
-            Out.Write(')');
-        }
-    }
-
     internal sealed class YieldState : NodeState
     {
         public override void EnterYieldStatement(YieldStatementContext context)

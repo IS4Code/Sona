@@ -20,7 +20,7 @@ namespace Sona.Compiler
             Environment.EnableParseTree();
         }
 
-        public sealed override void EnterErrorUnsupportedStringSuffix(ErrorUnsupportedStringSuffixContext context)
+        public sealed override void EnterErrorUnsupportedEndCharSuffix(ErrorUnsupportedEndCharSuffixContext context)
         {
             Environment.EnableParseTree();
         }
@@ -52,11 +52,11 @@ namespace Sona.Compiler
             }
         }
 
-        public sealed override void ExitErrorUnsupportedStringSuffix(ErrorUnsupportedStringSuffixContext context)
+        public sealed override void ExitErrorUnsupportedEndCharSuffix(ErrorUnsupportedEndCharSuffixContext context)
         {
             try
             {
-                Error($"The literal '{context.GetText()}' has an unsupported suffix.", context);
+                Error($"Unsupported character suffix '{context.GetText()}'.", context);
             }
             finally
             {

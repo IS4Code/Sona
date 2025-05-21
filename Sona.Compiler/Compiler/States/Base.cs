@@ -134,6 +134,16 @@ namespace Sona.Compiler
             }
         }
 
+        public override void EnterChar(CharContext context)
+        {
+            EnterState<StringState>().EnterChar(context);
+        }
+
+        public override void ExitChar(CharContext context)
+        {
+
+        }
+
         public override void EnterString(StringContext context)
         {
             EnterState<StringState>().EnterString(context);
@@ -266,15 +276,15 @@ namespace Sona.Compiler
 
         protected virtual IExpressionContext? GetExpressionContext() => FindContext<IExpressionContext>();
 
-        public override void EnterInterpolatedString(InterpolatedStringContext context)
+        public override void EnterPlainInterpolatedString(PlainInterpolatedStringContext context)
         {
             if(GetExpressionContext()?.IsLiteral ?? false)
             {
-                EnterState<LiteralNormalInterpolatedString>().EnterInterpolatedString(context);
+                EnterState<LiteralNormalInterpolatedString>().EnterPlainInterpolatedString(context);
             }
             else
             {
-                EnterState<InterpolatedString>().EnterInterpolatedString(context);
+                EnterState<InterpolatedString>().EnterPlainInterpolatedString(context);
             }
         }
 
@@ -290,7 +300,7 @@ namespace Sona.Compiler
             }
         }
 
-        public override void ExitInterpolatedString(InterpolatedStringContext context)
+        public override void ExitPlainInterpolatedString(PlainInterpolatedStringContext context)
         {
 
         }
@@ -344,50 +354,6 @@ namespace Sona.Compiler
         public override void ExitGlobalAttribute(GlobalAttributeContext context)
         {
 
-        }
-
-        sealed class StringState : NodeState
-        {
-            public override void EnterString(StringContext context)
-            {
-
-            }
-
-            public override void ExitString(StringContext context)
-            {
-                ExitState().ExitString(context);
-            }
-
-            public override void VisitTerminal(ITerminalNode node)
-            {
-                base.VisitTerminal(node);
-
-                var token = node.Symbol;
-                switch(token.Type)
-                {
-                    case SonaLexer.BEGIN_STRING:
-                    case SonaLexer.END_STRING:
-                        Out.Write('"');
-                        break;
-                    case SonaLexer.BEGIN_VERBATIM_STRING:
-                        Out.Write("@\"");
-                        break;
-                    case SonaLexer.BEGIN_CHAR:
-                    case SonaLexer.END_CHAR:
-                        Out.Write('\'');
-                        break;
-                    case SonaLexer.CHAR_PART:
-                    case SonaLexer.STRING_PART:
-                        Out.Write(token.Text);
-                        break;
-                    case SonaLexer.LITERAL_NEWLINE:
-                        Out.Write(LexerContext.GetState<NewlinePragma>()?.NewLineSequence ?? ScriptEnvironment.DefaultNewLineSequence);
-                        break;
-                    case SonaLexer.LITERAL_ESCAPE_NEWLINE:
-                        Out.Write(token.Text.Substring(1));
-                        break;
-                }
-            }
         }
     }
 

@@ -27,7 +27,7 @@ namespace Sona.Compiler.States
             // Do not inform writer about new lines
         }
 
-        public override void EnterInterpolatedString(InterpolatedStringContext context)
+        public override void EnterPlainInterpolatedString(PlainInterpolatedStringContext context)
         {
             Out.Write('(');
             parts.Add("$\"");
@@ -49,10 +49,10 @@ namespace Sona.Compiler.States
             Out.Write("\")");
         }
 
-        public override void ExitInterpolatedString(InterpolatedStringContext context)
+        public override void ExitPlainInterpolatedString(PlainInterpolatedStringContext context)
         {
             OnExit();
-            ExitState().ExitInterpolatedString(context);
+            ExitState().ExitPlainInterpolatedString(context);
         }
 
         public override void ExitVerbatimInterpolatedString(VerbatimInterpolatedStringContext context)
@@ -609,7 +609,7 @@ namespace Sona.Compiler.States
             // Do not inform writer about new lines
         }
 
-        public sealed override void EnterInterpolatedString(InterpolatedStringContext context)
+        public sealed override void EnterPlainInterpolatedString(PlainInterpolatedStringContext context)
         {
             Out.Write("(\"");
         }
@@ -624,10 +624,10 @@ namespace Sona.Compiler.States
             Out.Write("\")");
         }
 
-        public sealed override void ExitInterpolatedString(InterpolatedStringContext context)
+        public sealed override void ExitPlainInterpolatedString(PlainInterpolatedStringContext context)
         {
             OnExit();
-            ExitState().ExitInterpolatedString(context);
+            ExitState().ExitPlainInterpolatedString(context);
         }
 
         public sealed override void ExitVerbatimInterpolatedString(VerbatimInterpolatedStringContext context)
