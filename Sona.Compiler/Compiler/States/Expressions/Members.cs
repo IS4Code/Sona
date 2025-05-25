@@ -4,7 +4,7 @@ using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
 {
-    internal class MemberExprState : NodeState
+    internal class MemberExprState : TypeState
     {
         public override void EnterMemberExpr(MemberExprContext context)
         {
@@ -298,7 +298,7 @@ namespace Sona.Compiler.States
 
     internal class AltMemberExprState : MemberExprState
     {
-        bool lambdaOpen;
+        bool lambdaOpen, compactMember;
         int level;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
@@ -306,6 +306,7 @@ namespace Sona.Compiler.States
             base.Initialize(environment, parent);
 
             lambdaOpen = false;
+            compactMember = false;
             level = 0;
         }
 
@@ -328,7 +329,7 @@ namespace Sona.Compiler.States
 
         private void OpenLambda()
         {
-            if(lambdaOpen)
+            if(lambdaOpen || compactMember)
             {
                 return;
             }
@@ -348,6 +349,16 @@ namespace Sona.Compiler.States
                 Out.Write(')');
                 lambdaOpen = false;
             }
+        }
+
+        public override void EnterPrimitiveTypeMemberAccess(PrimitiveTypeMemberAccessContext context)
+        {
+            compactMember = true;
+        }
+
+        public override void ExitPrimitiveTypeMemberAccess(PrimitiveTypeMemberAccessContext context)
+        {
+            compactMember = true;
         }
 
         public override void EnterIndexAccess(IndexAccessContext context)

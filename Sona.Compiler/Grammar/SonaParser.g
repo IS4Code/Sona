@@ -1100,6 +1100,7 @@ memberExpr_Standalone:
   name genericArguments? simpleCallArgument?? |
   memberTypeConstructExpr |
   memberNewExpr |
+  primitiveTypeMemberAccess simpleCallArgument?? |
   nestedExpr |
   nestedAssignment;
 
@@ -1113,6 +1114,9 @@ memberExpr_Suffix:
   indexAccess |
   (memberAccess | dynamicMemberAccess) simpleCallArgument?? |
   dynamicExprMemberAccess;
+
+primitiveTypeMemberAccess:
+  primitiveType memberAccess;
 
 altMemberExpr:
   (memberExpr_Standalone | memberExpr_Prefix)
