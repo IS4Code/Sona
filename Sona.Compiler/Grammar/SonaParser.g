@@ -1041,6 +1041,7 @@ atomicExpr:
   hashExpr |
   notExpr |
   unaryOperator atomicExpr |
+  atomicNumberConvertExpr |
   atomicConvertExpr |
   unit;
 
@@ -1049,6 +1050,15 @@ hashExpr:
 
 notExpr:
   '!' atomicExpr;
+
+atomicNumberConvertExpr:
+  primitiveType numberConvertExpr_Arg;
+
+numberConvertExpr_Arg:
+  ('+' | '-')* (
+    numberToken |
+    '(' numberConvertExpr_Arg ')'
+  );
 
 atomicConvertExpr:
   convertOperator atomicExpr;
@@ -1107,6 +1117,7 @@ memberExpr_Standalone:
 memberExpr_Prefix:
   simpleExpr |
   fullConstructExpr |
+  memberNumberConvertExpr |
   memberConvertExpr;
 
 memberExpr_Suffix:
@@ -1150,6 +1161,9 @@ dynamicMemberAccess:
 
 dynamicExprMemberAccess:
   ':' nestedExpr;
+
+memberNumberConvertExpr:
+  primitiveType '(' numberConvertExpr_Arg ')';
 
 memberConvertExpr:
   convertOperator '(' expression ')';
@@ -1369,7 +1383,10 @@ unaryOperator:
 /* ---------- */
 
 number:
-  INT_LITERAL | FLOAT_LITERAL | EXP_LITERAL | HEX_LITERAL | errorUnsupportedNumberSuffix;
+  numberToken | errorUnsupportedNumberSuffix;
+
+numberToken:
+  INT_LITERAL | FLOAT_LITERAL | EXP_LITERAL | HEX_LITERAL;
 
 char:
   BEGIN_CHAR CHAR_PART (END_CHAR | errorUnsupportedEndCharSuffix);

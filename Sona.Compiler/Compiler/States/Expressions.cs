@@ -51,6 +51,16 @@ namespace Sona.Compiler.States
             EnterState<InlineStatementState>().EnterInlineExpr(context);
         }
 
+        public override void EnterAtomicNumberConvertExpr(AtomicNumberConvertExprContext context)
+        {
+            EnterState<NumberConversionState>().EnterAtomicNumberConvertExpr(context);
+        }
+
+        public override void ExitAtomicNumberConvertExpr(AtomicNumberConvertExprContext context)
+        {
+
+        }
+
         public override void EnterAtomicConvertExpr(AtomicConvertExprContext context)
         {
             EnterState<ConversionState>().EnterAtomicConvertExpr(context);
