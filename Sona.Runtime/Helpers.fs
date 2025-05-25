@@ -192,10 +192,10 @@ type Operators1 with
     | Ok value -> struct(true, value)
     | Error _ -> struct(false, Unchecked.defaultof<_>)
   
-  static member inline ``operator Convert``(_:Operators1, _:Operators2, x : ^T, y : ^U) =
+  static member inline ``operator Convert``(_:Operators1, _:Operators2, x : ^T, _ : ^U) =
     ((^T or ^U) : (static member op_Explicit : ^T -> ^U) x)
   
-  static member inline ``operator ConvertInvariant``(_:Operators1, _:Operators2, x : ^T, y : ^U) =
+  static member inline ``operator ConvertInvariant``(_:Operators1, _:Operators2, x : ^T, _ : ^U) =
     ((^T or ^U) : (static member op_Explicit : ^T -> ^U) x)
   
   static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : float<^M1>, _ : UnitMarker<^M2>, _ : float<^M2>) : float<^M2> =
@@ -245,6 +245,15 @@ type Operators1 with
   
   static member inline ``operator ConvertUnit``(_:Operators1, _:Operators2, x : complex<^M1>, _ : UnitMarker<^M2>, _ : complex<^M2>) : complex<^M2> =
     (# "" x : _ #)
+  
+  static member inline ``operator ConvertEnum``(_:Operators1, _:Operators2, x : ^T, _ : ^U) : ^U =
+    LanguagePrimitives.EnumOfValue(x)
+  
+  static member inline ``operator ConvertEnum``(_:Operators1, _:Operators2, x : string, _ : ^T when ^T : enum<_>) : ^T =
+    match Enum.TryParse<^T>(x) with
+    | (true, result) -> result
+    // Expose the exception on failure
+    | _ -> downcast Enum.Parse(typeof<^T>, x)
   
   static member inline ``operator Default``(_:Operators1, _:Operators2, _ : Nullable<^T>) : Nullable<^T> =
     Nullable()
@@ -323,7 +332,7 @@ type Operators2 with
   
   static member inline ``operator TryConversion``(_:Operators1, _:Operators2, x : ^T, f : ^T -> ^U) =
     try Some(f(x)) with
-    | (:? FormatException) | (:? OverflowException) | (:? InvalidCastException) -> None
+    | (:? FormatException) | (:? OverflowException) | (:? InvalidCastException) | (:? ArgumentException) -> None
   
   static member inline ``operator TryConversion``(_:Operators1, _:Operators2, n : Nullable<^T>, f : _ -> ^U) =
     if n.HasValue then ((^self1 or ^self2 or ^T) : (static member ``operator TryConversion``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U option) (null : Operators1), (null : Operators2), n.GetValueOrDefault(), f)
@@ -346,7 +355,7 @@ type Operators2 with
   
   static member inline ``operator TryConversionValue``(_:Operators1, _:Operators2, x : ^T, f : ^T -> ^U) =
     try ValueSome(f(x)) with
-    | (:? FormatException) | (:? OverflowException) | (:? InvalidCastException) -> ValueNone
+    | (:? FormatException) | (:? OverflowException) | (:? InvalidCastException) | (:? ArgumentException) -> ValueNone
   
   static member inline ``operator TryConversionValue``(_:Operators1, _:Operators2, n : Nullable<^T>, f : _ -> ^U) =
     if n.HasValue then ((^self1 or ^self2 or ^T) : (static member ``operator TryConversionValue``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U voption) (null : Operators1), (null : Operators2), n.GetValueOrDefault(), f)
@@ -374,6 +383,9 @@ type Operators2 with
   static member inline ``operator ConvertUnit``(_:Operators1, _:OperatorsBase, x : ^T, m : UnitMarker<_>, y : ^U) : ^U =
     if true then (# "" x : _ #)
     else ((^T or ^U) : (static member ``operator UnitCompatibility``: _ * _ * _ -> unit) y, m, x) ; Unchecked.defaultof<_>
+  
+  static member inline ``operator ConvertEnum``(_:Operators1, _:Operators2, x : ^T, _ : ^U) : ^U =
+    LanguagePrimitives.EnumToValue(x)
   
   static member inline ``operator Default``(_:Operators1, _:Operators2, _ : ^T) : ^T =
     null
@@ -420,7 +432,10 @@ module Operators =
   
   let inline ConvertUnit<^T, ^U, [<Measure>]^M when (Operators1 or Operators2 or ^T) : (static member ``operator ConvertUnit`` : Operators1 * Operators2 * ^T * UnitMarker<^M> * ^U -> ^U)>(x : ^T) : ^U =
     ((^self1 or ^self2 or ^T) : (static member ``operator ConvertUnit``: ^self1 * ^self2 * ^T * _ * ^U -> ^U) (null : Operators1), (null : Operators2), x, (null : UnitMarker<^M>), Unchecked.defaultof<^U>)
-    
+  
+  let inline ConvertEnum<^T, ^U when (Operators1 or Operators2 or ^T) : (static member ``operator ConvertEnum`` : Operators1 * Operators2 * ^T * ^U -> ^U)>(x : ^T) : ^U =
+    ((^self1 or ^self2 or ^T) : (static member ``operator ConvertEnum``: ^self1 * ^self2 * ^T * ^U -> ^U) (null : Operators1), (null : Operators2), x, Unchecked.defaultof<^U>)
+
   [<GeneralizableValue>]
   let inline Default<^T when (Operators1 or Operators2 or ^T) : (static member ``operator Default``: Operators1 * Operators2 * ^T -> ^T)> : ^T =
     ((^self1 or ^self2 or ^T) : (static member ``operator Default``: ^self1 * ^self2 * ^T -> ^T) (null : Operators1), (null : Operators2), Unchecked.defaultof<^T>)

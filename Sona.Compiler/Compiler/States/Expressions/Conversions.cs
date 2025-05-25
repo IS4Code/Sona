@@ -110,8 +110,8 @@ namespace Sona.Compiler.States
             switch(type)
             {
                 case SonaLexer.ENUM:
-                    Out.WriteCoreName("LanguagePrimitives");
-                    Out.Write(".EnumOfValue<_,");
+                    Out.WriteCustomOperator("ConvertEnum");
+                    Out.Write("<_,");
                     break;
                 case SonaLexer.IMPLICIT:
                     Out.WriteCustomOperator("Implicit");
@@ -202,8 +202,7 @@ namespace Sona.Compiler.States
                 switch(type)
                 {
                     case SonaLexer.ENUM:
-                        Out.WriteCoreName("LanguagePrimitives");
-                        Out.Write(".EnumOfValue");
+                        Out.WriteCustomOperator("ConvertEnum");
                         break;
                     case SonaLexer.IMPLICIT:
                         Out.WriteCustomOperator("Implicit");
