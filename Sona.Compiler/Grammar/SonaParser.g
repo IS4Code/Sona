@@ -1032,18 +1032,19 @@ annotationExpr:
   )*;
 
 atomicExpr:
-  altMemberExpr |
-  memberExpr |
-  simpleExpr |
-  fullConstructExpr |
-  funcExpr |
-  inlineExpr |
-  hashExpr |
-  notExpr |
-  unaryOperator atomicExpr |
-  atomicNumberConvertExpr |
-  atomicConvertExpr |
-  unit;
+  unaryOperator* (
+    altMemberExpr |
+    memberExpr |
+    simpleExpr |
+    fullConstructExpr |
+    funcExpr |
+    inlineExpr |
+    hashExpr |
+    notExpr |
+    atomicNumberConvertExpr |
+    atomicConvertExpr |
+    unit
+  );
 
 hashExpr:
   '#' atomicExpr;
