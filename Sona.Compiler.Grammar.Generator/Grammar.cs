@@ -87,10 +87,6 @@ namespace Sona.Compiler.Grammar.Generator
 
         public IEnumerable<IEnumerable<KeyValuePair<string, string>>> TreePaths()
         {
-            if(ElseIf.Count == 0)
-            {
-                return new[] { Normal() };
-            }
             return new[] { Normal(), TrailSecond() };
 
             IEnumerable<KeyValuePair<string, string>> Normal()
@@ -175,10 +171,6 @@ namespace Sona.Compiler.Grammar.Generator
 
         public IEnumerable<IEnumerable<KeyValuePair<string, string>>> TreePaths()
         {
-            if(Case.Count == 0)
-            {
-                return new[] { Normal() };
-            }
             return new[] { Normal(), TrailSecond() };
 
             IEnumerable<KeyValuePair<string, string>> Normal()
