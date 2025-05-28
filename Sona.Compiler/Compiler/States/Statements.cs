@@ -462,9 +462,9 @@ namespace Sona.Compiler.States
             ExitState()?.ExitInterruptingBlock(context);
         }
 
-        public sealed override void ExitClosingBlock(ClosingBlockContext context)
+        public sealed override void ExitReturningCoverBlock(ReturningCoverBlockContext context)
         {
-            ExitState()?.ExitClosingBlock(context);
+            ExitState()?.ExitReturningCoverBlock(context);
         }
 
         public sealed override void ExitConditionalBlock(ConditionalBlockContext context)
@@ -477,9 +477,9 @@ namespace Sona.Compiler.States
             ExitState()?.ExitInterruptibleBlock(context);
         }
 
-        public sealed override void ExitFullBlock(FullBlockContext context)
+        public sealed override void ExitConditionalCoverBlock(ConditionalCoverBlockContext context)
         {
-            ExitState()?.ExitFullBlock(context);
+            ExitState()?.ExitConditionalCoverBlock(context);
         }
         #endregion
     }

@@ -53,9 +53,9 @@ interruptingTrail:
   (';'? statement)*? ';'? interruptingStatement;
 
 // A block that explicitly returns, interrupts, or throws
-closingBlock:
+returningCoverBlock:
   (statement ';'?)*? closingStatement ';'?;
-closingTrail:
+returningCoverTrail:
   (';'? statement)*? ';'? closingStatement;
 
 // A block that may or may not return or interrupt
@@ -71,10 +71,20 @@ interruptibleTrail:
   (';'? statement)*? ';'? interruptibleStatement;
 
 // A block that may do anything
-fullBlock:
+conditionalCoverBlock:
   (statement ';'?)*? ((closingStatement | interruptibleStatement | conditionalStatement) ';'? | implicitReturnStatement);
-fullTrail:
-  (';'? statement)*? (';'? (closingStatement | interruptibleStatement | conditionalStatement) | implicitReturnStatement);
+conditionalCoverTrail:
+  (openTrail | interruptibleTrail | conditionalTrail);
+
+interruptingCoverBlock:
+  terminatingBlock | interruptingBlock;
+interruptingCoverTrail:
+  terminatingTrail | interruptingTrail;
+
+interruptibleCoverBlock:
+  openBlock | terminatingBlock | interruptingBlock | interruptibleBlock;
+interruptibleCoverTrail:
+  openTrail | interruptibleTrail;
 
 // Same but never executed
 ignoredBlock:
@@ -411,11 +421,11 @@ doStatementInterrupting:
 
 doStatementInterruptingTrail:
   // Body is interruptible but trail terminates or interrupts
-  'do' interruptibleBlock 'end' (terminatingTrail | interruptingTrail);
+  'do' interruptibleBlock 'end' interruptingCoverTrail;
 
 doStatementInterruptible:
   // Body is interruptible, trail is open or interruptible
-  'do' interruptibleBlock 'end' (openTrail | interruptibleTrail);
+  'do' interruptibleBlock 'end' interruptibleCoverTrail;
 
 doStatementReturning:
   // Body returns, trail is ignored
@@ -423,13 +433,13 @@ doStatementReturning:
   // Body is interruptible but trail returns
   'do' interruptibleBlock 'end' returningTrail |
   // Body is conditional but trail closes
-  'do' conditionalBlock 'end' closingTrail;
+  'do' conditionalBlock 'end' returningCoverTrail;
 
 doStatementConditional:
   // Body is conditional, trail is open, interruptible or conditional
-  'do' conditionalBlock 'end' (openTrail | interruptibleTrail | conditionalTrail) |
+  'do' conditionalBlock 'end' conditionalCoverTrail |
   // Body is interrutible but trail is conditional
-  'do' interruptibleBlock 'end' conditionalBlock;
+  'do' interruptibleBlock 'end' conditionalTrail;
 
 // `if`
 
@@ -451,11 +461,11 @@ ifStatementTerminating:
 
 ifStatementInterrupting:
   // `if` branch is interrupting, other are terminating or interrupting, trail is ignored
-  if interruptingBlock (elseif (terminatingBlock | interruptingBlock))* else (terminatingBlock | interruptingBlock) 'end' ignoredTrail |
+  if interruptingBlock (elseif interruptingCoverBlock)* else interruptingCoverBlock 'end' ignoredTrail |
   // `if` branch is terminating... (find interrupting branch)
   if terminatingBlock (elseif terminatingBlock)* (
     // `elseif` branch is interrupting, other are terminating or interrupting
-    elseif interruptingBlock (elseif (terminatingBlock | interruptingBlock))* else (terminatingBlock | interruptingBlock) |
+    elseif interruptingBlock (elseif interruptingCoverBlock)* else interruptingCoverBlock |
     // `else` branch is interrupting
     else interruptingBlock
     // Trail is ignored
@@ -463,73 +473,73 @@ ifStatementInterrupting:
 
 ifStatementInterruptingTrail:
   // `if` branch is interrupting... (find open path)
-  if interruptingBlock (elseif (terminatingBlock | interruptingBlock))* (
+  if interruptingBlock (elseif interruptingCoverBlock)* (
     // `elseif` branch is open or interruptible, other are non-returning
-    elseif (openBlock | interruptibleBlock) (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? |
+    elseif (openBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
     // `else` branch is open or interruptible
     (else (openBlock | interruptibleBlock))?
     // But the trail is terminating or interrupting
-  ) 'end' (terminatingTrail | interruptingTrail) |
+  ) 'end' interruptingCoverTrail |
   // `if` branch is interruptible, other are non-returning, but the trail is terminating or interrupting
-  if interruptibleBlock (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? 'end' (terminatingTrail | interruptingTrail) |
+  if interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' interruptingCoverTrail |
   // `if` branch is open or terminating... (find interrupting path)
   if (openBlock | terminatingBlock) (elseif (openBlock | terminatingBlock))* (
     // `elseif` branch is interrupting or interruptible, other are non-returning
-    elseif (interruptingBlock | interruptibleBlock) (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? |
+    elseif (interruptingBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
     // `else` branch is interrupting or interruptible
     else (interruptingBlock | interruptibleBlock)
     // But the trail is terminating or interrupting
-  ) 'end' (terminatingTrail | interruptingTrail);
+  ) 'end' interruptingCoverTrail;
 
 ifStatementInterruptible:
   // `if` branch is interrupting... (find open path)
-  if interruptingBlock (elseif (terminatingBlock | interruptingBlock))* (
+  if interruptingBlock (elseif interruptingCoverBlock)* (
     // `elseif` branch is open or interruptible, other are non-returning
-    elseif (openBlock | interruptibleBlock) (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? |
+    elseif (openBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
     // `else` branch is open or interruptible
     (else (openBlock | interruptibleBlock))?
     // Trail is open or interruptible
-  ) 'end' (openTrail | interruptibleTrail) |
+  ) 'end' interruptibleCoverTrail |
   // `if` branch is terminating... (find open and interrupting path)
   if terminatingBlock (elseif terminatingBlock)* (
     // `elseif` branch is interrupting... (find open path)
-    elseif interruptingBlock (elseif (terminatingBlock | interruptingBlock))* (
+    elseif interruptingBlock (elseif interruptingCoverBlock)* (
       // `elseif` branch is open or interruptible, other are non-returning
-      elseif (openBlock | interruptibleBlock) (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? |
+      elseif (openBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
       // `else` branch is open or interruptible
       (else (openBlock | interruptibleBlock))?
     ) |
     // `elseif` branch is open... (find interrupting path)
     elseif openBlock (elseif (openBlock | terminatingBlock))* (
       // `elseif` branch is interrupting or interruptible, other are non-returning
-      elseif (interruptingBlock | interruptibleBlock) (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? |
+      elseif (interruptingBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
       // `else` branch is interrupting or interruptible
       else (interruptingBlock | interruptibleBlock)
     ) |
     // `elseif` branch is interruptible, other are non-returning
-    elseif interruptibleBlock (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? |
+    elseif interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
     // `else` branch is interruptible
     else interruptibleBlock
     // Trail is open or interruptible
-  ) 'end' (openTrail | interruptibleTrail) |
+  ) 'end' interruptibleCoverTrail |
   // `if` branch is open... (find interrupting path)
   if openBlock (elseif (openBlock | terminatingBlock))* (
     // `elseif` branch is interrupting or interruptible, other are non-returning
-    elseif (interruptingBlock | interruptibleBlock) (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? |
+    elseif (interruptingBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
     // `else` branch is interrupting or interruptible
     else (interruptingBlock | interruptibleBlock)
     // Trail is open or interruptible
-  ) 'end' (openTrail | interruptibleTrail) |
+  ) 'end' interruptibleCoverTrail |
   // `if` branch is interruptible, other are non-returning, trail is open or interruptible
-  if interruptibleBlock (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? 'end' (openTrail | interruptibleTrail);
+  if interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' interruptibleCoverTrail;
 
 ifStatementReturning:
   // `if` branch is returning, other are closing, trail is ignored
-  if returningBlock (elseif closingBlock)* else closingBlock 'end' ignoredTrail |
+  if returningBlock (elseif returningCoverBlock)* else returningCoverBlock 'end' ignoredTrail |
   // `if` branch is closing but non-returning... (find returning path)
-  if (terminatingBlock | interruptingBlock) (elseif (terminatingBlock | interruptingBlock))* (
+  if interruptingCoverBlock (elseif interruptingCoverBlock)* (
     // `elseif` branch is returning, other are closing
-    elseif returningBlock (elseif closingBlock)* else closingBlock |
+    elseif returningBlock (elseif returningCoverBlock)* else returningCoverBlock |
     // `else` branch is returning
     else returningBlock
     // Trail is ignored
@@ -537,102 +547,102 @@ ifStatementReturning:
 
 ifStatementReturningTrailFromElse:
   // `if` branch is returning... (require open `else`)
-  if returningBlock (elseif closingBlock)* (
+  if returningBlock (elseif returningCoverBlock)* (
     // `else` branch is open
     (else openBlock)?
     // But the trail is closing
-  ) 'end' closingTrail |
+  ) 'end' returningCoverTrail |
   // `if` branch is terminating... (find returning path)
   if terminatingBlock (elseif terminatingBlock)* (
     // `elseif` branch is returning, other are returning or terminating, `else` is open
-    elseif returningBlock (elseif closingBlock)* (else openBlock)?
+    elseif returningBlock (elseif returningCoverBlock)* (else openBlock)?
     // But the trail is closing
-  ) 'end' closingTrail;
+  ) 'end' returningCoverTrail;
 
 ifStatementReturningTrail:
   // `if` branch is returning... (find open path)
-  if returningBlock (elseif closingBlock)* (
+  if returningBlock (elseif returningCoverBlock)* (
     // `elseif` branch is open or interruptible or conditional, other are anything
-    elseif (openBlock | interruptibleBlock | conditionalBlock) (elseif fullBlock)* (else fullBlock)? |
+    elseif (openBlock | interruptibleBlock | conditionalBlock) (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
     // `else` branch is open or interruptible or conditional
     (else (openBlock | interruptibleBlock | conditionalBlock))?
     // But the trail is closing
-  ) 'end' closingTrail |
+  ) 'end' returningCoverTrail |
   // `if` branch is interruptible, other are non-returning, but the trail is returning
-  if interruptibleBlock (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? 'end' returningTrail |
+  if interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' returningTrail |
   // `if` branch is conditional, other are anything, but the trail is closing
-  if conditionalBlock (elseif fullBlock)* (else fullBlock)? 'end' closingTrail |
+  if conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 'end' returningCoverTrail |
   // `if` branch is non-returning... (find returning path)
-  if (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock) (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (
+  if interruptibleCoverBlock (elseif interruptibleCoverBlock)* (
     // `elseif` branch is returning or conditional, other are anything
-    elseif (returningBlock | conditionalBlock) (elseif fullBlock)* (else fullBlock)? |
+    elseif (returningBlock | conditionalBlock) (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
     // `else` branch is returning or conditional
     else (returningBlock | conditionalBlock)
     // But the trail is closing
-  ) 'end' closingTrail |
+  ) 'end' returningCoverTrail |
   // `if` branch is interrupting... (find open path)
-  if interruptingBlock (elseif (terminatingBlock | interruptingBlock))* (
+  if interruptingBlock (elseif interruptingCoverBlock)* (
     // `elseif` branch is open or interruptible, other are non-returning
-    elseif (openBlock | interruptibleBlock) (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? |
+    elseif (openBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
     // `else` branch is open or interruptible
     (else (openBlock | interruptibleBlock))?
     // But the trail is returning
   ) 'end' returningTrail |
   // `if` branch is interruptible... (find returning path)
-  if interruptibleBlock (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (
+  if interruptibleBlock (elseif interruptibleCoverBlock)* (
     // `elseif` branch is returning or conditional, other are anything
-    elseif (returningBlock | conditionalBlock) (elseif fullBlock)* (else fullBlock)? |
+    elseif (returningBlock | conditionalBlock) (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
     // `else` branch is returning or conditional
     else (returningBlock | conditionalBlock)
     // But the trail is closing
-  ) 'end' closingTrail;
+  ) 'end' returningCoverTrail;
 
 ifStatementConditional:
   // `if` branch is returning... (find open path)
-  if returningBlock (elseif closingBlock)* (
+  if returningBlock (elseif returningCoverBlock)* (
     // `elseif` branch is open or interruptible or conditional, other are anything
-    elseif (openBlock | interruptibleBlock | conditionalBlock) (elseif fullBlock)* (else fullBlock)? |
+    elseif (openBlock | interruptibleBlock | conditionalBlock) (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
     // `else` branch is open or interruptible or conditional
     (else (openBlock | interruptibleBlock | conditionalBlock))?
     // Trail is open or interruptible or conditional
-  ) 'end' (openTrail | interruptibleTrail | conditionalTrail) |
+  ) 'end' conditionalCoverTrail |
   // `if` branch is conditional, other are anything, trail is open or interruptible or conditional
-  if conditionalBlock (elseif fullBlock)* (else fullBlock)? 'end' (openTrail | interruptibleTrail | conditionalTrail) |
+  if conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 'end' conditionalCoverTrail |
   // `if` branch is closing but non-returning... (find open and returning path)
-  if (terminatingBlock | interruptingBlock) (elseif (terminatingBlock | interruptingBlock))* (
+  if interruptingCoverBlock (elseif interruptingCoverBlock)* (
     // `elseif` branch is returning... (find open path)
-    elseif returningBlock (elseif closingBlock)* (
+    elseif returningBlock (elseif returningCoverBlock)* (
       // `elseif` branch is open or conditional, other are anything
-      elseif (openBlock | conditionalBlock) (elseif fullBlock)* (else fullBlock)? |
+      elseif (openBlock | conditionalBlock) (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
       // `else` branch is open or conditional
       (else (openBlock | conditionalBlock))?
     ) |
     // `elseif` branch is open... (find returning path)
-    elseif openBlock (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (
+    elseif openBlock (elseif interruptibleCoverBlock)* (
       // `elseif` branch is returning or conditional, other are anything
-      elseif (returningBlock | conditionalBlock) (elseif fullBlock)* (else fullBlock)? |
+      elseif (returningBlock | conditionalBlock) (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
       // `else` branch is returning or conditional
       else (returningBlock | conditionalBlock)
     ) |
     // `elseif` branch is conditional, other are anything
-    elseif conditionalBlock (elseif fullBlock)* (else fullBlock)? |
+    elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
     // `else` branch is conditional
     else conditionalBlock
     // Trail is open or interruptible or conditional
-  ) 'end' (openTrail | interruptibleTrail | conditionalTrail) |
+  ) 'end' conditionalCoverTrail |
   // `if` branch is non-returning... (find returning path)
-  if (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock) (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (
+  if interruptibleCoverBlock (elseif interruptibleCoverBlock)* (
     // `elseif` branch is returning or conditional, other are anything
-    elseif (returningBlock | conditionalBlock) (elseif fullBlock)* (else fullBlock)? |
+    elseif (returningBlock | conditionalBlock) (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
     // `else` branch is returning or conditional
     else (returningBlock | conditionalBlock)
     // Trail is open or interruptible or conditional
-  ) 'end' (openTrail | interruptibleTrail | conditionalTrail) |
+  ) 'end' conditionalCoverTrail |
   // Copied from ifStatementInterruptible
   // `if` branch is interrupting... (find open path)
-  if interruptingBlock (elseif (terminatingBlock | interruptingBlock))* (
+  if interruptingBlock (elseif interruptingCoverBlock)* (
     // `elseif` branch is open or interruptible, other are non-returning
-    elseif (openBlock | interruptibleBlock) (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? |
+    elseif (openBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
     // `else` branch is open or interruptible
     (else (openBlock | interruptibleBlock))?
     // But the trail is conditional
@@ -640,21 +650,21 @@ ifStatementConditional:
   // `if` branch is terminating... (find open and interrupting path)
   if terminatingBlock (elseif terminatingBlock)* (
     // `elseif` branch is interrupting... (find open path)
-    elseif interruptingBlock (elseif (terminatingBlock | interruptingBlock))* (
+    elseif interruptingBlock (elseif interruptingCoverBlock)* (
       // `elseif` branch is open or interruptible, other are non-returning
-      elseif (openBlock | interruptibleBlock) (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? |
+      elseif (openBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
       // `else` branch is open or interruptible
       (else (openBlock | interruptibleBlock))?
     ) |
     // `elseif` branch is open... (find interrupting path)
     elseif openBlock (elseif (openBlock | terminatingBlock))* (
       // `elseif` branch is interrupting or interruptible, other are non-returning
-      elseif (interruptingBlock | interruptibleBlock) (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? |
+      elseif (interruptingBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
       // `else` branch is interrupting or interruptible
       else (interruptingBlock | interruptibleBlock)
     ) |
     // `elseif` branch is interruptible, other are non-returning
-    elseif interruptibleBlock (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? |
+    elseif interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
     // `else` branch is interruptible
     else interruptibleBlock
     // But the trail is conditional
@@ -662,13 +672,13 @@ ifStatementConditional:
   // `if` branch is open... (find interrupting path)
   if openBlock (elseif (openBlock | terminatingBlock))* (
     // `elseif` branch is interrupting or interruptible, other are non-returning
-    elseif (interruptingBlock | interruptibleBlock) (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? |
+    elseif (interruptingBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
     // `else` branch is interrupting or interruptible
     else (interruptingBlock | interruptibleBlock)
     // But the trail is conditional
   ) 'end' conditionalTrail |
   // `if` branch is interruptible, other are non-returning, but the trail is conditional
-  if interruptibleBlock (elseif (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (else (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))? 'end' conditionalTrail;
+  if interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' conditionalTrail;
 
 // `while`
 
@@ -701,11 +711,11 @@ whileStatementReturning:
 
 whileStatementReturningTrail:
   // Body is returning or conditional, but the trail is closing
-  (whileTrue | while) (returningBlock | conditionalBlock) 'end' closingTrail;
+  (whileTrue | while) (returningBlock | conditionalBlock) 'end' returningCoverTrail;
 
 whileStatementConditional:
   // Body is returning or conditional, trail is open, interruptible, or conditional
-  (whileTrue | while) (returningBlock | conditionalBlock) 'end' (openTrail | interruptibleTrail | conditionalTrail);
+  (whileTrue | while) (returningBlock | conditionalBlock) 'end' conditionalCoverTrail;
 
 // `repeat`
 
@@ -732,11 +742,11 @@ repeatStatementReturning:
 
 repeatStatementReturningTrail:
   // Body is returning or conditional, but the trail is closing
-  'repeat' (returningBlock | conditionalBlock) until closingTrail;
+  'repeat' (returningBlock | conditionalBlock) until returningCoverTrail;
 
 repeatStatementConditional:
   // Body is returning or conditional, trail is open, interruptible, or conditional
-  'repeat' (returningBlock | conditionalBlock) until (openTrail | interruptibleTrail | conditionalTrail);
+  'repeat' (returningBlock | conditionalBlock) until conditionalCoverTrail;
 
 // `for`
 
@@ -779,11 +789,11 @@ forStatementFreeInterrupted:
 
 forStatementReturningTrail:
   // Body is returning or conditional, but the trail is closing
-  for (returningBlock | conditionalBlock) 'end' closingTrail;
+  for (returningBlock | conditionalBlock) 'end' returningCoverTrail;
 
 forStatementConditional:
   // Body is returning or conditional, trail is open, interruptible, or conditional
-  for (returningBlock | conditionalBlock) 'end' (openTrail | interruptibleTrail | conditionalTrail);
+  for (returningBlock | conditionalBlock) 'end' conditionalCoverTrail;
 
 // `switch`
 
@@ -821,51 +831,51 @@ switchStatementTerminating:
 switchStatementTerminatingInterrupted:
   switch (case terminatingBlock)* (
     // `case` interrupts, the rest terminates or interrupts
-    case interruptingBlock (case (terminatingBlock | interruptingBlock))* (else (terminatingBlock | interruptingBlock))? |
+    case interruptingBlock (case interruptingCoverBlock)* (else interruptingCoverBlock)? |
     // `else` interrupts
     else interruptingBlock
   ) 'end' ignoredTrail;
 
 switchStatementReturning:
-  switch (case (terminatingBlock | interruptingBlock))* (
+  switch (case interruptingCoverBlock)* (
     // `case` is returning, the rest is closing
-    case returningBlock (case closingBlock)* (else closingBlock)? |
+    case returningBlock (case returningCoverBlock)* (else returningCoverBlock)? |
     // `else` is returning
     else returningBlock
     // Trail is ignored
   ) 'end' ignoredTrail;
 
 switchStatementReturningTrail:
-  switch (case (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (
+  switch (case interruptibleCoverBlock)* (
     // `case` is returning or conditional, others are anything
-    case (returningBlock | conditionalBlock) (case fullBlock)* (else fullBlock)? |
+    case (returningBlock | conditionalBlock) (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
     // `else` is returning or conditional
     else (returningBlock | conditionalBlock)
     // But the trail is closing
-  ) 'end' closingTrail;
+  ) 'end' returningCoverTrail;
 
 switchStatementConditional:
-  switch (case (terminatingBlock | interruptingBlock))* (
+  switch (case interruptingCoverBlock)* (
     // `case` is returning... (find open path)
-    case returningBlock (case closingBlock)* (
+    case returningBlock (case returningCoverBlock)* (
       // `case` is open or conditional, other are anything
-      case (openBlock | interruptibleBlock | conditionalBlock) (case fullBlock)* (else fullBlock)? |
+      case (openBlock | interruptibleBlock | conditionalBlock) (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
       // `else` is open or conditional
       (else (openBlock | interruptibleBlock | conditionalBlock))?
     ) |
     // `case` is open... (find returning path)
-    case (openBlock | interruptibleBlock) (case (openBlock | terminatingBlock | interruptingBlock | interruptibleBlock))* (
+    case (openBlock | interruptibleBlock) (case interruptibleCoverBlock)* (
       // `case` is returning or conditional, other are anything
-      case (returningBlock | conditionalBlock) (case fullBlock)* (else fullBlock)? |
+      case (returningBlock | conditionalBlock) (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
       // `else` is returning or conditional
       else (returningBlock | conditionalBlock)
     ) |
     // `case` is conditional, other are anything
-    case conditionalBlock (case fullBlock)* (else fullBlock)? |
+    case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
     // `else` is conditional
     else conditionalBlock
     // Trail is open or interruptible or conditional
-  ) 'end' (openTrail | interruptibleTrail | conditionalTrail);
+  ) 'end' conditionalCoverTrail;
 
 /* -------------------- */
 /* Top-level statements */

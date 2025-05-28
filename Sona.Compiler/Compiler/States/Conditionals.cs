@@ -93,15 +93,15 @@ namespace Sona.Compiler.States
                 ExitState()?.ExitInterruptingTrail(context);
             }
 
-            public sealed override void EnterClosingTrail(ClosingTrailContext context)
+            public sealed override void EnterReturningCoverTrail(ReturningCoverTrailContext context)
             {
 
             }
 
-            public sealed override void ExitClosingTrail(ClosingTrailContext context)
+            public sealed override void ExitReturningCoverTrail(ReturningCoverTrailContext context)
             {
                 OnExitTrail();
-                ExitState()?.ExitClosingTrail(context);
+                ExitState()?.ExitReturningCoverTrail(context);
             }
 
             public sealed override void EnterConditionalTrail(ConditionalTrailContext context)
@@ -126,15 +126,15 @@ namespace Sona.Compiler.States
                 ExitState()?.ExitInterruptibleTrail(context);
             }
 
-            public sealed override void EnterFullTrail(FullTrailContext context)
+            public sealed override void EnterConditionalCoverTrail(ConditionalCoverTrailContext context)
             {
 
             }
 
-            public sealed override void ExitFullTrail(FullTrailContext context)
+            public sealed override void ExitConditionalCoverTrail(ConditionalCoverTrailContext context)
             {
                 OnExitTrail();
-                ExitState()?.ExitFullTrail(context);
+                ExitState()?.ExitConditionalCoverTrail(context);
             }
             #endregion
 
@@ -358,13 +358,13 @@ namespace Sona.Compiler.States
             OnExitBlock(StatementFlags.InterruptPath, context);
         }
 
-        public sealed override void EnterClosingBlock(ClosingBlockContext context)
+        public sealed override void EnterReturningCoverBlock(ReturningCoverBlockContext context)
         {
             OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
-            EnterState<BlockState>().EnterClosingBlock(context);
+            EnterState<BlockState>().EnterReturningCoverBlock(context);
         }
 
-        public sealed override void ExitClosingBlock(ClosingBlockContext context)
+        public sealed override void ExitReturningCoverBlock(ReturningCoverBlockContext context)
         {
             OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
@@ -391,13 +391,13 @@ namespace Sona.Compiler.States
             OnExitBlock(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
-        public sealed override void EnterFullBlock(FullBlockContext context)
+        public sealed override void EnterConditionalCoverBlock(ConditionalCoverBlockContext context)
         {
             OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
-            EnterState<BlockState>().EnterFullBlock(context);
+            EnterState<BlockState>().EnterConditionalCoverBlock(context);
         }
 
-        public sealed override void ExitFullBlock(FullBlockContext context)
+        public sealed override void ExitConditionalCoverBlock(ConditionalCoverBlockContext context)
         {
             OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
@@ -486,13 +486,13 @@ namespace Sona.Compiler.States
             OnExitTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
         }
 
-        public sealed override void EnterClosingTrail(ClosingTrailContext context)
+        public sealed override void EnterReturningCoverTrail(ReturningCoverTrailContext context)
         {
             OnEnterTrail(StatementFlags.Terminating, context);
-            EnterState<TrailingStatements>().EnterClosingTrail(context);
+            EnterState<TrailingStatements>().EnterReturningCoverTrail(context);
         }
 
-        public sealed override void ExitClosingTrail(ClosingTrailContext context)
+        public sealed override void ExitReturningCoverTrail(ReturningCoverTrailContext context)
         {
             OnExitTrail(StatementFlags.Terminating, context);
         }
@@ -541,13 +541,13 @@ namespace Sona.Compiler.States
             OnExitTrail(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
-        public sealed override void EnterFullTrail(FullTrailContext context)
+        public sealed override void EnterConditionalCoverTrail(ConditionalCoverTrailContext context)
         {
             OnEnterTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
-            EnterState<TrailingStatements>().EnterFullTrail(context);
+            EnterState<TrailingStatements>().EnterConditionalCoverTrail(context);
         }
 
-        public sealed override void ExitFullTrail(FullTrailContext context)
+        public sealed override void ExitConditionalCoverTrail(ConditionalCoverTrailContext context)
         {
             OnExitTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
