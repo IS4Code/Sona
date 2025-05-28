@@ -16,6 +16,7 @@ free_blocks(Main, Variadic, Trail) :-
   free_blocks(Main),
   free_blocks_unique(Variadic),
   free_blocks_filter(Main, Variadic),
+  special_blocks_ascending(Variadic),
   free_block(Trail).
   
 free_blocks_singleton(Main, Variadic, Trail) :- Trail = ignored_block, free_blocks(Main, Variadic, Trail).
@@ -31,6 +32,28 @@ free_blocks_filter([H|_], _) :- H \= ignored_block, H \= open_block.
 free_blocks_filter(_, [H|_]) :- H \= ignored_block, H \= open_block.
 free_blocks_filter([_|T], L) :- free_blocks_filter(T, L).
 free_blocks_filter(L, [_|T]) :- free_blocks_filter(L, T).
+
+% free_loop_blocks %
+free_loop_blocks(Main, Variadic, Trail) :-
+  free_loop_blocks(Main),
+  free_loop_blocks_unique(Variadic),
+  free_loop_blocks_filter(Main, Variadic),
+  special_blocks_ascending(Variadic),
+  free_block(Trail).
+  
+free_loop_blocks_singleton(Main, Variadic, Trail) :- Trail = ignored_block, free_loop_blocks(Main, Variadic, Trail).
+
+free_loop_block(B) :- member(B, [ignored_block, open_block, terminating_block, interrupting_block, interruptible_block]).
+free_loop_blocks([]) :- !.
+free_loop_blocks([H]) :- !, free_loop_block(H).
+free_loop_blocks([H|T]) :- !, free_loop_blocks([H]), free_loop_blocks(T).
+free_loop_blocks_unique(List) :- combinations([open_block, terminating_block, interrupting_block, interruptible_block], Set), permutation(Set, List).
+
+% Has one non-ignored non-open block.
+free_loop_blocks_filter([H|_], _) :- H \= ignored_block, H \= open_block.
+free_loop_blocks_filter(_, [H|_]) :- H \= ignored_block, H \= open_block.
+free_loop_blocks_filter([_|T], L) :- free_loop_blocks_filter(T, L).
+free_loop_blocks_filter(L, [_|T]) :- free_loop_blocks_filter(L, T).
 
 % special_blocks %
 special_blocks(Main, Variadic, Trail) :-
@@ -262,6 +285,82 @@ has_returning_path(switch_statement(Cases, Else, Trail)) :- !, has_path(switch_s
 % Inner interrupting statements are irrelevant.
 has_interrupting_path(switch_statement(Cases, Else, Trail)) :- !, has_path(switch_statement(Cases, Else, Trail)), has_interrupting_path(Trail).
 
+% ------------------------- %
+% switch_statement_no_trail %
+% ------------------------- %
+
+% Trail must be ignored.
+has_path(switch_statement_no_trail(Cases, Else, ignored_block)) :- !, has_path(switch_statement(Cases, Else, ignored_block)).
+has_open_path(switch_statement_no_trail(Cases, Else, ignored_block)) :- !, has_open_path(switch_statement(Cases, Else, ignored_block)).
+has_returning_path(switch_statement_no_trail(Cases, Else, ignored_block)) :- !, has_returning_path(switch_statement(Cases, Else, ignored_block)).
+has_interrupting_path(switch_statement_no_trail(Cases, Else, ignored_block)) :- !, has_interrupting_path(switch_statement(Cases, Else, ignored_block)).
+
+% ---------------------- %
+% switch_statement_trail %
+% ---------------------- %
+
+% Trail must be accessible.
+has_path(switch_statement_trail(Cases, Else, Trail)) :- !, has_path(Trail), has_path(switch_statement(Cases, Else, Trail)).
+has_open_path(switch_statement_trail(Cases, Else, Trail)) :- !, has_path(Trail), has_open_path(switch_statement(Cases, Else, Trail)).
+has_returning_path(switch_statement_trail(Cases, Else, Trail)) :- !, has_path(Trail), has_returning_path(switch_statement(Cases, Else, Trail)).
+has_interrupting_path(switch_statement_trail(Cases, Else, Trail)) :- !, has_path(Trail), has_interrupting_path(switch_statement(Cases, Else, Trail)).
+
+% ----------------------- %
+% switch_statement_simple %
+% ----------------------- %
+
+% Branches have no interrupting path.
+has_path(switch_statement_simple(Cases, Else, Trail)) :- !, not(has_any_interrupting_path([Else, Cases])), has_path(switch_statement(Cases, Else, Trail)).
+has_open_path(switch_statement_simple(Cases, Else, Trail)) :- !, has_path(switch_statement_simple(Cases, Else, Trail)), has_open_path(switch_statement(Cases, Else, Trail)).
+has_returning_path(switch_statement_simple(Cases, Else, Trail)) :- !, has_path(switch_statement_simple(Cases, Else, Trail)), has_returning_path(switch_statement(Cases, Else, Trail)).
+has_interrupting_path(switch_statement_trail(Cases, Else, Trail)) :- !, has_path(switch_statement_simple(Cases, Else, Trail)), has_interrupting_path(switch_statement(Cases, Else, Trail)).
+
+% ---------------------------- %
+% switch_statement_interrupted %
+% ---------------------------- %
+
+% Branches contain an interrupting path.
+has_path(switch_statement_interrupted(Cases, Else, Trail)) :- !, has_any_interrupting_path([Else, Cases]), has_path(switch_statement(Cases, Else, Trail)).
+has_open_path(switch_statement_interrupted(Cases, Else, Trail)) :- !, has_path(switch_statement_interrupted(Cases, Else, Trail)), has_open_path(switch_statement(Cases, Else, Trail)).
+has_returning_path(switch_statement_interrupted(Cases, Else, Trail)) :- !, has_path(switch_statement_interrupted(Cases, Else, Trail)), has_returning_path(switch_statement(Cases, Else, Trail)).
+has_interrupting_path(switch_statement_interrupted(Cases, Else, Trail)) :- !, has_path(switch_statement_interrupted(Cases, Else, Trail)), has_interrupting_path(switch_statement(Cases, Else, Trail)).
+
+% -------------------------------- %
+% switch_statement_no_trail_simple %
+% -------------------------------- %
+
+has_path(switch_statement_no_trail_simple(Cases, Else, Trail)) :- !, has_path(switch_statement_no_trail(Cases, Else, Trail)), has_path(switch_statement_simple(Cases, Else, Trail)).
+has_open_path(switch_statement_no_trail_simple(Cases, Else, Trail)) :- !, has_open_path(switch_statement_no_trail(Cases, Else, Trail)), has_open_path(switch_statement_simple(Cases, Else, Trail)).
+has_returning_path(switch_statement_no_trail_simple(Cases, Else, Trail)) :- !, has_returning_path(switch_statement_no_trail(Cases, Else, Trail)), has_returning_path(switch_statement_simple(Cases, Else, Trail)).
+has_interrupting_path(switch_statement_no_trail_simple(Cases, Else, Trail)) :- !, has_interrupting_path(switch_statement_no_trail(Cases, Else, Trail)), has_interrupting_path(switch_statement_simple(Cases, Else, Trail)).
+
+% ------------------------------------- %
+% switch_statement_no_trail_interrupted %
+% ------------------------------------- %
+
+has_path(switch_statement_no_trail_interrupted(Cases, Else, Trail)) :- !, has_path(switch_statement_no_trail(Cases, Else, Trail)), has_path(switch_statement_interrupted(Cases, Else, Trail)).
+has_open_path(switch_statement_no_trail_interrupted(Cases, Else, Trail)) :- !, has_open_path(switch_statement_no_trail(Cases, Else, Trail)), has_open_path(switch_statement_interrupted(Cases, Else, Trail)).
+has_returning_path(switch_statement_no_trail_interrupted(Cases, Else, Trail)) :- !, has_returning_path(switch_statement_no_trail(Cases, Else, Trail)), has_returning_path(switch_statement_interrupted(Cases, Else, Trail)).
+has_interrupting_path(switch_statement_no_trail_interrupted(Cases, Else, Trail)) :- !, has_interrupting_path(switch_statement_no_trail(Cases, Else, Trail)), has_interrupting_path(switch_statement_interrupted(Cases, Else, Trail)).
+
+% -------------------------------- %
+% switch_statement_trail_simple %
+% -------------------------------- %
+
+has_path(switch_statement_trail_simple(Cases, Else, Trail)) :- !, has_path(switch_statement_trail(Cases, Else, Trail)), has_path(switch_statement_simple(Cases, Else, Trail)).
+has_open_path(switch_statement_trail_simple(Cases, Else, Trail)) :- !, has_open_path(switch_statement_trail(Cases, Else, Trail)), has_open_path(switch_statement_simple(Cases, Else, Trail)).
+has_returning_path(switch_statement_trail_simple(Cases, Else, Trail)) :- !, has_returning_path(switch_statement_trail(Cases, Else, Trail)), has_returning_path(switch_statement_simple(Cases, Else, Trail)).
+has_interrupting_path(switch_statement_trail_simple(Cases, Else, Trail)) :- !, has_interrupting_path(switch_statement_trail(Cases, Else, Trail)), has_interrupting_path(switch_statement_simple(Cases, Else, Trail)).
+
+% ------------------------------------- %
+% switch_statement_trail_interrupted %
+% ------------------------------------- %
+
+has_path(switch_statement_trail_interrupted(Cases, Else, Trail)) :- !, has_path(switch_statement_trail(Cases, Else, Trail)), has_path(switch_statement_interrupted(Cases, Else, Trail)).
+has_open_path(switch_statement_trail_interrupted(Cases, Else, Trail)) :- !, has_open_path(switch_statement_trail(Cases, Else, Trail)), has_open_path(switch_statement_interrupted(Cases, Else, Trail)).
+has_returning_path(switch_statement_trail_interrupted(Cases, Else, Trail)) :- !, has_returning_path(switch_statement_trail(Cases, Else, Trail)), has_returning_path(switch_statement_interrupted(Cases, Else, Trail)).
+has_interrupting_path(switch_statement_trail_interrupted(Cases, Else, Trail)) :- !, has_interrupting_path(switch_statement_trail(Cases, Else, Trail)), has_interrupting_path(switch_statement_interrupted(Cases, Else, Trail)).
+
 
 
 % --------- %
@@ -299,8 +398,27 @@ analyze_if_trail_from_else(Blocks, Predicate, Result) :-
 analyze_switch(Blocks, Predicate, Result) :-
   setof(result{case:Cases,else:Else,trail:Trail}, (call(Blocks, [Else], Cases, Trail), call(Predicate, switch_statement(Cases, Else, Trail))), Result).
 
-analyze_singleton(Analyzer, Predicate, Result) :- call(Analyzer, free_blocks_singleton, Predicate, Result).
-analyze_trailed(Analyzer, Predicate, Result) :- call(Analyzer, special_blocks, Predicate, Result).
+analyze_switch_simple(Blocks, Predicate, Result) :-
+  setof(result{case:Cases,else:Else,trail:Trail}, (call(Blocks, [Else], Cases, Trail), call(Predicate, switch_statement_simple(Cases, Else, Trail))), Result).
+
+analyze_switch_interrupted(Blocks, Predicate, Result) :-
+  setof(result{case:Cases,else:Else,trail:Trail}, (call(Blocks, [Else], Cases, Trail), call(Predicate, switch_statement_interrupted(Cases, Else, Trail))), Result).
+
+analyze_switch_no_trail_simple(Blocks, Predicate, Result) :-
+  setof(result{case:Cases,else:Else,trail:Trail}, (call(Blocks, [Else], Cases, Trail), call(Predicate, switch_statement_no_trail_simple(Cases, Else, Trail))), Result).
+
+analyze_switch_trail_simple(Blocks, Predicate, Result) :-
+  setof(result{case:Cases,else:Else,trail:Trail}, (call(Blocks, [Else], Cases, Trail), call(Predicate, switch_statement_trail_simple(Cases, Else, Trail))), Result).
+
+analyze_switch_no_trail_interrupted(Blocks, Predicate, Result) :-
+  setof(result{case:Cases,else:Else,trail:Trail}, (call(Blocks, [Else], Cases, Trail), call(Predicate, switch_statement_no_trail_interrupted(Cases, Else, Trail))), Result).
+
+analyze_switch_trail_interrupted(Blocks, Predicate, Result) :-
+  setof(result{case:Cases,else:Else,trail:Trail}, (call(Blocks, [Else], Cases, Trail), call(Predicate, switch_statement_trail_interrupted(Cases, Else, Trail))), Result).
+
+analyze_singleton(Analyzer, Predicate, Result) :- call(Analyzer, free_blocks_singleton, Predicate, Result) ; Result = [].
+analyze_loop_singleton(Analyzer, Predicate, Result) :- call(Analyzer, free_loop_blocks_singleton, Predicate, Result) ; Result = [].
+analyze_trailed(Analyzer, Predicate, Result) :- call(Analyzer, special_blocks, Predicate, Result) ; Result = [].
 
 run :-
   analyze_singleton(analyze_do, is_terminating, DoTerminating),
@@ -323,12 +441,31 @@ run :-
   analyze_trailed(analyze_while_true, is_conditional, WhileTrueConditional),
   save('grammar_while_true.json', result{terminating:WhileTrueTerminating, interrupting:WhileTrueInterrupting, returning:WhileTrueReturning, interruptible:WhileTrueInterruptible, conditional:WhileTrueConditional}),
   
-  analyze_singleton(analyze_switch, is_terminating, SwitchTerminating),
-  analyze_trailed(analyze_switch, is_interrupting, SwitchInterrupting),
-  analyze_trailed(analyze_switch, is_returning, SwitchReturning),
-  analyze_trailed(analyze_switch, is_interruptible, SwitchInterruptible),
-  analyze_trailed(analyze_switch, is_conditional, SwitchConditional),
-  save('grammar_switch.json', result{terminating:SwitchTerminating, interrupting:SwitchInterrupting, returning:SwitchReturning, interruptible:SwitchInterruptible, conditional:SwitchConditional}),
+  analyze_loop_singleton(analyze_switch_simple, is_terminating, SwitchTerminatingSimple),
+  analyze_trailed(analyze_switch_simple, is_interruptible, SwitchInterruptibleSimple),
+  analyze_trailed(analyze_switch_simple, is_conditional, SwitchConditionalSimple),
+  save('grammar_switch_simple.json', result{terminating:SwitchTerminatingSimple, interruptible:SwitchInterruptibleSimple, conditional:SwitchConditionalSimple}),
+  
+  analyze_loop_singleton(analyze_switch_interrupted, is_terminating, SwitchTerminatingInterrupted),
+  analyze_trailed(analyze_switch_interrupted, is_interruptible, SwitchInterruptibleInterrupted),
+  analyze_trailed(analyze_switch_interrupted, is_conditional, SwitchConditionalInterrupted),
+  save('grammar_switch_interrupted.json', result{terminating:SwitchTerminatingInterrupted, interruptible:SwitchInterruptibleInterrupted, conditional:SwitchConditionalInterrupted}),
+  
+  analyze_trailed(analyze_switch_no_trail_simple, is_interrupting, SwitchInterruptingNoTrailSimple),
+  analyze_trailed(analyze_switch_no_trail_simple, is_returning, SwitchReturningNoTrailSimple),
+  save('grammar_switch_no_trail_simple.json', result{interrupting:SwitchInterruptingNoTrailSimple, returning:SwitchReturningNoTrailSimple}),
+  
+  analyze_trailed(analyze_switch_trail_simple, is_interrupting, SwitchInterruptingTrailSimple),
+  analyze_trailed(analyze_switch_trail_simple, is_returning, SwitchReturningTrailSimple),
+  save('grammar_switch_trail_simple.json', result{interrupting:SwitchInterruptingTrailSimple, returning:SwitchReturningTrailSimple}),
+  
+  analyze_trailed(analyze_switch_no_trail_interrupted, is_interrupting, SwitchInterruptingNoTrailInterrupted),
+  analyze_trailed(analyze_switch_no_trail_interrupted, is_returning, SwitchReturningNoTrailInterrupted),
+  save('grammar_switch_no_trail_interrupted.json', result{interrupting:SwitchInterruptingNoTrailInterrupted, returning:SwitchReturningNoTrailInterrupted}),
+  
+  analyze_trailed(analyze_switch_trail_interrupted, is_interrupting, SwitchInterruptingTrailInterrupted),
+  analyze_trailed(analyze_switch_trail_interrupted, is_returning, SwitchReturningTrailInterrupted),
+  save('grammar_switch_trail_interrupted.json', result{interrupting:SwitchInterruptingTrailInterrupted, returning:SwitchReturningTrailInterrupted}),
   
   analyze_singleton(analyze_if, is_terminating, IfTerminating),
   analyze_trailed(analyze_if, is_interruptible, IfInterruptible),

@@ -34,7 +34,22 @@ namespace Sona.Compiler.Grammar.Generator
             WriteGrammar(LoadGrammar<If<ImmutableList<string>>>("grammar_if_trail.json"), output, "Trail");
             output.WriteLine();
 
-            WriteGrammar(LoadGrammar<Switch<ImmutableList<string>>>("grammar_switch.json"), output);
+            WriteGrammar(LoadGrammar<Switch<ImmutableList<string>>>("grammar_switch_simple.json"), output);
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<Switch<ImmutableList<string>>>("grammar_switch_interrupted.json"), output);
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<Switch<ImmutableList<string>>>("grammar_switch_no_trail_simple.json"), output);
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<Switch<ImmutableList<string>>>("grammar_switch_trail_simple.json"), output, "Trail");
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<Switch<ImmutableList<string>>>("grammar_switch_no_trail_interrupted.json"), output);
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<Switch<ImmutableList<string>>>("grammar_switch_trail_interrupted.json"), output, "Trail");
             output.WriteLine();
         }
 
@@ -73,7 +88,13 @@ namespace Sona.Compiler.Grammar.Generator
             var caseSet = grammar.Select(parts => parts.CollapseParts()).ToHashSet();
 
             // Phase 2 - form tree from all values and group by paths
-            var groups = caseSet.BuildTree().GroupByPaths();
+            var groups = caseSet.BuildTree().GroupByPaths().Reverse().ToList();
+
+            if(groups.Count == 0)
+            {
+                // Empty
+                return;
+            }
 
             // Phase 3 - construct grammar
             output.Write(caseSet.Sample(e => e.RuleName));
@@ -84,7 +105,7 @@ namespace Sona.Compiler.Grammar.Generator
 
             bool firstAlternative = true;
 
-            foreach(var alternative in groups.Reverse())
+            foreach(var alternative in groups)
             {
                 if(firstAlternative)
                 {
