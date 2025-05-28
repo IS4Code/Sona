@@ -86,6 +86,21 @@ interruptibleCoverBlock:
 interruptibleCoverTrail:
   openTrail | interruptibleTrail;
 
+openCoverBlock:
+  openBlock | terminatingBlock;
+
+openToInterruptibleBlock:
+  openBlock | interruptibleBlock;
+
+openToConditionalBlock:
+  openBlock | interruptibleBlock | conditionalBlock;
+
+interruptingToInterruptibleBlock:
+  interruptingBlock | interruptibleBlock;
+
+returningToConditionalBlock:
+  returningBlock | conditionalBlock;
+
 // Same but never executed
 ignoredBlock:
   (statement ';'?)*? ((closingStatement | interruptibleStatement | conditionalStatement) ';'? | implicitReturnStatement);
@@ -468,35 +483,35 @@ ifStatementInterrupting:
 
 ifStatementInterruptingTrail:
   if interruptingBlock (elseif interruptingCoverBlock)* (
-    elseif (openBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-    (else (openBlock | interruptibleBlock))?
+    elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
+    (else openToInterruptibleBlock)?
   ) 'end' interruptingCoverTrail |
   if interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' interruptingCoverTrail |
-  if (openBlock | terminatingBlock) (elseif (openBlock | terminatingBlock))* (
-    elseif (interruptingBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-    else (interruptingBlock | interruptibleBlock)
+  if openCoverBlock (elseif openCoverBlock)* (
+    elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
+    else interruptingToInterruptibleBlock
   ) 'end' interruptingCoverTrail;
 
 ifStatementInterruptible:
   if interruptingBlock (elseif interruptingCoverBlock)* (
-    elseif (openBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-    (else (openBlock | interruptibleBlock))?
+    elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
+    (else openToInterruptibleBlock)?
   ) 'end' interruptibleCoverTrail |
   if terminatingBlock (elseif terminatingBlock)* (
     elseif interruptingBlock (elseif interruptingCoverBlock)* (
-      elseif (openBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-      (else (openBlock | interruptibleBlock))?
+      elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
+      (else openToInterruptibleBlock)?
     ) |
-    elseif openBlock (elseif (openBlock | terminatingBlock))* (
-      elseif (interruptingBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-      else (interruptingBlock | interruptibleBlock)
+    elseif openBlock (elseif openCoverBlock)* (
+      elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
+      else interruptingToInterruptibleBlock
     ) |
     elseif interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
     else interruptibleBlock
   ) 'end' interruptibleCoverTrail |
-  if openBlock (elseif (openBlock | terminatingBlock))* (
-    elseif (interruptingBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-    else (interruptingBlock | interruptibleBlock)
+  if openBlock (elseif openCoverBlock)* (
+    elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
+    else interruptingToInterruptibleBlock
   ) 'end' interruptibleCoverTrail |
   if interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' interruptibleCoverTrail;
 
@@ -517,28 +532,28 @@ ifStatementReturningTrailFromElse:
 
 ifStatementReturningTrail:
   if returningBlock (elseif returningCoverBlock)* (
-    elseif (openBlock | interruptibleBlock | conditionalBlock) (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-    (else (openBlock | interruptibleBlock | conditionalBlock))?
+    elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+    (else openToConditionalBlock)?
   ) 'end' returningCoverTrail |
   if interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' returningTrail |
   if conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 'end' returningCoverTrail |
   if interruptibleCoverBlock (elseif interruptibleCoverBlock)* (
-    elseif (returningBlock | conditionalBlock) (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-    else (returningBlock | conditionalBlock)
+    elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+    else returningToConditionalBlock
   ) 'end' returningCoverTrail |
   if interruptingBlock (elseif interruptingCoverBlock)* (
-    elseif (openBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-    (else (openBlock | interruptibleBlock))?
+    elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
+    (else openToInterruptibleBlock)?
   ) 'end' returningTrail |
   if interruptibleBlock (elseif interruptibleCoverBlock)* (
-    elseif (returningBlock | conditionalBlock) (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-    else (returningBlock | conditionalBlock)
+    elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+    else returningToConditionalBlock
   ) 'end' returningCoverTrail;
 
 ifStatementConditional:
   if returningBlock (elseif returningCoverBlock)* (
-    elseif (openBlock | interruptibleBlock | conditionalBlock) (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-    (else (openBlock | interruptibleBlock | conditionalBlock))?
+    elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+    (else openToConditionalBlock)?
   ) 'end' conditionalCoverTrail |
   if conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 'end' conditionalCoverTrail |
   if interruptingCoverBlock (elseif interruptingCoverBlock)* (
@@ -547,35 +562,35 @@ ifStatementConditional:
       (else (openBlock | conditionalBlock))?
     ) |
     elseif openBlock (elseif interruptibleCoverBlock)* (
-      elseif (returningBlock | conditionalBlock) (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      else (returningBlock | conditionalBlock)
+      elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      else returningToConditionalBlock
     ) |
     elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
     else conditionalBlock
   ) 'end' conditionalCoverTrail |
   if interruptibleCoverBlock (elseif interruptibleCoverBlock)* (
-    elseif (returningBlock | conditionalBlock) (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-    else (returningBlock | conditionalBlock)
+    elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+    else returningToConditionalBlock
   ) 'end' conditionalCoverTrail |
   if interruptingBlock (elseif interruptingCoverBlock)* (
-    elseif (openBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-    (else (openBlock | interruptibleBlock))?
+    elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
+    (else openToInterruptibleBlock)?
   ) 'end' conditionalTrail |
   if terminatingBlock (elseif terminatingBlock)* (
     elseif interruptingBlock (elseif interruptingCoverBlock)* (
-      elseif (openBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-      (else (openBlock | interruptibleBlock))?
+      elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
+      (else openToInterruptibleBlock)?
     ) |
-    elseif openBlock (elseif (openBlock | terminatingBlock))* (
-      elseif (interruptingBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-      else (interruptingBlock | interruptibleBlock)
+    elseif openBlock (elseif openCoverBlock)* (
+      elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
+      else interruptingToInterruptibleBlock
     ) |
     elseif interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
     else interruptibleBlock
   ) 'end' conditionalTrail |
-  if openBlock (elseif (openBlock | terminatingBlock))* (
-    elseif (interruptingBlock | interruptibleBlock) (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-    else (interruptingBlock | interruptibleBlock)
+  if openBlock (elseif openCoverBlock)* (
+    elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
+    else interruptingToInterruptibleBlock
   ) 'end' conditionalTrail |
   if interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' conditionalTrail;
 
@@ -592,7 +607,7 @@ whileStatementFree:
 
 whileStatementFreeInterrupted:
   // Body may interrupt
-  (whileTrue | while) (interruptingBlock | interruptibleBlock) 'end';
+  (whileTrue | while) interruptingToInterruptibleBlock 'end';
 
 // `while true do` with interrupting body could be terminating too,
 // but we would need to guarantee that only `continue` appears.
@@ -605,16 +620,16 @@ whileStatementTerminating:
 // may also interrupt, we cannot guarantee that it won't interrupt here.
 whileStatementReturning:
   // Body may return, trail is ignored
-  whileTrue (returningBlock | conditionalBlock) 'end' ignoredTrail;
+  whileTrue returningToConditionalBlock 'end' ignoredTrail;
 */
 
 whileStatementReturningTrail:
   // Body is returning or conditional, but the trail is closing
-  (whileTrue | while) (returningBlock | conditionalBlock) 'end' returningCoverTrail;
+  (whileTrue | while) returningToConditionalBlock 'end' returningCoverTrail;
 
 whileStatementConditional:
   // Body is returning or conditional, trail is open, interruptible, or conditional
-  (whileTrue | while) (returningBlock | conditionalBlock) 'end' conditionalCoverTrail;
+  (whileTrue | while) returningToConditionalBlock 'end' conditionalCoverTrail;
 
 // `repeat`
 
@@ -626,7 +641,7 @@ repeatStatementFree:
 
 repeatStatementFreeInterrupted:
   // Body may interrupt
-  'repeat' (interruptingBlock | interruptibleBlock) until;
+  'repeat' interruptingToInterruptibleBlock until;
 
 repeatStatementTerminating:
   // Body always throws and condition is never checked
@@ -641,11 +656,11 @@ repeatStatementReturning:
 
 repeatStatementReturningTrail:
   // Body is returning or conditional, but the trail is closing
-  'repeat' (returningBlock | conditionalBlock) until returningCoverTrail;
+  'repeat' returningToConditionalBlock until returningCoverTrail;
 
 repeatStatementConditional:
   // Body is returning or conditional, trail is open, interruptible, or conditional
-  'repeat' (returningBlock | conditionalBlock) until conditionalCoverTrail;
+  'repeat' returningToConditionalBlock until conditionalCoverTrail;
 
 // `for`
 
@@ -684,15 +699,15 @@ forStatementFree:
 
 forStatementFreeInterrupted:
   // Body may interrupt
-  for (interruptingBlock | interruptibleBlock) 'end';
+  for interruptingToInterruptibleBlock 'end';
 
 forStatementReturningTrail:
   // Body is returning or conditional, but the trail is closing
-  for (returningBlock | conditionalBlock) 'end' returningCoverTrail;
+  for returningToConditionalBlock 'end' returningCoverTrail;
 
 forStatementConditional:
   // Body is returning or conditional, trail is open, interruptible, or conditional
-  for (returningBlock | conditionalBlock) 'end' conditionalCoverTrail;
+  for returningToConditionalBlock 'end' conditionalCoverTrail;
 
 // `switch`
 
@@ -715,8 +730,8 @@ switchStatementFree:
 // Free-standing (may interrupt in all branches but this is not preferred)
 switchStatementFreeInterrupted:
   switch (case freeBlock)* (
-    case (interruptingBlock | interruptibleBlock) (case (freeBlock | interruptingBlock | interruptibleBlock))* (else (freeBlock | interruptingBlock | interruptibleBlock))? |
-    else (interruptingBlock | interruptibleBlock)
+    case interruptingToInterruptibleBlock (case (freeBlock | interruptingBlock | interruptibleBlock))* (else (freeBlock | interruptingBlock | interruptibleBlock))? |
+    else interruptingToInterruptibleBlock
   ) 'end';
 
 switchStatementTerminating:
@@ -738,19 +753,19 @@ switchStatementReturning:
 
 switchStatementReturningTrail:
   switch (case interruptibleCoverBlock)* (
-    case (returningBlock | conditionalBlock) (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
-    else (returningBlock | conditionalBlock)
+    case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+    else returningToConditionalBlock
   ) 'end' returningCoverTrail;
 
 switchStatementConditional:
   switch (case interruptingCoverBlock)* (
     case returningBlock (case returningCoverBlock)* (
-      case (openBlock | interruptibleBlock | conditionalBlock) (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (else (openBlock | interruptibleBlock | conditionalBlock))?
+      case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      (else openToConditionalBlock)?
     ) |
-    case (openBlock | interruptibleBlock) (case interruptibleCoverBlock)* (
-      case (returningBlock | conditionalBlock) (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      else (returningBlock | conditionalBlock)
+    case openToInterruptibleBlock (case interruptibleCoverBlock)* (
+      case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      else returningToConditionalBlock
     ) |
     case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
     else conditionalBlock
