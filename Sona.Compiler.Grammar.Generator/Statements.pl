@@ -209,6 +209,36 @@ has_open_path(if_statement(Then, Elseifs, Else, Trail)) :- !, has_open_path(Trai
 has_returning_path(if_statement(Then, Elseifs, Else, Trail)) :- !, has_path(if_statement(Then, Elseifs, Else, Trail)), has_any_returning_path([Trail, Then, Else, Elseifs]).
 has_interrupting_path(if_statement(Then, Elseifs, Else, Trail)) :- !, has_path(if_statement(Then, Elseifs, Else, Trail)), has_any_interrupting_path([Trail, Then, Else, Elseifs]).
 
+% --------------------- %
+% if_statement_no_trail %
+% --------------------- %
+
+% Trail must be ignored.
+has_path(if_statement_no_trail(Then, Elseifs, Else, ignored_block)) :- !, has_path(if_statement(Then, Elseifs, Else, ignored_block)).
+has_open_path(if_statement_no_trail(Then, Elseifs, Else, ignored_block)) :- !, has_open_path(if_statement(Then, Elseifs, Else, ignored_block)).
+has_returning_path(if_statement_no_trail(Then, Elseifs, Else, ignored_block)) :- !, has_returning_path(if_statement(Then, Elseifs, Else, ignored_block)).
+has_interrupting_path(if_statement_no_trail(Then, Elseifs, Else, ignored_block)) :- !, has_interrupting_path(if_statement(Then, Elseifs, Else, ignored_block)).
+
+% ------------------ %
+% if_statement_trail %
+% ------------------ %
+
+% Trail must be accessible.
+has_path(if_statement_trail(Then, Elseifs, Else, Trail)) :- !, has_path(Trail), has_path(if_statement(Then, Elseifs, Else, Trail)).
+has_open_path(if_statement_trail(Then, Elseifs, Else, Trail)) :- !, has_path(Trail), has_open_path(if_statement(Then, Elseifs, Else, Trail)).
+has_returning_path(if_statement_trail(Then, Elseifs, Else, Trail)) :- !, has_path(Trail), has_returning_path(if_statement(Then, Elseifs, Else, Trail)).
+has_interrupting_path(if_statement_trail(Then, Elseifs, Else, Trail)) :- !, has_path(Trail), has_interrupting_path(if_statement(Then, Elseifs, Else, Trail)).
+
+% ---------------------------- %
+% if_statement_trail_from_else %
+% ---------------------------- %
+
+% Trail must be accessible and must be semantically equivalent to putting it in Else.
+has_path(if_statement_trail_from_else(Then, Elseifs, Else, Trail)) :- !, has_path(Trail), has_open_path(Else), not_has_open_path(Then), not(has_any_open_path(Elseifs)), !, has_path(if_statement(Then, Elseifs, Else, Trail)).
+has_open_path(if_statement_trail_from_else(Then, Elseifs, Else, Trail)) :- !, has_path(if_statement_trail_from_else(Then, Elseifs, Else, Trail)), has_open_path(if_statement(Then, Elseifs, Else, Trail)).
+has_returning_path(if_statement_trail_from_else(Then, Elseifs, Else, Trail)) :- !, has_path(if_statement_trail_from_else(Then, Elseifs, Else, Trail)), has_returning_path(if_statement(Then, Elseifs, Else, Trail)).
+has_interrupting_path(if_statement_trail_from_else(Then, Elseifs, Else, Trail)) :- !, has_path(if_statement_trail_from_else(Then, Elseifs, Else, Trail)), has_interrupting_path(if_statement(Then, Elseifs, Else, Trail)).
+
 % ---------------- %
 % switch_statement %
 % ---------------- %
@@ -257,6 +287,15 @@ analyze_while_true(Blocks, Predicate, Result) :-
 analyze_if(Blocks, Predicate, Result) :-
   setof(result{then:Then,elseif:Elseifs,else:Else,trail:Trail}, (call(Blocks, [Then, Else], Elseifs, Trail), call(Predicate, if_statement(Then, Elseifs, Else, Trail))), Result).
 
+analyze_if_no_trail(Blocks, Predicate, Result) :-
+  setof(result{then:Then,elseif:Elseifs,else:Else,trail:Trail}, (call(Blocks, [Then, Else], Elseifs, Trail), call(Predicate, if_statement_no_trail(Then, Elseifs, Else, Trail))), Result).
+
+analyze_if_trail(Blocks, Predicate, Result) :-
+  setof(result{then:Then,elseif:Elseifs,else:Else,trail:Trail}, (call(Blocks, [Then, Else], Elseifs, Trail), call(Predicate, if_statement_trail(Then, Elseifs, Else, Trail))), Result).
+
+analyze_if_trail_from_else(Blocks, Predicate, Result) :-
+  setof(result{then:Then,elseif:Elseifs,else:Else,trail:Trail}, (call(Blocks, [Then, Else], Elseifs, Trail), call(Predicate, if_statement_trail_from_else(Then, Elseifs, Else, Trail))), Result).
+
 analyze_switch(Blocks, Predicate, Result) :-
   setof(result{case:Cases,else:Else,trail:Trail}, (call(Blocks, [Else], Cases, Trail), call(Predicate, switch_statement(Cases, Else, Trail))), Result).
 
@@ -292,8 +331,17 @@ run :-
   save('grammar_switch.json', result{terminating:SwitchTerminating, interrupting:SwitchInterrupting, returning:SwitchReturning, interruptible:SwitchInterruptible, conditional:SwitchConditional}),
   
   analyze_singleton(analyze_if, is_terminating, IfTerminating),
-  analyze_trailed(analyze_if, is_interrupting, IfInterrupting),
-  analyze_trailed(analyze_if, is_returning, IfReturning),
   analyze_trailed(analyze_if, is_interruptible, IfInterruptible),
   analyze_trailed(analyze_if, is_conditional, IfConditional),
-  save('grammar_if.json', result{terminating:IfTerminating, interrupting:IfInterrupting, returning:IfReturning, interruptible:IfInterruptible, conditional:IfConditional}).
+  save('grammar_if.json', result{terminating:IfTerminating, interruptible:IfInterruptible, conditional:IfConditional}),
+  
+  analyze_trailed(analyze_if_no_trail, is_interrupting, IfInterruptingNoTrail),
+  analyze_trailed(analyze_if_no_trail, is_returning, IfReturningNoTrail),
+  save('grammar_if_no_trail.json', result{interrupting:IfInterruptingNoTrail, returning:IfReturningNoTrail}),
+  
+  analyze_trailed(analyze_if_trail, is_interrupting, IfInterruptingTrail),
+  analyze_trailed(analyze_if_trail, is_returning, IfReturningTrail),  
+  save('grammar_if_trail.json', result{interrupting:IfInterruptingTrail, returning:IfReturningTrail}),
+  
+  analyze_trailed(analyze_if_trail_from_else, is_returning, IfReturningTrailFromElse),  
+  save('grammar_if_trail_from_else.json', result{returning:IfReturningTrailFromElse}).

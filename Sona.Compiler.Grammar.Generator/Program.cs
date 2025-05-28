@@ -25,22 +25,46 @@ namespace Sona.Compiler.Grammar.Generator
             WriteGrammar(LoadGrammar<If<ImmutableList<string>>>("grammar_if.json"), output);
             output.WriteLine();
 
+            WriteGrammar(LoadGrammar<If<ImmutableList<string>>>("grammar_if_no_trail.json"), output);
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<If<ImmutableList<string>>>("grammar_if_trail_from_else.json"), output, "TrailFromElse");
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<If<ImmutableList<string>>>("grammar_if_trail.json"), output, "Trail");
+            output.WriteLine();
+
             WriteGrammar(LoadGrammar<Switch<ImmutableList<string>>>("grammar_switch.json"), output);
             output.WriteLine();
         }
 
-        static void WriteGrammar(IGrammar grammar, IndentedTextWriter output)
+        static void WriteGrammar(IGrammar grammar, IndentedTextWriter output, string suffix = "")
         {
-            WriteRule(grammar.Terminating, output, "Terminating");
-            output.WriteLine();
-            WriteRule(grammar.Interrupting, output, "Interrupting");
-            output.WriteLine();
-            WriteRule(grammar.Interruptible, output, "Interruptible");
-            output.WriteLine();
-            WriteRule(grammar.Returning, output, "Returning");
-            output.WriteLine();
-            WriteRule(grammar.Conditional, output, "Conditional");
-            output.WriteLine();
+            if(grammar.Terminating is { } terminating)
+            {
+                WriteRule(terminating, output, "Terminating" + suffix);
+                output.WriteLine();
+            }
+            if(grammar.Interrupting is { } interrupting)
+            {
+                WriteRule(interrupting, output, "Interrupting" + suffix);
+                output.WriteLine();
+            }
+            if(grammar.Interruptible is { } interruptible)
+            {
+                WriteRule(interruptible, output, "Interruptible" + suffix);
+                output.WriteLine();
+            }
+            if(grammar.Returning is { } returning)
+            {
+                WriteRule(returning, output, "Returning" + suffix);
+                output.WriteLine();
+            }
+            if(grammar.Conditional is { } conditional)
+            {
+                WriteRule(conditional, output, "Conditional" + suffix);
+                output.WriteLine();
+            }
         }
 
         static void WriteRule(IEnumerable<IGrammarElement> grammar, IndentedTextWriter output, string statementCategory)
@@ -60,7 +84,7 @@ namespace Sona.Compiler.Grammar.Generator
 
             bool firstAlternative = true;
 
-            foreach(var alternative in groups)
+            foreach(var alternative in groups.Reverse())
             {
                 if(firstAlternative)
                 {
@@ -106,7 +130,7 @@ namespace Sona.Compiler.Grammar.Generator
 
                 // Group by contents regardless of trail
                 // Only used when the middle can be shared
-                var trailGroups = mainTree.Where(p => p.Key.Tag == "trail").GroupByPaths().ToList();
+                var trailGroups = mainTree.Where(p => p.Key.Tag == "trail").GroupByPaths().Reverse().ToList();
 
                 if(trailGroups.Any(g => g.Count() > 1))
                 {
@@ -167,7 +191,7 @@ namespace Sona.Compiler.Grammar.Generator
                 void ProcessMiddle(CategoryTreeImmutable parent, StatementFlags parentFlags, bool ignoreTrail, bool noTrail)
                 {
                     // Group by follow-up
-                    var groups = parent.GroupBy(p => (p.Key.Tag, p.Value)).ToList();
+                    var groups = parent.GroupBy(p => (p.Key.Tag, p.Value)).Reverse().ToList();
 
                     if(groups.Count == 0)
                     {
@@ -353,6 +377,28 @@ namespace Sona.Compiler.Grammar.Generator
             { "interruptible_block", InterruptPath | OpenPath },
         };
 
+        static readonly Dictionary<string, HashSet<string>> simplifiedBlockNames = new()
+        {
+            { "interruptingCover", new() { "terminating", "interrupting" } },
+            { "returningCover", new() { "terminating", "interrupting", "returning" } },
+            { "openCover", new() { "terminating", "open" } },
+            { "interruptibleCover", new() { "terminating", "open", "interrupting", "interruptible" } },
+            { "conditionalCover", new() { "terminating", "open", "interrupting", "interruptible", "returning", "conditional" } },
+
+            { "openToInterruptible", new() { "open", "interruptible" } },
+            { "openToConditional", new() { "open", "interruptible", "conditional" } },
+            { "interruptingToInterruptible", new() { "interrupting", "interruptible" } },
+            { "returningToConditional", new() { "returning", "conditional" } }
+        };
+
+        static readonly Dictionary<string, HashSet<string>> simplifiedTrailNames = new()
+        {
+            { "interruptingCover", new() { "terminating", "interrupting" } },
+            { "returningCover", new() { "terminating", "interrupting", "returning" } },
+            { "interruptibleCover", new() { "open", "interruptible" } },
+            { "conditionalCover", new() { "open", "interruptible", "conditional" } }
+        };
+
         public static StatementFlags ToFlags(string str)
         {
             if(!blockFlags.TryGetValue(str, out var flags))
@@ -481,14 +527,26 @@ namespace Sona.Compiler.Grammar.Generator
             }
         }
 
-        public static void WriteAlternativeBlocks(this TextWriter output, IReadOnlyCollection<string> blocks)
+        private static IReadOnlyCollection<string> SimplifyAlternatives(IReadOnlyCollection<string> collection, Dictionary<string, HashSet<string>> labels)
         {
-            WriteAlternatives(output, blocks, ToBlock);
+            foreach(var (key, set) in labels)
+            {
+                if(set.Count == collection.Count && collection.All(set.Contains))
+                {
+                    return new[] { key };
+                }
+            }
+            return collection;
         }
 
-        public static void WriteAlternativeTrails(this TextWriter output, IReadOnlyCollection<string> blocks)
+        public static void WriteAlternativeBlocks(this TextWriter output, IReadOnlyCollection<string> blocks)
         {
-            WriteAlternatives(output, blocks, ToTrail);
+            WriteAlternatives(output, SimplifyAlternatives(blocks, simplifiedBlockNames), ToBlock);
+        }
+
+        public static void WriteAlternativeTrails(this TextWriter output, IReadOnlyCollection<string> trails)
+        {
+            WriteAlternatives(output, SimplifyAlternatives(trails, simplifiedTrailNames), ToTrail);
         }
 
         public static Grammar<T> LoadGrammar<T>(string path) where T : class, IGrammarElement
