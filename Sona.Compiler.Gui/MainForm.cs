@@ -886,7 +886,7 @@ ReadKey(true)!");
                     {
                         // Show visible success only on latest code
                         resultRichText.Enabled = true;
-                        messageBox.Text = String.Join(Environment.NewLine, result.Diagnostics.OrderBy(d => d.Line));
+                        messageBox.Text = String.Join(Environment.NewLine, result.Diagnostics.OrderBy(d => d));
                     }
 
                     SetOutputText(resultText, (options.Flags & CompilerFlags.IgnoreLineNumbers) == 0);
@@ -959,7 +959,7 @@ ReadKey(true)!");
 
                 // Result exists
                 BeginWork();
-                var diagnostics = CheckSource(last!, out var entryPoint).Concat(last!.Diagnostics).Distinct().OrderBy(d => d.Line);
+                var diagnostics = CheckSource(last!, out var entryPoint).Concat(last!.Diagnostics).Distinct().OrderBy(d => d);
                 EndWork();
 
                 if(reader.TryPeek(out _))
@@ -1008,7 +1008,7 @@ ReadKey(true)!");
 
                 var diagnostics = new[]
                 {
-                    new CompilerDiagnostic(DiagnosticLevel.Error, "EXCEPTION", e.ToString(), 0, e)
+                    new CompilerDiagnostic(DiagnosticLevel.Error, "EXCEPTION", e.ToString(), 0, null, e)
                 };
                 entryPoint = null;
                 latestSourceResult = (diagnostics, null);

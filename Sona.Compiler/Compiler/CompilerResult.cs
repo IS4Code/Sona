@@ -67,7 +67,7 @@ namespace Sona.Compiler
         }
     }
 
-    public record CompilerDiagnostic(DiagnosticLevel Level, string Code, string Message, int Line, object? Data)
+    public record CompilerDiagnostic(DiagnosticLevel Level, string Code, string Message, int Line, int? Column, object? Data) : IComparable<CompilerDiagnostic>
     {
         public CompilerDiagnostic(FSharpDiagnostic diagnostic) : this(
             diagnostic.Severity.IsError ? DiagnosticLevel.Error :
@@ -76,6 +76,7 @@ namespace Sona.Compiler
             diagnostic.ErrorNumberText,
             diagnostic.Message,
             diagnostic.StartLine,
+            Int32.MinValue + diagnostic.StartColumn,
             diagnostic.ExtendedData?.Value)
         {
 
@@ -85,14 +86,66 @@ namespace Sona.Compiler
             DiagnosticLevel.Error,
             "COMPILER",
             exception.Message,
-            (exception is RecognitionException re ? re.OffendingToken?.Line : line) ?? -1,
+            GetExceptionLine(exception, out var column) ?? line ?? -1,
+            column,
             exception)
         {
 
         }
 
+        static int? GetExceptionLine(Exception e, out int? column)
+        {
+            if(e is RecognitionException re)
+            {
+                column = re.OffendingToken?.Column;
+                return re.OffendingToken?.Line;
+            }
+            column = null;
+            return null;
+        }
+
+        public int CompareTo(CompilerDiagnostic? other)
+        {
+            if(other == null)
+            {
+                return 1;
+            }
+            if(Line.CompareTo(other.Line) is not 0 and var lineCmp)
+            {
+                return lineCmp;
+            }
+            if(Column == other.Column)
+            {
+                // Definite ordering
+                return Message.CompareTo(other.Message);
+            }
+            // Null column comes first
+            if(Column is not { } col)
+            {
+                return -1;
+            }
+            if(other.Column is not { } otherCol)
+            {
+                return 1;
+            }
+            // F# errors go last
+            if(col < 0 && otherCol >= 0)
+            {
+                return 1;
+            }
+            if(col >= 0 && otherCol < 0)
+            {
+                return -1;
+            }
+            return col.CompareTo(otherCol);
+        }
+
         public override string ToString()
         {
+            if(Column is { } col and >= 0)
+            {
+                return $"{Code}:{Line}:{col}: {Message}";
+            }
             return $"{Code}:{Line}: {Message}";
         }
     }

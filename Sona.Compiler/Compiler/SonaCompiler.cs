@@ -122,7 +122,7 @@ namespace Sona.Compiler
                 {
                     Debugger.Break();
                 }
-                result.AddDiagnostic(new(DiagnosticLevel.Error, "PARSER", msg, line, e));
+                result.AddDiagnostic(new(DiagnosticLevel.Error, "PARSER", msg, line, charPositionInLine, e));
             }
 
             public void SyntaxError(TextWriter output, IRecognizer recognizer, int offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
@@ -131,7 +131,7 @@ namespace Sona.Compiler
                 {
                     Debugger.Break();
                 }
-                result.AddDiagnostic(new(DiagnosticLevel.Error, "LEXER", msg, line, e));
+                result.AddDiagnostic(new(DiagnosticLevel.Error, "LEXER", msg, line, charPositionInLine, e));
             }
         }
 
@@ -238,12 +238,7 @@ namespace Sona.Compiler
 
             foreach(var diagnostic in diagnostics)
             {
-                var level =
-                    diagnostic.Severity.IsError ? DiagnosticLevel.Error :
-                    diagnostic.Severity.IsWarning ? DiagnosticLevel.Warning :
-                    DiagnosticLevel.Info;
-
-                result.AddDiagnostic(new(level, diagnostic.ErrorNumberText, diagnostic.Message, diagnostic.StartLine, diagnostic.ExtendedData?.Value));
+                result.AddDiagnostic(new(diagnostic));
             }
 
             return result;
