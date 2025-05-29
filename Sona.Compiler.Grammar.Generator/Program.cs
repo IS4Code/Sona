@@ -208,11 +208,16 @@ namespace Sona.Compiler.Grammar.Generator
                 void ProcessMiddle(CategoryTreeImmutable parent, StatementFlags parentFlags, bool ignoreTrail, bool noTrail)
                 {
                     // Group by follow-up
+
+                    bool Filter(KeyValuePair<CategoryKey, CategoryTreeImmutable> p) => p.Value.Any();
+
+                    var groupedFollowUp = parent.Where(p => !Filter(p));
+                    var nonGroupedFollowUp = parent.Where(p => Filter(p));
+
                     var groups =
-                        (parentFlags == StatementFlags.None
                         // Do not group if at the beginning
-                        ? parent.SelectMany(p => new[] { p }.GroupBy(p => (p.Key.Tag, p.Value)))
-                        : parent.GroupBy(p => (p.Key.Tag, p.Value))).Reverse().ToList();
+                        groupedFollowUp.GroupBy(p => (p.Key.Tag, p.Value))
+                        .Concat(nonGroupedFollowUp.SelectMany(p => new[] { p }.GroupBy(p => (p.Key.Tag, p.Value)))).Reverse().ToList();
 
                     if(groups.Count == 0)
                     {
@@ -298,11 +303,35 @@ namespace Sona.Compiler.Grammar.Generator
                                     if(flags == StatementFlags.None)
                                     {
                                         output.WriteAlternativeBlocks(keys);
-                                        flags = ToFlags(keys);
+                                    }
+                                    else if(keys.Count == 1)
+                                    {
+                                        if(keys.First() == "terminating")
+                                        {
+                                            output.WriteAlternativeBlocks(keys);
+                                        }
+                                        else
+                                        {
+                                            output.WriteAlternativeBlocks(FlagsTransformBlocks(ToFlags(keys), ref flags));
+                                        }
                                     }
                                     else
                                     {
-                                        output.WriteAlternativeBlocks(FlagsTransformBlocks(ToFlags(keys), ref flags));
+                                        var allBlocks = new HashSet<string>();
+                                        foreach(var key in keys)
+                                        {
+                                            if(key == "terminating")
+                                            {
+                                                allBlocks.Add(key);
+                                                continue;
+                                            }
+                                            var tmpFlags = flags;
+                                            foreach(var block in FlagsTransformBlocks(ToFlags(keys), ref tmpFlags))
+                                            {
+                                                allBlocks.Add(block);
+                                            }
+                                        }
+                                        output.WriteAlternativeBlocks(allBlocks);
                                     }
                                     if(isIgnored)
                                     {
