@@ -134,19 +134,15 @@ namespace Sona.Compiler.Grammar.Generator
                 }
                 else
                 {
-                    output.WriteAlternativeBlocks(mainCategories);
-                    output.Write(' ');
+                    switch(mainTag)
+                    {
+                        case "if":
+                            output.WriteSingleBlockCover(mainCategories, "elseif");
+                            output.Write(' ');
+                            break;
+                    }
 
                     mainFlags = ToFlags(mainCategories);
-                }
-
-                switch(mainTag)
-                {
-                    case "if":
-                        output.Write("(elseif ");
-                        output.WriteAlternativeBlocks(FlagsCoverBlocks(mainFlags));
-                        output.Write(")* ");
-                        break;
                 }
 
                 // Group by contents regardless of trail
@@ -212,7 +208,11 @@ namespace Sona.Compiler.Grammar.Generator
                 void ProcessMiddle(CategoryTreeImmutable parent, StatementFlags parentFlags, bool ignoreTrail, bool noTrail)
                 {
                     // Group by follow-up
-                    var groups = parent.GroupBy(p => (p.Key.Tag, p.Value)).Reverse().ToList();
+                    var groups =
+                        (parentFlags == StatementFlags.None
+                        // Do not group if at the beginning
+                        ? parent.SelectMany(p => new[] { p }.GroupBy(p => (p.Key.Tag, p.Value)))
+                        : parent.GroupBy(p => (p.Key.Tag, p.Value))).Reverse().ToList();
 
                     if(groups.Count == 0)
                     {
@@ -256,16 +256,28 @@ namespace Sona.Compiler.Grammar.Generator
                                 {
                                     // Deciding block
                                     output.Write(tag);
-                                    output.Write(' ');
-                                    output.WriteAlternativeBlocks(FlagsTransformBlocks(ToFlags(keys), ref flags));
-                                    output.Write(' ');
 
-                                    // Covering block
-                                    output.Write('(');
-                                    output.Write(tag);
-                                    output.Write(' ');
-                                    output.WriteAlternativeBlocks(FlagsCoverBlocks(flags));
-                                    output.Write(")* ");
+                                    if(flags == StatementFlags.None)
+                                    {
+                                        // First case
+                                        output.Write(' ');
+                                        output.WriteSingleBlockCover(keys, tag);
+                                        output.Write(' ');
+                                        flags = ToFlags(keys);
+                                    }
+                                    else
+                                    {
+                                        output.Write(' ');
+                                        output.WriteAlternativeBlocks(FlagsTransformBlocks(ToFlags(keys), ref flags));
+                                        output.Write(' ');
+
+                                        // Covering block
+                                        output.Write('(');
+                                        output.Write(tag);
+                                        output.Write(' ');
+                                        output.WriteAlternativeBlocks(FlagsCoverBlocks(flags));
+                                        output.Write(")* ");
+                                    }
                                     break;
                                 }
 
@@ -283,7 +295,15 @@ namespace Sona.Compiler.Grammar.Generator
                                         output.Write('(');
                                     }
                                     output.Write("else ");
-                                    output.WriteAlternativeBlocks(FlagsTransformBlocks(ToFlags(keys), ref flags));
+                                    if(flags == StatementFlags.None)
+                                    {
+                                        output.WriteAlternativeBlocks(keys);
+                                        flags = ToFlags(keys);
+                                    }
+                                    else
+                                    {
+                                        output.WriteAlternativeBlocks(FlagsTransformBlocks(ToFlags(keys), ref flags));
+                                    }
                                     if(isIgnored)
                                     {
                                         output.Write(")?");
@@ -568,6 +588,25 @@ namespace Sona.Compiler.Grammar.Generator
         public static void WriteAlternativeTrails(this TextWriter output, IReadOnlyCollection<string> trails)
         {
             WriteAlternatives(output, SimplifyAlternatives(trails, simplifiedTrailNames), ToTrail);
+        }
+
+        public static void WriteSingleBlockCover(this TextWriter output, IReadOnlyCollection<string> blocks, string coverTag)
+        {
+            switch(blocks.Count)
+            {
+                case 1:
+                    var category = blocks.First();
+                    output.Write(ToBlock(category));
+                    output.Write(' ');
+                    output.Write('(');
+                    output.Write(coverTag);
+                    output.Write(' ');
+                    output.WriteAlternativeBlocks(FlagsCoverBlocks(ToFlags(category)));
+                    output.Write(")*");
+                    break;
+                default:
+                    throw new ArgumentException("Parameter must have exactly one element.", nameof(blocks));
+            }
         }
 
         public static Grammar<T> LoadGrammar<T>(string path) where T : class, IGrammarElement
