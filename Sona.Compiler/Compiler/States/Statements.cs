@@ -728,16 +728,22 @@ namespace Sona.Compiler.States
 
         public override void EnterExpression(ExpressionContext context)
         {
-            if(scope == null)
+            try
             {
-                Error("`break` must be used in a statement that supports it.", context);
+                if(scope == null)
+                {
+                    Error("`break` must be used in a statement that supports it.", context);
+                }
+                else
+                {
+                    scope.WriteBreak(true, context);
+                }
+                Out.Write('(');
             }
-            else
+            finally
             {
-                scope.WriteBreak(true, context);
+                base.EnterExpression(context);
             }
-            Out.Write('(');
-            base.EnterExpression(context);
         }
 
         public override void EnterBreakStatement(BreakStatementContext context)
@@ -747,27 +753,32 @@ namespace Sona.Compiler.States
 
         public override void ExitBreakStatement(BreakStatementContext context)
         {
-            if(!HasExpression)
+            try
             {
-                if(scope == null)
+                if(!HasExpression)
                 {
-                    Error("`break` must be used in a statement that supports it.", context);
+                    if(scope == null)
+                    {
+                        Error("`break` must be used in a statement that supports it.", context);
+                    }
+                    else
+                    {
+                        scope.WriteBreak(false, context);
+                    }
                 }
                 else
                 {
-                    scope.WriteBreak(false, context);
+                    Out.Write(")");
+                    if(scope != null)
+                    {
+                        scope.WriteAfterContinue(context);
+                    }
                 }
             }
-            else
+            finally
             {
-                Out.Write(")");
-                if(scope != null)
-                {
-                    scope.WriteAfterContinue(context);
-                }
+                ExitState().ExitBreakStatement(context);
             }
-
-            ExitState().ExitBreakStatement(context);
         }
     }
 
@@ -788,16 +799,22 @@ namespace Sona.Compiler.States
 
         public override void EnterExpression(ExpressionContext context)
         {
-            if(scope == null)
+            try
             {
-                Error("`continue` must be used in a statement that supports it.", context);
+                if(scope == null)
+                {
+                    Error("`continue` must be used in a statement that supports it.", context);
+                }
+                else
+                {
+                    scope.WriteContinue(true, context);
+                }
+                Out.Write('(');
             }
-            else
+            finally
             {
-                scope.WriteContinue(true, context);
+                base.EnterExpression(context);
             }
-            Out.Write('(');
-            base.EnterExpression(context);
         }
 
         public override void EnterContinueStatement(ContinueStatementContext context)

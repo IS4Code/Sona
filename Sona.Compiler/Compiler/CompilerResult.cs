@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Antlr4.Runtime;
 using FSharp.Compiler.Diagnostics;
 
 namespace Sona.Compiler
@@ -76,6 +77,16 @@ namespace Sona.Compiler
             diagnostic.Message,
             diagnostic.StartLine,
             diagnostic.ExtendedData?.Value)
+        {
+
+        }
+
+        public CompilerDiagnostic(Exception exception, int? line = null) : this(
+            DiagnosticLevel.Error,
+            "COMPILER",
+            exception.Message,
+            (exception is RecognitionException re ? re.OffendingToken?.Line : line) ?? -1,
+            exception)
         {
 
         }

@@ -255,6 +255,8 @@ namespace Sona.Compiler.States
                         return;
                 }
                 Error("This conversion does not support returning an option type.", context);
+                Out.Write('(');
+                return;
             }
             if(typeCapture != null)
             {

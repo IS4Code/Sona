@@ -217,6 +217,7 @@ namespace Sona.Compiler.States
             if(text.IndexOf(')') != -1)
             {
                 Error("The ')' character cannot be represented in a format string.", context);
+                text = text.Replace(")", "", StringComparison.Ordinal);
             }
             if(Syntax.IsValidIdentifierName(text))
             {

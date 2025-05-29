@@ -197,22 +197,35 @@ namespace Sona.Compiler
 
         protected string Error(string message, ParserRuleContext context)
         {
-            throw new SemanticException(message, context);
+            Environment.ReportError(message, context);
+            return Environment.ErrorIdentifier;
         }
 
         protected ISourceCapture ErrorCapture(string message, ParserRuleContext context)
         {
-            throw new SemanticException(message, context);
+            Environment.ReportError(message, context);
+            return ErrorIdentifierCapture;
         }
 
         protected string Error(string message, ITerminalNode node)
         {
-            throw new SemanticException(message, node);
+            Environment.ReportError(message, node);
+            return Environment.ErrorIdentifier;
         }
 
         protected ISourceCapture ErrorCapture(string message, ITerminalNode node)
         {
-            throw new SemanticException(message, node);
+            Environment.ReportError(message, node);
+            return ErrorIdentifierCapture;
+        }
+
+        ISourceCapture ErrorIdentifierCapture {
+            get {
+                var capture = Out.StartCapture();
+                Out.WriteIdentifier(Environment.ErrorIdentifier);
+                Out.StopCapture(capture);
+                return capture;
+            }
         }
 
         class Empty : ScriptState

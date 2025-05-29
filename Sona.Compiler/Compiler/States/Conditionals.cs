@@ -1546,7 +1546,10 @@ namespace Sona.Compiler.States
             {
                 Error("`break` in a `while` statement does not take an expression.", context);
             }
-            Error("COMPILER ERROR: `break` used in a wrong version of `while`.", context);
+            else
+            {
+                Error("COMPILER ERROR: `break` used in a wrong version of `while`.", context);
+            }
         }
 
         public virtual void WriteContinue(bool hasExpression, ParserRuleContext context)
@@ -1555,7 +1558,10 @@ namespace Sona.Compiler.States
             {
                 Error("`break` in a `while` statement does not take an expression.", context);
             }
-            Error("COMPILER ERROR: `continue` used in a wrong version of `while`.", context);
+            else
+            {
+                Error("COMPILER ERROR: `continue` used in a wrong version of `while`.", context);
+            }
         }
 
         void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
@@ -1770,7 +1776,10 @@ namespace Sona.Compiler.States
             {
                 Error("`break` in a `repeat` statement does not take an expression.", context);
             }
-            Error("COMPILER ERROR: `break` used in a wrong version of `repeat`.", context);
+            else
+            {
+                Error("COMPILER ERROR: `break` used in a wrong version of `repeat`.", context);
+            }
         }
 
         public virtual void WriteContinue(bool hasExpression, ParserRuleContext context)
@@ -1779,7 +1788,10 @@ namespace Sona.Compiler.States
             {
                 Error("`break` in a `repeat` statement does not take an expression.", context);
             }
-            Error("COMPILER ERROR: `continue` used in a wrong version of `repeat`.", context);
+            else
+            {
+                Error("COMPILER ERROR: `continue` used in a wrong version of `repeat`.", context);
+            }
         }
 
         void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
@@ -1977,7 +1989,10 @@ namespace Sona.Compiler.States
             {
                 Error("`break` in a `for` statement does not take an expression.", context);
             }
-            Error("COMPILER ERROR: `break` used in a wrong version of `for`.", context);
+            else
+            {
+                Error("COMPILER ERROR: `break` used in a wrong version of `for`.", context);
+            }
         }
 
         public virtual void WriteContinue(bool hasExpression, ParserRuleContext context)
@@ -1986,7 +2001,10 @@ namespace Sona.Compiler.States
             {
                 Error("`break` in a `for` statement does not take an expression.", context);
             }
-            Error("COMPILER ERROR: `continue` used in a wrong version of `for`.", context);
+            else
+            {
+                Error("COMPILER ERROR: `continue` used in a wrong version of `for`.", context);
+            }
         }
 
         void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)

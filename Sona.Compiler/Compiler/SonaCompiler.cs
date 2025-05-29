@@ -71,7 +71,12 @@ namespace Sona.Compiler
             }
             catch(Exception e)
             {
-                result.AddDiagnostic(new(DiagnosticLevel.Error, "COMPILER", e.Message, lexer.Line, e));
+                result.AddDiagnostic(new(e, lexer.Line));
+            }
+
+            foreach(var error in context.Errors)
+            {
+                result.AddDiagnostic(new(error, lexer.Line));
             }
 
             return result;
@@ -127,16 +132,6 @@ namespace Sona.Compiler
                     Debugger.Break();
                 }
                 result.AddDiagnostic(new(DiagnosticLevel.Error, "LEXER", msg, line, e));
-            }
-
-            public override void ReportError(Parser recognizer, RecognitionException e)
-            {
-                if(e is SemanticException && !InErrorRecoveryMode(recognizer))
-                {
-                    NotifyErrorListeners(recognizer, e.Message, e);
-                    return;
-                }
-                base.ReportError(recognizer, e);
             }
         }
 

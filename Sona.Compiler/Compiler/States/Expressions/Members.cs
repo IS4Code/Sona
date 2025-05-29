@@ -700,12 +700,18 @@ namespace Sona.Compiler.States
 
             public override void ExitConstrainedFunctionAccess(ConstrainedFunctionAccessContext context)
             {
-                if(tupleIndex == -1)
+                try
                 {
-                    Error("Function-constrained members must be immediately called.", context);
+                    if(tupleIndex == -1)
+                    {
+                        Error("Function-constrained members must be immediately called.", context);
+                    }
+                    Out.Write("))");
                 }
-                Out.Write("))");
-                ExitState().ExitConstrainedFunctionAccess(context);
+                finally
+                {
+                    ExitState().ExitConstrainedFunctionAccess(context);
+                }
             }
 
             public override void EnterFunctionType(FunctionTypeContext context)
