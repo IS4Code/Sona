@@ -477,375 +477,375 @@ ifStatementTerminating:
 // The following rules are auto-generated.
 
 ifStatementInterrupting:
-  if terminatingBlock (elseif terminatingBlock)* (
-    elseif interruptingBlock (elseif interruptingCoverBlock)* (
-      else terminatingBlock 'end' ignoredTrail |
-      else interruptingCoverBlock 'end' ignoredTrail 
-    ) |
-    else interruptingBlock 'end' ignoredTrail 
-  ) |
   if interruptingBlock (elseif interruptingCoverBlock)* (
-    else terminatingBlock 'end' ignoredTrail |
-    else interruptingCoverBlock 'end' ignoredTrail 
+    else interruptingCoverBlock 'end' ignoredTrail |
+    else terminatingBlock 'end' ignoredTrail 
+  ) |
+  if terminatingBlock (elseif terminatingBlock)* (
+    else interruptingBlock 'end' ignoredTrail |
+    elseif interruptingBlock (elseif interruptingCoverBlock)* (
+      else interruptingCoverBlock 'end' ignoredTrail |
+      else terminatingBlock 'end' ignoredTrail 
+    ) 
   );
 
 ifStatementInterruptingTrail:
-  if terminatingBlock (elseif terminatingBlock)* (
-    elseif openBlock (elseif openCoverBlock)* (
-      elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-      else interruptingToInterruptibleBlock 
-    ) |
-    elseif interruptingBlock (elseif interruptingCoverBlock)* (
-      elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-      (else openToInterruptibleBlock)? 
-    ) |
-    elseif interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-    else interruptibleBlock 
+  if interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' interruptingCoverTrail |
+  if interruptingBlock (elseif interruptingCoverBlock)* (
+    (else openToInterruptibleBlock)? |
+    elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
   ) 'end' interruptingCoverTrail |
   if openBlock (elseif openCoverBlock)* (
-    elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-    else interruptingToInterruptibleBlock 
+    else interruptingToInterruptibleBlock |
+    elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
   ) 'end' interruptingCoverTrail |
-  if interruptingBlock (elseif interruptingCoverBlock)* (
-    elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-    (else openToInterruptibleBlock)? 
-  ) 'end' interruptingCoverTrail |
-  if interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' interruptingCoverTrail;
+  if terminatingBlock (elseif terminatingBlock)* (
+    else interruptibleBlock |
+    elseif interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
+    elseif interruptingBlock (elseif interruptingCoverBlock)* (
+      (else openToInterruptibleBlock)? |
+      elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
+    ) |
+    elseif openBlock (elseif openCoverBlock)* (
+      else interruptingToInterruptibleBlock |
+      elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
+    ) 
+  ) 'end' interruptingCoverTrail;
 
 ifStatementInterruptible:
-  if terminatingBlock (elseif terminatingBlock)* (
-    elseif openBlock (elseif openCoverBlock)* (
-      elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-      else interruptingToInterruptibleBlock 
-    ) |
-    elseif interruptingBlock (elseif interruptingCoverBlock)* (
-      elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-      (else openToInterruptibleBlock)? 
-    ) |
-    elseif interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-    else interruptibleBlock 
+  if interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' interruptibleCoverTrail |
+  if interruptingBlock (elseif interruptingCoverBlock)* (
+    (else openToInterruptibleBlock)? |
+    elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
   ) 'end' interruptibleCoverTrail |
   if openBlock (elseif openCoverBlock)* (
-    elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-    else interruptingToInterruptibleBlock 
+    else interruptingToInterruptibleBlock |
+    elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
   ) 'end' interruptibleCoverTrail |
-  if interruptingBlock (elseif interruptingCoverBlock)* (
-    elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-    (else openToInterruptibleBlock)? 
-  ) 'end' interruptibleCoverTrail |
-  if interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' interruptibleCoverTrail;
+  if terminatingBlock (elseif terminatingBlock)* (
+    else interruptibleBlock |
+    elseif interruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
+    elseif interruptingBlock (elseif interruptingCoverBlock)* (
+      (else openToInterruptibleBlock)? |
+      elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
+    ) |
+    elseif openBlock (elseif openCoverBlock)* (
+      else interruptingToInterruptibleBlock |
+      elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
+    ) 
+  ) 'end' interruptibleCoverTrail;
 
 ifStatementReturning:
-  if terminatingBlock (elseif terminatingBlock)* (
+  if interruptingBlock (elseif interruptingCoverBlock)* (
+    else returningBlock 'end' ignoredTrail |
     elseif returningBlock (elseif returningCoverBlock)* (
-      else terminatingBlock 'end' ignoredTrail |
-      else returningCoverBlock 'end' ignoredTrail 
-    ) |
-    elseif interruptingBlock (elseif interruptingCoverBlock)* (
-      elseif returningBlock (elseif returningCoverBlock)* (
-        else terminatingBlock 'end' ignoredTrail |
-        else returningCoverBlock 'end' ignoredTrail 
-      ) |
-      else returningBlock 'end' ignoredTrail 
-    ) |
-    else returningBlock 'end' ignoredTrail 
+      else returningCoverBlock 'end' ignoredTrail |
+      else terminatingBlock 'end' ignoredTrail 
+    ) 
   ) |
   if returningBlock (elseif returningCoverBlock)* (
-    else terminatingBlock 'end' ignoredTrail |
-    else returningCoverBlock 'end' ignoredTrail 
+    else returningCoverBlock 'end' ignoredTrail |
+    else terminatingBlock 'end' ignoredTrail 
   ) |
-  if interruptingBlock (elseif interruptingCoverBlock)* (
-    elseif returningBlock (elseif returningCoverBlock)* (
-      else terminatingBlock 'end' ignoredTrail |
-      else returningCoverBlock 'end' ignoredTrail 
+  if terminatingBlock (elseif terminatingBlock)* (
+    else returningBlock 'end' ignoredTrail |
+    elseif interruptingBlock (elseif interruptingCoverBlock)* (
+      else returningBlock 'end' ignoredTrail |
+      elseif returningBlock (elseif returningCoverBlock)* (
+        else returningCoverBlock 'end' ignoredTrail |
+        else terminatingBlock 'end' ignoredTrail 
+      ) 
     ) |
-    else returningBlock 'end' ignoredTrail 
+    elseif returningBlock (elseif returningCoverBlock)* (
+      else returningCoverBlock 'end' ignoredTrail |
+      else terminatingBlock 'end' ignoredTrail 
+    ) 
   );
 
 ifStatementReturningTrailFromElse:
-  if terminatingBlock (elseif terminatingBlock)* (
-    (
-      elseif returningBlock (elseif returningCoverBlock)* else openToConditionalBlock |
-      elseif interruptingBlock (elseif interruptingCoverBlock)* (
-        elseif returningBlock (elseif returningCoverBlock)* else openToConditionalBlock |
-        else conditionalBlock 
-      ) |
-      else (conditionalBlock | interruptibleBlock) 
-    ) 'end' returningTrail |
-    (
-      elseif returningBlock (elseif returningCoverBlock)* else openToConditionalBlock |
-      elseif interruptingBlock (elseif interruptingCoverBlock)* (
-        elseif returningBlock (elseif returningCoverBlock)* else openToConditionalBlock |
-        else conditionalBlock 
-      ) |
-      else conditionalBlock 
-    ) 'end' interruptingCoverTrail 
-  ) |
-  if returningBlock (elseif returningCoverBlock)* else openToConditionalBlock 'end' returningCoverTrail |
   if interruptingBlock (elseif interruptingCoverBlock)* (
     (
-      elseif returningBlock (elseif returningCoverBlock)* else openToConditionalBlock |
-      else conditionalBlock 
-    ) 'end' returningTrail |
+      else conditionalBlock |
+      elseif returningBlock (elseif returningCoverBlock)* else openToConditionalBlock 
+    ) 'end' interruptingCoverTrail |
     (
-      elseif returningBlock (elseif returningCoverBlock)* else openToConditionalBlock |
-      else conditionalBlock 
-    ) 'end' interruptingCoverTrail 
+      else conditionalBlock |
+      elseif returningBlock (elseif returningCoverBlock)* else openToConditionalBlock 
+    ) 'end' returningTrail 
+  ) |
+  if returningBlock (elseif returningCoverBlock)* else openToConditionalBlock 'end' returningCoverTrail |
+  if terminatingBlock (elseif terminatingBlock)* (
+    (
+      else conditionalBlock |
+      elseif interruptingBlock (elseif interruptingCoverBlock)* (
+        else conditionalBlock |
+        elseif returningBlock (elseif returningCoverBlock)* else openToConditionalBlock 
+      ) |
+      elseif returningBlock (elseif returningCoverBlock)* else openToConditionalBlock 
+    ) 'end' interruptingCoverTrail |
+    (
+      else (conditionalBlock | interruptibleBlock) |
+      elseif interruptingBlock (elseif interruptingCoverBlock)* (
+        else conditionalBlock |
+        elseif returningBlock (elseif returningCoverBlock)* else openToConditionalBlock 
+      ) |
+      elseif returningBlock (elseif returningCoverBlock)* else openToConditionalBlock 
+    ) 'end' returningTrail 
   );
 
 ifStatementReturningTrail:
-  if terminatingBlock (elseif terminatingBlock)* (
+  if conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 'end' returningCoverTrail |
+  if interruptibleBlock (elseif interruptibleCoverBlock)* (
     (
-      elseif returningBlock (elseif returningCoverBlock)* (
-        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else openToConditionalBlock)? 
-      ) |
-      elseif openBlock (elseif openCoverBlock)* (
-        elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-          (else (returningBlock | conditionalBlock | terminatingBlock))? 
-        ) |
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        else returningToConditionalBlock 
-      ) |
-      elseif interruptingBlock (elseif interruptingCoverBlock)* (
-        elseif returningBlock (elseif returningCoverBlock)* (
-          elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-          (else openToConditionalBlock)? 
-        ) |
-        elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-          (else (returningBlock | conditionalBlock | terminatingBlock))? 
-        ) |
-        elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else conditionalBlock)? 
-      ) |
-      elseif interruptibleBlock (elseif interruptibleCoverBlock)* (
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else (returningBlock | conditionalBlock | terminatingBlock))? 
-      ) |
-      elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      else (conditionalBlock | interruptibleBlock) 
-    ) 'end' returningTrail |
+      else returningToConditionalBlock |
+      elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+    ) 'end' interruptingCoverTrail |
     (
-      elseif returningBlock (elseif returningCoverBlock)* (
-        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else openToConditionalBlock)? 
-      ) |
-      elseif openBlock (elseif openCoverBlock)* (
-        elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-          else returningToConditionalBlock 
-        ) |
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        else returningToConditionalBlock 
-      ) |
-      elseif interruptingBlock (elseif interruptingCoverBlock)* (
-        elseif returningBlock (elseif returningCoverBlock)* (
-          elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-          (else openToConditionalBlock)? 
-        ) |
-        elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-          else returningToConditionalBlock 
-        ) |
-        elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        else conditionalBlock 
-      ) |
-      elseif interruptibleBlock (elseif interruptibleCoverBlock)* (
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        else returningToConditionalBlock 
-      ) |
-      elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      else conditionalBlock 
-    ) 'end' interruptingCoverTrail 
-  ) |
-  if returningBlock (elseif returningCoverBlock)* (
-    elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-    (else openToConditionalBlock)? 
-  ) 'end' returningCoverTrail |
-  if openBlock (elseif openCoverBlock)* (
-    (
-      elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else (returningBlock | conditionalBlock | terminatingBlock))? 
-      ) |
-      elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      else returningToConditionalBlock 
-    ) 'end' returningTrail |
-    (
-      elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        else returningToConditionalBlock 
-      ) |
-      elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      else returningToConditionalBlock 
-    ) 'end' interruptingCoverTrail 
+      (else (returningBlock | conditionalBlock | terminatingBlock))? |
+      elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+    ) 'end' returningTrail 
   ) |
   if interruptingBlock (elseif interruptingCoverBlock)* (
     (
-      elseif returningBlock (elseif returningCoverBlock)* (
-        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else openToConditionalBlock)? 
-      ) |
-      elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else (returningBlock | conditionalBlock | terminatingBlock))? 
-      ) |
+      else conditionalBlock |
       elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (else conditionalBlock)? 
-    ) 'end' returningTrail |
-    (
-      elseif returningBlock (elseif returningCoverBlock)* (
-        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else openToConditionalBlock)? 
-      ) |
       elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        else returningToConditionalBlock 
+        else returningToConditionalBlock |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) |
+      elseif returningBlock (elseif returningCoverBlock)* (
+        (else openToConditionalBlock)? |
+        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) 
+    ) 'end' interruptingCoverTrail |
+    (
+      (else conditionalBlock)? |
       elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      else conditionalBlock 
-    ) 'end' interruptingCoverTrail 
+      elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (
+        (else (returningBlock | conditionalBlock | terminatingBlock))? |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) |
+      elseif returningBlock (elseif returningCoverBlock)* (
+        (else openToConditionalBlock)? |
+        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) 
+    ) 'end' returningTrail 
   ) |
-  if interruptibleBlock (elseif interruptibleCoverBlock)* (
+  if openBlock (elseif openCoverBlock)* (
     (
+      else returningToConditionalBlock |
       elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (else (returningBlock | conditionalBlock | terminatingBlock))? 
-    ) 'end' returningTrail |
+      elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
+        else returningToConditionalBlock |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) 
+    ) 'end' interruptingCoverTrail |
     (
+      else returningToConditionalBlock |
       elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      else returningToConditionalBlock 
-    ) 'end' interruptingCoverTrail 
+      elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
+        (else (returningBlock | conditionalBlock | terminatingBlock))? |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) 
+    ) 'end' returningTrail 
   ) |
-  if conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 'end' returningCoverTrail;
+  if returningBlock (elseif returningCoverBlock)* (
+    (else openToConditionalBlock)? |
+    elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+  ) 'end' returningCoverTrail |
+  if terminatingBlock (elseif terminatingBlock)* (
+    (
+      else conditionalBlock |
+      elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif interruptibleBlock (elseif interruptibleCoverBlock)* (
+        else returningToConditionalBlock |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) |
+      elseif interruptingBlock (elseif interruptingCoverBlock)* (
+        else conditionalBlock |
+        elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (
+          else returningToConditionalBlock |
+          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) |
+        elseif returningBlock (elseif returningCoverBlock)* (
+          (else openToConditionalBlock)? |
+          elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
+      ) |
+      elseif openBlock (elseif openCoverBlock)* (
+        else returningToConditionalBlock |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
+          else returningToConditionalBlock |
+          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
+      ) |
+      elseif returningBlock (elseif returningCoverBlock)* (
+        (else openToConditionalBlock)? |
+        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) 
+    ) 'end' interruptingCoverTrail |
+    (
+      else (conditionalBlock | interruptibleBlock) |
+      elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif interruptibleBlock (elseif interruptibleCoverBlock)* (
+        (else (returningBlock | conditionalBlock | terminatingBlock))? |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) |
+      elseif interruptingBlock (elseif interruptingCoverBlock)* (
+        (else conditionalBlock)? |
+        elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (
+          (else (returningBlock | conditionalBlock | terminatingBlock))? |
+          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) |
+        elseif returningBlock (elseif returningCoverBlock)* (
+          (else openToConditionalBlock)? |
+          elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
+      ) |
+      elseif openBlock (elseif openCoverBlock)* (
+        else returningToConditionalBlock |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
+          (else (returningBlock | conditionalBlock | terminatingBlock))? |
+          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
+      ) |
+      elseif returningBlock (elseif returningCoverBlock)* (
+        (else openToConditionalBlock)? |
+        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) 
+    ) 'end' returningTrail 
+  );
 
 ifStatementConditional:
-  if terminatingBlock (elseif terminatingBlock)* (
+  if conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 'end' conditionalCoverTrail |
+  if interruptibleBlock (elseif interruptibleCoverBlock)* (
     (
-      elseif returningBlock (elseif returningCoverBlock)* (
-        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else openToConditionalBlock)? 
-      ) |
-      elseif openBlock (elseif openCoverBlock)* (
-        elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-          else returningToConditionalBlock 
-        ) |
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        else returningToConditionalBlock 
-      ) |
-      elseif interruptingBlock (elseif interruptingCoverBlock)* (
-        elseif returningBlock (elseif returningCoverBlock)* (
-          elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-          (else openToConditionalBlock)? 
-        ) |
-        elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-          else returningToConditionalBlock 
-        ) |
-        elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        else conditionalBlock 
-      ) |
-      elseif interruptibleBlock (elseif interruptibleCoverBlock)* (
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        else returningToConditionalBlock 
-      ) |
-      elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      else conditionalBlock 
-    ) 'end' interruptibleCoverTrail |
+      (else (returningBlock | conditionalBlock | terminatingBlock))? |
+      elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+    ) 'end' conditionalTrail |
     (
-      elseif returningBlock (elseif returningCoverBlock)* (
-        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else openToConditionalBlock)? 
-      ) |
-      elseif openBlock (elseif openCoverBlock)* (
-        elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-          (else (returningBlock | conditionalBlock | terminatingBlock))? 
-        ) |
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        else returningToConditionalBlock 
-      ) |
-      elseif interruptingBlock (elseif interruptingCoverBlock)* (
-        elseif returningBlock (elseif returningCoverBlock)* (
-          elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-          (else openToConditionalBlock)? 
-        ) |
-        elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-          (else (returningBlock | conditionalBlock | terminatingBlock))? 
-        ) |
-        elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else conditionalBlock)? 
-      ) |
-      elseif interruptibleBlock (elseif interruptibleCoverBlock)* (
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else (returningBlock | conditionalBlock | terminatingBlock))? 
-      ) |
-      elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      else (conditionalBlock | interruptibleBlock) 
-    ) 'end' conditionalTrail 
-  ) |
-  if returningBlock (elseif returningCoverBlock)* (
-    elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-    (else openToConditionalBlock)? 
-  ) 'end' conditionalCoverTrail |
-  if openBlock (elseif openCoverBlock)* (
-    (
-      elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        else returningToConditionalBlock 
-      ) |
-      elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      else returningToConditionalBlock 
-    ) 'end' interruptibleCoverTrail |
-    (
-      elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else (returningBlock | conditionalBlock | terminatingBlock))? 
-      ) |
-      elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      else returningToConditionalBlock 
-    ) 'end' conditionalTrail 
+      else returningToConditionalBlock |
+      elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+    ) 'end' interruptibleCoverTrail 
   ) |
   if interruptingBlock (elseif interruptingCoverBlock)* (
     (
-      elseif returningBlock (elseif returningCoverBlock)* (
-        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else openToConditionalBlock)? 
-      ) |
-      elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        else returningToConditionalBlock 
-      ) |
+      (else conditionalBlock)? |
       elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      else conditionalBlock 
-    ) 'end' interruptibleCoverTrail |
-    (
-      elseif returningBlock (elseif returningCoverBlock)* (
-        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else openToConditionalBlock)? 
-      ) |
       elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (
-        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (else (returningBlock | conditionalBlock | terminatingBlock))? 
+        (else (returningBlock | conditionalBlock | terminatingBlock))? |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) |
+      elseif returningBlock (elseif returningCoverBlock)* (
+        (else openToConditionalBlock)? |
+        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) 
+    ) 'end' conditionalTrail |
+    (
+      else conditionalBlock |
       elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (else conditionalBlock)? 
-    ) 'end' conditionalTrail 
+      elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (
+        else returningToConditionalBlock |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) |
+      elseif returningBlock (elseif returningCoverBlock)* (
+        (else openToConditionalBlock)? |
+        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) 
+    ) 'end' interruptibleCoverTrail 
   ) |
-  if interruptibleBlock (elseif interruptibleCoverBlock)* (
+  if openBlock (elseif openCoverBlock)* (
     (
+      else returningToConditionalBlock |
       elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      else returningToConditionalBlock 
-    ) 'end' interruptibleCoverTrail |
+      elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
+        (else (returningBlock | conditionalBlock | terminatingBlock))? |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) 
+    ) 'end' conditionalTrail |
     (
+      else returningToConditionalBlock |
       elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (else (returningBlock | conditionalBlock | terminatingBlock))? 
-    ) 'end' conditionalTrail 
+      elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
+        else returningToConditionalBlock |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) 
+    ) 'end' interruptibleCoverTrail 
   ) |
-  if conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 'end' conditionalCoverTrail;
+  if returningBlock (elseif returningCoverBlock)* (
+    (else openToConditionalBlock)? |
+    elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+  ) 'end' conditionalCoverTrail |
+  if terminatingBlock (elseif terminatingBlock)* (
+    (
+      else (conditionalBlock | interruptibleBlock) |
+      elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif interruptibleBlock (elseif interruptibleCoverBlock)* (
+        (else (returningBlock | conditionalBlock | terminatingBlock))? |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) |
+      elseif interruptingBlock (elseif interruptingCoverBlock)* (
+        (else conditionalBlock)? |
+        elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (
+          (else (returningBlock | conditionalBlock | terminatingBlock))? |
+          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) |
+        elseif returningBlock (elseif returningCoverBlock)* (
+          (else openToConditionalBlock)? |
+          elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
+      ) |
+      elseif openBlock (elseif openCoverBlock)* (
+        else returningToConditionalBlock |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
+          (else (returningBlock | conditionalBlock | terminatingBlock))? |
+          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
+      ) |
+      elseif returningBlock (elseif returningCoverBlock)* (
+        (else openToConditionalBlock)? |
+        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) 
+    ) 'end' conditionalTrail |
+    (
+      else conditionalBlock |
+      elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif interruptibleBlock (elseif interruptibleCoverBlock)* (
+        else returningToConditionalBlock |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) |
+      elseif interruptingBlock (elseif interruptingCoverBlock)* (
+        else conditionalBlock |
+        elseif conditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif openToInterruptibleBlock (elseif interruptibleCoverBlock)* (
+          else returningToConditionalBlock |
+          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) |
+        elseif returningBlock (elseif returningCoverBlock)* (
+          (else openToConditionalBlock)? |
+          elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
+      ) |
+      elseif openBlock (elseif openCoverBlock)* (
+        else returningToConditionalBlock |
+        elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif interruptingToInterruptibleBlock (elseif interruptibleCoverBlock)* (
+          else returningToConditionalBlock |
+          elseif returningToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
+      ) |
+      elseif returningBlock (elseif returningCoverBlock)* (
+        (else openToConditionalBlock)? |
+        elseif openToConditionalBlock (elseif conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) 
+    ) 'end' interruptibleCoverTrail 
+  );
 
 // `while`
 
@@ -1003,300 +1003,300 @@ switchStatementTerminatingInterrupted:
 
 switchStatementReturning:
   switch (
-    else returningBlock 'end' ignoredTrail |
-    case terminatingBlock (case terminatingBlock)* (
-      else returningBlock 'end' ignoredTrail |
+    case interruptingBlock (case interruptingCoverBlock)* (
       case returningBlock (case returningCoverBlock)* (
-        else terminatingBlock 'end' ignoredTrail |
+        'end' ignoredTrail |
         else returningCoverBlock 'end' ignoredTrail |
-        'end' ignoredTrail 
+        else terminatingBlock 'end' ignoredTrail 
       ) |
-      case interruptingBlock (case interruptingCoverBlock)* (
-        else returningBlock 'end' ignoredTrail |
-        case returningBlock (case returningCoverBlock)* (
-          else terminatingBlock 'end' ignoredTrail |
-          else returningCoverBlock 'end' ignoredTrail |
-          'end' ignoredTrail 
-        ) 
-      ) 
+      else returningBlock 'end' ignoredTrail 
     ) |
     case returningBlock (case returningCoverBlock)* (
-      else terminatingBlock 'end' ignoredTrail |
+      'end' ignoredTrail |
       else returningCoverBlock 'end' ignoredTrail |
-      'end' ignoredTrail 
+      else terminatingBlock 'end' ignoredTrail 
     ) |
-    case interruptingBlock (case interruptingCoverBlock)* (
-      else returningBlock 'end' ignoredTrail |
+    case terminatingBlock (case terminatingBlock)* (
+      case interruptingBlock (case interruptingCoverBlock)* (
+        case returningBlock (case returningCoverBlock)* (
+          'end' ignoredTrail |
+          else returningCoverBlock 'end' ignoredTrail |
+          else terminatingBlock 'end' ignoredTrail 
+        ) |
+        else returningBlock 'end' ignoredTrail 
+      ) |
       case returningBlock (case returningCoverBlock)* (
-        else terminatingBlock 'end' ignoredTrail |
+        'end' ignoredTrail |
         else returningCoverBlock 'end' ignoredTrail |
-        'end' ignoredTrail 
-      ) 
-    ) 
+        else terminatingBlock 'end' ignoredTrail 
+      ) |
+      else returningBlock 'end' ignoredTrail 
+    ) |
+    else returningBlock 'end' ignoredTrail 
   );
 
 switchStatementReturningTrail:
   switch (
     (
-      else (conditionalBlock | interruptibleBlock) |
-      case terminatingBlock (case terminatingBlock)* (
-        else (conditionalBlock | interruptibleBlock) |
+      else conditionalBlock |
+      case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      case interruptibleBlock (case interruptibleCoverBlock)* (
+        else returningToConditionalBlock |
+        case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) |
+      case interruptingBlock (case interruptingCoverBlock)* (
+        else conditionalBlock |
+        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        case openToInterruptibleBlock (case interruptibleCoverBlock)* (
+          else returningToConditionalBlock |
+          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) |
         case returningBlock (case returningCoverBlock)* (
           else openToConditionalBlock |
           case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case openBlock (case openCoverBlock)* (
+        ) 
+      ) |
+      case openBlock (case openCoverBlock)* (
+        else returningToConditionalBlock |
+        case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
           else returningToConditionalBlock |
-          case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
-            (else (returningBlock | conditionalBlock | terminatingBlock))? |
-            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-          ) |
           case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case interruptingBlock (case interruptingCoverBlock)* (
-          else conditionalBlock |
-          case returningBlock (case returningCoverBlock)* (
-            else openToConditionalBlock |
-            case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-          ) |
-          case openToInterruptibleBlock (case interruptibleCoverBlock)* (
-            (else (returningBlock | conditionalBlock | terminatingBlock))? |
-            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-          ) |
-          case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case interruptibleBlock (case interruptibleCoverBlock)* (
-          (else (returningBlock | conditionalBlock | terminatingBlock))? |
-          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
       ) |
       case returningBlock (case returningCoverBlock)* (
         else openToConditionalBlock |
         case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) |
-      case openBlock (case openCoverBlock)* (
-        else returningToConditionalBlock |
-        case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
-          (else (returningBlock | conditionalBlock | terminatingBlock))? |
+      case terminatingBlock (case terminatingBlock)* (
+        else conditionalBlock |
+        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        case interruptibleBlock (case interruptibleCoverBlock)* (
+          else returningToConditionalBlock |
           case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
         ) |
-        case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-      ) |
-      case interruptingBlock (case interruptingCoverBlock)* (
-        else conditionalBlock |
+        case interruptingBlock (case interruptingCoverBlock)* (
+          else conditionalBlock |
+          case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+          case openToInterruptibleBlock (case interruptibleCoverBlock)* (
+            else returningToConditionalBlock |
+            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          ) |
+          case returningBlock (case returningCoverBlock)* (
+            else openToConditionalBlock |
+            case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          ) 
+        ) |
+        case openBlock (case openCoverBlock)* (
+          else returningToConditionalBlock |
+          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+          case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
+            else returningToConditionalBlock |
+            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          ) 
+        ) |
         case returningBlock (case returningCoverBlock)* (
           else openToConditionalBlock |
           case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case openToInterruptibleBlock (case interruptibleCoverBlock)* (
-          (else (returningBlock | conditionalBlock | terminatingBlock))? |
-          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-      ) |
+        ) 
+      ) 
+    ) 'end' interruptingCoverTrail |
+    (
+      else (conditionalBlock | interruptibleBlock) |
+      case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
       case interruptibleBlock (case interruptibleCoverBlock)* (
         (else (returningBlock | conditionalBlock | terminatingBlock))? |
         case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) |
-      case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-    ) 'end' returningTrail |
-    (
-      else conditionalBlock |
-      case terminatingBlock (case terminatingBlock)* (
+      case interruptingBlock (case interruptingCoverBlock)* (
         else conditionalBlock |
+        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        case openToInterruptibleBlock (case interruptibleCoverBlock)* (
+          (else (returningBlock | conditionalBlock | terminatingBlock))? |
+          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) |
         case returningBlock (case returningCoverBlock)* (
           else openToConditionalBlock |
           case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case openBlock (case openCoverBlock)* (
-          else returningToConditionalBlock |
-          case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
-            else returningToConditionalBlock |
-            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-          ) |
+        ) 
+      ) |
+      case openBlock (case openCoverBlock)* (
+        else returningToConditionalBlock |
+        case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
+          (else (returningBlock | conditionalBlock | terminatingBlock))? |
           case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case interruptingBlock (case interruptingCoverBlock)* (
-          else conditionalBlock |
-          case returningBlock (case returningCoverBlock)* (
-            else openToConditionalBlock |
-            case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-          ) |
-          case openToInterruptibleBlock (case interruptibleCoverBlock)* (
-            else returningToConditionalBlock |
-            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-          ) |
-          case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case interruptibleBlock (case interruptibleCoverBlock)* (
-          else returningToConditionalBlock |
-          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
       ) |
       case returningBlock (case returningCoverBlock)* (
         else openToConditionalBlock |
         case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) |
-      case openBlock (case openCoverBlock)* (
-        else returningToConditionalBlock |
-        case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
-          else returningToConditionalBlock |
+      case terminatingBlock (case terminatingBlock)* (
+        else (conditionalBlock | interruptibleBlock) |
+        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        case interruptibleBlock (case interruptibleCoverBlock)* (
+          (else (returningBlock | conditionalBlock | terminatingBlock))? |
           case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
         ) |
-        case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-      ) |
-      case interruptingBlock (case interruptingCoverBlock)* (
-        else conditionalBlock |
+        case interruptingBlock (case interruptingCoverBlock)* (
+          else conditionalBlock |
+          case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+          case openToInterruptibleBlock (case interruptibleCoverBlock)* (
+            (else (returningBlock | conditionalBlock | terminatingBlock))? |
+            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          ) |
+          case returningBlock (case returningCoverBlock)* (
+            else openToConditionalBlock |
+            case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          ) 
+        ) |
+        case openBlock (case openCoverBlock)* (
+          else returningToConditionalBlock |
+          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+          case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
+            (else (returningBlock | conditionalBlock | terminatingBlock))? |
+            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          ) 
+        ) |
         case returningBlock (case returningCoverBlock)* (
           else openToConditionalBlock |
           case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case openToInterruptibleBlock (case interruptibleCoverBlock)* (
-          else returningToConditionalBlock |
-          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-      ) |
-      case interruptibleBlock (case interruptibleCoverBlock)* (
-        else returningToConditionalBlock |
-        case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-      ) |
-      case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-    ) 'end' interruptingCoverTrail 
+        ) 
+      ) 
+    ) 'end' returningTrail 
   );
 
 switchStatementConditional:
   switch (
     (
-      else conditionalBlock |
-      case terminatingBlock (case terminatingBlock)* (
-        else conditionalBlock |
-        case returningBlock (case returningCoverBlock)* (
-          else openToConditionalBlock |
-          case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case openBlock (case openCoverBlock)* (
-          else returningToConditionalBlock |
-          case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
-            else returningToConditionalBlock |
-            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-          ) |
-          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case interruptingBlock (case interruptingCoverBlock)* (
-          else conditionalBlock |
-          case returningBlock (case returningCoverBlock)* (
-            else openToConditionalBlock |
-            case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-          ) |
-          case openToInterruptibleBlock (case interruptibleCoverBlock)* (
-            else returningToConditionalBlock |
-            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-          ) |
-          case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case interruptibleBlock (case interruptibleCoverBlock)* (
-          else returningToConditionalBlock |
-          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-      ) |
-      case returningBlock (case returningCoverBlock)* (
-        else openToConditionalBlock |
-        case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-      ) |
-      case openBlock (case openCoverBlock)* (
-        else returningToConditionalBlock |
-        case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
-          else returningToConditionalBlock |
-          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-      ) |
-      case interruptingBlock (case interruptingCoverBlock)* (
-        else conditionalBlock |
-        case returningBlock (case returningCoverBlock)* (
-          else openToConditionalBlock |
-          case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case openToInterruptibleBlock (case interruptibleCoverBlock)* (
-          else returningToConditionalBlock |
-          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-      ) |
-      case interruptibleBlock (case interruptibleCoverBlock)* (
-        else returningToConditionalBlock |
-        case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-      ) |
-      case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-    ) 'end' interruptibleCoverTrail |
-    (
       else (conditionalBlock | interruptibleBlock) |
-      case terminatingBlock (case terminatingBlock)* (
-        else (conditionalBlock | interruptibleBlock) |
-        case returningBlock (case returningCoverBlock)* (
-          else openToConditionalBlock |
-          case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case openBlock (case openCoverBlock)* (
-          else returningToConditionalBlock |
-          case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
-            (else (returningBlock | conditionalBlock | terminatingBlock))? |
-            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-          ) |
-          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case interruptingBlock (case interruptingCoverBlock)* (
-          else conditionalBlock |
-          case returningBlock (case returningCoverBlock)* (
-            else openToConditionalBlock |
-            case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-          ) |
-          case openToInterruptibleBlock (case interruptibleCoverBlock)* (
-            (else (returningBlock | conditionalBlock | terminatingBlock))? |
-            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-          ) |
-          case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case interruptibleBlock (case interruptibleCoverBlock)* (
-          (else (returningBlock | conditionalBlock | terminatingBlock))? |
-          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-      ) |
-      case returningBlock (case returningCoverBlock)* (
-        else openToConditionalBlock |
-        case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-      ) |
-      case openBlock (case openCoverBlock)* (
-        else returningToConditionalBlock |
-        case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
-          (else (returningBlock | conditionalBlock | terminatingBlock))? |
-          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-      ) |
-      case interruptingBlock (case interruptingCoverBlock)* (
-        else conditionalBlock |
-        case returningBlock (case returningCoverBlock)* (
-          else openToConditionalBlock |
-          case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case openToInterruptibleBlock (case interruptibleCoverBlock)* (
-          (else (returningBlock | conditionalBlock | terminatingBlock))? |
-          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-        ) |
-        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-      ) |
+      case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
       case interruptibleBlock (case interruptibleCoverBlock)* (
         (else (returningBlock | conditionalBlock | terminatingBlock))? |
         case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) |
-      case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
-    ) 'end' conditionalTrail 
+      case interruptingBlock (case interruptingCoverBlock)* (
+        else conditionalBlock |
+        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        case openToInterruptibleBlock (case interruptibleCoverBlock)* (
+          (else (returningBlock | conditionalBlock | terminatingBlock))? |
+          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) |
+        case returningBlock (case returningCoverBlock)* (
+          else openToConditionalBlock |
+          case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
+      ) |
+      case openBlock (case openCoverBlock)* (
+        else returningToConditionalBlock |
+        case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
+          (else (returningBlock | conditionalBlock | terminatingBlock))? |
+          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
+      ) |
+      case returningBlock (case returningCoverBlock)* (
+        else openToConditionalBlock |
+        case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) |
+      case terminatingBlock (case terminatingBlock)* (
+        else (conditionalBlock | interruptibleBlock) |
+        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        case interruptibleBlock (case interruptibleCoverBlock)* (
+          (else (returningBlock | conditionalBlock | terminatingBlock))? |
+          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) |
+        case interruptingBlock (case interruptingCoverBlock)* (
+          else conditionalBlock |
+          case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+          case openToInterruptibleBlock (case interruptibleCoverBlock)* (
+            (else (returningBlock | conditionalBlock | terminatingBlock))? |
+            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          ) |
+          case returningBlock (case returningCoverBlock)* (
+            else openToConditionalBlock |
+            case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          ) 
+        ) |
+        case openBlock (case openCoverBlock)* (
+          else returningToConditionalBlock |
+          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+          case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
+            (else (returningBlock | conditionalBlock | terminatingBlock))? |
+            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          ) 
+        ) |
+        case returningBlock (case returningCoverBlock)* (
+          else openToConditionalBlock |
+          case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
+      ) 
+    ) 'end' conditionalTrail |
+    (
+      else conditionalBlock |
+      case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      case interruptibleBlock (case interruptibleCoverBlock)* (
+        else returningToConditionalBlock |
+        case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) |
+      case interruptingBlock (case interruptingCoverBlock)* (
+        else conditionalBlock |
+        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        case openToInterruptibleBlock (case interruptibleCoverBlock)* (
+          else returningToConditionalBlock |
+          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) |
+        case returningBlock (case returningCoverBlock)* (
+          else openToConditionalBlock |
+          case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
+      ) |
+      case openBlock (case openCoverBlock)* (
+        else returningToConditionalBlock |
+        case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
+          else returningToConditionalBlock |
+          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
+      ) |
+      case returningBlock (case returningCoverBlock)* (
+        else openToConditionalBlock |
+        case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      ) |
+      case terminatingBlock (case terminatingBlock)* (
+        else conditionalBlock |
+        case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        case interruptibleBlock (case interruptibleCoverBlock)* (
+          else returningToConditionalBlock |
+          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) |
+        case interruptingBlock (case interruptingCoverBlock)* (
+          else conditionalBlock |
+          case conditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+          case openToInterruptibleBlock (case interruptibleCoverBlock)* (
+            else returningToConditionalBlock |
+            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          ) |
+          case returningBlock (case returningCoverBlock)* (
+            else openToConditionalBlock |
+            case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          ) 
+        ) |
+        case openBlock (case openCoverBlock)* (
+          else returningToConditionalBlock |
+          case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? |
+          case interruptingToInterruptibleBlock (case interruptibleCoverBlock)* (
+            else returningToConditionalBlock |
+            case returningToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          ) 
+        ) |
+        case returningBlock (case returningCoverBlock)* (
+          else openToConditionalBlock |
+          case openToConditionalBlock (case conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        ) 
+      ) 
+    ) 'end' interruptibleCoverTrail 
   );
 
 /* -------------------- */

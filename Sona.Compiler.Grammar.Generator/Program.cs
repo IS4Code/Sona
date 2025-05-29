@@ -88,7 +88,7 @@ namespace Sona.Compiler.Grammar.Generator
             var caseSet = grammar.Select(parts => parts.CollapseParts()).ToHashSet();
 
             // Phase 2 - form tree from all values and group by paths
-            var groups = caseSet.BuildTree().GroupByPaths().Reverse().ToList();
+            var groups = caseSet.BuildTree().GroupByPaths().ToList();
 
             if(groups.Count == 0)
             {
@@ -147,7 +147,7 @@ namespace Sona.Compiler.Grammar.Generator
 
                 // Group by contents regardless of trail
                 // Only used when the middle can be shared
-                var trailGroups = mainTree.Where(p => p.Key.Tag == "trail").GroupByPaths().Reverse().ToList();
+                var trailGroups = mainTree.Where(p => p.Key.Tag == "trail").GroupByPaths().ToList();
 
                 if(trailGroups.Any(g => g.Count() > 1))
                 {
@@ -217,7 +217,7 @@ namespace Sona.Compiler.Grammar.Generator
                     var groups =
                         // Do not group if at the beginning
                         groupedFollowUp.GroupBy(p => (p.Key.Tag, p.Value))
-                        .Concat(nonGroupedFollowUp.SelectMany(p => new[] { p }.GroupBy(p => (p.Key.Tag, p.Value)))).Reverse().ToList();
+                        .Concat(nonGroupedFollowUp.SelectMany(p => new[] { p }.GroupBy(p => (p.Key.Tag, p.Value)))).ToList();
 
                     if(groups.Count == 0)
                     {
