@@ -35,6 +35,7 @@ namespace Sona.Compiler.States
             {
                 case SonaLexer.BEGIN_STRING:
                 case SonaLexer.END_STRING:
+                case SonaLexer.END_STRING_SUFFIX:
                     Out.Write('"');
                     break;
                 case SonaLexer.BEGIN_VERBATIM_STRING:
