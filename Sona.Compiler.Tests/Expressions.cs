@@ -117,7 +117,7 @@ namespace Sona.Tests
         [DataRow("a>>b", $"(a){shr}(b)")]
         [DataRow("a<<b", $"(a){shl}(b)")]
         [DataRow("a&b&c", $"(a){and}(b){and}(c)")]
-        [DataRow("a^b^c", $"(a){xor}(b){xor}(c)")]
+        [DataRow("a^b^c", $"(a){xor}((b){xor}(c))")]
         [DataRow("a|b|c", $"(a){or}(b){or}(c)")]
         [DataRow("a>>b<<c", $"(a){shr}(b){shl}(c)")]
         [DataRow("a<<b>>c", $"(a){shl}(b){shr}(c)")]
