@@ -20,11 +20,11 @@ finishing statement take as much of the block as possible.
 mainBlock:
   (globalAttrList (topLevelStatement | statement) ';'?)*? globalAttrList ((closingStatement | conditionalStatement) ';'? | implicitReturnStatement);
 
-// A block that is evaluated as a whole (a function body)
+// openBlock | terminatingBlock | interruptingBlock | returningBlock | conditionalBlock
 valueBlock:
   (statement ';'?)*? ((closingStatement | conditionalStatement) ';'? | implicitReturnStatement);
 
-// A block without return (no special handling when in a free-standing conditional)
+// openBlock | terminatingBlock
 freeBlock:
   (statement ';'?)*? (terminatingStatement ';'? | implicitReturnStatement);
 
@@ -52,7 +52,7 @@ interruptingBlock:
 interruptingTrail:
   (';'? statement)*? ';'? interruptingStatement;
 
-// A block that explicitly returns, interrupts, or throws
+// terminatingBlock | interruptingBlock | returningBlock
 returningCoverBlock:
   (statement ';'?)*? closingStatement ';'?;
 returningCoverTrail:
@@ -70,36 +70,45 @@ interruptibleBlock:
 interruptibleTrail:
   (';'? statement)*? ';'? interruptibleStatement;
 
-// A block that may do anything
+// openBlock | terminatingBlock | interruptingBlock | interruptibleBlock | returningBlock | conditionalBlock
 conditionalCoverBlock:
   (statement ';'?)*? ((closingStatement | interruptibleStatement | conditionalStatement) ';'? | implicitReturnStatement);
+// openTrail | interruptibleTrail | conditionalTrail
 conditionalCoverTrail:
-  (openTrail | interruptibleTrail | conditionalTrail);
+  (';'? statement)*? (';'? (interruptibleStatement | conditionalStatement) | implicitReturnStatement);
 
+// terminatingBlock | interruptingBlock
 interruptingCoverBlock:
-  terminatingBlock | interruptingBlock;
+  (statement ';'?)*? (terminatingStatement | interruptingStatement) ';'?;
 interruptingCoverTrail:
-  terminatingTrail | interruptingTrail;
+  (';'? statement)*? ';'? (terminatingStatement | interruptingStatement);
 
+// openBlock | terminatingBlock | interruptingBlock | interruptibleBlock
 interruptibleCoverBlock:
-  openBlock | terminatingBlock | interruptingBlock | interruptibleBlock;
+  (statement ';'?)*? ((terminatingStatement | interruptingStatement | interruptibleStatement) ';'? | implicitReturnStatement);
+// openTrail | interruptibleTrail
 interruptibleCoverTrail:
-  openTrail | interruptibleTrail;
+  (';'? statement)*? (';'? interruptibleStatement | implicitReturnStatement);
 
+// openBlock | terminatingBlock
 openCoverBlock:
-  openBlock | terminatingBlock;
+  (statement ';'?)*? (terminatingStatement ';'? | implicitReturnStatement);
 
+// openBlock | interruptibleBlock
 openToInterruptibleBlock:
-  openBlock | interruptibleBlock;
+  (statement ';'?)*? (interruptibleStatement ';'? | implicitReturnStatement);
 
+// openBlock | interruptibleBlock | conditionalBlock
 openToConditionalBlock:
-  openBlock | interruptibleBlock | conditionalBlock;
+  (statement ';'?)*? ((interruptibleStatement | conditionalStatement) ';'? | implicitReturnStatement);
 
+// interruptingBlock | interruptibleBlock
 interruptingToInterruptibleBlock:
-  interruptingBlock | interruptibleBlock;
+  (statement ';'?)*? (interruptingStatement | interruptibleStatement) ';'?;
 
+// returningBlock | conditionalBlock
 returningToConditionalBlock:
-  returningBlock | conditionalBlock;
+  (statement ';'?)*? (returningStatement | conditionalStatement) ';'?;
 
 // Same but never executed
 ignoredBlock:

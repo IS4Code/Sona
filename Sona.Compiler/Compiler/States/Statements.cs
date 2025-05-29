@@ -481,6 +481,41 @@ namespace Sona.Compiler.States
         {
             ExitState()?.ExitConditionalCoverBlock(context);
         }
+
+        public sealed override void ExitInterruptingCoverBlock(InterruptingCoverBlockContext context)
+        {
+            ExitState()?.ExitInterruptingCoverBlock(context);
+        }
+
+        public sealed override void ExitInterruptibleCoverBlock(InterruptibleCoverBlockContext context)
+        {
+            ExitState()?.ExitInterruptibleCoverBlock(context);
+        }
+
+        public sealed override void ExitOpenCoverBlock(OpenCoverBlockContext context)
+        {
+            ExitState()?.ExitOpenCoverBlock(context);
+        }
+
+        public sealed override void ExitOpenToInterruptibleBlock(OpenToInterruptibleBlockContext context)
+        {
+            ExitState()?.ExitOpenToInterruptibleBlock(context);
+        }
+
+        public sealed override void ExitOpenToConditionalBlock(OpenToConditionalBlockContext context)
+        {
+            ExitState()?.ExitOpenToConditionalBlock(context);
+        }
+
+        public sealed override void ExitInterruptingToInterruptibleBlock(InterruptingToInterruptibleBlockContext context)
+        {
+            ExitState()?.ExitInterruptingToInterruptibleBlock(context);
+        }
+
+        public sealed override void ExitReturningToConditionalBlock(ReturningToConditionalBlockContext context)
+        {
+            ExitState()?.ExitReturningToConditionalBlock(context);
+        }
         #endregion
     }
 

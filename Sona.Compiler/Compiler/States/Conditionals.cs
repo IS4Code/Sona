@@ -136,6 +136,28 @@ namespace Sona.Compiler.States
                 OnExitTrail();
                 ExitState()?.ExitConditionalCoverTrail(context);
             }
+
+            public sealed override void EnterInterruptingCoverTrail(InterruptingCoverTrailContext context)
+            {
+
+            }
+
+            public sealed override void ExitInterruptingCoverTrail(InterruptingCoverTrailContext context)
+            {
+                OnExitTrail();
+                ExitState()?.ExitInterruptingCoverTrail(context);
+            }
+
+            public sealed override void EnterInterruptibleCoverTrail(InterruptibleCoverTrailContext context)
+            {
+
+            }
+
+            public sealed override void ExitInterruptibleCoverTrail(InterruptibleCoverTrailContext context)
+            {
+                OnExitTrail();
+                ExitState()?.ExitInterruptibleCoverTrail(context);
+            }
             #endregion
 
             protected override void OnEnterStatement(StatementFlags flags, ParserRuleContext context)
@@ -401,6 +423,83 @@ namespace Sona.Compiler.States
         {
             OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
+
+        public sealed override void EnterInterruptingCoverBlock(InterruptingCoverBlockContext context)
+        {
+            OnEnterBlock(StatementFlags.InterruptPath, context);
+            EnterState<BlockState>().EnterInterruptingCoverBlock(context);
+        }
+
+        public sealed override void ExitInterruptingCoverBlock(InterruptingCoverBlockContext context)
+        {
+            OnExitBlock(StatementFlags.InterruptPath, context);
+        }
+
+        public sealed override void EnterInterruptibleCoverBlock(InterruptibleCoverBlockContext context)
+        {
+            OnEnterBlock(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            EnterState<BlockState>().EnterInterruptibleCoverBlock(context);
+        }
+
+        public sealed override void ExitInterruptibleCoverBlock(InterruptibleCoverBlockContext context)
+        {
+            OnExitBlock(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void EnterOpenCoverBlock(OpenCoverBlockContext context)
+        {
+            OnEnterBlock(StatementFlags.OpenPath, context);
+            EnterState<BlockState>().EnterOpenCoverBlock(context);
+        }
+
+        public sealed override void ExitOpenCoverBlock(OpenCoverBlockContext context)
+        {
+            OnExitBlock(StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void EnterOpenToInterruptibleBlock(OpenToInterruptibleBlockContext context)
+        {
+            OnEnterBlock(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            EnterState<BlockState>().EnterOpenToInterruptibleBlock(context);
+        }
+
+        public sealed override void ExitOpenToInterruptibleBlock(OpenToInterruptibleBlockContext context)
+        {
+            OnExitBlock(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void EnterOpenToConditionalBlock(OpenToConditionalBlockContext context)
+        {
+            OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            EnterState<BlockState>().EnterOpenToConditionalBlock(context);
+        }
+
+        public sealed override void ExitOpenToConditionalBlock(OpenToConditionalBlockContext context)
+        {
+            OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void EnterInterruptingToInterruptibleBlock(InterruptingToInterruptibleBlockContext context)
+        {
+            OnEnterBlock(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            EnterState<BlockState>().EnterInterruptingToInterruptibleBlock(context);
+        }
+
+        public sealed override void ExitInterruptingToInterruptibleBlock(InterruptingToInterruptibleBlockContext context)
+        {
+            OnExitBlock(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void EnterReturningToConditionalBlock(ReturningToConditionalBlockContext context)
+        {
+            OnEnterBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            EnterState<BlockState>().EnterReturningToConditionalBlock(context);
+        }
+
+        public sealed override void ExitReturningToConditionalBlock(ReturningToConditionalBlockContext context)
+        {
+            OnExitBlock(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+        }
         #endregion
 
         public sealed override void EnterIgnoredTrail(IgnoredTrailContext context)
@@ -551,8 +650,30 @@ namespace Sona.Compiler.States
         {
             OnExitTrail(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
+
+        public sealed override void EnterInterruptingCoverTrail(InterruptingCoverTrailContext context)
+        {
+            OnEnterTrail(StatementFlags.InterruptPath, context);
+            EnterState<TrailingStatements>().EnterInterruptingCoverTrail(context);
+        }
+
+        public sealed override void ExitInterruptingCoverTrail(InterruptingCoverTrailContext context)
+        {
+            OnExitTrail(StatementFlags.InterruptPath, context);
+        }
+
+        public sealed override void EnterInterruptibleCoverTrail(InterruptibleCoverTrailContext context)
+        {
+            OnEnterTrail(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            EnterState<TrailingStatements>().EnterInterruptibleCoverTrail(context);
+        }
+
+        public sealed override void ExitInterruptibleCoverTrail(InterruptibleCoverTrailContext context)
+        {
+            OnExitTrail(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+        }
         #endregion
-        
+
         private void OnEnterInner(StatementFlags flags, ParserRuleContext context)
         {
             if(this is IReturnableStatementContext)
