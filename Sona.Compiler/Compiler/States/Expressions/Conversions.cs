@@ -465,7 +465,9 @@ namespace Sona.Compiler.States
                 }
                 else
                 {
-                    Out.Write("_ ");
+                    Out.Write('^');
+                    Out.WriteIdentifier(Out.CreateTemporaryIdentifier());
+                    Out.Write(' ');
                 }
                 Out.Write("as ");
                 var id = Out.CreateTemporaryIdentifier();
