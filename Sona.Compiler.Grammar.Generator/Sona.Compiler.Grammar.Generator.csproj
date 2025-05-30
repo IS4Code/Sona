@@ -13,4 +13,10 @@
     <ProjectReference Include="..\Sona.Runtime\Sona.Runtime.fsproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="grammar_*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

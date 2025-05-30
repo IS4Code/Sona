@@ -1,0 +1,101 @@
+{
+  "interrupting": [],
+  "returning": [
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "else":"ignored_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "else":"ignored_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "else":"ignored_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "else":"ignored_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "else":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "else":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "else":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "else":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {"case": [],"else":"returning_block","trail":"ignored_block"},
+    {
+      "case": ["interrupting_block" ],
+      "else":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "else":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "else":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "else":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "else":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "else":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "else":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "else":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "else":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "else":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "else":"terminating_block",
+      "trail":"ignored_block"
+    }
+  ]
+}

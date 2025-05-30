@@ -1,0 +1,31 @@
+{
+  "conditional": [
+    {"body":"conditional_block","trail":"conditional_block"},
+    {"body":"interruptible_block","trail":"conditional_block"},
+    {"body":"interrupting_block","trail":"conditional_block"},
+    {"body":"returning_block","trail":"conditional_block"},
+    {"body":"conditional_block","trail":"interruptible_block"},
+    {"body":"returning_block","trail":"interruptible_block"},
+    {"body":"conditional_block","trail":"open_block"},
+    {"body":"returning_block","trail":"open_block"}
+  ],
+  "interruptible": [
+    {"body":"interruptible_block","trail":"interruptible_block"},
+    {"body":"interrupting_block","trail":"interruptible_block"}
+  ],
+  "interrupting": [
+    {"body":"interrupting_block","trail":"ignored_block"},
+    {"body":"interruptible_block","trail":"interrupting_block"},
+    {"body":"interruptible_block","trail":"terminating_block"}
+  ],
+  "returning": [
+    {"body":"conditional_block","trail":"interrupting_block"},
+    {"body":"returning_block","trail":"interrupting_block"},
+    {"body":"conditional_block","trail":"returning_block"},
+    {"body":"interruptible_block","trail":"returning_block"},
+    {"body":"interrupting_block","trail":"returning_block"},
+    {"body":"returning_block","trail":"returning_block"},
+    {"body":"conditional_block","trail":"terminating_block"},
+    {"body":"returning_block","trail":"terminating_block"}
+  ]
+}

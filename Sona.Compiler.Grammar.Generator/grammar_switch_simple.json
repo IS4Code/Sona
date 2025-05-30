@@ -1,0 +1,17 @@
+{
+  "conditional": [],
+  "interruptible": [],
+  "terminating": [
+    {
+      "case": ["terminating_block" ],
+      "else":"ignored_block",
+      "trail":"ignored_block"
+    },
+    {"case": [],"else":"terminating_block","trail":"ignored_block"},
+    {
+      "case": ["terminating_block" ],
+      "else":"terminating_block",
+      "trail":"ignored_block"
+    }
+  ]
+}

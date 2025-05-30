@@ -1,0 +1,1096 @@
+{
+  "returning": [
+    {
+      "else":"conditional_block",
+      "elseif": [],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["returning_block" ],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block" ],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": [],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["returning_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": [],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["returning_block" ],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block" ],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": [],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["returning_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": [],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["returning_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": [],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["returning_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": [],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["returning_block" ],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block" ],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": [],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["returning_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": [],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["returning_block" ],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block" ],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"conditional_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["returning_block" ],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": [],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["interrupting_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["returning_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["returning_block" ],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": [],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["returning_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": [],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["interrupting_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["returning_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": [],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["returning_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["returning_block" ],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": [],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["interrupting_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["returning_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["returning_block" ],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"interruptible_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["returning_block" ],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": [],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["interrupting_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["returning_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["returning_block" ],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"interrupting_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": [],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["returning_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": [],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["interrupting_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["returning_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["returning_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"returning_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["returning_block" ],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": [],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["interrupting_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["returning_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["returning_block" ],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    },
+    {
+      "else":"open_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"terminating_block"
+    }
+  ]
+}

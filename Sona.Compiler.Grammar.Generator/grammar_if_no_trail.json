@@ -1,0 +1,426 @@
+{
+  "interrupting": [
+    {
+      "else":"interrupting_block",
+      "elseif": [],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["terminating_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": [],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["terminating_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": [],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["terminating_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    }
+  ],
+  "returning": [
+    {
+      "else":"interrupting_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["returning_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": [],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["interrupting_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["returning_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["terminating_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["returning_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"interrupting_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": [],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["returning_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["terminating_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": [],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["interrupting_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["returning_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["terminating_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": [],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["returning_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["terminating_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"returning_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["returning_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"interrupting_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": [],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["interrupting_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["returning_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["terminating_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["terminating_block", "interrupting_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"returning_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["returning_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["terminating_block", "interrupting_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    },
+    {
+      "else":"terminating_block",
+      "elseif": ["terminating_block", "returning_block" ],
+      "then":"terminating_block",
+      "trail":"ignored_block"
+    }
+  ]
+}

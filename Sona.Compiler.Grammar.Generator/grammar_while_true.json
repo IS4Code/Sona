@@ -1,0 +1,18 @@
+{
+  "conditional": [
+    {"body":"conditional_block","trail":"conditional_block"},
+    {"body":"interruptible_block","trail":"conditional_block"},
+    {"body":"conditional_block","trail":"interruptible_block"},
+    {"body":"conditional_block","trail":"open_block"}
+  ],
+  "interruptible": [ {"body":"interruptible_block","trail":"interruptible_block"} ],
+  "interrupting": [ {"body":"interruptible_block","trail":"interrupting_block"} ],
+  "returning": [
+    {"body":"returning_block","trail":"ignored_block"},
+    {"body":"conditional_block","trail":"interrupting_block"},
+    {"body":"conditional_block","trail":"returning_block"},
+    {"body":"interruptible_block","trail":"returning_block"},
+    {"body":"conditional_block","trail":"terminating_block"}
+  ],
+  "terminating": [ {"body":"terminating_block","trail":"ignored_block"} ]
+}
