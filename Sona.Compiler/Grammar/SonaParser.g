@@ -176,9 +176,9 @@ atomicType:
   ) typeSuffix*;
 
 primitiveType:
-  'bool' | 'byte' | 'sbyte' |
-  'int' | 'int16' | 'int32' | 'int64' | 'int128' |
-  'uint' | 'uint16' | 'uint32' | 'uint64' | 'uint128' |
+  'bool' | 'int' | 'uint' |
+  'int8' | 'int16' | 'int32' | 'int64' | 'int128' |
+  'uint8' | 'uint16' | 'uint32' | 'uint64' | 'uint128' |
   'nativeint' | 'unativeint' | 'bigint' |
   'float' | 'float16' | 'float32' | 'float64' | 'decimal' |
   'char' | 'string' | 'object' | 'void' |

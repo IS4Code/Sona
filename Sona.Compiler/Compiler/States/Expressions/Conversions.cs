@@ -533,11 +533,11 @@ namespace Sona.Compiler.States
         {
             switch(context.Start.Type)
             {
-                case SonaLexer.BYTE:
-                    suffix = "uy";
-                    break;
-                case SonaLexer.SBYTE:
+                case SonaLexer.INT8:
                     suffix = "y";
+                    break;
+                case SonaLexer.UINT8:
+                    suffix = "uy";
                     break;
                 case SonaLexer.INT16:
                     suffix = "s";
