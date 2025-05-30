@@ -295,15 +295,14 @@ namespace Sona.Compiler.States
                     if(token.Type == SonaLexer.BOOL)
                     {
                         Out.WriteCustomOperator("Convert");
-                        Out.Write("(true)");
+                        Out.Write("<_,");
+                        Out.WriteCoreName("bool");
+                        Out.Write('>');
                         return;
                     }
 
                     Out.WriteCustomOperator("ConvertInvariant");
-                    Out.Write('(');
-                    Out.WriteCoreOperatorName("Unchecked");
-                    Out.Write(".defaultof<");
-
+                    Out.Write("<_,");
                     switch(token.Type)
                     {
                         case SonaLexer.BIGINT:
@@ -319,8 +318,7 @@ namespace Sona.Compiler.States
                             Out.WriteSystemName("Half");
                             break;
                     }
-
-                    Out.Write(">)");
+                    Out.Write('>');
                     return;
                 case SonaLexer.FLOAT32:
                     // Might be 'single'

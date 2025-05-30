@@ -412,11 +412,11 @@ module Operators =
   let inline OptionalBindToResult x =
     ((^self1 or ^self2 or ^x) : (static member ``operator OptionalBindToResult``: ^self1 * ^self2 * ^x -> struct(bool * _)) (null : Operators1), (null : Operators2), x)
   
-  let inline Convert(y)(x) =
-    ((^self1 or ^self2 or ^x) : (static member ``operator Convert``: ^self1 * ^self2 * ^x * ^y -> ^y) (null : Operators1), (null : Operators2), x, y)
+  let inline Convert<^T, ^U when (Operators1 or Operators2 or ^T) : (static member ``operator Convert`` : Operators1 * Operators2 * ^T * ^U -> ^U)>(x : ^T) : ^U =
+    ((^self1 or ^self2 or ^T) : (static member ``operator Convert``: ^self1 * ^self2 * ^T * ^U -> ^U) (null : Operators1), (null : Operators2), x, Unchecked.defaultof<^U>)
   
-  let inline ConvertInvariant(y)(x) =
-    ((^self1 or ^self2 or ^x) : (static member ``operator ConvertInvariant``: ^self1 * ^self2 * ^x * ^y -> ^y) (null : Operators1), (null : Operators2), x, y)
+  let inline ConvertInvariant<^T, ^U when (Operators1 or Operators2 or ^T) : (static member ``operator ConvertInvariant`` : Operators1 * Operators2 * ^T * ^U -> ^U)>(x : ^T) : ^U =
+    ((^self1 or ^self2 or ^T) : (static member ``operator ConvertInvariant``: ^self1 * ^self2 * ^T * ^U -> ^U) (null : Operators1), (null : Operators2), x, Unchecked.defaultof<^U>)
   
   let inline TryConversion(x : ^T)(f : _ -> ^U) =
     ((^self1 or ^self2 or ^T) : (static member ``operator TryConversion``: ^self1 * ^self2 * ^T * (_ -> ^U) -> ^U option) (null : Operators1), (null : Operators2), x, f)
