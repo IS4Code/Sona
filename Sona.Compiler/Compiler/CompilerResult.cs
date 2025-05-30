@@ -34,7 +34,7 @@ namespace Sona.Compiler
 
         public Assembly? Assembly => LazyInitializer.EnsureInitialized(ref assembly, ref assemblyInitialized, ref syncLock, () => {
             if(Stream == null) return null;
-            return Options.AssemblyLoadContext.LoadFromStream(Stream);
+            return Options.AssemblyLoader.AssemblyLoadStream(Stream);
         });
 
         Func<Task>? entryPoint;
@@ -61,7 +61,7 @@ namespace Sona.Compiler
             }
 #pragma warning disable CS1998
             return async () => {
-                entryPoint.CreateDelegate<Action>().Invoke();
+                ((Action)entryPoint.CreateDelegate(typeof(Action))).Invoke();
             };
 #pragma warning restore CS1998
         }

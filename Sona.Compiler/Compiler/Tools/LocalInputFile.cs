@@ -44,7 +44,7 @@ namespace Sona.Compiler.Tools
 
         public static implicit operator LocalInputFile(byte[] bytes)
         {
-            return FromBytes(bytes);
+            return FromBytes(new(bytes));
         }
 
         public static implicit operator LocalInputFile(FileInfo fileInfo)

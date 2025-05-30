@@ -51,15 +51,22 @@ namespace Sona.Compiler.Tools
             const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.GetProperty;
             var parserToken = tok.GetType().InvokeMember("tok", flags, null, tok, null)!;
             var item = parserToken.GetType().InvokeMember("Item", flags, null, parserToken, null)!;
-            switch(item)
+            if(item is char c)
             {
-                case char c:
-                    return c.ToString();
-                case ITuple t:
-                    return (string)t[0]!;
-                default:
-                    throw new ArgumentException("Argument is not a recognized literal.", nameof(str));
+                return c.ToString();
             }
+#if NETCOREAPP2_0_OR_GREATER || NET471_OR_GREATER
+            if(item is ITuple t)
+            {
+                return (string)t[0]!;
+            }
+#else
+            if(item?.GetType().GetProperty("Item1") is { } prop)
+            {
+                return (string)prop.GetValue(item);
+            }
+#endif
+            throw new ArgumentException("Argument is not a recognized literal.", nameof(str));
         }
     }
 }

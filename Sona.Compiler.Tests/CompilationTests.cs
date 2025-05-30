@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Runtime.Loader;
 using System.Text.RegularExpressions;
 using Antlr4.Runtime;
 using Sona.Compiler;
@@ -34,7 +33,7 @@ namespace Sona.Tests
                 Target: BinaryTarget.Exe,
                 Flags: CompilerFlags.Privileged | CompilerFlags.DebuggingComments |
                     (GenerateLineNumbers ? 0 : CompilerFlags.IgnoreLineNumbers),
-                AssemblyLoadContext: AssemblyLoadContext.Default
+                AssemblyLoader: AssemblyContextLoader.Default
             );
 
             var writer = new StringWriter();

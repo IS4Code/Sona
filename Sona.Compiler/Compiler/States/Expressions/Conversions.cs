@@ -636,7 +636,7 @@ namespace Sona.Compiler.States
                     }
                     else if(Decimal.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var number))
                     {
-                        if(Decimal.IsInteger(number))
+                        if(number.IsInteger())
                         {
                             text = number.ToString(CultureInfo.InvariantCulture);
                             goto case SonaLexer.INT_LITERAL;
@@ -663,7 +663,7 @@ namespace Sona.Compiler.States
                     if(suffix is "" or "f" or "M")
                     {
                         // Use the initial 0 to keep the sign positive
-                        if(!BigInteger.TryParse(text.Replace("x", "", StringComparison.OrdinalIgnoreCase), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var number))
+                        if(!BigInteger.TryParse(text.Replace("x", "").Replace("X", ""), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var number))
                         {
                             Error($"The literal value '{text}' cannot be parsed.", node);
                             goto case SonaLexer.FLOAT_LITERAL;

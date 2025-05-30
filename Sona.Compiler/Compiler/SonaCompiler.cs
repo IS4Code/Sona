@@ -185,7 +185,7 @@ namespace Sona.Compiler
             // A virtual file prefix (accessed through the local file system) to stand for in-memory dependencies
             var fsPrefix = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), Path.GetFileNameWithoutExtension(fileName));
 
-            var fs = new LocalFileSystem(fsPrefix, options.AssemblyLoadContext);
+            var fs = new LocalFileSystem(fsPrefix, options.AssemblyLoader);
             inputPath = fsPrefix + ".fsx";
             outputPath = fsPrefix + ".dll";
             manifestPath = fsPrefix + ".win32manifest";

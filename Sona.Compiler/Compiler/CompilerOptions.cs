@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Runtime.Loader;
 
 namespace Sona.Compiler
 {
-    public record CompilerOptions(BinaryTarget Target, CompilerFlags Flags, AssemblyLoadContext AssemblyLoadContext);
+    public record CompilerOptions(BinaryTarget Target, CompilerFlags Flags, ICompilerAssemblyLoader AssemblyLoader);
 
     public enum BinaryTarget
     {

@@ -22,10 +22,19 @@ namespace Sona.Compiler.Gui
                 {
                     return null;
                 }
+#if NETCOREAPP
                 return AssemblyLoadContext.Default.LoadFromStream(stream);
+#else
+                return AppDomainAssemblyLoader.Instance.AssemblyLoadStream(stream);
+#endif
             };
 
+#if NETCOREAPP
             ApplicationConfiguration.Initialize();
+#else
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+#endif
             Application.Run(new MainForm());
         }
     }

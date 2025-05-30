@@ -31,17 +31,27 @@ namespace Sona.Compiler.Tools
             encoder = encoding.GetEncoder();
         }
 
-        public override int Read(Span<byte> buffer)
+        public unsafe
+#if NETCOREAPP2_1_OR_GREATER
+            override
+#endif
+            int Read(Span<byte> buffer)
         {
             if(completed)
             {
                 return 0;
             }
             var span = text.AsSpan(textOffset);
-            encoder.Convert(span, buffer, false, out var used, out var count, out completed);
-            textOffset += used;
-            bytePosition += count;
-            return count;
+            fixed(char* spanPtr = span)
+            {
+                fixed(byte* bufferPtr = buffer)
+                {
+                    encoder.Convert(spanPtr, span.Length, bufferPtr, buffer.Length, false, out var used, out var count, out completed);
+                    textOffset += used;
+                    bytePosition += count;
+                    return count;
+                }
+            }
         }
 
         public override int Read(byte[] buffer, int offset, int count)

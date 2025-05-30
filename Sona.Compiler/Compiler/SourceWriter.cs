@@ -276,11 +276,13 @@ namespace Sona.Compiler
             base.OutputTabs();
         }
 
+#if NET6_0_OR_GREATER
         protected async override Task OutputTabsAsync()
         {
             OnNewLine();
             await base.OutputTabsAsync();
         }
+#endif
 
         public string CreateTemporaryIdentifier()
         {
@@ -662,14 +664,19 @@ namespace Sona.Compiler
             }
             
             public override void Close() => writer.Close();
-            public override ValueTask DisposeAsync() => writer.DisposeAsync();
             public override void Flush() => writer.Flush();
             public override Task FlushAsync() => writer.FlushAsync();
 
+#if NET8_0_OR_GREATER
             public override Task FlushAsync(CancellationToken cancellationToken)
             {
                 return writer.FlushAsync(cancellationToken);
             }
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER
+            public override ValueTask DisposeAsync() => writer.DisposeAsync();
+#endif
 
             public override void Write(string? s)
             {
@@ -707,6 +714,7 @@ namespace Sona.Compiler
                 OnCharsWritten(value?.Length ?? 0);
             }
 
+#if NETCOREAPP2_1_OR_GREATER
             public async override Task WriteAsync(ReadOnlyMemory<char> buffer, CancellationToken cancellationToken = default)
             {
                 await writer.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
@@ -718,6 +726,7 @@ namespace Sona.Compiler
                 await writer.WriteAsync(value).ConfigureAwait(false);
                 OnCharsWritten(value?.Length ?? 0);
             }
+#endif
 
             public override void WriteLine(string? s)
             {
@@ -841,6 +850,7 @@ namespace Sona.Compiler
                 OnNewLine();
             }
 
+#if NETCOREAPP2_1_OR_GREATER
             public async override Task WriteLineAsync(ReadOnlyMemory<char> buffer, CancellationToken cancellationToken = default)
             {
                 await writer.WriteLineAsync(buffer, cancellationToken).ConfigureAwait(false);
@@ -852,7 +862,8 @@ namespace Sona.Compiler
                 await writer.WriteLineAsync(value, cancellationToken).ConfigureAwait(false);
                 OnNewLine();
             }
-#endregion
+#endif
+            #endregion
         }
     }
 }

@@ -101,7 +101,13 @@ namespace Sona.Compiler.Tools
             InnerStream.EndWrite(asyncResult);
         }
 
-        public override void CopyTo(Stream destination, int bufferSize)
+        public
+#if NETCOREAPP2_1_OR_GREATER
+            override
+#else
+            new
+#endif
+            void CopyTo(Stream destination, int bufferSize)
         {
             InnerStream.CopyTo(destination, bufferSize);
         }

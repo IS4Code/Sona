@@ -115,7 +115,7 @@ namespace Sona.Compiler
             switch(token.Type)
             {
                 case SonaLexer.NAME:
-                    ValidateName(token.Text, node);
+                    ValidateName(token.Text.AsSpan(), node);
                     break;
                 case SonaLexer.LITERAL_NAME:
                 case SonaLexer.MEMBER_NAME:

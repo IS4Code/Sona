@@ -3,10 +3,8 @@ using System.Globalization;
 using Antlr4.Runtime;
 using System.IO;
 using Sona.Compiler;
-using System.Runtime.Loader;
 using System.Threading.Tasks;
 using System.Diagnostics;
-using System.Reflection;
 using System.Linq;
 
 internal class Program
@@ -26,7 +24,7 @@ internal class Program
         var options = new CompilerOptions
         (
             Target: BinaryTarget.Exe,
-            AssemblyLoadContext: AssemblyLoadContext.Default,
+            AssemblyLoader: AssemblyContextLoader.Default,
             Flags: CompilerFlags.Privileged
         );
 
@@ -35,7 +33,7 @@ internal class Program
             {
                 return null;
             }
-            return options.AssemblyLoadContext.LoadFromStream(stream);
+            return options.AssemblyLoader.AssemblyLoadStream(stream);
         };
 
         var backColor = Console.BackgroundColor;

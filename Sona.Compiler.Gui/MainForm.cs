@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime;
 using System.Runtime.ExceptionServices;
-using System.Runtime.Loader;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -178,8 +177,16 @@ ReadKey(true)!");
         bool reformatModifiedText;
         bool modifying;
 
-        static readonly SearchValues<char> surroundReformattingCharacters = SearchValues.Create(new[] { '(', ')', '[', ']', '{', '}', '/', '*', '$', '"', '\'', '\\' });
-        static readonly SearchValues<char> lineReformattingCharacters = SearchValues.Create(new[] { '#' });
+        static readonly char[] surroundReformattingCharacters = new[] { '(', ')', '[', ']', '{', '}', '/', '*', '$', '"', '\'', '\\' }.OrderBy(c => c).ToArray();
+        static readonly char[] lineReformattingCharacters = { '#' };
+
+#if NET8_0_OR_GREATER
+        static readonly SearchValues<char> surroundReformattingCharactersSearch = SearchValues.Create(surroundReformattingCharacters);
+        static readonly SearchValues<char> lineReformattingCharactersSearch = SearchValues.Create(lineReformattingCharacters);
+#else
+        static ReadOnlySpan<char> surroundReformattingCharactersSearch => surroundReformattingCharacters.AsSpan();
+        static ReadOnlySpan<char> lineReformattingCharactersSearch => lineReformattingCharacters.AsSpan();
+#endif
 
         private void sonaText_SelectionChanged(object sender, EventArgs e)
         {
@@ -206,7 +213,7 @@ ReadKey(true)!");
             var text = sonaRichText.Text;
             var selectedSpan = text.AsSpan(start, end - start);
             // Check if selection is near characters that might require reformatting
-            bool reformat = selectedSpan.ContainsAny(surroundReformattingCharacters);
+            bool reformat = selectedSpan.ContainsAny(surroundReformattingCharactersSearch);
             if(!reformat)
             {
                 // Get span of the whole line
@@ -230,7 +237,7 @@ ReadKey(true)!");
                 }
                 var lineSpan = text.AsSpan(lineStart, lineEnd - lineStart);
                 // Check if lines contain characters that might require reformatting
-                reformat = lineSpan.ContainsAny(lineReformattingCharacters);
+                reformat = lineSpan.ContainsAny(lineReformattingCharactersSearch);
             }
 
             if(sonaRichText.Modified)
@@ -721,7 +728,7 @@ ReadKey(true)!");
                         }
                         FormatToken(start, length, FontStyle.Bold | FontStyle.Italic);
                         break;
-                    case not SonaLexer.NAME when text.Length > 0 && Char.IsAsciiLetter(text[0]):
+                    case not SonaLexer.NAME when text.Length > 0 && text[0].IsAsciiLetter():
                         // Keyword
                         FormatToken(start, length, FontStyle.Bold);
                         break;
@@ -731,7 +738,7 @@ ReadKey(true)!");
                         FormatToken(start, length, FontStyle.Bold | FontStyle.Italic);
                         break;
                     default:
-                        if(text.Length > 2 && text[0] == '#' && Char.IsAsciiLetter(text[1]))
+                        if(text.Length > 2 && text[0] == '#' && text[1].IsAsciiLetter())
                         {
                             goto case SonaLexer.END_DIRECTIVE;
                         }
@@ -787,6 +794,13 @@ ReadKey(true)!");
                 });
             }
         }
+
+#if !NET6_0_OR_GREATER
+        public T Invoke<T>(Func<T> method)
+        {
+            return (T)this.Invoke((Delegate)method);
+        }
+#endif
 
         private void UpdateText()
         {
@@ -845,7 +859,12 @@ ReadKey(true)!");
                     Flags: CompilerFlags.Privileged |
                         (showBeginEnd ? CompilerFlags.DebuggingComments : 0) |
                         (adjustLineNumbers ? 0 : CompilerFlags.IgnoreLineNumbers),
-                    AssemblyLoadContext: AssemblyLoadContext.Default
+                    AssemblyLoader:
+#if NETCOREAPP
+                        AssemblyContextLoader.Default
+#else
+                        AppDomainAssemblyLoader.Instance
+#endif
                 );
 
                 if(CompileText(stack.Pop(), latest, options))
@@ -1092,7 +1111,7 @@ ReadKey(true)!");
                         }
                         if(pretext != ")" && !String.IsNullOrWhiteSpace(pretext))
                         {
-                            if(pretext.Contains("(*begin*)", StringComparison.Ordinal) || pretext.Contains("(*end*)"))
+                            if(pretext.Contains("(*begin*)", StringComparison.Ordinal) || pretext.Contains("(*end*)", StringComparison.Ordinal))
                             {
                                 receiver(pretext, FontStyle.Italic | FontStyle.Bold);
                             }
@@ -1125,7 +1144,7 @@ ReadKey(true)!");
                         return null!;
                     }
                     lastPosition = range.End;
-                    if(tok.IsKeyword || (subtext.Length > 0 && Char.IsAsciiLetter(subtext[0]) && !PrettyNaming.IsIdentifierName(subtext)))
+                    if(tok.IsKeyword || (subtext.Length > 0 && subtext[0].IsAsciiLetter() && !PrettyNaming.IsIdentifierName(subtext)))
                     {
                         receiver(subtext, FontStyle.Bold);
                     }
@@ -1135,7 +1154,7 @@ ReadKey(true)!");
                     }
                     else if(tok.Kind == FSharpTokenKind.Identifier && subtext.StartsWith('`'))
                     {
-                        receiver(subtext, subtext.StartsWith("``_ ") ? FontStyle.Underline | FontStyle.Italic : FontStyle.Italic);
+                        receiver(subtext, subtext.StartsWith("``_ ", StringComparison.Ordinal) ? FontStyle.Underline | FontStyle.Italic : FontStyle.Italic);
                     }
                     else
                     {
@@ -1304,7 +1323,11 @@ ReadKey(true)!");
             var cts = executionCts;
             if(cts != null)
             {
+#if NET8_0_OR_GREATER
                 await cts.CancelAsync();
+#else
+                cts.Cancel();
+#endif
             }
             cts = executionCts = new();
             var entryPoint = lastEntryPoint;
@@ -1315,8 +1338,8 @@ ReadKey(true)!");
 
             var buffer = new StringBuilder();
 
-            var tcs = new TaskCompletionSource();
-            cts.Token.Register(() => tcs.TrySetResult());
+            var tcs = new TaskCompletionSource<Unit?>();
+            cts.Token.Register(() => tcs.TrySetResult(null));
 
             new Thread(() => {
                 try
@@ -1326,12 +1349,16 @@ ReadKey(true)!");
                     Console.SetOut(new DuplicatingTextWriter(Console.Out, new StringWriter(buffer)));
                     Console.SetError(new DuplicatingTextWriter(Console.Error, new StringWriter(buffer)));
 
+#if NET7_0_OR_GREATER
                     Task? task = null;
 #pragma warning disable SYSLIB0046
                     ControlledExecution.Run(() => {
                         task = entryPoint();
                     }, cts.Token);
 #pragma warning restore SYSLIB0046
+#else
+                    var task = entryPoint();
+#endif
 
                     if(task != null)
                     {
@@ -1345,7 +1372,7 @@ ReadKey(true)!");
                         }
                     }
 
-                    tcs.TrySetResult();
+                    tcs.TrySetResult(null);
                     try
                     {
                         Task.Delay(2000).Wait(cts.Token);
@@ -1386,7 +1413,7 @@ ReadKey(true)!");
                 }
                 finally
                 {
-                    tcs.TrySetResult();
+                    tcs.TrySetResult(null);
                     if(!cts.IsCancellationRequested)
                     {
                         ConsoleExtensions.HideConsole();

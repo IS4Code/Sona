@@ -12,7 +12,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sona.Compiler.Grammar.Gener
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sona.Compiler.Gui", "Sona.Compiler.Gui\Sona.Compiler.Gui.csproj", "{82C36DC6-E3E3-4B1A-B479-0FC1CAAA4DAD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sona.Compiler.Tool", "Sona.Compiler.Tool\Sona.Compiler.Tool.csproj", "{C75CD402-6929-4E58-9F25-132E0793E769}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sona.Compiler.Tool", "Sona.Compiler.Tool\Sona.Compiler.Tool.csproj", "{C75CD402-6929-4E58-9F25-132E0793E769}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Sona.Shared", "Sona.Shared\Sona.Shared.shproj", "{4765072B-47AA-4944-914E-94FD30FE24D3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,5 +52,10 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BA8F6A85-1D05-4C4A-B974-2953A9B28AEB}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Sona.Shared\Sona.Shared.projitems*{4765072b-47aa-4944-914e-94fd30fe24d3}*SharedItemsImports = 13
+		Sona.Shared\Sona.Shared.projitems*{82c36dc6-e3e3-4b1a-b479-0fc1caaa4dad}*SharedItemsImports = 5
+		Sona.Shared\Sona.Shared.projitems*{c3ed9a4a-b4c1-4334-8748-5091c3e72d06}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal

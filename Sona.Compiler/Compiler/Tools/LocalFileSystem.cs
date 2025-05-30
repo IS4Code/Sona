@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Runtime.Loader;
 using FSharp.Compiler.IO;
 using Microsoft.FSharp.Core;
 
@@ -17,12 +16,12 @@ namespace Sona.Compiler.Tools
 
         public string FileNamePrefix { get; }
 
-        readonly AssemblyLoadContext assemblyLoadContext;
+        readonly IAssemblyLoader assemblyLoader;
 
-        public LocalFileSystem(string fileNamePrefix, AssemblyLoadContext assemblyLoadContext)
+        public LocalFileSystem(string fileNamePrefix, IAssemblyLoader assemblyLoader)
         {
             FileNamePrefix = fileNamePrefix;
-            this.assemblyLoadContext = assemblyLoadContext;
+            this.assemblyLoader = assemblyLoader;
         }
 
         public override IAssemblyLoader AssemblyLoader => this;
@@ -56,12 +55,12 @@ namespace Sona.Compiler.Tools
 
         Assembly IAssemblyLoader.AssemblyLoadFrom(string fileName)
         {
-            return assemblyLoadContext.LoadFromAssemblyPath(fileName) ?? base.AssemblyLoader.AssemblyLoadFrom(fileName);
+            return assemblyLoader.AssemblyLoadFrom(fileName) ?? base.AssemblyLoader.AssemblyLoadFrom(fileName);
         }
 
         Assembly IAssemblyLoader.AssemblyLoad(AssemblyName assemblyName)
         {
-            return assemblyLoadContext.LoadFromAssemblyName(assemblyName) ?? base.AssemblyLoader.AssemblyLoad(assemblyName);
+            return assemblyLoader.AssemblyLoad(assemblyName) ?? base.AssemblyLoader.AssemblyLoad(assemblyName);
         }
 
         static readonly Func<string, Stream> createStream = static _ => new BlockBufferStream();
@@ -77,7 +76,7 @@ namespace Sona.Compiler.Tools
                 case MemoryStream memoryStream:
                     if(!memoryStream.TryGetBuffer(out var buffer))
                     {
-                        buffer = memoryStream.ToArray();
+                        buffer = new(memoryStream.ToArray());
                     }
                     return new MemoryStream(buffer.Array!, buffer.Offset, buffer.Count, true);
                 case BlockBufferStream bufferStream:

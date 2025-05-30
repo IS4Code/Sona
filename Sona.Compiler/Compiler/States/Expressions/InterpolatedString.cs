@@ -217,7 +217,7 @@ namespace Sona.Compiler.States
             if(text.IndexOf(')') != -1)
             {
                 Error("The ')' character cannot be represented in a format string.", context);
-                text = text.Replace(")", "", StringComparison.Ordinal);
+                text = text.Replace(")", "");
             }
             if(Syntax.IsValidIdentifierName(text))
             {
@@ -374,7 +374,7 @@ namespace Sona.Compiler.States
                     type = token[1];
                     token = token.Substring(1);
                 }
-                else if(!Char.IsAsciiLetter(type) && type is not (':' or '/'))
+                else if(!type.IsAsciiLetter() && type is not (':' or '/'))
                 {
                     // Escape literal characters
                     if(token.Length == 1)

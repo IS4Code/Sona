@@ -236,7 +236,7 @@ namespace Sona.Compiler.Tools
             {
                 return 0;
             }
-            return 1 + (int)Math.Floor(Math.Log2(offset));
+            return 1 + (int)Math.Floor(Math.Log(offset, 2));
         }
 
         class Storage : IDisposable
