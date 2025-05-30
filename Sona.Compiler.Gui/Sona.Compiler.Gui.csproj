@@ -24,6 +24,7 @@
     <OutputType>WinExe</OutputType>
     <DebugType>embedded</DebugType>
     <UseWindowsForms>true</UseWindowsForms>
+    <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
   </PropertyGroup>
 
   <ItemGroup>
