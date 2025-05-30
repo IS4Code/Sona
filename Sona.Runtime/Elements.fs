@@ -104,6 +104,10 @@ type ``trait unmanaged``<^T when ^T : unmanaged> = ^T
 namespace Sona.Runtime.Core
 
 type object = obj
+type short = int16
+type ushort = uint16
+type long = int64
+type ulong = uint64
 type ``exception`` = System.Exception
 type ``void`` = System.Void
 
