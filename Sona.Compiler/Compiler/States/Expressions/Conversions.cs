@@ -674,4 +674,96 @@ namespace Sona.Compiler.States
             }
         }
     }
+
+    internal sealed class CharConversionState : ExpressionState
+    {
+        int? type;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            type = null;
+        }
+
+        public override void EnterMemberCharConvertExpr(MemberCharConvertExprContext context)
+        {
+            Out.Write('(');
+        }
+
+        public override void ExitMemberCharConvertExpr(MemberCharConvertExprContext context)
+        {
+            OnExit();
+            ExitState().ExitMemberCharConvertExpr(context);
+        }
+
+        public override void EnterAtomicCharConvertExpr(AtomicCharConvertExprContext context)
+        {
+            Out.Write('(');
+        }
+
+        public override void ExitAtomicCharConvertExpr(AtomicCharConvertExprContext context)
+        {
+            OnExit();
+            ExitState().ExitAtomicCharConvertExpr(context);
+        }
+
+        void OnExit()
+        {
+            if(type == null)
+            {
+                Out.Write(')');
+            }
+            Out.Write(')');
+        }
+
+        public override void EnterPrimitiveType(PrimitiveTypeContext context)
+        {
+            type = context.Start.Type;
+            switch(type)
+            {
+                case SonaLexer.INT8:
+                    Out.WriteCoreOperatorName("sbyte");
+                    Out.Write(' ');
+                    break;
+                case SonaLexer.UINT8:
+                    break;
+                default:
+                    type = null;
+                    base.EnterPrimitiveType(context);
+                    break;
+            }
+        }
+
+        public override void ExitPrimitiveType(PrimitiveTypeContext context)
+        {
+            if(type == null)
+            {
+                base.ExitPrimitiveType(context);
+                Out.Write('(');
+            }
+        }
+
+        public override void VisitTerminal(ITerminalNode node)
+        {
+            base.VisitTerminal(node);
+            var token = node.Symbol;
+            switch(token.Type)
+            {
+                case SonaLexer.BEGIN_CHAR:
+                    Out.Write('\'');
+                    break;
+                case SonaLexer.END_CHAR:
+                    Out.Write('\'');
+                    if(type != null)
+                    {
+                        Out.Write('B');
+                    }
+                    break;
+                case SonaLexer.CHAR_PART:
+                    Out.Write(token.Text);
+                    break;
+            }
+        }
+    }
 }

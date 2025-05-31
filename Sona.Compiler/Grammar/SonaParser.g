@@ -312,12 +312,7 @@ closingStatement:
 // Special statements
 
 echoStatement:
-  'echo' (echoStatement_Arg | expression) (',' expression)*;
-
-echoStatement_Arg:
-  string |
-  interpolatedString |
-  '(' echoStatement_Arg ')';
+  'echo' (anyStringArg | expression) (',' expression)*;
 
 // Simple control statements
 
@@ -1322,10 +1317,6 @@ topLevelStatement:
 importStatement:
   'import' symbolArg;
 
-symbolArg:
-  compoundName |
-  '(' symbolArg ')';
-
 importTypeStatement:
   'import' symbolContentsArg;
 
@@ -1341,10 +1332,6 @@ includeStatement:
 
 requireStatement:
   'require' stringArg;
-
-stringArg:
-  string |
-  '(' stringArg ')';
 
 /* ---------------------------- */
 /* Declarations and assignments */
@@ -1483,6 +1470,7 @@ atomicExpr:
     hashExpr |
     notExpr |
     atomicNumberConvertExpr |
+    atomicCharConvertExpr |
     atomicConvertExpr |
     unit
   );
@@ -1494,13 +1482,10 @@ notExpr:
   '!' atomicExpr;
 
 atomicNumberConvertExpr:
-  primitiveType numberConvertExpr_Arg;
+  primitiveType numberArg;
 
-numberConvertExpr_Arg:
-  ('+' | '-')* (
-    numberToken |
-    '(' numberConvertExpr_Arg ')'
-  );
+atomicCharConvertExpr:
+  primitiveType charArg;
 
 atomicConvertExpr:
   convertOperator atomicExpr;
@@ -1542,6 +1527,29 @@ fullConstructExpr:
   basicConstructExpr |
   tupleConstructor;
 
+numberArg:
+  ('+' | '-')* (
+    numberToken |
+    '(' numberArg ')'
+  );
+
+stringArg:
+  string |
+  '(' stringArg ')';
+
+anyStringArg:
+  string |
+  interpolatedString |
+  '(' anyStringArg ')';
+
+charArg:
+  charToken |
+  '(' charArg ')';
+
+symbolArg:
+  compoundName |
+  '(' symbolArg ')';
+
 // Member access
 
 memberExpr:
@@ -1560,6 +1568,7 @@ memberExpr_Prefix:
   simpleExpr |
   fullConstructExpr |
   memberNumberConvertExpr |
+  memberCharConvertExpr |
   memberConvertExpr;
 
 memberExpr_Suffix:
@@ -1605,7 +1614,10 @@ dynamicExprMemberAccess:
   ':' nestedExpr;
 
 memberNumberConvertExpr:
-  primitiveType '(' numberConvertExpr_Arg ')';
+  primitiveType '(' numberArg ')';
+
+memberCharConvertExpr:
+  primitiveType '(' charArg ')';
 
 memberConvertExpr:
   convertOperator '(' expression ')';
@@ -1832,6 +1844,9 @@ numberToken:
 
 char:
   BEGIN_CHAR CHAR_PART (END_CHAR | errorUnsupportedEndCharSuffix);
+
+charToken:
+  BEGIN_CHAR CHAR_PART END_CHAR;
 
 string:
   (BEGIN_STRING | BEGIN_VERBATIM_STRING) (STRING_PART | LITERAL_NEWLINE | LITERAL_ESCAPE_NEWLINE)* (END_STRING | errorUnsupportedEndStringSuffix);

@@ -61,6 +61,16 @@ namespace Sona.Compiler.States
 
         }
 
+        public override void EnterAtomicCharConvertExpr(AtomicCharConvertExprContext context)
+        {
+            EnterState<CharConversionState>().EnterAtomicCharConvertExpr(context);
+        }
+
+        public override void ExitAtomicCharConvertExpr(AtomicCharConvertExprContext context)
+        {
+
+        }
+
         public override void EnterAtomicConvertExpr(AtomicConvertExprContext context)
         {
             EnterState<ConversionState>().EnterAtomicConvertExpr(context);
