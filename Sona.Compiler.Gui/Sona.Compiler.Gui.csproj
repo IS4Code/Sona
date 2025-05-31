@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0-windows;net461</TargetFrameworks>
     <AssemblyName>Sona.Compiler.Gui</AssemblyName>
-    <VersionPrefix>0.1</VersionPrefix>
+    <VersionPrefix>0.2</VersionPrefix>
     <Product>Sona Language</Product>
     <Authors>IS4</Authors>
     <Copyright>Copyright (c) $(Authors) $([System.DateTime]::UtcNow.ToString('yyyy'))</Copyright>

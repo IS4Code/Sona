@@ -24,7 +24,12 @@ internal class Program
         var options = new CompilerOptions
         (
             Target: BinaryTarget.Exe,
-            AssemblyLoader: AssemblyContextLoader.Default,
+            AssemblyLoader:
+#if NETCOREAPP
+                        AssemblyContextLoader.Default,
+#else
+                        AppDomainAssemblyLoader.Instance,
+#endif
             Flags: CompilerFlags.Privileged
         );
 

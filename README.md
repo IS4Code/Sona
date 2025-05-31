@@ -16,7 +16,7 @@ Despite its primary paradigm being imperative, it utilizes many features found i
 * [Imperative constructs](//github.com/IS4Code/Sona/wiki/Control-statements) (`return`, `break`, `continue`) are built on functional principles, maintaining convenience without sacrificing soundness.
 * [Built-in option type](//github.com/IS4Code/Sona/wiki/Built%E2%80%90in-types#options) (`?`), usable in constructions (`some x`, `none`), conversions (`int? x`, `narrow? x`), the coalesce operator (`x ?? y`), or conditional member access (`?.`).
 * [Built-in sequence type](//github.com/IS4Code/Sona/wiki/Built%E2%80%90in-types#sequences) (`..`), easily constructible using `{…}` (e.g. `{x, ..anotherSequence, y}`, supporting the spread operator).
-* Type-tested formatting in [interpolated strings](//github.com/IS4Code/Sona/wiki/Interpolated-strings): `{x:0.##}` implies a numeric type; `{x:ddMMyy}` implies a date.
+* Type-tested formatting in [interpolated strings](//github.com/IS4Code/Sona/wiki/Interpolated-strings): `{x:0.0#}` implies a numeric type; `{x:ddMMyy}` implies a date.
 
 ## Support
 **To report and track bugs, please use the associated [issues](//github.com/IS4Code/Sona/issues) page.**
@@ -31,14 +31,13 @@ Since the language is not considered stable at this point, you are welcome to tr
 The compiler is also available as a [.NET tool](https://www.nuget.org/packages/Sona.Compiler.Tool), and may be embedded as a service in other solutions as a [NuGet package](https://www.nuget.org/packages/Sona.Compiler).
 
 ### Environment
-During the initial development, the project is built and tested using .NET 8+.
-At or before the full release on version 1.0, .NET Standard 2.0 compatibility is expected.
+During the initial development, the project is built and tested using .NET 8+, and multi-targeted for .NET Standard 2.0.
 The compiler and runtime rely on the latest version of F# to properly function ‒ using the intermediate output in an older version of F# may lead to errors.
 
 ### Versions
 The project uses semantic versioning:
 * **[0.1](//github.com/IS4Code/Sona/releases/tag/v0.1)** ‒ statements, value expressions, attributes.
-* **0.2** ‒ type expressions.
+* **[0.2](//github.com/IS4Code/Sona/releases/tag/v0.2)** ‒ type expressions, conversions and constructions.
 * **0.3** ‒ patterns, exception handling.
-* **0.<i>*</i>** ‒ declarations, generics, better handling of compiler errors.
+* **0.<i>*</i>** ‒ declarations, generic parameters, namespaces, packages, monads.
 * **1.0** ‒ full release of the initial feature set.
