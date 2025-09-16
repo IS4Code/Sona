@@ -457,8 +457,7 @@ namespace Sona.Compiler.States
 
             string MatchDerivedSome()
             {
-                Out.Write(")with|struct(true,(");
-                Out.WriteOperator(":?");
+                Out.Write(")with|struct(true,(:? ");
                 if(typeCapture != null)
                 {
                     Out.Write('(');

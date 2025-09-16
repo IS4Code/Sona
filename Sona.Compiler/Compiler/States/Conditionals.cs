@@ -2537,11 +2537,14 @@ namespace Sona.Compiler.States
     {
         protected bool HasBranches { get; private set; }
 
+        bool hasPattern;
+
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             HasBranches = false;
+            hasPattern = true;
         }
 
         protected override void OnExit(StatementFlags flags, ParserRuleContext context)
@@ -2564,6 +2567,7 @@ namespace Sona.Compiler.States
         {
             Out.WriteLine();
             Out.Write("| ");
+            hasPattern = false;
         }
 
         public sealed override void ExitCase(CaseContext context)
@@ -2572,18 +2576,26 @@ namespace Sona.Compiler.States
             HasBranches = true;
         }
 
-        public sealed override void EnterEmptyPattern(EmptyPatternContext context)
+        public override void EnterPattern(PatternContext context)
         {
-            Out.Write('_');
+            hasPattern = true;
+            Out.Write('(');
+            base.EnterPattern(context);
         }
 
-        public sealed override void ExitEmptyPattern(EmptyPatternContext context)
+        public override void ExitPattern(PatternContext context)
         {
-
+            base.ExitPattern(context);
+            Out.Write(')');
         }
 
         public sealed override void EnterWhenClause(WhenClauseContext context)
         {
+            if(!hasPattern)
+            {
+                Out.Write('_');
+                hasPattern = true;
+            }
             Out.Write(" when(");
         }
 

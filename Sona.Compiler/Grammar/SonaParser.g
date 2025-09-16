@@ -907,7 +907,7 @@ repeatStatementTerminating:
 /*
 // Same issue as with returning `while true do`.
 repeatStatementReturning:
-  // Body may returns, trail is ignored
+  // Body may return, trail is ignored
   'repeat' returningBlock until ignoredTrail;
 */
 
@@ -972,12 +972,10 @@ switch:
   'switch' expression;
 
 case:
-  'case' (pattern whenClause? | emptyPattern whenClause) 'do';
+  'case' (pattern whenClause? | whenClause) 'do';
 
 whenClause:
   'when' expression;
-
-emptyPattern:;
 
 // Free-standing (may throw from all branches but this is not preferred).
 // Presence of at least one case/else is ensured in code.
@@ -1365,10 +1363,10 @@ inlineFuncDecl:
   localAttrList 'inline' 'function' name funcBody;
 
 funcBody:
-  '(' paramList ')' ('as' type ';'?)? valueBlock 'end';
+  paramList ('as' type ';'?)? valueBlock 'end';
 
 paramList:
-  paramTuple (';' paramTuple)*;
+  ('(' paramTuple (';' paramTuple)* ')')+;
 
 paramTuple:
   (declaration (',' declaration)*)?;
@@ -1389,12 +1387,115 @@ memberDiscard:
 /* Patterns */
 /* -------- */
 
+patternArgument:
+  pattern?;
+
 pattern:
+  logicPattern |
+  inlineSourceFree;
+
+logicPattern:
+  typePattern (
+    (
+      'and' (typePattern 'and')* |
+      'or' (typePattern 'or')*
+    ) typePattern
+  )?;
+
+typePattern:
+  'is' (
+    '<' typeArgument '>' typePatternExplicit? |
+    typePatternImplicit
+  ) |
+  annotationPattern;
+
+typePatternExplicit:
+  annotationPattern;
+
+typePatternImplicit:
+  annotationPattern;
+
+annotationPattern:
+  atomicPattern (
+    'as' type
+  )*;
+
+atomicPattern:
   primitiveExpr |
+  unit |
+  somePattern |
+  fullConstructPattern |
+  namedPattern |
+  memberPattern |
   nestedPattern;
 
 nestedPattern:
   '(' pattern ')';
+
+somePattern:
+  'some' (
+    '(' patternArgument ')' |
+    annotationPattern
+  );
+
+namedPattern:
+  compoundName;
+
+memberPattern:
+  compoundName (
+    simplePatternArgument |
+    patternArguments
+  );
+
+// Calls
+
+patternArguments:
+  ('(' patternArgTuple (';' patternArgTuple)* ')')+;
+
+simplePatternArgument:
+  basicConstructPattern |
+  char |
+  string;
+
+patternArgTuple:
+  fieldAssignment? patternArgument (',' fieldAssignment? patternArgument)*;
+
+// Records, collections, and tuples
+
+basicConstructPattern:
+  arrayConstructorPattern |
+  recordConstructorPattern |
+  explicitTupleConstructorPattern |
+  classTupleConstructorPattern |
+  structTupleConstructorPattern;
+
+fullConstructPattern:
+  basicConstructPattern |
+  tupleConstructorPattern;
+
+recordConstructorPattern:
+  '{' fieldAssignment patternArgument (',' fieldAssignment patternArgument)* '}';
+
+arrayConstructorPattern:
+  '[' (
+    pattern |
+    patternArgument (',' patternArgument)+
+   )? ']';
+
+tupleConstructorPattern:
+  '(' tuplePattern_Contents ')';
+
+explicitTupleConstructorPattern:
+  '(' 'as' 'new' ';'? tuplePattern_Contents ')';
+
+classTupleConstructorPattern:
+  '(' 'as' 'class' ';'? tuplePattern_Contents ')';
+
+structTupleConstructorPattern:
+  '(' 'as' 'struct' ';'? tuplePattern_Contents ')';
+
+tuplePattern_Contents:
+  patternArgument (',' patternArgument)+;
 
 /* ----------- */
 /* Expressions */
@@ -1639,17 +1740,17 @@ memberTypeConstructExpr:
 memberNewExpr:
   'new' ('<' type '>')? optionSuffix? constructArguments;
 
-// Must indicate construction by having no arguments, at least two arguments, or one named argument.
+// Must indicate construction by having no arguments, at least two arguments, or at least one named argument.
 constructArguments:
   '(' (constructCallArgTuple | complexCallArgTuple) ')';
 
 constructCallArgTuple:
-  ((expression ',' expression | (expression ',')* fieldAssignment) (',' (fieldAssignment | expression))*)?;
+  ((expression ',' expression | (expression ',')* fieldAssignment expression) (',' fieldAssignment? expression)*)?;
 
 fieldAssignment:
-  name '=' expression;
+  name '=';
 
-// Function calls
+// Calls
 
 callArguments:
   '(' callArgList ')';
@@ -1664,24 +1765,27 @@ callArgList:
   (simpleCallArgTuple | complexCallArgTuple) (';' (simpleCallArgTuple | complexCallArgTuple))*;
 
 simpleCallArgTuple:
-  ((fieldAssignment | expression) (',' (fieldAssignment | expression))*)?;
+  (fieldAssignment? expression (',' fieldAssignment? expression)*)?;
 
 complexCallArgTuple:
-  ((fieldAssignment | expression) ',')* spreadExpression (',' (spreadExpression | fieldAssignment | expression))*;
+  (fieldAssignment? expression ',')* spreadExpression (',' (spreadExpression | fieldAssignment? expression))*;
 
 // Records, collections, and tuples
 
 recordConstructor:
-  '{' fieldAssignment (',' fieldAssignment)* '}';
+  '{' recordConstructor_Contents '}';
 
 anonymousRecordConstructor:
-  '{' 'as' 'new' ';'? fieldAssignment (',' fieldAssignment)* '}';
+  '{' 'as' 'new' ';'? recordConstructor_Contents '}';
 
 anonymousClassRecordConstructor:
-  '{' 'as' 'class' ';'? fieldAssignment (',' fieldAssignment)* '}';
+  '{' 'as' 'class' ';'? recordConstructor_Contents '}';
 
 anonymousStructRecordConstructor:
-  '{' 'as' 'struct' ';'? fieldAssignment (',' fieldAssignment)* '}';
+  '{' 'as' 'struct' ';'? recordConstructor_Contents '}';
+
+recordConstructor_Contents:
+  fieldAssignment expression (',' fieldAssignment expression)*;
 
 arrayConstructor:
   '[' (simpleCollectionContents | complexCollectionContents)? ']';
