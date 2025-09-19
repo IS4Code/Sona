@@ -138,16 +138,16 @@ namespace Sona.Compiler.States
             isNamed = true;
         }
 
-        public override void EnterAtomicExpr(AtomicExprContext context)
+        public override void EnterUnaryExpr(UnaryExprContext context)
         {
             if(isNamed)
             {
                 Out.WriteOperator('=');
             }
-            EnterState<Expression>().EnterAtomicExpr(context);
+            EnterState<Expression>().EnterUnaryExpr(context);
         }
 
-        public override void ExitAtomicExpr(AtomicExprContext context)
+        public override void ExitUnaryExpr(UnaryExprContext context)
         {
 
         }
@@ -159,9 +159,9 @@ namespace Sona.Compiler.States
 
             }
 
-            public override void ExitAtomicExpr(AtomicExprContext context)
+            public override void ExitUnaryExpr(UnaryExprContext context)
             {
-                ExitState().ExitAtomicExpr(context);
+                ExitState().ExitUnaryExpr(context);
             }
         }
     }

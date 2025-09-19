@@ -10,7 +10,7 @@ namespace Sona.Compiler.States
         ISourceCapture? capture;
         TContext? operationContext;
         ParserRuleContext? operandContext;
-        int atomicLevel;
+        int unaryLevel;
 
         protected ITerminalNode? FirstOperator { get; private set; }
 
@@ -22,7 +22,7 @@ namespace Sona.Compiler.States
             operationContext = null;
             operandContext = null;
             FirstOperator = null;
-            atomicLevel = 0;
+            unaryLevel = 0;
         }
 
         private void EnterOperation(TContext context)
@@ -415,22 +415,22 @@ namespace Sona.Compiler.States
             }
         }
 
-        // Ignore terminals in atomic expressions
-        public sealed override void EnterAtomicExpr(AtomicExprContext context)
+        // Ignore terminals in unary expressions
+        public sealed override void EnterUnaryExpr(UnaryExprContext context)
         {
-            atomicLevel++;
+            unaryLevel++;
         }
 
-        public sealed override void ExitAtomicExpr(AtomicExprContext context)
+        public sealed override void ExitUnaryExpr(UnaryExprContext context)
         {
-            atomicLevel--;
+            unaryLevel--;
         }
 
         public sealed override void VisitTerminal(ITerminalNode node)
         {
             base.VisitTerminal(node);
 
-            if(atomicLevel > 0)
+            if(unaryLevel > 0)
             {
                 return;
             }

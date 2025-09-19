@@ -272,10 +272,10 @@ attrGroup:
   WHITESPACE* compoundName (WHITESPACE* (attrNamedArg | attrPosArg) (WHITESPACE+ (attrNamedArg | attrPosArg))*)? WHITESPACE*;
 
 attrPosArg:
-   atomicExpr;
+   unaryExpr;
 
 attrNamedArg:
-  name WHITESPACE* '=' WHITESPACE* atomicExpr;
+  name WHITESPACE* '=' WHITESPACE* unaryExpr;
 
 /* ------------------ */
 /* General statements */
@@ -322,7 +322,7 @@ returnStatement:
   'return' expression?;
 
 returnOptionStatement:
-  'return' valueExpr '?';
+  'return' atomicExpr '?';
 
 yieldStatement:
   'yield' (expression | errorMissingExpression);
@@ -1563,7 +1563,7 @@ innerExpr:
   annotationExpr (('+' | '-' | '*' | '/' | '%') annotationExpr)*;
 
 annotationExpr:
-  atomicExpr (
+  unaryExpr (
     'as' type |
     'with' (
       recordConstructor |
@@ -1573,18 +1573,18 @@ annotationExpr:
     )
   )*;
 
-atomicExpr:
+unaryExpr:
   unaryOperator* (
-    valueExpr |
+    atomicExpr |
     hashExpr |
     notExpr |
-    atomicNumberConvertExpr |
-    atomicCharConvertExpr |
-    atomicConvertExpr |
+    unaryNumberConvertExpr |
+    unaryCharConvertExpr |
+    unaryConvertExpr |
     unit
   );
 
-valueExpr:
+atomicExpr:
   altMemberExpr |
   memberExpr |
   simpleExpr |
@@ -1593,19 +1593,19 @@ valueExpr:
   inlineExpr;
 
 hashExpr:
-  '#' atomicExpr;
+  '#' unaryExpr;
 
 notExpr:
-  '!' atomicExpr;
+  '!' unaryExpr;
 
-atomicNumberConvertExpr:
+unaryNumberConvertExpr:
   primitiveType numberArg;
 
-atomicCharConvertExpr:
+unaryCharConvertExpr:
   primitiveType charArg;
 
-atomicConvertExpr:
-  convertOperator atomicExpr;
+unaryConvertExpr:
+  convertOperator unaryExpr;
 
 simpleExpr:
   primitiveExpr |

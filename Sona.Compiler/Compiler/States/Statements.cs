@@ -748,27 +748,27 @@ namespace Sona.Compiler.States
             ExitState().ExitReturnOptionStatement(context);
         }
 
-        public sealed override void EnterValueExpr(ValueExprContext context)
+        public sealed override void EnterAtomicExpr(AtomicExprContext context)
         {
             OnEnterExpression(context);
-            EnterState<Argument>().EnterValueExpr(context);
+            EnterState<Argument>().EnterAtomicExpr(context);
         }
 
-        public sealed override void ExitValueExpr(ValueExprContext context)
+        public sealed override void ExitAtomicExpr(AtomicExprContext context)
         {
             OnExitExpression(context);
         }
 
         sealed class Argument : ExpressionState
         {
-            public override void EnterValueExpr(ValueExprContext context)
+            public override void EnterAtomicExpr(AtomicExprContext context)
             {
 
             }
 
-            public override void ExitValueExpr(ValueExprContext context)
+            public override void ExitAtomicExpr(AtomicExprContext context)
             {
-                ExitState().ExitValueExpr(context);
+                ExitState().ExitAtomicExpr(context);
             }
         }
     }

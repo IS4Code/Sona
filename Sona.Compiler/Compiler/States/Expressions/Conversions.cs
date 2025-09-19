@@ -40,17 +40,17 @@ namespace Sona.Compiler.States
             ExitState().ExitMemberConvertExpr(context);
         }
 
-        public override void EnterAtomicConvertExpr(AtomicConvertExprContext context)
+        public override void EnterUnaryConvertExpr(UnaryConvertExprContext context)
         {
             Out.Write('(');
             OnEnter(context);
         }
 
-        public override void ExitAtomicConvertExpr(AtomicConvertExprContext context)
+        public override void ExitUnaryConvertExpr(UnaryConvertExprContext context)
         {
             OnExit();
             Out.Write(')');
-            ExitState().ExitAtomicConvertExpr(context);
+            ExitState().ExitUnaryConvertExpr(context);
         }
 
         public override void EnterPrimitiveType(PrimitiveTypeContext context)
@@ -80,27 +80,27 @@ namespace Sona.Compiler.States
 
         }
 
-        public override void EnterAtomicExpr(AtomicExprContext context)
+        public override void EnterUnaryExpr(UnaryExprContext context)
         {
             OnOperand(context);
-            EnterState<Operand>().EnterAtomicExpr(context);
+            EnterState<Operand>().EnterUnaryExpr(context);
         }
 
-        public override void ExitAtomicExpr(AtomicExprContext context)
+        public override void ExitUnaryExpr(UnaryExprContext context)
         {
 
         }
 
         class Operand : ExpressionState
         {
-            public override void EnterAtomicExpr(AtomicExprContext context)
+            public override void EnterUnaryExpr(UnaryExprContext context)
             {
 
             }
 
-            public override void ExitAtomicExpr(AtomicExprContext context)
+            public override void ExitUnaryExpr(UnaryExprContext context)
             {
-                ExitState().ExitAtomicExpr(context);
+                ExitState().ExitUnaryExpr(context);
             }
         }
 
@@ -504,15 +504,15 @@ namespace Sona.Compiler.States
             ExitState().ExitMemberNumberConvertExpr(context);
         }
 
-        public override void EnterAtomicNumberConvertExpr(AtomicNumberConvertExprContext context)
+        public override void EnterUnaryNumberConvertExpr(UnaryNumberConvertExprContext context)
         {
             Out.Write('(');
         }
 
-        public override void ExitAtomicNumberConvertExpr(AtomicNumberConvertExprContext context)
+        public override void ExitUnaryNumberConvertExpr(UnaryNumberConvertExprContext context)
         {
             OnExit();
-            ExitState().ExitAtomicNumberConvertExpr(context);
+            ExitState().ExitUnaryNumberConvertExpr(context);
         }
 
         void OnExit()
@@ -692,15 +692,15 @@ namespace Sona.Compiler.States
             ExitState().ExitMemberCharConvertExpr(context);
         }
 
-        public override void EnterAtomicCharConvertExpr(AtomicCharConvertExprContext context)
+        public override void EnterUnaryCharConvertExpr(UnaryCharConvertExprContext context)
         {
             Out.Write('(');
         }
 
-        public override void ExitAtomicCharConvertExpr(AtomicCharConvertExprContext context)
+        public override void ExitUnaryCharConvertExpr(UnaryCharConvertExprContext context)
         {
             OnExit();
-            ExitState().ExitAtomicCharConvertExpr(context);
+            ExitState().ExitUnaryCharConvertExpr(context);
         }
 
         void OnExit()

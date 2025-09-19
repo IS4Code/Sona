@@ -51,32 +51,32 @@ namespace Sona.Compiler.States
             EnterState<InlineStatementState>().EnterInlineExpr(context);
         }
 
-        public override void EnterAtomicNumberConvertExpr(AtomicNumberConvertExprContext context)
+        public override void EnterUnaryNumberConvertExpr(UnaryNumberConvertExprContext context)
         {
-            EnterState<NumberConversionState>().EnterAtomicNumberConvertExpr(context);
+            EnterState<NumberConversionState>().EnterUnaryNumberConvertExpr(context);
         }
 
-        public override void ExitAtomicNumberConvertExpr(AtomicNumberConvertExprContext context)
-        {
-
-        }
-
-        public override void EnterAtomicCharConvertExpr(AtomicCharConvertExprContext context)
-        {
-            EnterState<CharConversionState>().EnterAtomicCharConvertExpr(context);
-        }
-
-        public override void ExitAtomicCharConvertExpr(AtomicCharConvertExprContext context)
+        public override void ExitUnaryNumberConvertExpr(UnaryNumberConvertExprContext context)
         {
 
         }
 
-        public override void EnterAtomicConvertExpr(AtomicConvertExprContext context)
+        public override void EnterUnaryCharConvertExpr(UnaryCharConvertExprContext context)
         {
-            EnterState<ConversionState>().EnterAtomicConvertExpr(context);
+            EnterState<CharConversionState>().EnterUnaryCharConvertExpr(context);
         }
 
-        public override void ExitAtomicConvertExpr(AtomicConvertExprContext context)
+        public override void ExitUnaryCharConvertExpr(UnaryCharConvertExprContext context)
+        {
+
+        }
+
+        public override void EnterUnaryConvertExpr(UnaryConvertExprContext context)
+        {
+            EnterState<ConversionState>().EnterUnaryConvertExpr(context);
+        }
+
+        public override void ExitUnaryConvertExpr(UnaryConvertExprContext context)
         {
 
         }
