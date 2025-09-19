@@ -6,6 +6,7 @@ namespace Sona.Compiler.States
     internal interface IStatementContext
     {
         bool TrailAllowed { get; }
+        bool? IsStructOptionalReturn { get; }
     }
 
     internal interface IReturnableStatementContext : IStatementContext
@@ -16,7 +17,7 @@ namespace Sona.Compiler.States
 
     internal interface IFunctionContext : IReturnableStatementContext, IInterruptibleStatementContext, IStatementContext, IComputationContext, IExpressionContext
     {
-        bool? IsStructOptionalReturn { get; }
+
     }
 
     internal interface IComputationContext : IInterruptibleStatementContext, IStatementContext

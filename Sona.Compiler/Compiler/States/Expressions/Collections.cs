@@ -20,11 +20,11 @@ namespace Sona.Compiler.States
 
         public virtual bool TrailAllowed => false;
 
+        bool? IStatementContext.IsStructOptionalReturn => null;
+
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
-
-        bool? IFunctionContext.IsStructOptionalReturn => null;
 
         string? IReturnableStatementContext.ReturnVariable => null;
 

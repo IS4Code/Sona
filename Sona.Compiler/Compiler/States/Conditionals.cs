@@ -215,6 +215,8 @@ namespace Sona.Compiler.States
         bool IStatementContext.TrailAllowed => true;
         protected override bool IgnoreContext => exited;
 
+        bool? IStatementContext.IsStructOptionalReturn => null;
+
         StatementFlags enterFlags;
         bool exited;
 

@@ -20,6 +20,8 @@ namespace Sona.Compiler.States
     {
         bool IStatementContext.TrailAllowed => true;
 
+        bool? IStatementContext.IsStructOptionalReturn => FindContext<IStatementContext>()?.IsStructOptionalReturn;
+
         public sealed override void EnterMultiFuncDecl(MultiFuncDeclContext context)
         {
             EnterState<MultiFunctionState>().EnterMultiFuncDecl(context);
@@ -71,18 +73,14 @@ namespace Sona.Compiler.States
                 Out.WriteCoreOperatorName("Unchecked");
                 Out.WriteLine(".defaultof<_>");
             }
+            else if(FindContext<IStatementContext>() is { IsStructOptionalReturn: bool isStruct })
+            {
+                // Implicit returning depends on the statement
+                Out.WriteCoreName(isStruct ? "ValueNone" : "None");
+            }
             else
             {
-                var funcContext = FindContext<IFunctionContext>();
-                if(funcContext is { IsStructOptionalReturn: bool isStruct } && FindContext<IStatementContext>() == funcContext)
-                {
-                    // Returning immediately from a function
-                    Out.WriteCoreName(isStruct ? "ValueNone" : "None");
-                }
-                else
-                {
-                    Out.Write("()");
-                }
+                Out.Write("()");
             }
         }
 
@@ -555,7 +553,7 @@ namespace Sona.Compiler.States
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
 
-        bool? IFunctionContext.IsStructOptionalReturn => null;
+        bool? IStatementContext.IsStructOptionalReturn => null;
 
         bool IComputationContext.IsCollection => false;
 
@@ -658,6 +656,7 @@ namespace Sona.Compiler.States
             }
             if(this is not ReturnOptionState && FindContext<IFunctionContext>() is { IsStructOptionalReturn: bool isStruct })
             {
+                // Explicit returning depends on the function
                 Out.WriteCoreName(isStruct ? "ValueSome" : "Some");
             }
             Out.Write('(');
