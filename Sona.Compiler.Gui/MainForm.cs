@@ -58,6 +58,8 @@ namespace Sona.Compiler.Gui
 
             DoubleBuffered = true;
 
+            modifying = true;
+
             var font = messageBox.Font;
 
             messageBox.Font = new Font(
@@ -83,6 +85,8 @@ namespace Sona.Compiler.Gui
             var indentSize = (float)TextRenderer.MeasureText(new string('_', measureLength), sonaRichText.Font).Width / measureLength * tabSize;
             sonaRichText.SelectionTabs = Enumerable.Range(1, 32).Select(i => (int)Math.Round(i * indentSize)).ToArray();
             sonaRichText.SetPadding(8, 8, 8, 8);
+
+            modifying = false;
 
             resultRichText.BackColor = sonaRichText.BackColor;
             resultRichText.ForeColor = sonaRichText.ForeColor;
@@ -425,6 +429,7 @@ ReadKey(true)!");
             // Highlighting
             var selectedStart = sonaRichText.SelectionStart;
             var selectedLength = sonaRichText.SelectionLength;
+            var scrollOffset = sonaRichText.GetScrollOffset();
 
             bool updated = false;
             bool reformat = reformatModifiedText;
@@ -455,6 +460,7 @@ ReadKey(true)!");
                 sonaRichText.SelectionStart = selectedStart;
                 sonaRichText.SelectionLength = selectedLength;
                 sonaRichText.SelectionFont = sonaRichText.Font;
+                sonaRichText.SetScrollOffset(scrollOffset);
                 sonaRichText.ResumeDrawing();
 
                 if(updated)

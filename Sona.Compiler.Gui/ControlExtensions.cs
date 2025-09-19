@@ -82,5 +82,33 @@ namespace Sona.Compiler.Gui
             SendMessage(textbox.Handle, EM_GETRECT, IntPtr.Zero, ref r);
             return Rectangle.FromLTRB(r.Left, r.Top, r.Right, r.Bottom);
         }
+
+        [DllImport("user32.dll")]
+        static extern int GetScrollPos(IntPtr hWnd, int nBar);
+
+        [DllImport("user32.dll")]
+        static extern int SetScrollPos(IntPtr hWnd, int nBar, int nPos, bool bRedraw);
+
+        const int SB_HORZ = 0;
+        const int SB_VERT = 1;
+
+        const int WM_HSCROLL = 0x114;
+        const int WM_VSCROLL = 0x115;
+        const int SB_THUMBPOSITION = 4;
+
+        public static Point GetScrollOffset(this TextBoxBase textbox)
+        {
+            var handle = textbox.Handle;
+            return new(GetScrollPos(handle, SB_HORZ), GetScrollPos(handle, SB_VERT));
+        }
+
+        public static void SetScrollOffset(this TextBoxBase textbox, Point offset)
+        {
+            var handle = textbox.Handle;
+            SetScrollPos(handle, SB_HORZ, offset.X, false);
+            SendMessage(handle, WM_HSCROLL, SB_THUMBPOSITION | (offset.X << 16), IntPtr.Zero);
+            SetScrollPos(handle, SB_VERT, offset.Y, false);
+            SendMessage(handle, WM_VSCROLL, SB_THUMBPOSITION | (offset.Y << 16), IntPtr.Zero);
+        }
     }
 }
