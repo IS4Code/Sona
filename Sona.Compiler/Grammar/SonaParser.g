@@ -1358,13 +1358,22 @@ useVarDecl:
   'use' 'var' declaration '=' expression;
 
 multiFuncDecl:
-  funcDecl+;
+  (funcDecl | caseFuncDecl)+;
 
 funcDecl:
   localAttrList 'function' name optionalTypeSuffix? funcBody;
 
 inlineFuncDecl:
   localAttrList 'inline' 'function' name optionalTypeSuffix? funcBody;
+
+caseFuncDecl:
+  localAttrList 'case' 'function' caseFuncName optionalTypeSuffix? funcBody;
+
+inlineCaseFuncDecl:
+  localAttrList 'inline' 'case' 'function' caseFuncName optionalTypeSuffix? funcBody;
+
+caseFuncName:
+  name | '(' name ('or' name)* ')';
 
 funcBody:
   paramList ('as' type ';'?)? valueBlock 'end';

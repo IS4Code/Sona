@@ -41,6 +41,17 @@ namespace Sona.Compiler.States
 
         }
 
+        public sealed override void EnterInlineCaseFuncDecl(InlineCaseFuncDeclContext context)
+        {
+            Out.Write("let inline ");
+            EnterState<CaseFunctionDeclState>().EnterInlineCaseFuncDecl(context);
+        }
+
+        public sealed override void ExitInlineCaseFuncDecl(InlineCaseFuncDeclContext context)
+        {
+
+        }
+
         protected virtual void OnEnterStatement(StatementFlags flags, ParserRuleContext context)
         {
 

@@ -14,7 +14,7 @@ namespace Sona.Compiler.States
             first = true;
         }
 
-        public override void EnterFuncDecl(FuncDeclContext context)
+        private void OnEnter(ParserRuleContext context)
         {
             if(first)
             {
@@ -26,7 +26,33 @@ namespace Sona.Compiler.States
                 Out.WriteLine();
                 Out.Write("and ");
             }
+        }
+
+        public override void EnterFuncDecl(FuncDeclContext context)
+        {
+            OnEnter(context);
             EnterState<FunctionDeclState>().EnterFuncDecl(context);
+        }
+
+        public override void ExitFuncDecl(FuncDeclContext context)
+        {
+
+        }
+
+        public override void EnterCaseFuncDecl(CaseFuncDeclContext context)
+        {
+            OnEnter(context);
+            EnterState<CaseFunctionDeclState>().EnterCaseFuncDecl(context);
+        }
+
+        public override void ExitCaseFuncDecl(CaseFuncDeclContext context)
+        {
+
+        }
+
+        public override void EnterMultiFuncDecl(MultiFuncDeclContext context)
+        {
+
         }
 
         public override void ExitMultiFuncDecl(MultiFuncDeclContext context)
@@ -35,7 +61,7 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal sealed class FunctionDeclState : NodeState, IFunctionContext
+    internal abstract class FunctionBaseState : NodeState, IFunctionContext
     {
         // Establish a scope to return from
         string? IReturnableStatementContext.ReturnVariable => null;
@@ -64,26 +90,6 @@ namespace Sona.Compiler.States
             hasType = false;
         }
 
-        public override void EnterFuncDecl(FuncDeclContext context)
-        {
-
-        }
-
-        public override void ExitFuncDecl(FuncDeclContext context)
-        {
-            ExitState().ExitFuncDecl(context);
-        }
-
-        public override void EnterInlineFuncDecl(InlineFuncDeclContext context)
-        {
-
-        }
-
-        public override void ExitInlineFuncDecl(InlineFuncDeclContext context)
-        {
-            ExitState().ExitInlineFuncDecl(context);
-        }
-
         public override void EnterOptionalTypeSuffix(OptionalTypeSuffixContext context)
         {
             IsStructOptionalReturn = LexerContext.GetState<OptionPragma>()?.IsStruct ?? true;
@@ -94,17 +100,17 @@ namespace Sona.Compiler.States
 
         }
 
-        public override void EnterParamList(ParamListContext context)
+        public sealed override void EnterParamList(ParamListContext context)
         {
             EnterState<ParamListState>().EnterParamList(context);
         }
 
-        public override void ExitParamList(ParamListContext context)
+        public sealed override void ExitParamList(ParamListContext context)
         {
 
         }
 
-        public override void EnterType(TypeContext context)
+        public sealed override void EnterType(TypeContext context)
         {
             hasType = true;
             Out.WriteOperator(':');
@@ -116,7 +122,7 @@ namespace Sona.Compiler.States
             base.EnterType(context);
         }
 
-        public override void ExitType(TypeContext context)
+        public sealed override void ExitType(TypeContext context)
         {
             base.ExitType(context);
             if(IsStructOptionalReturn != null)
@@ -125,7 +131,7 @@ namespace Sona.Compiler.States
             }
         }
 
-        public override void EnterValueBlock(ValueBlockContext context)
+        public sealed override void EnterValueBlock(ValueBlockContext context)
         {
             if(!hasType && IsStructOptionalReturn is bool isStruct)
             {
@@ -139,10 +145,20 @@ namespace Sona.Compiler.States
             EnterState<BlockState>().EnterValueBlock(context);
         }
 
-        public override void ExitValueBlock(ValueBlockContext context)
+        public sealed override void ExitValueBlock(ValueBlockContext context)
         {
             Out.ExitScope();
             Out.Write(')');
+        }
+
+        public override void EnterFuncBody(FuncBodyContext context)
+        {
+
+        }
+
+        public override void ExitFuncBody(FuncBodyContext context)
+        {
+
         }
 
         void IComputationContext.WriteBeginBlockExpression()
@@ -175,6 +191,94 @@ namespace Sona.Compiler.States
         void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
         {
 
+        }
+    }
+
+    internal sealed class FunctionDeclState : FunctionBaseState
+    {
+        public override void EnterFuncDecl(FuncDeclContext context)
+        {
+
+        }
+
+        public override void ExitFuncDecl(FuncDeclContext context)
+        {
+            ExitState().ExitFuncDecl(context);
+        }
+
+        public override void EnterInlineFuncDecl(InlineFuncDeclContext context)
+        {
+
+        }
+
+        public override void ExitInlineFuncDecl(InlineFuncDeclContext context)
+        {
+            ExitState().ExitInlineFuncDecl(context);
+        }
+    }
+
+    internal sealed class CaseFunctionDeclState : FunctionBaseState
+    {
+        bool firstName;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            firstName = true;
+        }
+
+        public override void EnterCaseFuncDecl(CaseFuncDeclContext context)
+        {
+
+        }
+
+        public override void ExitCaseFuncDecl(CaseFuncDeclContext context)
+        {
+            ExitState().ExitCaseFuncDecl(context);
+        }
+
+        public override void EnterInlineCaseFuncDecl(InlineCaseFuncDeclContext context)
+        {
+
+        }
+
+        public override void ExitInlineCaseFuncDecl(InlineCaseFuncDeclContext context)
+        {
+            ExitState().ExitInlineCaseFuncDecl(context);
+        }
+
+        public override void EnterCaseFuncName(CaseFuncNameContext context)
+        {
+            Out.Write("(|");
+        }
+
+        public override void EnterName(NameContext context)
+        {
+            if(firstName)
+            {
+                firstName = false;
+            }
+            else
+            {
+                Out.Write('|');
+            }
+
+            base.EnterName(context);
+        }
+
+        public override void EnterOptionalTypeSuffix(OptionalTypeSuffixContext context)
+        {
+            Out.Write("|_");
+
+            base.EnterOptionalTypeSuffix(context);
+        }
+
+        public override void EnterFuncBody(FuncBodyContext context)
+        {
+            Out.Write("|)");
+
+            base.EnterFuncBody(context);
         }
     }
 
