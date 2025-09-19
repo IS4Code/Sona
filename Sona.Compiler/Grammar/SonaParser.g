@@ -286,6 +286,7 @@ statement:
   variableDecl |
   multiFuncDecl |
   inlineFuncDecl |
+  inlineCaseFuncDecl |
   memberDiscard |
   memberOrAssignment |
   echoStatement |
