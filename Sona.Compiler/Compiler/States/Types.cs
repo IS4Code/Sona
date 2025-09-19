@@ -257,12 +257,12 @@ namespace Sona.Compiler.States
 
         }
 
-        public sealed override void EnterOptionalTypeSuffix(OptionalTypeSuffixContext context)
+        public sealed override void EnterOptionTypeSuffix(OptionTypeSuffixContext context)
         {
 
         }
 
-        public sealed override void ExitOptionalTypeSuffix(OptionalTypeSuffixContext context)
+        public sealed override void ExitOptionTypeSuffix(OptionTypeSuffixContext context)
         {
             Out.Write(' ');
             Out.WriteOptionAbbreviation(OptionImplementationType);

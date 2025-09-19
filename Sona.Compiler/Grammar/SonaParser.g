@@ -219,11 +219,11 @@ anonymousRecordMemberDeclaration:
 
 typeSuffix:
   arrayTypeSuffix |
-  optionalTypeSuffix |
+  optionTypeSuffix |
   sequenceTypeSuffix;
 
 arrayTypeSuffix: '[' ','* ']';
-optionalTypeSuffix: '?';
+optionTypeSuffix: '?';
 sequenceTypeSuffix: '..';
 
 genericArguments:
@@ -1362,16 +1362,16 @@ multiFuncDecl:
   (funcDecl | caseFuncDecl)+;
 
 funcDecl:
-  localAttrList 'function' name optionalTypeSuffix? funcBody;
+  localAttrList 'function' name optionTypeSuffix? funcBody;
 
 inlineFuncDecl:
-  localAttrList 'inline' 'function' name optionalTypeSuffix? funcBody;
+  localAttrList 'inline' 'function' name optionTypeSuffix? funcBody;
 
 caseFuncDecl:
-  localAttrList 'case' 'function' caseFuncName optionalTypeSuffix? funcBody;
+  localAttrList 'case' 'function' caseFuncName optionTypeSuffix? funcBody;
 
 inlineCaseFuncDecl:
-  localAttrList 'inline' 'case' 'function' caseFuncName optionalTypeSuffix? funcBody;
+  localAttrList 'inline' 'case' 'function' caseFuncName optionTypeSuffix? funcBody;
 
 caseFuncName:
   name | '(' name ('or' name)* ')';
@@ -1625,7 +1625,7 @@ namedValue:
   'null' | 'false' | 'true' | 'none' | 'default';
 
 funcExpr:
-  'function' name? optionalTypeSuffix? funcBody;
+  'function' name? optionTypeSuffix? funcBody;
 
 inlineExpr:
   'inline' expressionStatement;
