@@ -28,7 +28,7 @@ namespace Sona.Compiler.States
 
     internal abstract class ClassStructPragma : LexerState
     {
-        public bool? IsStruct { get; private set; }
+        public ImplementationType? Type { get; private set; }
 
         public ClassStructPragma(string name) : base(name)
         {
@@ -41,10 +41,10 @@ namespace Sona.Compiler.States
             switch(type)
             {
                 case "class":
-                    IsStruct = false;
+                    Type = ImplementationType.Class;
                     break;
                 case "struct":
-                    IsStruct = true;
+                    Type = ImplementationType.Struct;
                     break;
                 default:
                     throw new ArgumentException("Only 'class' or 'struct' is a valid pragma argument.");

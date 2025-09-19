@@ -94,7 +94,7 @@ namespace Sona.Compiler
             switch(token.Type)
             {
                 case SonaLexer.NONE:
-                    Out.WriteCoreName(LexerContext.GetState<OptionPragma>()?.IsStruct ?? true ? "ValueNone" : "None");
+                    Out.WriteOptionNone(LexerContext.GetState<OptionPragma>()?.Type ?? ImplementationType.Struct);
                     break;
                 case SonaLexer.DEFAULT:
                     if(GetExpressionContext()?.IsLiteral ?? false)

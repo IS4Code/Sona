@@ -73,7 +73,7 @@ namespace Sona.Compiler.States
 
         bool IExpressionContext.IsLiteral => false;
 
-        public bool? IsStructOptionalReturn { get; private set; }
+        public ImplementationType? ReturnOptionType { get; private set; }
 
         string? IComputationContext.BuilderVariable => null;
 
@@ -92,7 +92,7 @@ namespace Sona.Compiler.States
 
         public override void EnterOptionalTypeSuffix(OptionalTypeSuffixContext context)
         {
-            IsStructOptionalReturn = LexerContext.GetState<OptionPragma>()?.IsStruct ?? true;
+            ReturnOptionType = LexerContext.GetState<OptionPragma>()?.Type ?? ImplementationType.Struct;
         }
 
         public override void ExitOptionalTypeSuffix(OptionalTypeSuffixContext context)
@@ -114,9 +114,9 @@ namespace Sona.Compiler.States
         {
             hasType = true;
             Out.WriteOperator(':');
-            if(IsStructOptionalReturn is bool isStruct)
+            if(ReturnOptionType is { } optionType)
             {
-                Out.WriteCoreName(isStruct ? "voption" : "option");
+                Out.WriteOptionType(optionType);
                 Out.Write('<');
             }
             base.EnterType(context);
@@ -125,7 +125,7 @@ namespace Sona.Compiler.States
         public sealed override void ExitType(TypeContext context)
         {
             base.ExitType(context);
-            if(IsStructOptionalReturn != null)
+            if(ReturnOptionType != null)
             {
                 Out.Write('>');
             }
@@ -133,11 +133,11 @@ namespace Sona.Compiler.States
 
         public sealed override void EnterValueBlock(ValueBlockContext context)
         {
-            if(!hasType && IsStructOptionalReturn is bool isStruct)
+            if(!hasType && ReturnOptionType is { } optionType)
             {
                 Out.WriteOperator(':');
                 Out.Write("_ ");
-                Out.WriteCoreName(isStruct ? "voption" : "option");
+                Out.WriteOptionAbbreviation(optionType);
             }
             Out.WriteOperator('=');
             Out.WriteLine("(");

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Antlr4.Runtime;
+using Sona.Compiler.States;
 using Sona.Compiler.Tools;
 
 namespace Sona.Compiler
@@ -71,6 +72,115 @@ namespace Sona.Compiler
         {
             writer.WriteNamespacedName("System", name);
         }
+
+#pragma warning disable CS8524
+        public static void WriteOptionNone(this ISourceWriter writer, ImplementationType optionType)
+        {
+            writer.WriteCoreName(optionType switch {
+                ImplementationType.Class => "None",
+                ImplementationType.Struct => "ValueNone"
+            });
+        }
+
+        public static void WriteOptionNoneIdentifier(this ISourceWriter writer, ImplementationType optionType)
+        {
+            writer.WriteIdentifier(optionType switch
+            {
+                ImplementationType.Class => "None",
+                ImplementationType.Struct => "ValueNone"
+            });
+        }
+
+        public static void WriteOptionSome(this ISourceWriter writer, ImplementationType optionType)
+        {
+            writer.WriteCoreName(optionType switch
+            {
+                ImplementationType.Class => "Some",
+                ImplementationType.Struct => "ValueSome"
+            });
+        }
+
+        public static void WriteOptionSomeIdentifier(this ISourceWriter writer, ImplementationType optionType)
+        {
+            writer.WriteIdentifier(optionType switch
+            {
+                ImplementationType.Class => "Some",
+                ImplementationType.Struct => "ValueSome"
+            });
+        }
+
+        public static void WriteOptionType(this ISourceWriter writer, ImplementationType optionType)
+        {
+            writer.WriteCoreName(optionType switch
+            {
+                ImplementationType.Class => "Option",
+                ImplementationType.Struct => "ValueOption"
+            });
+        }
+
+        public static void WriteOptionAbbreviation(this ISourceWriter writer, ImplementationType optionType)
+        {
+            writer.WriteCoreName(optionType switch
+            {
+                ImplementationType.Class => "option",
+                ImplementationType.Struct => "voption"
+            });
+        }
+
+        public static void WriteCustomOptionConversionOperator(this ISourceWriter writer, ImplementationType optionType)
+        {
+            writer.WriteCustomOperator(optionType switch
+            {
+                ImplementationType.Class => "TryConversion",
+                ImplementationType.Struct => "TryConversionValue"
+            });
+        }
+
+        public static void WriteTupleOpen(this ISourceWriter writer, ImplementationType tupleType)
+        {
+            writer.Write(tupleType switch
+            {
+                ImplementationType.Class => "(",
+                ImplementationType.Struct => "(struct("
+            });
+        }
+
+        public static void WriteTupleClose(this ISourceWriter writer, ImplementationType tupleType)
+        {
+            writer.Write(tupleType switch
+            {
+                ImplementationType.Class => ")",
+                ImplementationType.Struct => "))"
+            });
+        }
+
+        public static void WriteCustomTupleFromTreeOperator(this ISourceWriter writer, ImplementationType tupleType)
+        {
+            writer.WriteCustomTupleOperator(tupleType switch
+            {
+                ImplementationType.Class => "FromTree",
+                ImplementationType.Struct => "FromTreeValue"
+            });
+        }
+
+        public static void WriteAnonymousRecordOpen(this ISourceWriter writer, ImplementationType recordType)
+        {
+            writer.Write(recordType switch
+            {
+                ImplementationType.Class => "{| ",
+                ImplementationType.Struct => "(struct{| "
+            });
+        }
+
+        public static void WriteAnonymousRecordClose(this ISourceWriter writer, ImplementationType recordType)
+        {
+            writer.Write(recordType switch
+            {
+                ImplementationType.Class => " |}",
+                ImplementationType.Struct => " |})"
+            });
+        }
+#pragma warning restore CS8524
 
         public static void WriteCustomOperator(this ISourceWriter writer, string name)
         {

@@ -298,8 +298,8 @@ namespace Sona.Compiler.States
         {
             public sealed override void EnterSomePattern(SomePatternContext context)
             {
-                var optionIsStruct = LexerContext.GetState<OptionPragma>()?.IsStruct ?? true;
-                Out.WriteCoreName(optionIsStruct ? "ValueSome" : "Some");
+                var optionType = LexerContext.GetState<OptionPragma>()?.Type ?? ImplementationType.Struct;
+                Out.WriteOptionSome(optionType);
                 Out.Write('(');
             }
 
@@ -540,19 +540,20 @@ namespace Sona.Compiler.States
 
         sealed class TuplePattern : PatternState
         {
-            bool first, isStruct;
+            bool first;
+            ImplementationType tupleType;
 
             protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
             {
                 base.Initialize(environment, parent);
 
                 first = true;
-                isStruct = false;
+                tupleType = default;
             }
 
             public override void EnterTupleConstructorPattern(TupleConstructorPatternContext context)
             {
-                isStruct = LexerContext.GetState<TuplePragma>()?.IsStruct ?? true;
+                tupleType = LexerContext.GetState<TuplePragma>()?.Type ?? ImplementationType.Struct;
                 OnEnter();
             }
 
@@ -564,7 +565,7 @@ namespace Sona.Compiler.States
 
             public override void EnterExplicitTupleConstructorPattern(ExplicitTupleConstructorPatternContext context)
             {
-                isStruct = LexerContext.GetState<TuplePragma>()?.IsStruct ?? true;
+                tupleType = LexerContext.GetState<TuplePragma>()?.Type ?? ImplementationType.Struct;
                 OnEnter();
             }
 
@@ -576,6 +577,7 @@ namespace Sona.Compiler.States
 
             public override void EnterClassTupleConstructorPattern(ClassTupleConstructorPatternContext context)
             {
+                tupleType = ImplementationType.Class;
                 OnEnter();
             }
 
@@ -587,7 +589,7 @@ namespace Sona.Compiler.States
 
             public override void EnterStructTupleConstructorPattern(StructTupleConstructorPatternContext context)
             {
-                isStruct = true;
+                tupleType = ImplementationType.Struct;
                 OnEnter();
             }
 
@@ -599,12 +601,12 @@ namespace Sona.Compiler.States
 
             private void OnEnter()
             {
-                Out.Write(isStruct ? "(struct(" : "(");
+                Out.WriteTupleOpen(tupleType);
             }
 
             private new void OnExit()
             {
-                Out.Write(isStruct ? "))" : ")");
+                Out.WriteTupleClose(tupleType);
             }
 
             public override void EnterPatternArgument(PatternArgumentContext context)

@@ -435,13 +435,13 @@ namespace Sona.Compiler.States
             Out.Write('(');
             Out.WriteIdentifier(arg);
             Out.Write(")with|struct(false,_)->");
-            bool isStruct = LexerContext.GetState<OptionPragma>()?.IsStruct ?? true;
-            Out.WriteCoreName(isStruct ? "ValueNone" : "None");
+            var optionType = LexerContext.GetState<OptionPragma>()?.Type ?? ImplementationType.Struct;
+            Out.WriteOptionNone(optionType);
             var value = Out.CreateTemporaryIdentifier();
             Out.Write("|struct(true,");
             Out.WriteIdentifier(value);
             Out.Write(")->");
-            Out.WriteCoreName(isStruct ? "ValueSome" : "Some");
+            Out.WriteOptionSome(optionType);
             Out.Write('(');
             Out.WriteIdentifier(value);
             level++;

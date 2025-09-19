@@ -14,11 +14,7 @@ namespace Sona.Compiler.States
         bool typePresent;
         ISourceCapture? typeCapture;
         bool asOption;
-        bool optionIsStruct;
-
-        string Option => optionIsStruct ? "ValueOption" : "Option";
-        string Some => optionIsStruct ? "ValueSome" : "Some";
-        string None => optionIsStruct ? "ValueNone" : "None";
+        ImplementationType optionType;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -28,7 +24,7 @@ namespace Sona.Compiler.States
             typePresent = false;
             typeCapture = null;
             asOption = false;
-            optionIsStruct = false;
+            optionType = default;
         }
 
         public override void EnterMemberConvertExpr(MemberConvertExprContext context)
@@ -195,7 +191,7 @@ namespace Sona.Compiler.States
                     type = null;
                     break;
             }
-            optionIsStruct = LexerContext.GetState<OptionPragma>()?.IsStruct ?? true;
+            optionType = LexerContext.GetState<OptionPragma>()?.Type ?? ImplementationType.Struct;
         }
 
         void OnOperand(ParserRuleContext context)
@@ -250,7 +246,7 @@ namespace Sona.Compiler.States
                     case null:
                         // Conversion through function
                         Out.WriteOperator("|>");
-                        Out.WriteCustomOperator(optionIsStruct ? "TryConversionValue" : "TryConversion");
+                        Out.WriteCustomOptionConversionOperator(optionType);
                         Out.Write('(');
                         return;
                 }
@@ -269,12 +265,12 @@ namespace Sona.Compiler.States
                         typeCapture = null;
                         break;
                     case SonaLexer.SOME:
-                        Out.WriteCoreName(Option);
+                        Out.WriteOptionType(optionType);
                         Out.Write('<');
                         typeCapture.Play(Out);
                         typeCapture = null;
                         Out.Write(">.");
-                        Out.WriteIdentifier(Some);
+                        Out.WriteOptionSomeIdentifier(optionType);
                         break;
                     case SonaLexer.WIDEN:
                     case SonaLexer.NARROW:
@@ -289,7 +285,7 @@ namespace Sona.Compiler.States
                 case SonaLexer.SOME:
                     if(!typePresent)
                     {
-                        Out.WriteCoreName(Some);
+                        Out.WriteOptionSome(optionType);
                     }
                     Out.Write('(');
                     return;
@@ -325,7 +321,7 @@ namespace Sona.Compiler.States
                     Out.Write(" in ");
                     if(asOption)
                     {
-                        Out.WriteCoreName(None);
+                        Out.WriteOptionNone(optionType);
                     }
                     else
                     {
@@ -336,14 +332,14 @@ namespace Sona.Compiler.States
                     if(asOption)
                     {
                         var id = MatchSome();
-                        Out.WriteCoreName(Some);
+                        Out.WriteOptionSome(optionType);
                         Out.Write('(');
                         Out.WriteIdentifier(id);
                         Out.WriteOperator(":>");
                         Out.WriteCoreName("objnull");
                         Out.Write(')');
                         MatchNone();
-                        Out.WriteCoreName(None);
+                        Out.WriteOptionNone(optionType);
                     }
                     else
                     {
@@ -354,7 +350,7 @@ namespace Sona.Compiler.States
                 case SonaLexer.NEW when asOption:
                 {
                     var id = MatchSome();
-                    Out.WriteCoreName(Some);
+                    Out.WriteOptionSome(optionType);
                     Out.Write('(');
                     Out.Write("new ");
                     if(typeCapture != null)
@@ -369,7 +365,7 @@ namespace Sona.Compiler.States
                     Out.WriteIdentifier(id);
                     Out.Write("))");
                     MatchNone();
-                    Out.WriteCoreName(None);
+                    Out.WriteOptionNone(optionType);
                     return;
                 }
                 case SonaLexer.SOME when asOption:
@@ -377,27 +373,27 @@ namespace Sona.Compiler.States
                     var id = MatchSome();
                     if(typeCapture != null)
                     {
-                        Out.WriteCoreName(Option);
+                        Out.WriteOptionType(optionType);
                         Out.Write('<');
                         typeCapture.Play(Out);
                         Out.Write(">.");
-                        Out.WriteIdentifier(Some);
+                        Out.WriteOptionSomeIdentifier(optionType);
                     }
                     else
                     {
-                        Out.WriteCoreName(Some);
+                        Out.WriteOptionSome(optionType);
                     }
                     Out.Write(' ');
                     Out.WriteIdentifier(id);
                     MatchNone();
-                    Out.WriteCoreName(None);
+                    Out.WriteOptionNone(optionType);
                     return;
                 }
                 case SonaLexer.WIDEN:
                     if(asOption)
                     {
                         var id = MatchSome();
-                        Out.WriteCoreName(Some);
+                        Out.WriteOptionSome(optionType);
                         Out.Write('(');
                         if(typeCapture != null)
                         {
@@ -412,7 +408,7 @@ namespace Sona.Compiler.States
                         }
                         Out.Write(')');
                         MatchNone();
-                        Out.WriteCoreName(None);
+                        Out.WriteOptionNone(optionType);
                         return;
                     }
                     else if(typeCapture != null)
@@ -426,11 +422,11 @@ namespace Sona.Compiler.States
                     if(asOption)
                     {
                         var id = MatchDerivedSome();
-                        Out.WriteCoreName(Some);
+                        Out.WriteOptionSome(optionType);
                         Out.Write(' ');
                         Out.WriteIdentifier(id);
                         MatchNone();
-                        Out.WriteCoreName(None);
+                        Out.WriteOptionNone(optionType);
                         return;
                     }
                     else if(typeCapture != null)

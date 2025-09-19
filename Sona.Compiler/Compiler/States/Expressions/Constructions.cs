@@ -4,14 +4,15 @@ namespace Sona.Compiler.States
 {
     internal sealed class RecordState : NodeState
     {
-        bool first, isStruct;
+        bool first;
+        ImplementationType recordType;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             first = true;
-            isStruct = false;
+            recordType = default;
         }
 
         public override void EnterRecordConstructor(RecordConstructorContext context)
@@ -27,35 +28,35 @@ namespace Sona.Compiler.States
 
         public override void EnterAnonymousRecordConstructor(AnonymousRecordConstructorContext context)
         {
-            isStruct = LexerContext.GetState<RecordPragma>()?.IsStruct ?? false;
-            Out.Write(isStruct ? "(struct{| " : "{| ");
+            recordType = LexerContext.GetState<RecordPragma>()?.Type ?? ImplementationType.Class;
+            Out.WriteAnonymousRecordOpen(recordType);
         }
 
         public override void ExitAnonymousRecordConstructor(AnonymousRecordConstructorContext context)
         {
-            Out.Write(isStruct ? " |})" : " |}");
+            Out.WriteAnonymousRecordClose(recordType);
             ExitState().ExitAnonymousRecordConstructor(context);
         }
 
         public override void EnterAnonymousClassRecordConstructor(AnonymousClassRecordConstructorContext context)
         {
-            Out.Write("{| ");
+            Out.WriteAnonymousRecordOpen(ImplementationType.Class);
         }
 
         public override void ExitAnonymousClassRecordConstructor(AnonymousClassRecordConstructorContext context)
         {
-            Out.Write(" |}");
+            Out.WriteAnonymousRecordClose(ImplementationType.Class);
             ExitState().ExitAnonymousClassRecordConstructor(context);
         }
 
         public override void EnterAnonymousStructRecordConstructor(AnonymousStructRecordConstructorContext context)
         {
-            Out.Write("(struct{| ");
+            Out.WriteAnonymousRecordOpen(ImplementationType.Struct);
         }
 
         public override void ExitAnonymousStructRecordConstructor(AnonymousStructRecordConstructorContext context)
         {
-            Out.Write(" |})");
+            Out.WriteAnonymousRecordClose(ImplementationType.Struct);
             ExitState().ExitAnonymousStructRecordConstructor(context);
         }
 
@@ -86,19 +87,20 @@ namespace Sona.Compiler.States
 
     internal sealed class TupleState : NodeState
     {
-        bool first, isStruct;
+        bool first;
+        ImplementationType tupleType;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             first = true;
-            isStruct = false;
+            tupleType = default;
         }
 
         public override void EnterTupleConstructor(TupleConstructorContext context)
         {
-            isStruct = LexerContext.GetState<TuplePragma>()?.IsStruct ?? true;
+            tupleType = LexerContext.GetState<TuplePragma>()?.Type ?? ImplementationType.Struct;
         }
 
         public override void ExitTupleConstructor(TupleConstructorContext context)
@@ -108,7 +110,7 @@ namespace Sona.Compiler.States
 
         public override void EnterExplicitTupleConstructor(ExplicitTupleConstructorContext context)
         {
-            isStruct = LexerContext.GetState<TuplePragma>()?.IsStruct ?? true;
+            tupleType = LexerContext.GetState<TuplePragma>()?.Type ?? ImplementationType.Struct;
         }
 
         public override void ExitExplicitTupleConstructor(ExplicitTupleConstructorContext context)
@@ -118,7 +120,7 @@ namespace Sona.Compiler.States
 
         public override void EnterClassTupleConstructor(ClassTupleConstructorContext context)
         {
-
+            tupleType = ImplementationType.Class;
         }
 
         public override void ExitClassTupleConstructor(ClassTupleConstructorContext context)
@@ -128,7 +130,7 @@ namespace Sona.Compiler.States
 
         public override void EnterStructTupleConstructor(StructTupleConstructorContext context)
         {
-            isStruct = true;
+            tupleType = ImplementationType.Struct;
         }
 
         public override void ExitStructTupleConstructor(StructTupleConstructorContext context)
@@ -138,17 +140,17 @@ namespace Sona.Compiler.States
 
         public override void EnterSimpleTupleContents(SimpleTupleContentsContext context)
         {
-            Out.Write(isStruct ? "(struct(" : "(");
+            Out.WriteTupleOpen(tupleType);
         }
 
         public override void ExitSimpleTupleContents(SimpleTupleContentsContext context)
         {
-            Out.Write(isStruct ? "))" : ")");
+            Out.WriteTupleClose(tupleType);
         }
 
         public override void EnterComplexTupleContents(ComplexTupleContentsContext context)
         {
-            Out.WriteCustomTupleOperator(isStruct ? "FromTreeValue" : "FromTree");
+            Out.WriteCustomTupleFromTreeOperator(tupleType);
             Out.Write('(');
             EnterState<TupleAppendState>().EnterComplexTupleContents(context);
         }

@@ -20,7 +20,7 @@ namespace Sona.Compiler.States
     {
         bool IStatementContext.TrailAllowed => true;
 
-        bool? IStatementContext.IsStructOptionalReturn => FindContext<IStatementContext>()?.IsStructOptionalReturn;
+        ImplementationType? IStatementContext.ReturnOptionType => FindContext<IStatementContext>()?.ReturnOptionType;
 
         public sealed override void EnterMultiFuncDecl(MultiFuncDeclContext context)
         {
@@ -73,10 +73,10 @@ namespace Sona.Compiler.States
                 Out.WriteCoreOperatorName("Unchecked");
                 Out.WriteLine(".defaultof<_>");
             }
-            else if(FindContext<IStatementContext>() is { IsStructOptionalReturn: bool isStruct })
+            else if(FindContext<IStatementContext>() is { ReturnOptionType: { } optionType })
             {
                 // Implicit returning depends on the statement
-                Out.WriteCoreName(isStruct ? "ValueNone" : "None");
+                Out.WriteOptionNone(optionType);
             }
             else
             {
@@ -553,7 +553,7 @@ namespace Sona.Compiler.States
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
 
-        bool? IStatementContext.IsStructOptionalReturn => null;
+        ImplementationType? IStatementContext.ReturnOptionType => null;
 
         bool IComputationContext.IsCollection => false;
 
@@ -654,10 +654,10 @@ namespace Sona.Compiler.States
                 Out.WriteIdentifier(result);
                 Out.WriteOperator("<-");
             }
-            if(this is not ReturnOptionState && FindContext<IFunctionContext>() is { IsStructOptionalReturn: bool isStruct })
+            if(this is not ReturnOptionState && FindContext<IFunctionContext>() is { ReturnOptionType: { } optionType })
             {
                 // Explicit returning depends on the function
-                Out.WriteCoreName(isStruct ? "ValueSome" : "Some");
+                Out.WriteOptionSome(optionType);
             }
             Out.Write('(');
             base.OnEnterExpression(context);
@@ -685,9 +685,9 @@ namespace Sona.Compiler.States
                     Out.WriteIdentifier(result);
                     Out.WriteOperator("<-");
                 }
-                if(this is not ReturnOptionState && FindContext<IFunctionContext>() is { IsStructOptionalReturn: bool isStruct })
+                if(this is not ReturnOptionState && FindContext<IFunctionContext>() is { ReturnOptionType: { } optionType })
                 {
-                    Out.WriteCoreName(isStruct ? "ValueNone" : "None");
+                    Out.WriteOptionNone(optionType);
                 }
                 else
                 {
@@ -735,7 +735,7 @@ namespace Sona.Compiler.States
     {
         public override void EnterReturnOptionStatement(ReturnOptionStatementContext context)
         {
-            if(FindContext<IFunctionContext>() is { IsStructOptionalReturn: null })
+            if(FindContext<IFunctionContext>() is { ReturnOptionType: null })
             {
                 Error("`return` with an option passthrough is permitted only within an optional function.", context);
             }

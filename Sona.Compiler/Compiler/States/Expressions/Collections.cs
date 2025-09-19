@@ -20,7 +20,7 @@ namespace Sona.Compiler.States
 
         public virtual bool TrailAllowed => false;
 
-        bool? IStatementContext.IsStructOptionalReturn => null;
+        ImplementationType? IStatementContext.ReturnOptionType => null;
 
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
 

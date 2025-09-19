@@ -264,8 +264,9 @@ namespace Sona.Compiler.States
 
         public sealed override void ExitOptionalTypeSuffix(OptionalTypeSuffixContext context)
         {
+            var optionType = LexerContext.GetState<OptionPragma>()?.Type ?? ImplementationType.Struct;
             Out.Write(' ');
-            Out.WriteCoreName(LexerContext.GetState<OptionPragma>()?.IsStruct ?? true ? "voption" : "option");
+            Out.WriteOptionAbbreviation(optionType);
         }
 
         public sealed override void EnterSequenceTypeSuffix(SequenceTypeSuffixContext context)
@@ -720,19 +721,20 @@ namespace Sona.Compiler.States
 
     internal sealed class TupleType : NodeState
     {
-        bool first, isStruct;
+        bool first;
+        ImplementationType tupleType;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             first = true;
-            isStruct = false;
+            tupleType = default;
         }
 
         public override void EnterTupleType(TupleTypeContext context)
         {
-            isStruct = LexerContext.GetState<TuplePragma>()?.IsStruct ?? true;
+            tupleType = LexerContext.GetState<TuplePragma>()?.Type ?? ImplementationType.Struct;
             OnEnter();
         }
 
@@ -744,6 +746,7 @@ namespace Sona.Compiler.States
 
         public override void EnterClassTupleType(ClassTupleTypeContext context)
         {
+            tupleType = ImplementationType.Class;
             OnEnter();
         }
 
@@ -755,7 +758,7 @@ namespace Sona.Compiler.States
 
         public override void EnterStructTupleType(StructTupleTypeContext context)
         {
-            isStruct = true;
+            tupleType = ImplementationType.Struct;
             OnEnter();
         }
 
@@ -767,12 +770,12 @@ namespace Sona.Compiler.States
 
         void OnEnter()
         {
-            Out.Write(isStruct ? "(struct(" : "(");
+            Out.WriteTupleOpen(tupleType);
         }
 
         void OnExit()
         {
-            Out.Write(isStruct ? "))" : ")");
+            Out.WriteTupleClose(tupleType);
         }
 
         public override void EnterTypeArgument(TypeArgumentContext context)
@@ -796,19 +799,20 @@ namespace Sona.Compiler.States
 
     internal sealed class AnonymousRecordType : NodeState
     {
-        bool first, isStruct, hasType;
+        bool first, hasType;
+        ImplementationType recordType;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             first = true;
-            isStruct = false;
+            recordType = default;
         }
 
         public override void EnterAnonymousRecordType(AnonymousRecordTypeContext context)
         {
-            isStruct = LexerContext.GetState<RecordPragma>()?.IsStruct ?? false;
+            recordType = LexerContext.GetState<RecordPragma>()?.Type ?? ImplementationType.Class;
             OnEnter();
         }
 
@@ -820,6 +824,7 @@ namespace Sona.Compiler.States
 
         public override void EnterAnonymousClassRecordType(AnonymousClassRecordTypeContext context)
         {
+            recordType = ImplementationType.Class;
             OnEnter();
         }
 
@@ -831,7 +836,7 @@ namespace Sona.Compiler.States
 
         public override void EnterAnonymousStructRecordType(AnonymousStructRecordTypeContext context)
         {
-            isStruct = true;
+            recordType = ImplementationType.Struct;
             OnEnter();
         }
 
@@ -843,12 +848,12 @@ namespace Sona.Compiler.States
 
         void OnEnter()
         {
-            Out.Write(isStruct ? "(struct{| " : "{| ");
+            Out.WriteAnonymousRecordOpen(recordType);
         }
 
         void OnExit()
         {
-            Out.Write(isStruct ? " |})" : " |}");
+            Out.WriteAnonymousRecordClose(recordType);
         }
 
         public override void EnterAnonymousRecordMemberDeclaration(AnonymousRecordMemberDeclarationContext context)
