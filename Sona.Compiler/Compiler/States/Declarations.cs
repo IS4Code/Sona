@@ -133,7 +133,7 @@ namespace Sona.Compiler.States
 
         public sealed override void EnterValueBlock(ValueBlockContext context)
         {
-            if(!hasType && ReturnOptionType is { } optionType)
+            if(!hasType && ReturnOptionType is { } optionType && this is not CaseFunctionDeclState)
             {
                 Out.WriteOperator(':');
                 Out.Write("_ ");
