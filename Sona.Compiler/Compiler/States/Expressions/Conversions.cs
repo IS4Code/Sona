@@ -191,7 +191,7 @@ namespace Sona.Compiler.States
                     type = null;
                     break;
             }
-            optionType = LexerContext.GetState<OptionPragma>()?.Type ?? ImplementationType.Struct;
+            optionType = OptionImplementationType;
         }
 
         void OnOperand(ParserRuleContext context)

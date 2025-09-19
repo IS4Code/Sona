@@ -264,9 +264,8 @@ namespace Sona.Compiler.States
 
         public sealed override void ExitOptionalTypeSuffix(OptionalTypeSuffixContext context)
         {
-            var optionType = LexerContext.GetState<OptionPragma>()?.Type ?? ImplementationType.Struct;
             Out.Write(' ');
-            Out.WriteOptionAbbreviation(optionType);
+            Out.WriteOptionAbbreviation(OptionImplementationType);
         }
 
         public sealed override void EnterSequenceTypeSuffix(SequenceTypeSuffixContext context)
@@ -734,7 +733,7 @@ namespace Sona.Compiler.States
 
         public override void EnterTupleType(TupleTypeContext context)
         {
-            tupleType = LexerContext.GetState<TuplePragma>()?.Type ?? ImplementationType.Struct;
+            tupleType = TupleImplementationType;
             OnEnter();
         }
 
@@ -812,7 +811,7 @@ namespace Sona.Compiler.States
 
         public override void EnterAnonymousRecordType(AnonymousRecordTypeContext context)
         {
-            recordType = LexerContext.GetState<RecordPragma>()?.Type ?? ImplementationType.Class;
+            recordType = RecordImplementationType;
             OnEnter();
         }
 

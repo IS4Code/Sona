@@ -92,7 +92,7 @@ namespace Sona.Compiler.States
 
         public override void EnterOptionalTypeSuffix(OptionalTypeSuffixContext context)
         {
-            ReturnOptionType = LexerContext.GetState<OptionPragma>()?.Type ?? ImplementationType.Struct;
+            ReturnOptionType = OptionImplementationType;
         }
 
         public override void ExitOptionalTypeSuffix(OptionalTypeSuffixContext context)

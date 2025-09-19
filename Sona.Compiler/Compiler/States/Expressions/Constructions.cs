@@ -28,7 +28,7 @@ namespace Sona.Compiler.States
 
         public override void EnterAnonymousRecordConstructor(AnonymousRecordConstructorContext context)
         {
-            recordType = LexerContext.GetState<RecordPragma>()?.Type ?? ImplementationType.Class;
+            recordType = RecordImplementationType;
             Out.WriteAnonymousRecordOpen(recordType);
         }
 
@@ -100,7 +100,7 @@ namespace Sona.Compiler.States
 
         public override void EnterTupleConstructor(TupleConstructorContext context)
         {
-            tupleType = LexerContext.GetState<TuplePragma>()?.Type ?? ImplementationType.Struct;
+            tupleType = TupleImplementationType;
         }
 
         public override void ExitTupleConstructor(TupleConstructorContext context)
@@ -110,7 +110,7 @@ namespace Sona.Compiler.States
 
         public override void EnterExplicitTupleConstructor(ExplicitTupleConstructorContext context)
         {
-            tupleType = LexerContext.GetState<TuplePragma>()?.Type ?? ImplementationType.Struct;
+            tupleType = TupleImplementationType;
         }
 
         public override void ExitExplicitTupleConstructor(ExplicitTupleConstructorContext context)

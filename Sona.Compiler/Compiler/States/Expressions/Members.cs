@@ -435,7 +435,7 @@ namespace Sona.Compiler.States
             Out.Write('(');
             Out.WriteIdentifier(arg);
             Out.Write(")with|struct(false,_)->");
-            var optionType = LexerContext.GetState<OptionPragma>()?.Type ?? ImplementationType.Struct;
+            var optionType = OptionImplementationType;
             Out.WriteOptionNone(optionType);
             var value = Out.CreateTemporaryIdentifier();
             Out.Write("|struct(true,");

@@ -298,8 +298,7 @@ namespace Sona.Compiler.States
         {
             public sealed override void EnterSomePattern(SomePatternContext context)
             {
-                var optionType = LexerContext.GetState<OptionPragma>()?.Type ?? ImplementationType.Struct;
-                Out.WriteOptionSome(optionType);
+                Out.WriteOptionSome(OptionImplementationType);
                 Out.Write('(');
             }
 
@@ -553,7 +552,7 @@ namespace Sona.Compiler.States
 
             public override void EnterTupleConstructorPattern(TupleConstructorPatternContext context)
             {
-                tupleType = LexerContext.GetState<TuplePragma>()?.Type ?? ImplementationType.Struct;
+                tupleType = TupleImplementationType;
                 OnEnter();
             }
 
@@ -565,7 +564,7 @@ namespace Sona.Compiler.States
 
             public override void EnterExplicitTupleConstructorPattern(ExplicitTupleConstructorPatternContext context)
             {
-                tupleType = LexerContext.GetState<TuplePragma>()?.Type ?? ImplementationType.Struct;
+                tupleType = TupleImplementationType;
                 OnEnter();
             }
 

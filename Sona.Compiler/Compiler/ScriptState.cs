@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using Sona.Compiler.States;
 using Sona.Grammar;
 
 namespace Sona.Compiler
@@ -15,6 +16,10 @@ namespace Sona.Compiler
 
         protected ISourceWriter Out => Environment.Output;
         protected LexerContext LexerContext => Environment.LexerContext;
+
+        protected ImplementationType OptionImplementationType => LexerContext.GetState<OptionPragma>()?.Type ?? ImplementationType.Struct;
+        protected ImplementationType TupleImplementationType => LexerContext.GetState<TuplePragma>()?.Type ?? ImplementationType.Struct;
+        protected ImplementationType RecordImplementationType => LexerContext.GetState<RecordPragma>()?.Type ?? ImplementationType.Class;
 
         public int StateLevel { get; private set; }
 
