@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Runtime;
 using System.Runtime.ExceptionServices;
@@ -17,8 +18,8 @@ using FSharp.Compiler.Diagnostics;
 using FSharp.Compiler.Syntax;
 using FSharp.Compiler.Text;
 using FSharp.Compiler.Tokenization;
-using Sona.Grammar;
 using Microsoft.FSharp.Core;
+using Sona.Grammar;
 using static FSharp.Compiler.Interactive.Shell;
 
 namespace Sona.Compiler.Gui
@@ -28,6 +29,9 @@ namespace Sona.Compiler.Gui
         readonly Channel<string> codeChannel;
         readonly Channel<CompilerResult> sourceChannel;
         readonly SonaCompiler compiler;
+
+        readonly IsolatedStorageFile editCache;
+        const string lastEditedFile = "LastEditedFile.sona";
 
         const float fontScale = 1.5f;
 
@@ -114,6 +118,9 @@ namespace Sona.Compiler.Gui
 #if !DEBUG
             orientationButton.PerformClick();
             orientationButton.PerformClick();
+            editCache = null!;
+#else
+            editCache = IsolatedStorageFile.GetUserStoreForApplication();
 #endif
         }
 
@@ -139,7 +146,21 @@ namespace Sona.Compiler.Gui
             }
             else
             {
-                SetText(@"import System
+                string? startText = null;
+#if DEBUG
+                try
+                {
+                    // Load previous file
+                    using var lastFile = editCache.OpenFile(lastEditedFile, FileMode.Open);
+                    using var reader = new StreamReader(lastFile, Encoding.UTF8);
+                    startText = reader.ReadToEnd();
+                }
+                catch
+                {
+
+                }
+#endif
+                SetText(startText ?? @"import System
 import Console.*
 
 let name = ""Sona""
@@ -456,8 +477,19 @@ ReadKey(true)!");
             // Yield to get latest text in case of replacement
             await Task.Yield();
 
+            var sourceText = sonaRichText.Text;
+
+#if DEBUG
+            // Save text to storage
+            using(var file = editCache.OpenFile(lastEditedFile, FileMode.Create))
+            {
+                using var writer = new StreamWriter(file, Encoding.UTF8);
+                writer.Write(sourceText);
+            }
+#endif
+
             // Send the text to channel
-            await codeChannel.Writer.WriteAsync(sonaRichText.Text);
+            await codeChannel.Writer.WriteAsync(sourceText);
         }
 
         private void blockDelimitersButton_CheckedChanged(object sender, EventArgs e)
