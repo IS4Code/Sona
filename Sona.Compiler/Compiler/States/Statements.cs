@@ -62,7 +62,16 @@ namespace Sona.Compiler.States
             }
             else
             {
-                Out.Write("()");
+                var funcContext = FindContext<IFunctionContext>();
+                if(funcContext is { IsStructOptionalReturn: bool isStruct } && FindContext<IStatementContext>() == funcContext)
+                {
+                    // Returning immediately from a function
+                    Out.WriteCoreName(isStruct ? "ValueNone" : "None");
+                }
+                else
+                {
+                    Out.Write("()");
+                }
             }
         }
 
@@ -74,6 +83,11 @@ namespace Sona.Compiler.States
         public sealed override void EnterReturnStatement(ReturnStatementContext context)
         {
             EnterState<ReturnState>().EnterReturnStatement(context);
+        }
+
+        public sealed override void EnterReturnOptionStatement(ReturnOptionStatementContext context)
+        {
+            EnterState<ReturnOptionState>().EnterReturnOptionStatement(context);
         }
 
         public sealed override void EnterThrowStatement(ThrowStatementContext context)
@@ -530,7 +544,7 @@ namespace Sona.Compiler.States
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
 
-        bool IFunctionContext.IsOptionalReturn => false;
+        bool? IFunctionContext.IsStructOptionalReturn => null;
 
         bool IComputationContext.IsCollection => false;
 
@@ -592,11 +606,21 @@ namespace Sona.Compiler.States
 
         public override void EnterExpression(ExpressionContext context)
         {
-            HasExpression = true;
+            OnEnterExpression(context);
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
         public sealed override void ExitExpression(ExpressionContext context)
+        {
+
+        }
+
+        protected virtual void OnEnterExpression(ParserRuleContext context)
+        {
+            HasExpression = true;
+        }
+
+        protected virtual void OnExitExpression(ParserRuleContext context)
         {
 
         }
@@ -613,7 +637,7 @@ namespace Sona.Compiler.States
             returnScope = FindContext<IReturnableStatementContext>();
         }
 
-        public sealed override void EnterExpression(ExpressionContext context)
+        protected sealed override void OnEnterExpression(ParserRuleContext context)
         {
             if(returnScope?.ReturnVariable is { } result)
             {
@@ -621,11 +645,20 @@ namespace Sona.Compiler.States
                 Out.WriteIdentifier(result);
                 Out.WriteOperator("<-");
             }
+            if(this is not ReturnOptionState && FindContext<IFunctionContext>() is { IsStructOptionalReturn: bool isStruct })
+            {
+                Out.WriteCoreName(isStruct ? "ValueSome" : "Some");
+            }
             Out.Write('(');
-            base.EnterExpression(context);
+            base.OnEnterExpression(context);
         }
 
         public sealed override void EnterReturnStatement(ReturnStatementContext context)
+        {
+            OnEnter(context);
+        }
+
+        protected virtual void OnEnter(ParserRuleContext context)
         {
             if(FindContext<IComputationContext>() is { IsCollection: true, BuilderVariable: null })
             {
@@ -642,7 +675,14 @@ namespace Sona.Compiler.States
                     Out.WriteIdentifier(result);
                     Out.WriteOperator("<-");
                 }
-                Out.Write("()");
+                if(this is not ReturnOptionState && FindContext<IFunctionContext>() is { IsStructOptionalReturn: bool isStruct })
+                {
+                    Out.WriteCoreName(isStruct ? "ValueNone" : "None");
+                }
+                else
+                {
+                    Out.Write("()");
+                }
             }
             else
             {
@@ -678,6 +718,48 @@ namespace Sona.Compiler.States
         {
             OnExit(context);
             ExitState().ExitReturnStatement(context);
+        }
+    }
+
+    internal sealed class ReturnOptionState : ReturnState
+    {
+        public override void EnterReturnOptionStatement(ReturnOptionStatementContext context)
+        {
+            if(FindContext<IFunctionContext>() is { IsStructOptionalReturn: null })
+            {
+                Error("`return` with an option passthrough is permitted only within an optional function.", context);
+            }
+            OnEnter(context);
+        }
+
+        public override void ExitReturnOptionStatement(ReturnOptionStatementContext context)
+        {
+            OnExit(context);
+            ExitState().ExitReturnOptionStatement(context);
+        }
+
+        public sealed override void EnterValueExpr(ValueExprContext context)
+        {
+            OnEnterExpression(context);
+            EnterState<Argument>().EnterValueExpr(context);
+        }
+
+        public sealed override void ExitValueExpr(ValueExprContext context)
+        {
+            OnExitExpression(context);
+        }
+
+        sealed class Argument : ExpressionState
+        {
+            public override void EnterValueExpr(ValueExprContext context)
+            {
+
+            }
+
+            public override void ExitValueExpr(ValueExprContext context)
+            {
+                ExitState().ExitValueExpr(context);
+            }
         }
     }
 

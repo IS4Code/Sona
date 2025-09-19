@@ -321,6 +321,9 @@ implicitReturnStatement:;
 returnStatement:
   'return' expression?;
 
+returnOptionStatement:
+  'return' valueExpr '?';
+
 yieldStatement:
   'yield' (expression | errorMissingExpression);
 
@@ -341,6 +344,7 @@ throwStatement:
 
 // A statement that has a returning path and all other paths are closing
 returningStatement:
+  returnOptionStatement |
   returnStatement |
   yieldBreakStatement |
   inlineSourceReturning |
@@ -1357,10 +1361,10 @@ multiFuncDecl:
   funcDecl+;
 
 funcDecl:
-  localAttrList 'function' name funcBody;
+  localAttrList 'function' name optionalTypeSuffix? funcBody;
 
 inlineFuncDecl:
-  localAttrList 'inline' 'function' name funcBody;
+  localAttrList 'inline' 'function' name optionalTypeSuffix? funcBody;
 
 funcBody:
   paramList ('as' type ';'?)? valueBlock 'end';
@@ -1562,12 +1566,7 @@ annotationExpr:
 
 atomicExpr:
   unaryOperator* (
-    altMemberExpr |
-    memberExpr |
-    simpleExpr |
-    fullConstructExpr |
-    funcExpr |
-    inlineExpr |
+    valueExpr |
     hashExpr |
     notExpr |
     atomicNumberConvertExpr |
@@ -1575,6 +1574,14 @@ atomicExpr:
     atomicConvertExpr |
     unit
   );
+
+valueExpr:
+  altMemberExpr |
+  memberExpr |
+  simpleExpr |
+  fullConstructExpr |
+  funcExpr |
+  inlineExpr;
 
 hashExpr:
   '#' atomicExpr;
@@ -1608,7 +1615,7 @@ namedValue:
   'null' | 'false' | 'true' | 'none' | 'default';
 
 funcExpr:
-  'function' name? funcBody;
+  'function' name? optionalTypeSuffix? funcBody;
 
 inlineExpr:
   'inline' expressionStatement;

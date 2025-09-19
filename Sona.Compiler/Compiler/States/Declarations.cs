@@ -47,13 +47,22 @@ namespace Sona.Compiler.States
 
         bool IExpressionContext.IsLiteral => false;
 
-        bool IFunctionContext.IsOptionalReturn => false;
+        public bool? IsStructOptionalReturn { get; private set; }
 
         string? IComputationContext.BuilderVariable => null;
 
         bool IComputationContext.IsCollection => false;
 
         bool IStatementContext.TrailAllowed => true;
+
+        bool hasType;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            hasType = false;
+        }
 
         public override void EnterFuncDecl(FuncDeclContext context)
         {
@@ -75,6 +84,16 @@ namespace Sona.Compiler.States
             ExitState().ExitInlineFuncDecl(context);
         }
 
+        public override void EnterOptionalTypeSuffix(OptionalTypeSuffixContext context)
+        {
+            IsStructOptionalReturn = LexerContext.GetState<OptionPragma>()?.IsStruct ?? true;
+        }
+
+        public override void ExitOptionalTypeSuffix(OptionalTypeSuffixContext context)
+        {
+
+        }
+
         public override void EnterParamList(ParamListContext context)
         {
             EnterState<ParamListState>().EnterParamList(context);
@@ -87,17 +106,33 @@ namespace Sona.Compiler.States
 
         public override void EnterType(TypeContext context)
         {
+            hasType = true;
             Out.WriteOperator(':');
+            if(IsStructOptionalReturn is bool isStruct)
+            {
+                Out.WriteCoreName(isStruct ? "voption" : "option");
+                Out.Write('<');
+            }
             base.EnterType(context);
         }
 
         public override void ExitType(TypeContext context)
         {
             base.ExitType(context);
+            if(IsStructOptionalReturn != null)
+            {
+                Out.Write('>');
+            }
         }
 
         public override void EnterValueBlock(ValueBlockContext context)
         {
+            if(!hasType && IsStructOptionalReturn is bool isStruct)
+            {
+                Out.WriteOperator(':');
+                Out.Write("_ ");
+                Out.WriteCoreName(isStruct ? "voption" : "option");
+            }
             Out.WriteOperator('=');
             Out.WriteLine("(");
             Out.EnterScope();

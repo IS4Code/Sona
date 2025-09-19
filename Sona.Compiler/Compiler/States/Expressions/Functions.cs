@@ -15,7 +15,7 @@ namespace Sona.Compiler.States
 
         bool IExpressionContext.IsLiteral => false;
 
-        bool IFunctionContext.IsOptionalReturn => false;
+        public bool? IsStructOptionalReturn { get; private set; }
 
         string? IComputationContext.BuilderVariable => null;
 
@@ -25,11 +25,15 @@ namespace Sona.Compiler.States
 
         string? name;
 
+        bool hasType;
+
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             name = null;
+
+            hasType = false;
         }
 
         public override void EnterName(NameContext context)
@@ -58,6 +62,16 @@ namespace Sona.Compiler.States
             ExitState().ExitFuncExpr(context);
         }
 
+        public override void EnterOptionalTypeSuffix(OptionalTypeSuffixContext context)
+        {
+            IsStructOptionalReturn = LexerContext.GetState<OptionPragma>()?.IsStruct ?? true;
+        }
+
+        public override void ExitOptionalTypeSuffix(OptionalTypeSuffixContext context)
+        {
+
+        }
+
         public override void EnterParamList(ParamListContext context)
         {
             if(name == null)
@@ -71,9 +85,44 @@ namespace Sona.Compiler.States
             EnterState<ParamListState>().EnterParamList(context);
         }
 
-        public override void EnterValueBlock(ValueBlockContext context)
+        public override void ExitParamList(ParamListContext context)
         {
             Out.WriteOperator("->");
+        }
+
+        public override void EnterType(TypeContext context)
+        {
+            hasType = true;
+            Out.WriteCoreName("Operators");
+            Out.Write(".id<");
+            if(IsStructOptionalReturn is bool isStruct)
+            {
+                Out.WriteCoreName(isStruct ? "voption" : "option");
+                Out.Write('<');
+            }
+            base.EnterType(context);
+        }
+
+        public override void ExitType(TypeContext context)
+        {
+            base.ExitType(context);
+            if(IsStructOptionalReturn != null)
+            {
+                Out.Write('>');
+            }
+            Out.Write('>');
+        }
+
+        public override void EnterValueBlock(ValueBlockContext context)
+        {
+            if(!hasType && IsStructOptionalReturn is bool isStruct)
+            {
+                Out.WriteCoreName("Operators");
+                Out.Write(".id<");
+                Out.Write("_ ");
+                Out.WriteCoreName(isStruct ? "voption" : "option");
+                Out.Write('>');
+            }
             Out.EnterNestedScope();
             Out.WriteLine("(");
             EnterState<BlockState>().EnterValueBlock(context);

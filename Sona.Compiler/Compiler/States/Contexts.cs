@@ -16,7 +16,7 @@ namespace Sona.Compiler.States
 
     internal interface IFunctionContext : IReturnableStatementContext, IInterruptibleStatementContext, IStatementContext, IComputationContext, IExpressionContext
     {
-        bool IsOptionalReturn { get; }
+        bool? IsStructOptionalReturn { get; }
     }
 
     internal interface IComputationContext : IInterruptibleStatementContext, IStatementContext

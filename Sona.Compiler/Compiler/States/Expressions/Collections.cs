@@ -24,7 +24,7 @@ namespace Sona.Compiler.States
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
 
-        bool IFunctionContext.IsOptionalReturn => false;
+        bool? IFunctionContext.IsStructOptionalReturn => null;
 
         string? IReturnableStatementContext.ReturnVariable => null;
 
