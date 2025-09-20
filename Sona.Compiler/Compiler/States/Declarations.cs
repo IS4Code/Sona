@@ -90,12 +90,12 @@ namespace Sona.Compiler.States
             hasType = false;
         }
 
-        public override void EnterOptionTypeSuffix(OptionTypeSuffixContext context)
+        public override void EnterOptionSuffix(OptionSuffixContext context)
         {
             ReturnOptionType = OptionImplementationType;
         }
 
-        public override void ExitOptionTypeSuffix(OptionTypeSuffixContext context)
+        public override void ExitOptionSuffix(OptionSuffixContext context)
         {
 
         }
@@ -267,11 +267,11 @@ namespace Sona.Compiler.States
             base.EnterName(context);
         }
 
-        public override void EnterOptionTypeSuffix(OptionTypeSuffixContext context)
+        public override void EnterOptionSuffix(OptionSuffixContext context)
         {
             Out.Write("|_");
 
-            base.EnterOptionTypeSuffix(context);
+            base.EnterOptionSuffix(context);
         }
 
         public override void EnterFuncBody(FuncBodyContext context)

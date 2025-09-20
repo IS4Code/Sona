@@ -62,12 +62,12 @@ namespace Sona.Compiler.States
             ExitState().ExitFuncExpr(context);
         }
 
-        public override void EnterOptionTypeSuffix(OptionTypeSuffixContext context)
+        public override void EnterOptionSuffix(OptionSuffixContext context)
         {
             ReturnOptionType = OptionImplementationType;
         }
 
-        public override void ExitOptionTypeSuffix(OptionTypeSuffixContext context)
+        public override void ExitOptionSuffix(OptionSuffixContext context)
         {
 
         }

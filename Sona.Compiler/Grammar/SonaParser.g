@@ -1362,16 +1362,16 @@ multiFuncDecl:
   (funcDecl | caseFuncDecl)+;
 
 funcDecl:
-  localAttrList 'function' name optionTypeSuffix? funcBody;
+  localAttrList 'function' name optionSuffix? funcBody;
 
 inlineFuncDecl:
-  localAttrList 'inline' 'function' name optionTypeSuffix? funcBody;
+  localAttrList 'inline' 'function' name optionSuffix? funcBody;
 
 caseFuncDecl:
-  localAttrList 'case' 'function' caseFuncName optionTypeSuffix? funcBody;
+  localAttrList 'case' 'function' caseFuncName optionSuffix? funcBody;
 
 inlineCaseFuncDecl:
-  localAttrList 'inline' 'case' 'function' caseFuncName optionTypeSuffix? funcBody;
+  localAttrList 'inline' 'case' 'function' caseFuncName optionSuffix? funcBody;
 
 caseFuncName:
   name | '(' name ('or' name)* ')';
@@ -1628,7 +1628,7 @@ namedValue:
   'null' | 'false' | 'true' | 'none' | 'default';
 
 funcExpr:
-  'function' name? optionTypeSuffix? funcBody;
+  'function' name? optionSuffix? funcBody;
 
 inlineExpr:
   'inline' expressionStatement;
