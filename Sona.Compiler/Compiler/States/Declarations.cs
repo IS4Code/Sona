@@ -1,4 +1,5 @@
-﻿using Antlr4.Runtime;
+﻿using System.Collections.Generic;
+using Antlr4.Runtime;
 using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
@@ -331,22 +332,20 @@ namespace Sona.Compiler.States
 
     internal sealed class NewVariableState : NodeState, IExpressionContext
     {
-        bool first;
-        bool? isliteral;
+        bool? isLiteral;
 
-        bool IExpressionContext.IsLiteral => isliteral ??= (FindContext<IExpressionContext>()?.IsLiteral ?? false);
+        bool IExpressionContext.IsLiteral => isLiteral ??= (FindContext<IExpressionContext>()?.IsLiteral ?? false);
         
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            first = false;
-            isliteral = null;
+            isLiteral = null;
         }
 
         public override void EnterVariableDecl(VariableDeclContext context)
         {
-            first = true;
+
         }
 
         public override void ExitVariableDecl(VariableDeclContext context)
@@ -356,19 +355,27 @@ namespace Sona.Compiler.States
 
         public override void EnterDeclaration(DeclarationContext context)
         {
-            if(first)
-            {
-                first = false;
-            }
-            else
-            {
-                Out.Write(',');
-            }
-
             EnterState<DeclarationState>().EnterDeclaration(context);
         }
 
         public override void ExitDeclaration(DeclarationContext context)
+        {
+
+        }
+
+        public override void EnterMultiDeclAssignment(MultiDeclAssignmentContext context)
+        {
+            if(isLiteral == true)
+            {
+                EnterState<RecursiveMultiDeclarationState>().EnterMultiDeclAssignment(context);
+            }
+            else
+            {
+                EnterState<MultiDeclarationState>().EnterMultiDeclAssignment(context);
+            }
+        }
+
+        public override void ExitMultiDeclAssignment(MultiDeclAssignmentContext context)
         {
 
         }
@@ -399,7 +406,7 @@ namespace Sona.Compiler.States
             Out.WriteCoreName("LiteralAttribute");
             Out.WriteLine(">]");
             Out.Write("let ");
-            isliteral = true;
+            isLiteral = true;
         }
 
         public override void ExitConstDecl(ConstDeclContext context)
@@ -445,7 +452,7 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal sealed class DeclarationState : NodeState
+    internal class DeclarationState : NodeState
     {
         public override void EnterDeclaration(DeclarationContext context)
         {
@@ -457,25 +464,173 @@ namespace Sona.Compiler.States
             ExitState().ExitDeclaration(context);
         }
 
-        public override void EnterOptionalName(OptionalNameContext context)
+        public sealed override void EnterPattern(PatternContext context)
+        {
+            Out.Write('(');
+            EnterState<PatternState>().EnterPattern(context);
+        }
+
+        public sealed override void ExitPattern(PatternContext context)
+        {
+            Out.Write(')');
+        }
+
+        public sealed override void EnterOptionalName(OptionalNameContext context)
         {
             Out.Write('?');
         }
 
-        public override void ExitOptionalName(OptionalNameContext context)
+        public sealed override void ExitOptionalName(OptionalNameContext context)
         {
 
         }
 
-        public override void EnterType(TypeContext context)
+        public sealed override void EnterType(TypeContext context)
         {
             Out.WriteOperator(':');
             base.EnterType(context);
         }
 
-        public override void ExitType(TypeContext context)
+        public sealed override void ExitType(TypeContext context)
         {
             base.ExitType(context);
+        }
+    }
+
+    internal sealed class MultiDeclarationState : DeclarationState
+    {
+        bool first;
+        ISourceCapture? valueCapture;
+        readonly List<ISourceCapture> valueCaptures = new();
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            first = true;
+            valueCapture = null;
+            valueCaptures.Clear();
+        }
+
+        public override void EnterMultiDeclAssignment(MultiDeclAssignmentContext context)
+        {
+            Out.Write('(');
+        }
+
+        public override void ExitMultiDeclAssignment(MultiDeclAssignmentContext context)
+        {
+            Out.Write(')');
+            Out.WriteOperator('=');
+            Out.EnterNestedScope();
+            Out.Write('(');
+            var first = true;
+            foreach(var capture in valueCaptures)
+            {
+                if(first)
+                {
+                    first = false;
+                }
+                else
+                {
+                    Out.Write(',');
+                }
+                capture.Play(Out);
+            }
+            Out.ExitNestedScope();
+            Out.Write(')');
+            ExitState().ExitMultiDeclAssignment(context);
+        }
+
+        public override void EnterDeclaration(DeclarationContext context)
+        {
+            if(first)
+            {
+                first = false;
+            }
+            else
+            {
+                Out.Write(',');
+            }
+        }
+
+        public override void ExitDeclaration(DeclarationContext context)
+        {
+
+        }
+
+        public override void EnterExpression(ExpressionContext context)
+        {
+            valueCapture = Out.StartCapture();
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public override void ExitExpression(ExpressionContext context)
+        {
+            if(valueCapture != null)
+            {
+                Out.StopCapture(valueCapture);
+                valueCaptures.Add(valueCapture);
+                valueCapture = null;
+            }
+        }
+    }
+
+    internal sealed class RecursiveMultiDeclarationState : DeclarationState
+    {
+        bool first, isLiteral;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            first = true;
+            isLiteral = FindContext<IExpressionContext>()?.IsLiteral ?? false;
+        }
+
+        public override void EnterMultiDeclAssignment(MultiDeclAssignmentContext context)
+        {
+
+        }
+
+        public override void ExitMultiDeclAssignment(MultiDeclAssignmentContext context)
+        {
+            ExitState().ExitMultiDeclAssignment(context);
+        }
+
+        public override void EnterDeclaration(DeclarationContext context)
+        {
+            if(first)
+            {
+                first = false;
+                Out.Write("rec ");
+            }
+            else
+            {
+                Out.WriteLine();
+                Out.Write("and ");
+                if(isLiteral)
+                {
+                    Out.Write("[<");
+                    Out.WriteCoreName("LiteralAttribute");
+                    Out.Write(">]");
+                }
+            }
+        }
+
+        public override void ExitDeclaration(DeclarationContext context)
+        {
+
+        }
+
+        public override void EnterExpression(ExpressionContext context)
+        {
+            Out.WriteOperator('=');
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public override void ExitExpression(ExpressionContext context)
+        {
+
         }
     }
 }

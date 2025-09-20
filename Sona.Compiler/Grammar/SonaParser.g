@@ -1344,19 +1344,22 @@ variableDecl:
   localAttrList (letDecl | varDecl | constDecl | useDecl | useVarDecl);
 
 letDecl:
-  'let' declaration '=' expression;
+  'let' (multiDeclAssignment | declaration '=' expression);
 
 varDecl:
-  'var' declaration '=' expression;
+  'var' (multiDeclAssignment | declaration '=' expression);
 
 constDecl:
-  'const' declaration '=' expression;
+  'const' (multiDeclAssignment | declaration '=' expression);
 
 useDecl:
-  'use' declaration '=' expression;
+  'use' (multiDeclAssignment | declaration '=' expression);
 
 useVarDecl:
-  'use' 'var' declaration '=' expression;
+  'use' 'var' (multiDeclAssignment | declaration '=' expression);
+
+multiDeclAssignment:
+  declaration '=' expression (',' declaration '=' expression)+;
 
 multiFuncDecl:
   (funcDecl | caseFuncDecl)+;
@@ -1386,7 +1389,7 @@ paramTuple:
   (declaration (',' declaration)*)?;
 
 declaration:
-  localAttrList (optionalName | name) ('as' type)?;
+  localAttrList ((optionalName | name) ('as' type)? | pattern);
 
 optionalName:
   name '?';
