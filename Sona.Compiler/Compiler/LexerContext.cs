@@ -224,6 +224,8 @@ namespace Sona.Compiler
                     return new OptionPragma();
                 case "newline":
                     return new NewlinePragma();
+                case "recursive":
+                    return new RecursivePragma();
             }
             throw new Exception($"'{name}' is not recognized as a valid pragma name.");
         }

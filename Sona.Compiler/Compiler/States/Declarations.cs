@@ -355,6 +355,10 @@ namespace Sona.Compiler.States
 
         public override void EnterDeclaration(DeclarationContext context)
         {
+            if(LexerContext.GetState<RecursivePragma>()?.Value ?? false)
+            {
+                Out.Write("rec ");
+            }
             EnterState<DeclarationState>().EnterDeclaration(context);
         }
 
@@ -365,7 +369,7 @@ namespace Sona.Compiler.States
 
         public override void EnterMultiDeclAssignment(MultiDeclAssignmentContext context)
         {
-            if(isLiteral == true)
+            if(isLiteral == true || (LexerContext.GetState<RecursivePragma>()?.Value ?? false))
             {
                 EnterState<RecursiveMultiDeclarationState>().EnterMultiDeclAssignment(context);
             }

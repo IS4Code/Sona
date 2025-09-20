@@ -116,4 +116,49 @@ namespace Sona.Compiler.States
             return false;
         }
     }
+
+    internal abstract class BooleanPragma : LexerState
+    {
+        public bool? Value { get; private set; }
+
+        public BooleanPragma(string name) : base(name)
+        {
+
+        }
+
+        public sealed override bool ReceiveToken(IToken token)
+        {
+            var type = GetIdentifier(token);
+            switch(type)
+            {
+                case "true":
+                case "on":
+                case "enabled":
+                    Value = true;
+                    break;
+                case "false":
+                case "off":
+                case "disabled":
+                    Value = false;
+                    break;
+                default:
+                    throw new ArgumentException("Only a boolean value is a valid pragma argument.");
+            }
+            return false;
+        }
+    }
+
+    [LexerStateName("recursive")]
+    internal sealed class RecursivePragma : BooleanPragma
+    {
+        public RecursivePragma() : base("recursive")
+        {
+
+        }
+
+        public override LexerState ForkNew(IToken token)
+        {
+            return new RecursivePragma();
+        }
+    }
 }
