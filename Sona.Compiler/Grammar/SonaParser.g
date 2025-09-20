@@ -1386,7 +1386,10 @@ paramTuple:
   (declaration (',' declaration)*)?;
 
 declaration:
-  localAttrList name ('as' type)?;
+  localAttrList (optionalName | name) ('as' type)?;
+
+optionalName:
+  name '?';
 
 memberOrAssignment:
   (altMemberExpr | memberExpr) assignment?;
@@ -1762,10 +1765,18 @@ constructArguments:
   '(' (constructCallArgTuple | complexCallArgTuple) ')';
 
 constructCallArgTuple:
-  ((expression ',' expression | (expression ',')* fieldAssignment expression) (',' fieldAssignment? expression)*)?;
+  (
+    (
+      expression ',' expression |
+      (expression ',')* (optionalFieldAssignmentExpr | fieldAssignment expression)
+    ) (',' (optionalFieldAssignmentExpr | fieldAssignment? expression))*
+  )?;
 
 fieldAssignment:
   name '=';
+
+optionalFieldAssignmentExpr:
+  name '=' atomicExpr '?';
 
 // Calls
 
@@ -1782,7 +1793,10 @@ callArgList:
   (simpleCallArgTuple | complexCallArgTuple) (';' (simpleCallArgTuple | complexCallArgTuple))*;
 
 simpleCallArgTuple:
-  (fieldAssignment? expression (',' fieldAssignment? expression)*)?;
+  (
+    (optionalFieldAssignmentExpr | fieldAssignment? expression)
+    (',' (optionalFieldAssignmentExpr | fieldAssignment? expression))*
+  )?;
 
 complexCallArgTuple:
   (fieldAssignment? expression ',')* spreadExpression (',' (spreadExpression | fieldAssignment? expression))*;

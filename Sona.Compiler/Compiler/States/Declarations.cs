@@ -318,6 +318,11 @@ namespace Sona.Compiler.States
             EnterState<DeclarationState>().EnterDeclaration(context);
         }
 
+        public override void ExitDeclaration(DeclarationContext context)
+        {
+
+        }
+
         public override void ExitParamList(ParamListContext context)
         {
             ExitState().ExitParamList(context);
@@ -442,9 +447,24 @@ namespace Sona.Compiler.States
 
     internal sealed class DeclarationState : NodeState
     {
+        public override void EnterDeclaration(DeclarationContext context)
+        {
+
+        }
+
         public override void ExitDeclaration(DeclarationContext context)
         {
             ExitState().ExitDeclaration(context);
+        }
+
+        public override void EnterOptionalName(OptionalNameContext context)
+        {
+            Out.Write('?');
+        }
+
+        public override void ExitOptionalName(OptionalNameContext context)
+        {
+
         }
 
         public override void EnterType(TypeContext context)

@@ -1,4 +1,5 @@
-﻿using static Sona.Grammar.SonaParser;
+﻿using Antlr4.Runtime;
+using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
 {
@@ -325,29 +326,7 @@ namespace Sona.Compiler.States
             Out.Write(')');
         }
 
-        public sealed override void EnterExpression(ExpressionContext context)
-        {
-            if(namedArg)
-            {
-                Out.WriteOperator('=');
-            }
-            else if(first)
-            {
-                first = false;
-            }
-            else
-            {
-                Out.Write(',');
-            }
-            EnterState<ExpressionState>().EnterExpression(context);
-        }
-
-        public sealed override void ExitExpression(ExpressionContext context)
-        {
-            namedArg = false;
-        }
-
-        public sealed override void EnterFieldAssignment(FieldAssignmentContext context)
+        private void OnEnterArgument(ParserRuleContext context)
         {
             if(first)
             {
@@ -357,6 +336,62 @@ namespace Sona.Compiler.States
             {
                 Out.Write(',');
             }
+        }
+
+        private void OnEnterExpression(ParserRuleContext context)
+        {
+            if(namedArg)
+            {
+                Out.WriteOperator('=');
+            }
+            else
+            {
+                OnEnterArgument(context);
+            }
+        }
+
+        private void OnExitExpression(ParserRuleContext context)
+        {
+            namedArg = false;
+        }
+
+        public sealed override void EnterExpression(ExpressionContext context)
+        {
+            OnEnterExpression(context);
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public sealed override void ExitExpression(ExpressionContext context)
+        {
+            OnExitExpression(context);
+        }
+
+        public sealed override void EnterAtomicExpr(AtomicExprContext context)
+        {
+            OnEnterExpression(context);
+            EnterState<AtomicExpressionState>().EnterAtomicExpr(context);
+        }
+
+        public sealed override void ExitAtomicExpr(AtomicExprContext context)
+        {
+            OnExitExpression(context);
+        }
+
+        public sealed override void EnterOptionalFieldAssignmentExpr(OptionalFieldAssignmentExprContext context)
+        {
+            OnEnterArgument(context);
+            namedArg = true;
+            Out.Write('?');
+        }
+
+        public sealed override void ExitOptionalFieldAssignmentExpr(OptionalFieldAssignmentExprContext context)
+        {
+
+        }
+
+        public sealed override void EnterFieldAssignment(FieldAssignmentContext context)
+        {
+            OnEnterArgument(context);
             namedArg = true;
         }
 

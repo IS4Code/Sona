@@ -751,25 +751,12 @@ namespace Sona.Compiler.States
         public sealed override void EnterAtomicExpr(AtomicExprContext context)
         {
             OnEnterExpression(context);
-            EnterState<Argument>().EnterAtomicExpr(context);
+            EnterState<AtomicExpressionState>().EnterAtomicExpr(context);
         }
 
         public sealed override void ExitAtomicExpr(AtomicExprContext context)
         {
             OnExitExpression(context);
-        }
-
-        sealed class Argument : ExpressionState
-        {
-            public override void EnterAtomicExpr(AtomicExprContext context)
-            {
-
-            }
-
-            public override void ExitAtomicExpr(AtomicExprContext context)
-            {
-                ExitState().ExitAtomicExpr(context);
-            }
         }
     }
 

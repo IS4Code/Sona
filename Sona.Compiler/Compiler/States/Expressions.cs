@@ -354,6 +354,19 @@ namespace Sona.Compiler.States
         }
     }
 
+    internal sealed class AtomicExpressionState : ExpressionState
+    {
+        public override void EnterAtomicExpr(AtomicExprContext context)
+        {
+
+        }
+
+        public override void ExitAtomicExpr(AtomicExprContext context)
+        {
+            ExitState().ExitAtomicExpr(context);
+        }
+    }
+
     internal sealed class ExpressionStatementState : BlockState, IStatementContext
     {
         bool IStatementContext.TrailAllowed => false;
