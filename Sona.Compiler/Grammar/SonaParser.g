@@ -1442,7 +1442,7 @@ annotationPattern:
 
 atomicPattern:
   primitiveExpr |
-  unit |
+  unit ('(' ')')? |
   somePattern |
   fullConstructPattern |
   namedPattern |
@@ -1588,7 +1588,7 @@ unaryExpr:
     unaryNumberConvertExpr |
     unaryCharConvertExpr |
     unaryConvertExpr |
-    unit
+    unit ('(' ')')?
   );
 
 atomicExpr:
@@ -1749,8 +1749,9 @@ memberConvertExpr:
 convertOperator:
   (
     (
-      'some' | 'enum' | 'implicit' | 'explicit' | 'new' | 'widen' | 'narrow' | 'unit'
+      'some' | 'enum' | 'implicit' | 'explicit' | 'new' | 'widen' | 'narrow'
     ) ('<' genericArgument '>')? |
+    'unit' '<' genericArgument '>' |
     primitiveType
   ) optionSuffix?;
 
