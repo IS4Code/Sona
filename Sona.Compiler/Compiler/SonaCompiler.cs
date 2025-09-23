@@ -350,24 +350,87 @@ namespace Sona.Compiler
             CheckEvaluation(result, manifestPath, depsPath, options);
         }
 
-        static readonly string[] executableFlags = new[] {
+        static readonly int[] ignoredWarnings =
+        {
+            // Code style
+            3220, // This method or property is not normally used from F# code, use an explicit tuple pattern for deconstruction instead.
+
+            // Triggered by unused generic returns
+            3559, // A type has been implicitly inferred as 'obj', which may be unintended. Consider adding explicit type annotations.
+        };
+
+        static readonly int[] enabledWarnings =
+        {
+            // Recursion checked at run time
+            21,
+
+            // Implicit copies of structs
+            52,
+
+            // Implicit equality/comparison
+            1178,
+
+            // Unused anything not starting with `_`
+            1182, // The value '%s' is unused
+            
+            3387, // This expression has type '%s' and is only made compatible with type '%s' through an ambiguous implicit conversion. Consider using an explicit call to 'op_Implicit'.
+            
+            // Additional implicit upcast
+            3388, // This expression implicitly converts type '%s' to type '%s'.
+            
+            // Implicit widening
+            3389, // This expression uses a built-in implicit conversion to convert type '%s' to type '%s'.
+            
+            // Malformed XML doc comments
+            3390, // This XML comment is invalid: '%s'
+
+            // f() should not work for function(object)
+            3397, // This expression uses 'unit' for an 'obj'-typed argument. This will lead to passing 'null' at runtime.
+            
+            // Ineffective inline lambda
+            3517, // The value '%s' was marked 'InlineIfLambda' but was not determined to have a lambda value.
+        };
+
+        static readonly int[] errorWarnings =
+        {
+            // Explicit discard required
+            20, // The result of this expression has type '%s' and is implicitly ignored.
+
+            // No hidden exceptions
+            25, // Incomplete pattern matches on this expression.
+            
+            // Explicit discard required
+            193, // This expression is a function value, i.e. is missing arguments. Its type is %s.
+
+             // Nullness warning
+            3261,
+            
+            // Ineffective inline lambda
+            3517, // The value '%s' was marked 'InlineIfLambda' but was not determined to have a lambda value.
+        };
+
+        static readonly string[] executableFlags =
+        {
             "--subsystemversion:6.00",
             "--standalone",
             "--nointerfacedata",
             "--platform:anycpu",
         };
 
-        static readonly string[] libraryFlags = new[] {
+        static readonly string[] libraryFlags =
+        {
             "--nowin32manifest",
             "--targetprofile:netstandard",
             "--platform:anycpu",
         };
 
-        static readonly string[] scriptFlags = new[] {
+        static readonly string[] scriptFlags =
+        {
             "--targetprofile:netstandard",
         };
 
-        static readonly string[] commonFlags = new[] {
+        static readonly string[] commonFlags =
+        {
             "--debug:embedded",
             "--deterministic+",
 
@@ -378,10 +441,9 @@ namespace Sona.Compiler
             "--simpleresolution",
 
             "--langversion:latest",
-            "--nowarn:3220,3559",
-            // 3559 is triggered by unused generic returns
-            "--warnon:21,52,1178,1182,3387,3388,3389,3397,3390,3517",
-            "--warnaserror+:20,25,193,3261,3517",
+            "--nowarn:" + String.Join(",", ignoredWarnings),
+            "--warnon:" + String.Join(",", enabledWarnings),
+            "--warnaserror+:" + String.Join(",", errorWarnings),
             "--checknulls+",
         };
 
