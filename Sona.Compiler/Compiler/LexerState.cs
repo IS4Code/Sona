@@ -7,15 +7,15 @@ namespace Sona.Compiler
 {
     internal abstract class LexerState
     {
-        protected string Name { get; }
+        public string Name { get; }
 
         public LexerState(string name)
         {
             Name = name;
         }
 
-        public abstract bool ReceiveToken(IToken token);
-
+        public abstract bool OnArgument(IToken token);
+        public abstract bool OnEnd(IToken token);
         public abstract LexerState ForkNew(IToken token);
 
         protected string GetIdentifier(IToken token)

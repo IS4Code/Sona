@@ -61,6 +61,7 @@ namespace Sona.Compiler
             }
 
             var context = new ScriptEnvironment(parser, writer, lexerContext, debugBeginEnd ? "(*begin*)" : "", debugBeginEnd ? "(*end*)" : "");
+            lexerContext.Environment = context;
 
             // Main state to process the chunk
             parser.AddParseListener(new ChunkState(context));

@@ -59,6 +59,18 @@ namespace Sona.Compiler
             }
         }
 
+        public void ReportError(string message, IToken token)
+        {
+            try
+            {
+                throw new SemanticException(message, token);
+            }
+            catch(RecognitionException e)
+            {
+                errors.Add(e);
+            }
+        }
+
         class SemanticException : RecognitionException
         {
             public SemanticException(string message, ParserRuleContext ctx) : base(message, null, null, ctx)
@@ -68,6 +80,11 @@ namespace Sona.Compiler
             }
 
             public SemanticException(string message, ITerminalNode node) : this(message, GetNodeContext(node))
+            {
+
+            }
+
+            public SemanticException(string message, IToken token) : this(message, GetTokenContext(token))
             {
 
             }
@@ -84,6 +101,13 @@ namespace Sona.Compiler
                     : new();
 
                 newContext.Start = newContext.Stop = node.Symbol;
+                return newContext;
+            }
+
+            static ParserRuleContext GetTokenContext(IToken token)
+            {
+                var newContext = new ParserRuleContext();
+                newContext.Start = newContext.Stop = token;
                 return newContext;
             }
         }

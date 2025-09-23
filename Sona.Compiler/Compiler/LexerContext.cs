@@ -8,18 +8,26 @@ using Sona.Grammar;
 
 namespace Sona.Compiler
 {
+    // Progressively updated collection of stacks for each type of lexer context
+    using ContextStacks = ImmutableDictionary<string, ImmutableStack<LexerState>>;
+
     /// <summary>
     /// Maintains a space of entities produced by the lexer which may
     /// be retrieved from the parser, such as documentation comments or pragmas.
     /// </summary>
     internal sealed class LexerContext
     {
-        record struct ContextRecord(int TokenIndex, ImmutableDictionary<string, ImmutableStack<LexerState>> Context);
+        public ScriptEnvironment? Environment { get; internal set; }
+
+        record struct ContextRecord(int TokenIndex, ContextStacks Context);
 
         readonly Queue<ContextRecord> contexts = new();
 
-        ImmutableDictionary<string, ImmutableStack<LexerState>> parserContext;
-        ImmutableDictionary<string, ImmutableStack<LexerState>> lexerContext;
+        // As observed by the parser
+        ContextStacks parserContext;
+
+        // As observed by the lexer
+        ContextStacks lexerContext;
 
         // Pragma parsing
         ParseState state;
@@ -30,7 +38,7 @@ namespace Sona.Compiler
 
         public LexerContext(SonaLexer lexer)
         {
-            parserContext = lexerContext = ImmutableDictionary<string, ImmutableStack<LexerState>>.Empty;
+            parserContext = lexerContext = ContextStacks.Empty;
         }
 
         /// <summary>
@@ -46,25 +54,23 @@ namespace Sona.Compiler
                 AddComment(token);
                 return;
             }
-            if((state == ParseState.PragmaEnd || pragmaOperation == PragmaOperation.Pop) && type == SonaLexer.END_PRAGMA)
-            {
-                // End of pragma requested
-                state = ParseState.None;
-                return;
-            }
             if(currentPragma != null)
             {
-                // Inside a pragma
-                if(!currentPragma.ReceiveToken(token))
-                {
-                    // Last token for this pragma
-                    state = ParseState.PragmaEnd;
-                    currentPragma = null;
-                }
+                // Inside a #pragma when a name was provided
                 if(type == SonaLexer.END_PRAGMA)
                 {
+                    if(!currentPragma.OnEnd(token))
+                    {
+                        // End signal rejected
+                        Error($"Pragma '{currentPragma.Name}' is missing arguments.", token);
+                    }
                     state = ParseState.None;
                     currentPragma = null;
+                    return;
+                }
+                if(!currentPragma.OnArgument(token))
+                {
+                    Error($"Unexpected token '{token.Text}' for pragma '{currentPragma.Name}'.", token);
                 }
                 return;
             }
@@ -80,7 +86,7 @@ namespace Sona.Compiler
                     pragmaOperation = PragmaOperation.Normal;
                     return;
                 case ParseState.Pragma:
-                    // Beginning of pragma - name needed
+                    // Beginning of pragma - name expected
                     if(type != SonaLexer.NAME)
                     {
                         break;
@@ -91,6 +97,7 @@ namespace Sona.Compiler
                         case "push":
                             if(pragmaOperation != PragmaOperation.Normal)
                             {
+                                // Operation already specified
                                 break;
                             }
                             pragmaOperation = PragmaOperation.Push;
@@ -98,18 +105,20 @@ namespace Sona.Compiler
                         case "pop":
                             if(pragmaOperation != PragmaOperation.Normal)
                             {
+                                // Operation already specified
                                 break;
                             }
                             pragmaOperation = PragmaOperation.Pop;
                             return;
                         default:
+                            // Initialize the pragma
                             OnPragma(name, token);
                             return;
                     }
                     break;
             }
             // Fallback
-            throw new Exception($"Unexpected token '{token}' in a channel.");
+            Error($"Unexpected token '{token.Text}'.", token);
         }
 
         /// <summary>
@@ -132,6 +141,11 @@ namespace Sona.Compiler
             }
         }
 
+        private void Error(string message, IToken token)
+        {
+            Environment?.ReportError(message, token);
+        }
+
         /// <summary>
         /// Retrieves a lexer state in the context of the parser's current position.
         /// </summary>
@@ -152,8 +166,7 @@ namespace Sona.Compiler
         enum ParseState
         {
             None,
-            Pragma,
-            PragmaEnd
+            Pragma
         }
 
         enum PragmaOperation
@@ -174,39 +187,47 @@ namespace Sona.Compiler
             switch(pragmaOperation)
             {
                 case PragmaOperation.Pop:
+                    // Remove from the top
                     if(stack.IsEmpty)
                     {
-                        throw new Exception($"'#pragma pop {name}' used without a corresponding 'push'.");
+                        Error($"'#pragma pop {name}' used without a corresponding 'push'.", token);
                     }
-                    stack = stack.Pop();
-                    currentPragma = null;
+                    else
+                    {
+                        stack = stack.Pop();
+                    }
+                    // End of the pragma is handled normally
+                    currentPragma = PopPragma.Instance;
                     break;
                 case PragmaOperation.Push:
                     if(stack.IsEmpty)
                     {
+                        // Create a brand new one
                         currentPragma = CreatePragma(name, token);
-                        stack = stack.Push(currentPragma);
                     }
                     else
                     {
+                        // Duplicate the top one
                         currentPragma = stack.Peek().ForkNew(token);
-                        stack = stack.Push(currentPragma);
                     }
+                    stack = stack.Push(currentPragma);
                     break;
                 default:
                     if(stack.IsEmpty)
                     {
+                        // Create a brand new one
                         currentPragma = CreatePragma(name, token);
-                        stack = stack.Push(currentPragma);
                     }
                     else
                     {
+                        // Replace the top by its duplicate
                         stack = stack.Pop(out currentPragma);
                         currentPragma = currentPragma.ForkNew(token);
-                        stack = stack.Push(currentPragma);
                     }
+                    stack = stack.Push(currentPragma);
                     break;
             }
+            // Update the context at this token
             AddContext(token, name, stack);
         }
 
@@ -291,9 +312,14 @@ namespace Sona.Compiler
                 return new DocComment(token);
             }
 
-            public override bool ReceiveToken(IToken token)
+            public override bool OnArgument(IToken token)
             {
-                throw new NotSupportedException();
+                return false;
+            }
+
+            public override bool OnEnd(IToken token)
+            {
+                return false;
             }
 
             public override IReadOnlyCollection<IToken> ReadTokens()
@@ -301,6 +327,24 @@ namespace Sona.Compiler
                 var result = value.ToImmutable();
                 value.Clear();
                 return result;
+            }
+        }
+
+        /// <summary>
+        /// A singleton pragma for terminating <code>#pragma pop</code>.
+        /// </summary>
+        sealed class PopPragma : EmptyPragma
+        {
+            public static readonly PopPragma Instance = new();
+
+            private PopPragma() : base("pop")
+            {
+
+            }
+
+            public override LexerState ForkNew(IToken token)
+            {
+                return Instance;
             }
         }
 
