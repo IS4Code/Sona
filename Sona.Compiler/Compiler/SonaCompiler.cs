@@ -399,6 +399,9 @@ namespace Sona.Compiler
 
             // No hidden exceptions
             25, // Incomplete pattern matches on this expression.
+
+            // Pattern variables must be lowercase
+            49, // Uppercase variable identifiers should not generally be used in patterns, and may indicate a missing open declaration or a misspelt pattern name.
             
             // Explicit discard required
             193, // This expression is a function value, i.e. is missing arguments. Its type is %s.
