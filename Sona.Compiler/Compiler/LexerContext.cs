@@ -89,33 +89,23 @@ namespace Sona.Compiler
                     // Beginning of pragma - name expected
                     if(type != SonaLexer.NAME)
                     {
+                        // Not a name
                         break;
                     }
                     var name = token.Text;
-                    switch(name)
+                    if(Enum.TryParse(name, true, out PragmaOperation operation) && operation != PragmaOperation.Normal)
                     {
-                        case "push":
-                            if(pragmaOperation != PragmaOperation.Normal)
-                            {
-                                // Operation already specified
-                                break;
-                            }
-                            pragmaOperation = PragmaOperation.Push;
-                            return;
-                        case "pop":
-                            if(pragmaOperation != PragmaOperation.Normal)
-                            {
-                                // Operation already specified
-                                break;
-                            }
-                            pragmaOperation = PragmaOperation.Pop;
-                            return;
-                        default:
-                            // Initialize the pragma
-                            OnPragma(name, token);
-                            return;
+                        if(pragmaOperation != PragmaOperation.Normal)
+                        {
+                            // Operation already specified
+                            break;
+                        }
+                        pragmaOperation = operation;
+                        return;
                     }
-                    break;
+                    // Initialize the pragma
+                    OnPragma(name, token);
+                    return;
             }
             // Fallback
             Error($"Unexpected token '{token.Text}'.", token);
@@ -156,11 +146,17 @@ namespace Sona.Compiler
         /// </returns>
         public TState? GetState<TState>() where TState : LexerState
         {
-            if(!parserContext.TryGetValue(NameCache<TState>.Name, out var stack) || stack.IsEmpty)
+            var stateName = NameCache<TState>.Name;
+            if(!parserContext.TryGetValue(stateName, out var stack) || stack.IsEmpty)
             {
                 return null;
             }
-            return stack.Peek() as TState;
+            if(stack.Peek() is not TState state)
+            {
+                // Nothing in effect
+                return null;
+            }
+            return state;
         }
 
         enum ParseState
@@ -194,41 +190,43 @@ namespace Sona.Compiler
                     }
                     else
                     {
-                        stack = stack.Pop();
+                        stack = stack.Pop(out var current);
                     }
                     // End of the pragma is handled normally
                     currentPragma = PopPragma.Instance;
                     break;
                 case PragmaOperation.Push:
-                    if(stack.IsEmpty)
-                    {
-                        // Create a brand new one
-                        currentPragma = CreatePragma(name, token);
-                    }
-                    else
-                    {
-                        // Duplicate the top one
-                        currentPragma = stack.Peek().ForkNew(token);
-                    }
+                    currentPragma = NewPragma();
                     stack = stack.Push(currentPragma);
                     break;
                 default:
-                    if(stack.IsEmpty)
+                    currentPragma = NewPragma();
+                    if(!stack.IsEmpty)
                     {
-                        // Create a brand new one
-                        currentPragma = CreatePragma(name, token);
-                    }
-                    else
-                    {
-                        // Replace the top by its duplicate
-                        stack = stack.Pop(out currentPragma);
-                        currentPragma = currentPragma.ForkNew(token);
+                        // Replace the top
+                        stack = stack.Pop();
                     }
                     stack = stack.Push(currentPragma);
                     break;
             }
             // Update the context at this token
             AddContext(token, name, stack);
+
+            LexerState NewPragma()
+            {
+                if(stack.IsEmpty)
+                {
+                    // Create a brand new one
+                    return CreatePragma(name, token);
+                }
+                else
+                {
+                    // Duplicate the top one
+                    var top = stack.Peek();
+                    var fork = top.ForkNew(token);
+                    return fork;
+                }
+            }
         }
 
         private LexerState CreatePragma(string name, IToken token)
