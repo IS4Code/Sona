@@ -221,8 +221,8 @@ namespace Sona.Compiler.States
             {
                 return false;
             }
-            NewLineSequence = String.Join("", GetString(token).Select(c => $"\\u{(ushort)c:X4}"));
-            return false;
+            NewLineSequence = String.Join("", Value.Select(c => $"\\u{(ushort)c:X4}"));
+            return true;
         }
     }
 
