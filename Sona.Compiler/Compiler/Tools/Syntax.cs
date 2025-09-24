@@ -22,20 +22,12 @@ namespace Sona.Compiler.Tools
             return name.Length != 0 && !name.EndsWith('`') && !invalidEnclosedIdentifier.IsMatch(name);
         }
 
-        public static string GetStringLiteralValue(string str)
+        private static void Tokenize(string str, Converter<FSharpToken, Unit> visitor)
         {
             var text = SourceText.ofString(str);
-            FSharpToken? token = null;
             FSharpLexer.Tokenize(
                 text,
-                FSharpFunc<FSharpToken, Unit>.FromConverter(tok => {
-                    if(token != null || (!tok.IsStringLiteral && !tok.Kind.IsChar))
-                    {
-                        throw new ArgumentException("Argument does not contain a single string or character literal.", nameof(str));
-                    }
-                    token = tok;
-                    return null!;
-                }),
+                FSharpFunc<FSharpToken, Unit>.FromConverter(visitor),
                 langVersion: null,
                 strictIndentation: null,
                 filePath: null,
@@ -44,16 +36,50 @@ namespace Sona.Compiler.Tools
                 pathMap: null,
                 ct: null
             );
-            if(token is not { } tok)
-            {
-                throw new ArgumentException("Argument is empty.", nameof(str));
-            }
+        }
+
+        public static string GetStringLiteralValue(string str)
+        {
+            FSharpToken? token = null;
+            Tokenize(str, tok => {
+                if(token != null || (!tok.IsStringLiteral && !tok.Kind.IsChar))
+                {
+                    throw new ArgumentException("Argument does not contain a single string or character literal.", nameof(str));
+                }
+                token = tok;
+                return null!;
+            });
+            return GetTokenValue(token);
+        }
+
+        public static string GetIdentifierValue(string str)
+        {
+            FSharpToken? token = null;
+            Tokenize(str, tok => {
+                if(token != null || (!tok.IsIdentifier))
+                {
+                    throw new ArgumentException("Argument does not contain a single identifier.", nameof(str));
+                }
+                token = tok;
+                return null!;
+            });
+            return GetTokenValue(token);
+        }
+
+        private static string GetTokenValue(FSharpToken? token)
+        {
+            token = token ?? throw new ArgumentNullException(nameof(token));
+
             const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.GetProperty;
-            var parserToken = tok.GetType().InvokeMember("tok", flags, null, tok, null)!;
+            var parserToken = token.GetType().InvokeMember("tok", flags, null, token, null)!;
             var item = parserToken.GetType().InvokeMember("Item", flags, null, parserToken, null)!;
             if(item is char c)
             {
                 return c.ToString();
+            }
+            if(item is string s)
+            {
+                return s;
             }
 #if NETCOREAPP2_0_OR_GREATER || NET471_OR_GREATER
             if(item is ITuple t)
@@ -66,7 +92,7 @@ namespace Sona.Compiler.Tools
                 return (string)prop.GetValue(item);
             }
 #endif
-            throw new ArgumentException("Argument is not a recognized literal.", nameof(str));
+            throw new ArgumentException("Argument does not have a recognized value.", nameof(token));
         }
     }
 }

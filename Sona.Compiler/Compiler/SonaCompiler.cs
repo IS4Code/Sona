@@ -2,20 +2,22 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Antlr4.Runtime;
 using FSharp.Compiler.CodeAnalysis;
 using FSharp.Compiler.IO;
 using FSharp.Compiler.Text;
+using Microsoft.FSharp.Control;
+using Microsoft.FSharp.Core;
 using Sona.Compiler.States;
 using Sona.Compiler.Tools;
 using Sona.Grammar;
-using Microsoft.FSharp.Control;
-using Microsoft.FSharp.Core;
 using static FSharp.Compiler.Interactive.Shell;
 
 namespace Sona.Compiler
@@ -29,6 +31,11 @@ namespace Sona.Compiler
             false
 #endif
             ;
+
+        static SonaCompiler()
+        {
+
+        }
 
         public CompilerResult CompileToSource(ICharStream inputStream, TextWriter output, CompilerOptions options)
         {
@@ -239,10 +246,38 @@ namespace Sona.Compiler
 
             foreach(var diagnostic in diagnostics)
             {
+                if(ShouldIgnoreDiagnostic(diagnostic))
+                {
+                    continue;
+                }
                 result.AddDiagnostic(new(diagnostic));
             }
 
             return result;
+        }
+
+        static readonly CultureInfo diagnosticsCulture = new CultureInfo("en");
+
+        static readonly Regex NonRigidTypar1 = Resources.GetRegex("NonRigidTypar1", diagnosticsCulture);
+        static readonly Regex chkUnusedValue = Resources.GetRegex("chkUnusedValue", diagnosticsCulture);
+
+        private static bool ShouldIgnoreDiagnostic(FSharp.Compiler.Diagnostics.FSharpDiagnostic diagnostic)
+        {
+            if(diagnostic.Severity.IsError)
+            {
+                return false;
+            }
+            switch(diagnostic.ErrorNumber)
+            {
+                case 64 when NonRigidTypar1.IsMatch(diagnostic.Message):
+                    // This construct causes code to be less generic than indicated by its type annotations. The type variable implied by the use of a '#', '_' or other type annotation at or near '%s' has been constrained to be type '%s'.
+                    return true;
+                // Compiler-generated unused variables are reported even when they start on _.
+                case 1182 when chkUnusedValue.Match(diagnostic.Message) is { Success: true } match && Syntax.GetIdentifierValue(match.Groups[1].Value).StartsWith("_"):
+                    // The value '%s' is unused
+                    return true;
+            }
+            return false;
         }
 
         public Task<CompilerResult> CompileToBinary(AntlrInputStream inputStream, string fileName, CompilerOptions options, CancellationToken cancellationToken = default)
@@ -277,6 +312,10 @@ namespace Sona.Compiler
 
             foreach(var diagnostic in parseResults.Diagnostics.Concat(fileResults.Diagnostics).Concat(projectResults.Diagnostics).Distinct())
             {
+                if(ShouldIgnoreDiagnostic(diagnostic))
+                {
+                    continue;
+                }
                 result.AddDiagnostic(new(diagnostic));
             }
 
@@ -353,6 +392,9 @@ namespace Sona.Compiler
 
         static readonly int[] ignoredWarnings =
         {
+            // Wildcards are not generics
+            464, // This code is less generic than indicated by its annotations. A unit-of-measure specified using '_' has been determined to be '1', i.e. dimensionless.
+
             // Code style
             3220, // This method or property is not normally used from F# code, use an explicit tuple pattern for deconstruction instead.
 
@@ -438,7 +480,7 @@ namespace Sona.Compiler
             "--debug:embedded",
             "--deterministic+",
 
-            "--preferreduilang:en",
+            "--preferreduilang:" + diagnosticsCulture.Name,
             //"--flaterrors",
             //"--parallelcompilation",
 
