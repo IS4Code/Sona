@@ -72,7 +72,7 @@ namespace Sona.Compiler.States
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
 
-        bool IExpressionContext.IsLiteral => false;
+        ExpressionType IExpressionContext.Type => ExpressionType.Regular;
 
         public ImplementationType? ReturnOptionType { get; private set; }
 
@@ -332,15 +332,15 @@ namespace Sona.Compiler.States
 
     internal sealed class NewVariableState : NodeState, IExpressionContext
     {
-        bool? isLiteral;
+        ExpressionType? type;
 
-        bool IExpressionContext.IsLiteral => isLiteral ??= (FindContext<IExpressionContext>()?.IsLiteral ?? false);
+        ExpressionType IExpressionContext.Type => type ??= (FindContext<IExpressionContext>()?.Type ?? ExpressionType.Regular);
         
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            isLiteral = null;
+            type = null;
         }
 
         public override void EnterVariableDecl(VariableDeclContext context)
@@ -369,7 +369,7 @@ namespace Sona.Compiler.States
 
         public override void EnterMultiDeclAssignment(MultiDeclAssignmentContext context)
         {
-            if(isLiteral == true || (LexerContext.GetState<RecursivePragma>()?.Value ?? false))
+            if(type == ExpressionType.Literal || (LexerContext.GetState<RecursivePragma>()?.Value ?? false))
             {
                 EnterState<RecursiveMultiDeclarationState>().EnterMultiDeclAssignment(context);
             }
@@ -410,7 +410,7 @@ namespace Sona.Compiler.States
             Out.WriteCoreName("LiteralAttribute");
             Out.WriteLine(">]");
             Out.Write("let ");
-            isLiteral = true;
+            type = ExpressionType.Literal;
         }
 
         public override void ExitConstDecl(ConstDeclContext context)
@@ -588,7 +588,7 @@ namespace Sona.Compiler.States
             base.Initialize(environment, parent);
 
             first = true;
-            isLiteral = FindContext<IExpressionContext>()?.IsLiteral ?? false;
+            isLiteral = FindContext<IExpressionContext>()?.Type == ExpressionType.Literal;
         }
 
         public override void EnterMultiDeclAssignment(MultiDeclAssignmentContext context)

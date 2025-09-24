@@ -5,9 +5,11 @@ using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
 {
-    internal class PatternState : NodeState
+    internal class PatternState : NodeState, IExpressionContext
     {
         int parenthesisLevel;
+
+        ExpressionType IExpressionContext.Type => ExpressionType.Pattern;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -108,6 +110,26 @@ namespace Sona.Compiler.States
         }
 
         public sealed override void ExitInlineSourceFree(InlineSourceFreeContext context)
+        {
+
+        }
+
+        public override void EnterUnaryNumberConvertExpr(UnaryNumberConvertExprContext context)
+        {
+            EnterState<NumberConversionState>().EnterUnaryNumberConvertExpr(context);
+        }
+
+        public override void ExitUnaryNumberConvertExpr(UnaryNumberConvertExprContext context)
+        {
+
+        }
+
+        public override void EnterUnaryCharConvertExpr(UnaryCharConvertExprContext context)
+        {
+            EnterState<CharConversionState>().EnterUnaryCharConvertExpr(context);
+        }
+
+        public override void ExitUnaryCharConvertExpr(UnaryCharConvertExprContext context)
         {
 
         }

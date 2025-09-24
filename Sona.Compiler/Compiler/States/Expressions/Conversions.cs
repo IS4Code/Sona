@@ -718,7 +718,7 @@ namespace Sona.Compiler.States
             switch(type)
             {
                 case SonaLexer.INT8:
-                    Out.WriteCoreOperatorName("sbyte");
+                    Out.WriteCustomUnaryOperator("SByte");
                     Out.Write(' ');
                     break;
                 case SonaLexer.UINT8:

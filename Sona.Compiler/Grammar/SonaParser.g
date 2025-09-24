@@ -1443,6 +1443,8 @@ annotationPattern:
 atomicPattern:
   primitiveExpr |
   unit ('(' ')')? |
+  unaryNumberConvertExpr |
+  unaryCharConvertExpr |
   somePattern |
   fullConstructPattern |
   namedPattern |

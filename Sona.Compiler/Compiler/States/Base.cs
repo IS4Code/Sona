@@ -97,7 +97,7 @@ namespace Sona.Compiler
                     Out.WriteOptionNone(OptionImplementationType);
                     break;
                 case SonaLexer.DEFAULT:
-                    if(GetExpressionContext()?.IsLiteral ?? false)
+                    if(GetExpressionContext()?.Type == ExpressionType.Literal)
                     {
                         Out.Write("(new _())");
                     }
@@ -278,7 +278,7 @@ namespace Sona.Compiler
 
         public override void EnterPlainInterpolatedString(PlainInterpolatedStringContext context)
         {
-            if(GetExpressionContext()?.IsLiteral ?? false)
+            if(GetExpressionContext()?.Type == ExpressionType.Literal)
             {
                 EnterState<LiteralNormalInterpolatedString>().EnterPlainInterpolatedString(context);
             }
@@ -290,7 +290,7 @@ namespace Sona.Compiler
 
         public override void EnterVerbatimInterpolatedString(VerbatimInterpolatedStringContext context)
         {
-            if(GetExpressionContext()?.IsLiteral ?? false)
+            if(GetExpressionContext()?.Type == ExpressionType.Literal)
             {
                 EnterState<LiteralVerbatimInterpolatedString>().EnterVerbatimInterpolatedString(context);
             }

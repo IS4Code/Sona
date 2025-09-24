@@ -30,7 +30,7 @@ namespace Sona.Compiler.States
 
         string? IReturnableStatementContext.ReturningVariable => null;
 
-        bool IExpressionContext.IsLiteral => GetExpressionContext()?.IsLiteral ?? false;
+        ExpressionType IExpressionContext.Type => GetExpressionContext()?.Type ?? ExpressionType.Regular;
 
         protected sealed override IExpressionContext? GetExpressionContext()
         {

@@ -7,7 +7,9 @@ namespace Sona.Compiler.States
     {
         IExpressionContext? scope;
 
-        protected bool IsLiteral => GetExpressionContext()?.IsLiteral ?? false;
+        protected ExpressionType Type => GetExpressionContext()?.Type ?? ExpressionType.Regular;
+
+        protected bool IsLiteral => Type == ExpressionType.Literal;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -233,7 +235,7 @@ namespace Sona.Compiler.States
         public override void ExitHashExpr(HashExprContext context)
         {
             Out.Write(')');
-            if(IsLiteral)
+            if(Type == ExpressionType.Literal)
             {
                 Out.Write(".Length");
             }
@@ -302,8 +304,20 @@ namespace Sona.Compiler.States
                 case SonaLexer.INT128:
                 case SonaLexer.UINT128:
                 case SonaLexer.FLOAT16:
+                    bool isPattern = FindContext<IExpressionContext>()?.Type == ExpressionType.Pattern;
+
                     if(token.Type == SonaLexer.BOOL)
                     {
+                        if(isPattern)
+                        {
+                            Out.WriteCustomBinaryOperator("ToTypeOf");
+                            Out.Write('(');
+                            Out.WriteCustomOperator("Default");
+                            Out.WriteOperator(':');
+                            Out.WriteCoreName("bool");
+                            Out.Write(')');
+                            return;
+                        }
                         Out.WriteCustomOperator("Convert");
                         Out.Write("<_,");
                         Out.WriteCoreName("bool");
@@ -311,8 +325,18 @@ namespace Sona.Compiler.States
                         return;
                     }
 
-                    Out.WriteCustomOperator("ConvertInvariant");
-                    Out.Write("<_,");
+                    if(isPattern)
+                    {
+                        Out.WriteCustomBinaryOperator("ToTypeOfInvariant");
+                        Out.Write('(');
+                        Out.WriteCustomOperator("Default");
+                        Out.WriteOperator(':');
+                    }
+                    else
+                    {
+                        Out.WriteCustomOperator("ConvertInvariant");
+                        Out.Write("<_,");
+                    }
                     switch(token.Type)
                     {
                         case SonaLexer.BIGINT:
@@ -328,7 +352,14 @@ namespace Sona.Compiler.States
                             Out.WriteSystemName("Half");
                             break;
                     }
-                    Out.Write('>');
+                    if(isPattern)
+                    {
+                        Out.Write(')');
+                    }
+                    else
+                    {
+                        Out.Write('>');
+                    }
                     return;
                 case SonaLexer.FLOAT32:
                     // Might be 'single'

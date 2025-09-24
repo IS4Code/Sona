@@ -30,7 +30,14 @@ namespace Sona.Compiler.States
 
     internal interface IExpressionContext
     {
-        bool IsLiteral { get; }
+        ExpressionType Type { get; }
+    }
+
+    internal enum ExpressionType
+    {
+        Regular,
+        Literal,
+        Pattern
     }
 
     internal interface IBindingContext

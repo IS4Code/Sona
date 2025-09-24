@@ -8,7 +8,7 @@ namespace Sona.Compiler.States
         bool firstArgument;
         bool isNamed;
 
-        bool IExpressionContext.IsLiteral => true;
+        ExpressionType IExpressionContext.Type => ExpressionType.Literal;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {

@@ -547,7 +547,7 @@ namespace Sona.Compiler.States
         // Main block return is currently ignored
         string? IReturnableStatementContext.ReturnVariable => null;
         string? IReturnableStatementContext.ReturningVariable => null;
-        bool IExpressionContext.IsLiteral => false;
+        ExpressionType IExpressionContext.Type => ExpressionType.Regular;
 
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
 

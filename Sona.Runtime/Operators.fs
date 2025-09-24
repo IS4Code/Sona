@@ -36,6 +36,12 @@ type UnaryOperators2 with
 [<RequireQualifiedAccess>]
 module UnaryOperators =
   let inline Length x = ((^self1 or ^self2 or ^x) : (static member ``operator Length``: ^self1 * ^self2 * ^x -> int) (null : UnaryOperators1), (null : UnaryOperators2), x)
+  
+  let inline SByte x = sbyte x
+
+  [<return: Struct>]
+  let inline (|SByte|_|) x (value : sbyte) =
+    if value = sbyte x then ValueSome() else ValueNone
 
 [<Sealed; AbstractClass; AllowNullLiteral>]
 type BinaryOperators1 = class end
@@ -163,3 +169,15 @@ module BinaryOperators =
   let inline (<&>) x y = And y x
   let inline (>>) x y = RightShift y x
   let inline (<<) x y = LeftShift y x
+
+  let inline ToTypeOf (y : 'TTo) x = Operators.Convert<_, 'TTo> x
+
+  [<return: Struct>]
+  let inline (|ToTypeOf|_|) (y : 'TTo) x value =
+    if value = Operators.Convert<_, 'TTo> x then ValueSome() else ValueNone
+
+  let inline ToTypeOfInvariant (y : 'TTo) x = Operators.ConvertInvariant<_, 'TTo> x
+
+  [<return: Struct>]
+  let inline (|ToTypeOfInvariant|_|) (y : 'TTo) x value =
+    if value = Operators.ConvertInvariant<_, 'TTo> x then ValueSome() else ValueNone

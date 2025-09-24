@@ -13,7 +13,7 @@ namespace Sona.Compiler.States
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
 
-        bool IExpressionContext.IsLiteral => false;
+        ExpressionType IExpressionContext.Type => ExpressionType.Regular;
 
         public ImplementationType? ReturnOptionType { get; private set; }
 
