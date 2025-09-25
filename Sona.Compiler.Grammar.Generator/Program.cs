@@ -51,6 +51,33 @@ namespace Sona.Compiler.Grammar.Generator
 
             WriteGrammar(LoadGrammar<Switch<ImmutableList<string>>>("grammar_switch_trail_interrupted.json"), output, "Trail");
             output.WriteLine();
+
+            WriteGrammar(LoadGrammar<TryCatch<ImmutableList<string>>>("grammar_try_catch.json"), output);
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<TryCatch<ImmutableList<string>>>("grammar_try_catch_no_trail.json"), output);
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<TryCatch<ImmutableList<string>>>("grammar_try_catch_trail.json"), output, "Trail");
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<TryFinally<ImmutableList<string>>>("grammar_try_finally.json"), output);
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<TryFinally<ImmutableList<string>>>("grammar_try_finally_no_trail.json"), output);
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<TryFinally<ImmutableList<string>>>("grammar_try_finally_trail.json"), output, "Trail");
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<TryCatchFinally<ImmutableList<string>>>("grammar_try_catch_finally.json"), output);
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<TryCatchFinally<ImmutableList<string>>>("grammar_try_catch_finally_no_trail.json"), output);
+            output.WriteLine();
+
+            WriteGrammar(LoadGrammar<TryCatchFinally<ImmutableList<string>>>("grammar_try_catch_finally_trail.json"), output, "Trail");
+            output.WriteLine();
         }
 
         static void WriteGrammar(IGrammar grammar, IndentedTextWriter output, string suffix = "")
@@ -138,6 +165,10 @@ namespace Sona.Compiler.Grammar.Generator
                     {
                         case "if":
                             output.WriteSingleBlockCover(mainCategories, "elseif");
+                            output.Write(' ');
+                            break;
+                        case "try":
+                            output.WriteAlternativeBlocks(mainCategories);
                             output.Write(' ');
                             break;
                     }
@@ -260,13 +291,18 @@ namespace Sona.Compiler.Grammar.Generator
                                 case "elseif" or "case":
                                 {
                                     // Deciding block
-                                    output.Write(tag);
+                                    string tagName = tag switch
+                                    {
+                                        "case" => "(case | catchCase)",
+                                        _ => tag
+                                    };
+                                    output.Write(tagName);
 
                                     if(flags == StatementFlags.None)
                                     {
                                         // First case
                                         output.Write(' ');
-                                        output.WriteSingleBlockCover(keys, tag);
+                                        output.WriteSingleBlockCover(keys, tagName);
                                         output.Write(' ');
                                         flags = ToFlags(keys);
                                     }
@@ -278,7 +314,7 @@ namespace Sona.Compiler.Grammar.Generator
 
                                         // Covering block
                                         output.Write('(');
-                                        output.Write(tag);
+                                        output.Write(tagName);
                                         output.Write(' ');
                                         output.WriteAlternativeBlocks(FlagsCoverBlocks(flags));
                                         output.Write(")* ");
@@ -286,12 +322,21 @@ namespace Sona.Compiler.Grammar.Generator
                                     break;
                                 }
 
-                                case "else":
+                                case "else" or "finally":
                                 {
                                     bool isIgnored = keys.Remove("ignored");
                                     if(keys.Count == 0)
                                     {
-                                        // else is missing fully
+                                        // is missing fully
+                                        if(noTrail)
+                                        {
+                                            // Trail was already entered
+                                            if(!tree.Nodes.IsEmpty)
+                                            {
+                                                throw new InvalidOperationException("Trail not expected but there are remaining paths.");
+                                            }
+                                            continue;
+                                        }
                                         break;
                                     }
 
@@ -299,14 +344,15 @@ namespace Sona.Compiler.Grammar.Generator
                                     {
                                         output.Write('(');
                                     }
-                                    output.Write("else ");
+                                    output.Write(tag);
+                                    output.Write(' ');
                                     if(flags == StatementFlags.None)
                                     {
                                         output.WriteAlternativeBlocks(keys);
                                     }
                                     else if(keys.Count == 1)
                                     {
-                                        if(keys.First() == "terminating")
+                                        if(keys.First() == "terminating" || tag == "finally")
                                         {
                                             output.WriteAlternativeBlocks(keys);
                                         }
@@ -320,7 +366,7 @@ namespace Sona.Compiler.Grammar.Generator
                                         var allBlocks = new HashSet<string>();
                                         foreach(var key in keys)
                                         {
-                                            if(key == "terminating")
+                                            if(key == "terminating" || tag == "finally")
                                             {
                                                 allBlocks.Add(key);
                                                 continue;
@@ -617,6 +663,19 @@ namespace Sona.Compiler.Grammar.Generator
         public static void WriteAlternativeTrails(this TextWriter output, IReadOnlyCollection<string> trails)
         {
             WriteAlternatives(output, SimplifyAlternatives(trails, simplifiedTrailNames), ToTrail);
+        }
+
+        public static void WriteSingleBlock(this TextWriter output, IReadOnlyCollection<string> blocks)
+        {
+            switch(blocks.Count)
+            {
+                case 1:
+                    var category = blocks.First();
+                    output.Write(ToBlock(category));
+                    break;
+                default:
+                    throw new ArgumentException("Parameter must have exactly one element.", nameof(blocks));
+            }
         }
 
         public static void WriteSingleBlockCover(this TextWriter output, IReadOnlyCollection<string> blocks, string coverTag)

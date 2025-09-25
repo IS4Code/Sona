@@ -1,0 +1,3401 @@
+{
+  "interrupting": [],
+  "returning": [
+    {
+      "case": ["conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interruptible_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interruptible_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interruptible_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interruptible_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interrupting_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interrupting_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block" ],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block" ],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["interrupting_block", "returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["open_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["open_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["open_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["open_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["open_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["open_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["open_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["open_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["open_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["open_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["open_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["open_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interruptible_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "interruptible_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "interruptible_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "interruptible_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "interruptible_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "interrupting_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"interrupting_block",
+	"returning_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "open_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "open_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "open_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "open_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "open_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "open_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "open_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "open_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "open_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "open_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "interruptible_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "interruptible_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "interruptible_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "interruptible_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "open_block", "interruptible_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": [
+	"terminating_block",
+	"open_block",
+	"interruptible_block",
+	"conditional_block"
+      ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": ["terminating_block", "returning_block", "conditional_block" ],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    }
+  ]
+}

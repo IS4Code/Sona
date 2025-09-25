@@ -1,0 +1,206 @@
+{
+  "conditional": [
+    {
+      "case": [],
+      "finally":"conditional_block",
+      "trail":"conditional_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [],
+      "finally":"interruptible_block",
+      "trail":"conditional_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [],
+      "finally":"open_block",
+      "trail":"conditional_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [],
+      "finally":"conditional_block",
+      "trail":"conditional_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [],
+      "finally":"interruptible_block",
+      "trail":"conditional_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [],
+      "finally":"open_block",
+      "trail":"conditional_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [],
+      "finally":"conditional_block",
+      "trail":"conditional_block",
+      "try":"open_block"
+    },
+    {
+      "case": [],
+      "finally":"interruptible_block",
+      "trail":"conditional_block",
+      "try":"open_block"
+    },
+    {
+      "case": [],
+      "finally":"conditional_block",
+      "trail":"interruptible_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [],
+      "finally":"interruptible_block",
+      "trail":"interruptible_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [],
+      "finally":"open_block",
+      "trail":"interruptible_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [],
+      "finally":"conditional_block",
+      "trail":"interruptible_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [],
+      "finally":"conditional_block",
+      "trail":"interruptible_block",
+      "try":"open_block"
+    },
+    {
+      "case": [],
+      "finally":"conditional_block",
+      "trail":"open_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [],
+      "finally":"interruptible_block",
+      "trail":"open_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [],
+      "finally":"open_block",
+      "trail":"open_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [],
+      "finally":"conditional_block",
+      "trail":"open_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [],
+      "finally":"conditional_block",
+      "trail":"open_block",
+      "try":"open_block"
+    }
+  ],
+  "interruptible": [
+    {
+      "case": [],
+      "finally":"interruptible_block",
+      "trail":"interruptible_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [],
+      "finally":"open_block",
+      "trail":"interruptible_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [],
+      "finally":"interruptible_block",
+      "trail":"interruptible_block",
+      "try":"open_block"
+    }
+  ],
+  "terminating": [
+    {
+      "case": [],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": [],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": [],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": [],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": [],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": [],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": [],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": [],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": [],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": [],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "interrupting": [],
+  "returning": [
+    {
+      "case": [],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"conditional_block"
+    },
+    {
+      "case": [],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interruptible_block"
+    },
+    {
+      "case": [],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": [],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"interrupting_block"
+    },
+    {
+      "case": [],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"open_block"
+    },
+    {
+      "case": [],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": [],
+      "finally":"interruptible_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": [],
+      "finally":"interrupting_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": [],
+      "finally":"open_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": [],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": [],
+      "finally":"terminating_block",
+      "trail":"ignored_block",
+      "try":"returning_block"
+    },
+    {
+      "case": [],
+      "finally":"conditional_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    },
+    {
+      "case": [],
+      "finally":"returning_block",
+      "trail":"ignored_block",
+      "try":"terminating_block"
+    }
+  ]
+}

@@ -363,6 +363,118 @@ has_interrupting_path(switch_statement_trail_interrupted(Cases, Else, Trail)) :-
 
 
 
+% ------------- %
+% try_statement %
+% ------------- %
+
+% Leaves through exactly one of the branches and executes finally afterwards.
+
+% If trail is ignored, there must be no open path.
+has_path(try_statement(Try, Cases, ignored_block, ignored_block)) :- !, has_path(Try), has_all_path(Cases), not_has_open_path(Try), not(has_any_open_path(Cases)).
+has_path(try_statement(Try, Cases, Finally, ignored_block)) :- !, has_all_path([Trail, Try, Finally]), has_all_path(Cases), ((not_has_open_path(Try), not(has_any_open_path(Cases))); not_has_open_path(Finally)).
+
+% If trail is accessible, there must be an open path to it.
+has_path(try_statement(Try, Cases, ignored_block, Trail)) :- !, has_all_path([Trail, Try]), has_all_path(Cases), has_any_open_path([Try, Cases]).
+has_path(try_statement(Try, Cases, Finally, Trail)) :- !, has_all_path([Trail, Try, Finally]), has_all_path(Cases), has_open_path(Finally), has_any_open_path([Try, Cases]).
+
+% If trail is open, it must be accessible.
+has_open_path(try_statement(Try, Cases, Finally, Trail)) :- !, has_open_path(Trail), !, has_path(try_statement(Try, Cases, Finally, Trail)).
+
+% Check trail and find in any part.
+has_returning_path(try_statement(Try, Cases, Finally, Trail)) :- !, has_path(try_statement(Try, Cases, Finally, Trail)), has_any_returning_path([Trail, Try, Finally, Cases]).
+
+% Inner interrupting statements are irrelevant.
+has_interrupting_path(try_statement(Try, Cases, Finally, Trail)) :- !, has_path(try_statement(Try, Cases, Finally, Trail)), has_interrupting_path(Trail).
+
+% ------------------- %
+% try_catch_statement %
+% ------------------- %
+
+has_path(try_catch_statement(Try, Cases, ignored_block, Trail)) :- !, has_path(try_statement(Try, Cases, ignored_block, Trail)).
+has_open_path(try_catch_statement(Try, Cases, ignored_block, Trail)) :- !, has_open_path(try_statement(Try, Cases, ignored_block, Trail)).
+has_returning_path(try_catch_statement(Try, Cases, ignored_block, Trail)) :- !, has_returning_path(try_statement(Try, Cases, ignored_block, Trail)).
+has_interrupting_path(try_catch_statement(Try, Cases, ignored_block, Trail)) :- !, has_interrupting_path(try_statement(Try, Cases, ignored_block, Trail)).
+
+% ---------------------------- %
+% try_catch_statement_no_trail %
+% ---------------------------- %
+
+% Trail must be ignored.
+has_path(try_catch_statement_no_trail(Try, Cases, ignored_block, ignored_block)) :- !, has_path(try_statement(Try, Cases, ignored_block, ignored_block)).
+has_open_path(try_catch_statement_no_trail(Try, Cases, ignored_block, ignored_block)) :- !, has_open_path(try_statement(Try, Cases, ignored_block, ignored_block)).
+has_returning_path(try_catch_statement_no_trail(Try, Cases, ignored_block, ignored_block)) :- !, has_returning_path(try_statement(Try, Cases, ignored_block, ignored_block)).
+has_interrupting_path(try_catch_statement_no_trail(Try, Cases, ignored_block, ignored_block)) :- !, has_interrupting_path(try_statement(Try, Cases, ignored_block, ignored_block)).
+
+% ------------------------- %
+% try_catch_statement_trail %
+% ------------------------- %
+
+% Trail must be accessible.
+has_path(try_catch_statement_trail(Try, Cases, ignored_block, Trail)) :- !, has_path(Trail), has_path(try_statement(Try, Cases, ignored_block, Trail)).
+has_open_path(try_catch_statement_trail(Try, Cases, ignored_block, Trail)) :- !, has_path(Trail), has_open_path(try_statement(Try, Cases, ignored_block, Trail)).
+has_returning_path(try_catch_statement_trail(Try, Cases, ignored_block, Trail)) :- !, has_path(Trail), has_returning_path(try_statement(Try, Cases, ignored_block, Trail)).
+has_interrupting_path(try_catch_statement_trail(Try, Cases, ignored_block, Trail)) :- !, has_path(Trail), has_interrupting_path(try_statement(Try, Cases, ignored_block, Trail)).
+
+% --------------------- %
+% try_finally_statement %
+% --------------------- %
+
+has_path(try_finally_statement(Try, [], Finally, Trail)) :- !, has_path(Finally), has_path(try_statement(Try, [], Finally, Trail)).
+has_open_path(try_finally_statement(Try, [], Finally, Trail)) :- !, has_path(Finally), has_open_path(try_statement(Try, [], Finally, Trail)).
+has_returning_path(try_finally_statement(Try, [], Finally, Trail)) :- !, has_path(Finally), has_returning_path(try_statement(Try, [], Finally, Trail)).
+has_interrupting_path(try_finally_statement(Try, [], Finally, Trail)) :- !, has_path(Finally), has_interrupting_path(try_statement(Try, [], Finally, Trail)).
+
+% ------------------------------ %
+% try_finally_statement_no_trail %
+% ------------------------------ %
+
+% Trail must be ignored.
+has_path(try_finally_statement_no_trail(Try, [], Finally, ignored_block)) :- !, has_path(Finally), has_path(try_statement(Try, [], Finally, ignored_block)).
+has_open_path(try_finally_statement_no_trail(Try, [], Finally, ignored_block)) :- !, has_path(Finally), has_open_path(try_statement(Try, [], Finally, ignored_block)).
+has_returning_path(try_finally_statement_no_trail(Try, [], Finally, ignored_block)) :- !, has_path(Finally), has_returning_path(try_statement(Try, [], Finally, ignored_block)).
+has_interrupting_path(try_finally_statement_no_trail(Try, [], Finally, ignored_block)) :- !, has_path(Finally), has_interrupting_path(try_statement(Try, [], Finally, ignored_block)).
+
+% --------------------------- %
+% try_finally_statement_trail %
+% --------------------------- %
+
+% Trail must be accessible.
+has_path(try_finally_statement_trail(Try, [], Finally, Trail)) :- !, has_path(Trail), has_path(Finally), has_path(try_statement(Try, [], Finally, Trail)).
+has_open_path(try_finally_statement_trail(Try, [], Finally, Trail)) :- !, has_path(Trail), has_path(Finally), has_open_path(try_statement(Try, [], Finally, Trail)).
+has_returning_path(try_finally_statement_trail(Try, [], Finally, Trail)) :- !, has_path(Trail), has_path(Finally), has_returning_path(try_statement(Try, [], Finally, Trail)).
+has_interrupting_path(try_finally_statement_trail(Try, [], Finally, Trail)) :- !, has_path(Trail), has_path(Finally), has_interrupting_path(try_statement(Try, [], Finally, Trail)).
+
+% --------------------------- %
+% try_catch_finally_statement %
+% --------------------------- %
+
+has_path(try_catch_finally_statement(Try, [Case1|Cases], Finally, Trail)) :- !, has_path(Finally), has_path(try_statement(Try, [Case1|Cases], Finally, Trail)).
+has_open_path(try_catch_finally_statement(Try, [Case1|Cases], Finally, Trail)) :- !, has_path(Finally), has_open_path(try_statement(Try, [Case1|Cases], Finally, Trail)).
+has_returning_path(try_catch_finally_statement(Try, [Case1|Cases], Finally, Trail)) :- !, has_path(Finally), has_returning_path(try_statement(Try, [Case1|Cases], Finally, Trail)).
+has_interrupting_path(try_catch_finally_statement(Try, [Case1|Cases], Finally, Trail)) :- !, has_path(Finally), has_interrupting_path(try_statement(Try, [Case1|Cases], Finally, Trail)).
+
+% ------------------------------------ %
+% try_catch_finally_statement_no_trail %
+% ------------------------------------ %
+
+% Trail must be ignored.
+has_path(try_catch_finally_statement_no_trail(Try, [Case1|Cases], Finally, ignored_block)) :- !, has_path(Finally), has_path(try_statement(Try, [Case1|Cases], Finally, ignored_block)).
+has_open_path(try_catch_finally_statement_no_trail(Try, [Case1|Cases], Finally, ignored_block)) :- !, has_path(Finally), has_open_path(try_statement(Try, [Case1|Cases], Finally, ignored_block)).
+has_returning_path(try_catch_finally_statement_no_trail(Try, [Case1|Cases], Finally, ignored_block)) :- !, has_path(Finally), has_returning_path(try_statement(Try, [Case1|Cases], Finally, ignored_block)).
+has_interrupting_path(try_catch_finally_statement_no_trail(Try, [Case1|Cases], Finally, ignored_block)) :- !, has_path(Finally), has_interrupting_path(try_statement(Try, [Case1|Cases], Finally, ignored_block)).
+
+% --------------------------------- %
+% try_catch_finally_statement_trail %
+% --------------------------------- %
+
+% Trail must be accessible.
+has_path(try_catch_finally_statement_trail(Try, [Case1|Cases], Finally, Trail)) :- !, has_path(Trail), has_path(Finally), has_path(try_statement(Try, [Case1|Cases], Finally, Trail)).
+has_open_path(try_catch_finally_statement_trail(Try, [Case1|Cases], Finally, Trail)) :- !, has_path(Trail), has_path(Finally), has_open_path(try_statement(Try, [Case1|Cases], Finally, Trail)).
+has_returning_path(try_catch_finally_statement_trail(Try, [Case1|Cases], Finally, Trail)) :- !, has_path(Trail), has_path(Finally), has_returning_path(try_statement(Try, [Case1|Cases], Finally, Trail)).
+has_interrupting_path(try_catch_finally_statement_trail(Try, [Case1|Cases], Finally, Trail)) :- !, has_path(Trail), has_path(Finally), has_interrupting_path(try_statement(Try, [Case1|Cases], Finally, Trail)).
+
+
+
 % --------- %
 % Execution %
 % --------- %
@@ -416,6 +528,33 @@ analyze_switch_no_trail_interrupted(Blocks, Predicate, Result) :-
 analyze_switch_trail_interrupted(Blocks, Predicate, Result) :-
   setof(result{case:Cases,else:Else,trail:Trail}, (call(Blocks, [Else], Cases, Trail), call(Predicate, switch_statement_trail_interrupted(Cases, Else, Trail))), Result).
 
+analyze_try_catch(Blocks, Predicate, Result) :-
+  setof(result{try:Try,case:Cases,finally:Finally,trail:Trail}, (call(Blocks, [Try, Finally], Cases, Trail), call(Predicate, try_catch_statement(Try, Cases, Finally, Trail))), Result).
+
+analyze_try_finally(Blocks, Predicate, Result) :-
+  setof(result{try:Try,case:Cases,finally:Finally,trail:Trail}, (call(Blocks, [Try, Finally], Cases, Trail), call(Predicate, try_finally_statement(Try, Cases, Finally, Trail))), Result).
+
+analyze_try_catch_finally(Blocks, Predicate, Result) :-
+  setof(result{try:Try,case:Cases,finally:Finally,trail:Trail}, (call(Blocks, [Try, Finally], Cases, Trail), call(Predicate, try_catch_finally_statement(Try, Cases, Finally, Trail))), Result).
+
+analyze_try_catch_no_trail(Blocks, Predicate, Result) :-
+  setof(result{try:Try,case:Cases,finally:Finally,trail:Trail}, (call(Blocks, [Try, Finally], Cases, Trail), call(Predicate, try_catch_statement_no_trail(Try, Cases, Finally, Trail))), Result).
+
+analyze_try_finally_no_trail(Blocks, Predicate, Result) :-
+  setof(result{try:Try,case:Cases,finally:Finally,trail:Trail}, (call(Blocks, [Try, Finally], Cases, Trail), call(Predicate, try_finally_statement_no_trail(Try, Cases, Finally, Trail))), Result).
+
+analyze_try_catch_finally_no_trail(Blocks, Predicate, Result) :-
+  setof(result{try:Try,case:Cases,finally:Finally,trail:Trail}, (call(Blocks, [Try, Finally], Cases, Trail), call(Predicate, try_catch_finally_statement_no_trail(Try, Cases, Finally, Trail))), Result).
+
+analyze_try_catch_trail(Blocks, Predicate, Result) :-
+  setof(result{try:Try,case:Cases,finally:Finally,trail:Trail}, (call(Blocks, [Try, Finally], Cases, Trail), call(Predicate, try_catch_statement_trail(Try, Cases, Finally, Trail))), Result).
+
+analyze_try_finally_trail(Blocks, Predicate, Result) :-
+  setof(result{try:Try,case:Cases,finally:Finally,trail:Trail}, (call(Blocks, [Try, Finally], Cases, Trail), call(Predicate, try_finally_statement_trail(Try, Cases, Finally, Trail))), Result).
+
+analyze_try_catch_finally_trail(Blocks, Predicate, Result) :-
+  setof(result{try:Try,case:Cases,finally:Finally,trail:Trail}, (call(Blocks, [Try, Finally], Cases, Trail), call(Predicate, try_catch_finally_statement_trail(Try, Cases, Finally, Trail))), Result).
+
 analyze_singleton(Analyzer, Predicate, Result) :- call(Analyzer, free_blocks_singleton, Predicate, Result) ; Result = [].
 analyze_loop_singleton(Analyzer, Predicate, Result) :- call(Analyzer, free_loop_blocks_singleton, Predicate, Result) ; Result = [].
 analyze_trailed(Analyzer, Predicate, Result) :- call(Analyzer, special_blocks, Predicate, Result) ; Result = [].
@@ -440,6 +579,45 @@ run :-
   analyze_trailed(analyze_while_true, is_interruptible, WhileTrueInterruptible),
   analyze_trailed(analyze_while_true, is_conditional, WhileTrueConditional),
   save('grammar_while_true.json', result{terminating:WhileTrueTerminating, interrupting:WhileTrueInterrupting, returning:WhileTrueReturning, interruptible:WhileTrueInterruptible, conditional:WhileTrueConditional}),
+  
+  analyze_loop_singleton(analyze_try_catch, is_terminating, TryCatchTerminating),
+  analyze_trailed(analyze_try_catch, is_interruptible, TryCatchInterruptible),
+  analyze_trailed(analyze_try_catch, is_conditional, TryCatchConditional),
+  save('grammar_try_catch.json', result{terminating:TryCatchTerminating, interruptible:TryCatchInterruptible, conditional:TryCatchConditional}),
+  
+  analyze_trailed(analyze_try_catch_no_trail, is_interrupting, TryCatchInterruptingNoTrail),
+  analyze_trailed(analyze_try_catch_no_trail, is_returning, TryCatchReturningNoTrail),
+  save('grammar_try_catch_no_trail.json', result{interrupting:TryCatchInterruptingNoTrail, returning:TryCatchReturningNoTrail}),
+  
+  analyze_trailed(analyze_try_catch_trail, is_interrupting, TryCatchInterruptingTrail),
+  analyze_trailed(analyze_try_catch_trail, is_returning, TryCatchReturningTrail),
+  save('grammar_try_catch_trail.json', result{interrupting:TryCatchInterruptingTrail, returning:TryCatchReturningTrail}),
+  
+  analyze_loop_singleton(analyze_try_finally, is_terminating, TryFinallyTerminating),
+  analyze_trailed(analyze_try_finally, is_interruptible, TryFinallyInterruptible),
+  analyze_trailed(analyze_try_finally, is_conditional, TryFinallyConditional),
+  save('grammar_try_finally.json', result{terminating:TryFinallyTerminating, interruptible:TryFinallyInterruptible, conditional:TryFinallyConditional}),
+  
+  analyze_trailed(analyze_try_finally_no_trail, is_interrupting, TryFinallyInterruptingNoTrail),
+  analyze_trailed(analyze_try_finally_no_trail, is_returning, TryFinallyReturningNoTrail),
+  save('grammar_try_finally_no_trail.json', result{interrupting:TryFinallyInterruptingNoTrail, returning:TryFinallyReturningNoTrail}),
+  
+  analyze_trailed(analyze_try_finally_trail, is_interrupting, TryFinallyInterruptingTrail),
+  analyze_trailed(analyze_try_finally_trail, is_returning, TryFinallyReturningTrail),
+  save('grammar_try_finally_trail.json', result{interrupting:TryFinallyInterruptingTrail, returning:TryFinallyReturningTrail}),
+  
+  analyze_loop_singleton(analyze_try_catch_finally, is_terminating, TryCatchFinallyTerminating),
+  analyze_trailed(analyze_try_catch_finally, is_interruptible, TryCatchFinallyInterruptible),
+  analyze_trailed(analyze_try_catch_finally, is_conditional, TryCatchFinallyConditional),
+  save('grammar_try_catch_finally.json', result{terminating:TryCatchFinallyTerminating, interruptible:TryCatchFinallyInterruptible, conditional:TryCatchFinallyConditional}),
+  
+  analyze_trailed(analyze_try_catch_finally_no_trail, is_interrupting, TryCatchFinallyInterruptingNoTrail),
+  analyze_trailed(analyze_try_catch_finally_no_trail, is_returning, TryCatchFinallyReturningNoTrail),
+  save('grammar_try_catch_finally_no_trail.json', result{interrupting:TryCatchFinallyInterruptingNoTrail, returning:TryCatchFinallyReturningNoTrail}),
+  
+  analyze_trailed(analyze_try_catch_finally_trail, is_interrupting, TryCatchFinallyInterruptingTrail),
+  analyze_trailed(analyze_try_catch_finally_trail, is_returning, TryCatchFinallyReturningTrail),
+  save('grammar_try_catch_finally_trail.json', result{interrupting:TryCatchFinallyInterruptingTrail, returning:TryCatchFinallyReturningTrail}),
   
   analyze_loop_singleton(analyze_switch_simple, is_terminating, SwitchTerminatingSimple),
   analyze_trailed(analyze_switch_simple, is_interruptible, SwitchInterruptibleSimple),

@@ -1328,6 +1328,261 @@ namespace Sona.Compiler.States
                 ExitState().ExitSwitchStatementConditional(context);
             }
         }
+
+        public sealed override void EnterTryCatchStatementFree(TryCatchStatementFreeContext context)
+        {
+            OnEnterInner(StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void ExitTryCatchStatementFree(TryCatchStatementFreeContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitTryCatchStatementFree(context);
+            }
+        }
+
+        public sealed override void EnterTryCatchStatementTerminating(TryCatchStatementTerminatingContext context)
+        {
+            OnEnterInner(StatementFlags.Terminating, context);
+        }
+
+        public sealed override void ExitTryCatchStatementTerminating(TryCatchStatementTerminatingContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.Terminating, context);
+            }
+            finally
+            {
+                ExitState().ExitTryCatchStatementTerminating(context);
+            }
+        }
+
+        public sealed override void EnterTryCatchStatementReturning(TryCatchStatementReturningContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+        }
+
+        public sealed override void ExitTryCatchStatementReturning(TryCatchStatementReturningContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitTryCatchStatementReturning(context);
+            }
+        }
+
+        public sealed override void EnterTryCatchStatementReturningTrail(TryCatchStatementReturningTrailContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+        }
+
+        public sealed override void ExitTryCatchStatementReturningTrail(TryCatchStatementReturningTrailContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitTryCatchStatementReturningTrail(context);
+            }
+        }
+
+        public sealed override void EnterTryCatchStatementConditional(TryCatchStatementConditionalContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void ExitTryCatchStatementConditional(TryCatchStatementConditionalContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitTryCatchStatementConditional(context);
+            }
+        }
+
+        public sealed override void EnterTryFinallyStatementFree(TryFinallyStatementFreeContext context)
+        {
+            OnEnterInner(StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void ExitTryFinallyStatementFree(TryFinallyStatementFreeContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitTryFinallyStatementFree(context);
+            }
+        }
+
+        public sealed override void EnterTryFinallyStatementTerminating(TryFinallyStatementTerminatingContext context)
+        {
+            OnEnterInner(StatementFlags.Terminating, context);
+        }
+
+        public sealed override void ExitTryFinallyStatementTerminating(TryFinallyStatementTerminatingContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.Terminating, context);
+            }
+            finally
+            {
+                ExitState().ExitTryFinallyStatementTerminating(context);
+            }
+        }
+
+        public sealed override void EnterTryFinallyStatementReturning(TryFinallyStatementReturningContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+        }
+
+        public sealed override void ExitTryFinallyStatementReturning(TryFinallyStatementReturningContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitTryFinallyStatementReturning(context);
+            }
+        }
+
+        public sealed override void EnterTryFinallyStatementReturningTrail(TryFinallyStatementReturningTrailContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+        }
+
+        public sealed override void ExitTryFinallyStatementReturningTrail(TryFinallyStatementReturningTrailContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitTryFinallyStatementReturningTrail(context);
+            }
+        }
+
+        public sealed override void EnterTryFinallyStatementConditional(TryFinallyStatementConditionalContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void ExitTryFinallyStatementConditional(TryFinallyStatementConditionalContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitTryFinallyStatementConditional(context);
+            }
+        }
+
+        public sealed override void EnterTryCatchFinallyStatementFree(TryCatchFinallyStatementFreeContext context)
+        {
+            OnEnterInner(StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void ExitTryCatchFinallyStatementFree(TryCatchFinallyStatementFreeContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitTryCatchFinallyStatementFree(context);
+            }
+        }
+
+        public sealed override void EnterTryCatchFinallyStatementTerminating(TryCatchFinallyStatementTerminatingContext context)
+        {
+            OnEnterInner(StatementFlags.Terminating, context);
+        }
+
+        public sealed override void ExitTryCatchFinallyStatementTerminating(TryCatchFinallyStatementTerminatingContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.Terminating, context);
+            }
+            finally
+            {
+                ExitState().ExitTryCatchFinallyStatementTerminating(context);
+            }
+        }
+
+        public sealed override void EnterTryCatchFinallyStatementReturning(TryCatchFinallyStatementReturningContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+        }
+
+        public sealed override void ExitTryCatchFinallyStatementReturning(TryCatchFinallyStatementReturningContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitTryCatchFinallyStatementReturning(context);
+            }
+        }
+
+        public sealed override void EnterTryCatchFinallyStatementReturningTrail(TryCatchFinallyStatementReturningTrailContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+        }
+
+        public sealed override void ExitTryCatchFinallyStatementReturningTrail(TryCatchFinallyStatementReturningTrailContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitTryCatchFinallyStatementReturningTrail(context);
+            }
+        }
+
+        public sealed override void EnterTryCatchFinallyStatementConditional(TryCatchFinallyStatementConditionalContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void ExitTryCatchFinallyStatementConditional(TryCatchFinallyStatementConditionalContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitTryCatchFinallyStatementConditional(context);
+            }
+        }
         #endregion
     }
 
@@ -2805,5 +3060,246 @@ namespace Sona.Compiler.States
     {
         string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
         string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
+    }
+
+    internal abstract class TryStatementBase : ControlStatement, IInterruptibleStatementContext
+    {
+        protected bool HasBranches { get; private set; }
+
+        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
+
+        string? IInterruptibleStatementContext.InterruptingVariable => null;
+
+        bool first;
+        bool hasPattern;
+        bool inCatch;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            HasBranches = false;
+            hasPattern = true;
+            inCatch = false;
+            first = true;
+        }
+
+        private void OnCase(ParserRuleContext context)
+        {
+            if(first)
+            {
+                Out.WriteLine();
+                Out.Write("with");
+                first = false;
+            }
+        }
+
+        public sealed override void EnterCase(CaseContext context)
+        {
+            OnCase(context);
+            Out.WriteLine();
+            Out.Write("| ");
+            hasPattern = false;
+            inCatch = false;
+        }
+
+        public sealed override void ExitCase(CaseContext context)
+        {
+            Out.WriteOperator("->");
+            HasBranches = true;
+        }
+
+        public sealed override void EnterCatchCase(CatchCaseContext context)
+        {
+            OnCase(context);
+            Out.WriteLine();
+            Out.Write("| ");
+            hasPattern = false;
+            inCatch = true;
+        }
+
+        public sealed override void ExitCatchCase(CatchCaseContext context)
+        {
+            Out.WriteOperator("->");
+            HasBranches = true;
+        }
+
+        public override void EnterTry(TryContext context)
+        {
+            Out.Write("try ");
+        }
+
+        public override void ExitTry(TryContext context)
+        {
+
+        }
+
+        public override void EnterFinallyBranch(FinallyBranchContext context)
+        {
+            Out.WriteLine();
+            Out.Write("finally ");
+        }
+
+        public override void ExitFinallyBranch(FinallyBranchContext context)
+        {
+
+        }
+
+        public override void EnterPattern(PatternContext context)
+        {
+            if(inCatch)
+            {
+                Out.Write(":? _ as");
+            }
+            hasPattern = true;
+            Out.Write('(');
+            base.EnterPattern(context);
+        }
+
+        public override void ExitPattern(PatternContext context)
+        {
+            base.ExitPattern(context);
+            Out.Write(')');
+        }
+
+        public sealed override void EnterWhenClause(WhenClauseContext context)
+        {
+            if(!hasPattern)
+            {
+                Out.Write('_');
+                hasPattern = true;
+            }
+            Out.Write(" when(");
+        }
+
+        public sealed override void ExitWhenClause(WhenClauseContext context)
+        {
+            Out.Write(')');
+        }
+
+        public sealed override void EnterExpression(ExpressionContext context)
+        {
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public sealed override void ExitExpression(ExpressionContext context)
+        {
+
+        }
+        
+        void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
+        {
+            Error("COMPILER ERROR: `break` is not supported in `try`.", context);
+        }
+
+        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
+        {
+
+        }
+
+        void IInterruptibleStatementContext.WriteContinue(bool hasExpression, ParserRuleContext context)
+        {
+            Error("COMPILER ERROR: `continue` is not supported in `try`.", context);
+        }
+
+        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
+        {
+
+        }
+    }
+
+    /// <summary>
+    /// <c>try</c> with no trailing statements (free or ignored).
+    /// </summary>
+    internal abstract class TryStatementNoTrail : TryStatementBase
+    {
+        protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
+        {
+            if((flags & StatementFlags.OpenPath) == 0)
+            {
+                // Not open, there will be ignored statements
+                Out.Write("if true then ");
+                Out.WriteLine(_begin_);
+                Out.EnterScope();
+                return;
+            }
+            base.OnEnter(flags, context);
+        }
+
+        protected override void OnExit(StatementFlags flags, ParserRuleContext context)
+        {
+            base.OnExit(flags, context);
+            if((flags & StatementFlags.OpenPath) == 0)
+            {
+                // Exit for ignored statements
+                Out.ExitScope();
+                Out.WriteLine();
+                Out.Write(_end_);
+            }
+        }
+    }
+
+    internal abstract class TryStatementControl : TryStatementBase, IReturnableStatementContext
+    {
+        string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
+        string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
+    }
+
+    internal sealed class TryCatchStatementNoTrail : TryStatementNoTrail
+    {
+
+    }
+
+    internal sealed class TryFinallyStatementNoTrail : TryStatementNoTrail
+    {
+
+    }
+
+    internal sealed class TryCatchFinallyStatementNoTrail : TryStatementNoTrail
+    {
+        public override void EnterTry(TryContext context)
+        {
+            base.EnterTry(context);
+            Out.WriteLine(_begin_);
+            Out.EnterScope();
+            base.EnterTry(context);
+        }
+
+        public override void EnterFinallyBranch(FinallyBranchContext context)
+        {
+            Out.ExitScope();
+            Out.WriteLine();
+            Out.Write(_end_);
+            base.EnterFinallyBranch(context);
+        }
+    }
+
+    internal sealed class TryCatchStatementControl : TryStatementControl
+    {
+
+    }
+
+    internal sealed class TryFinallyStatementControl : TryStatementControl
+    {
+
+    }
+
+    internal sealed class TryCatchFinallyStatementControl : TryStatementControl
+    {
+        public override void EnterTry(TryContext context)
+        {
+            base.EnterTry(context);
+            Out.WriteLine(_begin_);
+            Out.EnterScope();
+            base.EnterTry(context);
+        }
+
+        public override void EnterFinallyBranch(FinallyBranchContext context)
+        {
+            Out.ExitScope();
+            Out.WriteLine();
+            Out.Write(_end_);
+            base.EnterFinallyBranch(context);
+        }
     }
 }

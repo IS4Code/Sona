@@ -196,4 +196,124 @@ namespace Sona.Compiler.Grammar.Generator
             }
         }
     }
+
+    abstract record TryBase<TCollection>(
+        [property: JsonPropertyName("try")] string Try,
+        [property: JsonPropertyName("case")] TCollection Case,
+        [property: JsonPropertyName("finally")] string Finally,
+        [property: JsonPropertyName("trail")] string Trail
+    ) : IGrammarElement where TCollection : IReadOnlyCollection<string>
+    {
+        public abstract string RuleName { get; }
+
+        //public string RuleName => $"try{(Case.Count > 0 ? "Catch" : "")}{(Finally != "ignored_block" ? "Finally" : "")}Statement";
+
+        public IGrammarElement CollapseParts()
+        {
+            var flags = ToFlags(Try);
+            var @try = FromFlags(flags, Try);
+            var cases = new List<string>();
+            bool first = true;
+            foreach(var @case in Case)
+            {
+                var newFlags = ToFlags(@case);
+                if((newFlags & ~flags) == 0 && !first)
+                {
+                    // Flags are already covered
+                    continue;
+                }
+                // Merge new flags
+                flags |= newFlags;
+                cases.Add(FromFlags(flags, @case));
+                first = false;
+            }
+
+            // Keep finally flags unchanged because they are in series
+            var finallyFlags = ToFlags(Finally);
+
+            // Keep trail flags unchanged
+            var trailFlags = ToFlags(Trail);
+
+            return CreateNew(
+                @try,
+                SeqModule.ToList(cases),
+                FromFlags(finallyFlags, Finally),
+                FromFlags(trailFlags, Trail)
+            );
+        }
+
+        protected abstract TryBase<T> CreateNew<T>(string @try, T @case, string @finally, string trail) where T : IReadOnlyCollection<string>;
+
+        public IEnumerable<IEnumerable<KeyValuePair<string, string>>> TreePaths()
+        {
+            return new[] { Normal(), TrailSecond() };
+
+            IEnumerable<KeyValuePair<string, string>> Normal()
+            {
+                yield return new("try", Try);
+                foreach(var @case in Case)
+                {
+                    yield return new("case", @case);
+                }
+                yield return new("finally", Finally);
+                yield return new("trail", Trail);
+            }
+
+            IEnumerable<KeyValuePair<string, string>> TrailSecond()
+            {
+                yield return new("try", Try);
+                yield return new("trail", Trail);
+                foreach(var @case in Case)
+                {
+                    yield return new("case", @case);
+                }
+                yield return new("finally", Finally);
+            }
+        }
+    }
+
+    sealed record TryCatch<TCollection> : TryBase<TCollection> where TCollection : IReadOnlyCollection<string>
+    {
+        public override string RuleName => "tryCatchStatement";
+
+        public TryCatch(string @try, TCollection @case, string @finally, string trail) : base(@try, @case, @finally, trail)
+        {
+
+        }
+
+        protected override TryBase<T> CreateNew<T>(string @try, T @case, string @finally, string trail)
+        {
+            return new TryCatch<T>(@try, @case, @finally, trail);
+        }
+    }
+
+    sealed record TryFinally<TCollection> : TryBase<TCollection> where TCollection : IReadOnlyCollection<string>
+    {
+        public override string RuleName => "tryFinallyStatement";
+
+        public TryFinally(string @try, TCollection @case, string @finally, string trail) : base(@try, @case, @finally, trail)
+        {
+
+        }
+
+        protected override TryBase<T> CreateNew<T>(string @try, T @case, string @finally, string trail)
+        {
+            return new TryFinally<T>(@try, @case, @finally, trail);
+        }
+    }
+
+    sealed record TryCatchFinally<TCollection> : TryBase<TCollection> where TCollection : IReadOnlyCollection<string>
+    {
+        public override string RuleName => "tryCatchFinallyStatement";
+
+        public TryCatchFinally(string @try, TCollection @case, string @finally, string trail) : base(@try, @case, @finally, trail)
+        {
+
+        }
+
+        protected override TryBase<T> CreateNew<T>(string @try, T @case, string @finally, string trail)
+        {
+            return new TryCatchFinally<T>(@try, @case, @finally, trail);
+        }
+    }
 }

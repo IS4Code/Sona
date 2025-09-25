@@ -344,6 +344,81 @@ namespace Sona.Compiler.States
             EnterState<SwitchStatementControl>().EnterSwitchStatementConditional(context);
         }
 
+        public sealed override void EnterTryCatchStatementFree(TryCatchStatementFreeContext context)
+        {
+            EnterState<TryCatchStatementNoTrail>().EnterTryCatchStatementFree(context);
+        }
+
+        public sealed override void EnterTryCatchStatementTerminating(TryCatchStatementTerminatingContext context)
+        {
+            EnterState<TryCatchStatementNoTrail>().EnterTryCatchStatementTerminating(context);
+        }
+
+        public sealed override void EnterTryCatchStatementReturning(TryCatchStatementReturningContext context)
+        {
+            EnterState<TryCatchStatementControl>().EnterTryCatchStatementReturning(context);
+        }
+
+        public sealed override void EnterTryCatchStatementReturningTrail(TryCatchStatementReturningTrailContext context)
+        {
+            EnterState<TryCatchStatementControl>().EnterTryCatchStatementReturningTrail(context);
+        }
+
+        public sealed override void EnterTryCatchStatementConditional(TryCatchStatementConditionalContext context)
+        {
+            EnterState<TryCatchStatementControl>().EnterTryCatchStatementConditional(context);
+        }
+
+        public sealed override void EnterTryFinallyStatementFree(TryFinallyStatementFreeContext context)
+        {
+            EnterState<TryFinallyStatementNoTrail>().EnterTryFinallyStatementFree(context);
+        }
+
+        public sealed override void EnterTryFinallyStatementTerminating(TryFinallyStatementTerminatingContext context)
+        {
+            EnterState<TryFinallyStatementNoTrail>().EnterTryFinallyStatementTerminating(context);
+        }
+
+        public sealed override void EnterTryFinallyStatementReturning(TryFinallyStatementReturningContext context)
+        {
+            EnterState<TryFinallyStatementControl>().EnterTryFinallyStatementReturning(context);
+        }
+
+        public sealed override void EnterTryFinallyStatementReturningTrail(TryFinallyStatementReturningTrailContext context)
+        {
+            EnterState<TryFinallyStatementControl>().EnterTryFinallyStatementReturningTrail(context);
+        }
+
+        public sealed override void EnterTryFinallyStatementConditional(TryFinallyStatementConditionalContext context)
+        {
+            EnterState<TryFinallyStatementControl>().EnterTryFinallyStatementConditional(context);
+        }
+
+        public sealed override void EnterTryCatchFinallyStatementFree(TryCatchFinallyStatementFreeContext context)
+        {
+            EnterState<TryCatchFinallyStatementNoTrail>().EnterTryCatchFinallyStatementFree(context);
+        }
+
+        public sealed override void EnterTryCatchFinallyStatementTerminating(TryCatchFinallyStatementTerminatingContext context)
+        {
+            EnterState<TryCatchFinallyStatementNoTrail>().EnterTryCatchFinallyStatementTerminating(context);
+        }
+
+        public sealed override void EnterTryCatchFinallyStatementReturning(TryCatchFinallyStatementReturningContext context)
+        {
+            EnterState<TryCatchFinallyStatementControl>().EnterTryCatchFinallyStatementReturning(context);
+        }
+
+        public sealed override void EnterTryCatchFinallyStatementReturningTrail(TryCatchFinallyStatementReturningTrailContext context)
+        {
+            EnterState<TryCatchFinallyStatementControl>().EnterTryCatchFinallyStatementReturningTrail(context);
+        }
+
+        public sealed override void EnterTryCatchFinallyStatementConditional(TryCatchFinallyStatementConditionalContext context)
+        {
+            EnterState<TryCatchFinallyStatementControl>().EnterTryCatchFinallyStatementConditional(context);
+        }
+
         public sealed override void EnterInlineSourceFree(InlineSourceFreeContext context)
         {
             EnterState<InlineSource>().EnterInlineSourceFree(context);
