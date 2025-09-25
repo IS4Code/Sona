@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using Antlr4.Runtime;
+using Antlr4.Runtime.Tree;
+using Sona.Grammar;
 using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
@@ -498,6 +500,18 @@ namespace Sona.Compiler.States
         public sealed override void ExitType(TypeContext context)
         {
             base.ExitType(context);
+        }
+
+        public override void VisitTerminal(ITerminalNode node)
+        {
+            base.VisitTerminal(node);
+
+            if(node.Symbol.Type == SonaLexer.INLINE)
+            {
+                Out.Write("[<");
+                Out.WriteCoreName("InlineIfLambdaAttribute");
+                Out.Write(">]");
+            }
         }
     }
 

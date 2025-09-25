@@ -1389,7 +1389,7 @@ paramTuple:
   (declaration (',' declaration)*)?;
 
 declaration:
-  localAttrList ((optionalName | name) ('as' type)? | pattern);
+  localAttrList 'inline'? ((optionalName | name) ('as' type)? | pattern);
 
 optionalName:
   name '?';
