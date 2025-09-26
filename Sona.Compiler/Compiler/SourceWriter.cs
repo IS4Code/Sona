@@ -3,6 +3,7 @@ using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -291,6 +292,25 @@ namespace Sona.Compiler
                     writer.Write(new string(' ', length));
                     return;
             }
+        }
+
+        static readonly char[] escapedChars = { '"', '\r', '\n' };
+
+        public static void WriteStringPart(this ISourceWriter writer, string part)
+        {
+            ReadOnlySpan<char> search = escapedChars.AsSpan();
+
+            int start = 0;
+            while(part.AsSpan(start).IndexOfAny(search) is (not -1) and int offset)
+            {
+                writer.Write(part.Substring(start, offset));
+                writer.Write(@"\u");
+                start += offset;
+                writer.Write(((ushort)part[start]).ToString("X4"));
+                start++;
+            }
+
+            writer.Write(part.Substring(start));
         }
     }
 

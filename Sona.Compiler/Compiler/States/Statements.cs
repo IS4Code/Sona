@@ -421,17 +421,17 @@ namespace Sona.Compiler.States
 
         public sealed override void EnterInlineSourceFree(InlineSourceFreeContext context)
         {
-            EnterState<InlineSource>().EnterInlineSourceFree(context);
+            EnterState<InlineSourceStatement>().EnterInlineSourceFree(context);
         }
 
         public sealed override void EnterInlineSourceReturning(InlineSourceReturningContext context)
         {
-            EnterState<InlineSource>().EnterInlineSourceReturning(context);
+            EnterState<InlineSourceStatement>().EnterInlineSourceReturning(context);
         }
 
         public sealed override void EnterInlineSourceTerminating(InlineSourceTerminatingContext context)
         {
-            EnterState<InlineSource>().EnterInlineSourceTerminating(context);
+            EnterState<InlineSourceStatement>().EnterInlineSourceTerminating(context);
         }
 
         public sealed override void EnterImportStatement(ImportStatementContext context)

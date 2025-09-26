@@ -106,7 +106,7 @@ namespace Sona.Compiler.States
 
         public sealed override void EnterInlineSourceFree(InlineSourceFreeContext context)
         {
-            EnterState<InlineSource>().EnterInlineSourceFree(context);
+            EnterState<InlineSourcePattern>().EnterInlineSourceFree(context);
         }
 
         public sealed override void ExitInlineSourceFree(InlineSourceFreeContext context)

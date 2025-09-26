@@ -3131,57 +3131,66 @@ interpStrExpression:
 /* ---------------- */
 
 inlineSourceFree:
-  BEGIN_INLINE_SOURCE WHITESPACE* inlineSourceLanguage inlineSourceFirstLine inlineSourceLine*
+  BEGIN_INLINE_SOURCE WHITESPACE* inlineSourceLanguage
+    (inlineSourceFSharp | inlineSourceJavaScript | ERROR*)
   END_INLINE_SOURCE WHITESPACE* (END_DIRECTIVE | EOF);
 
 inlineSourceReturning:
-  BEGIN_INLINE_SOURCE WHITESPACE* inlineSourceLanguage inlineSourceFirstLine inlineSourceLine*
+  BEGIN_INLINE_SOURCE WHITESPACE* inlineSourceLanguage
+    (inlineSourceFSharp | inlineSourceJavaScript | ERROR*)
   END_INLINE_SOURCE WHITESPACE* 'return' WHITESPACE* (END_DIRECTIVE | EOF);
 
 inlineSourceTerminating:
-  BEGIN_INLINE_SOURCE WHITESPACE* inlineSourceLanguage inlineSourceFirstLine inlineSourceLine*
+  BEGIN_INLINE_SOURCE WHITESPACE* inlineSourceLanguage
+    (inlineSourceFSharp | inlineSourceJavaScript | ERROR*)
   END_INLINE_SOURCE WHITESPACE* 'throw' WHITESPACE* (END_DIRECTIVE | EOF);
 
 inlineSourceLanguage:
   STRING_LITERAL | VERBATIM_STRING_LITERAL;
 
-inlineSourceFirstLine:
-  // Skip any whitespace before indented token
-  ((FS_WHITESPACE | FS_COMMENT | FS_BEGIN_BLOCK_COMMENT | FS_END_BLOCK_COMMENT)* inlineSourceToken inlineSourcePart*)? inlineSourceWhitespace* inlineSourceLineCutComment?;
+inlineSourceFSharp:
+  inlineSourceFSFirstLine inlineSourceFSLine*;
 
-inlineSourceLine:
+inlineSourceJavaScript:
+  JS_PART+;
+
+inlineSourceFSFirstLine:
+  // Skip any whitespace before indented token
+  ((FS_WHITESPACE | FS_COMMENT | FS_BEGIN_BLOCK_COMMENT | FS_END_BLOCK_COMMENT)* inlineSourceFSToken inlineSourceFSPart*)? inlineSourceFSWhitespace* inlineSourceFSLineCutComment?;
+
+inlineSourceFSLine:
   (
     // Directive includes newline
-    inlineSourceDirective inlineSourcePart* |
-    inlineSourceNewLine (inlineSourceIndentation inlineSourceToken inlineSourcePart*)?
-  ) inlineSourceWhitespace* inlineSourceLineCutComment?;
+    inlineSourceFSDirective inlineSourceFSPart* |
+    inlineSourceFSNewLine (inlineSourceFSIndentation inlineSourceFSToken inlineSourceFSPart*)?
+  ) inlineSourceFSWhitespace* inlineSourceFSLineCutComment?;
 
-inlineSourceNewLine:
+inlineSourceFSNewLine:
   FS_EOL;
 
-inlineSourceIndentation:
+inlineSourceFSIndentation:
   (FS_WHITESPACE | FS_COMMENT | FS_BEGIN_BLOCK_COMMENT | FS_END_BLOCK_COMMENT)*;
 
-inlineSourceToken:
+inlineSourceFSToken:
   FS_PART;
 
-inlineSourcePart:
-  FS_PART | FS_WHITESPACE | inlineSourceLineComment;
+inlineSourceFSPart:
+  FS_PART | FS_WHITESPACE | inlineSourceFSLineComment;
 
-inlineSourceDirective:
+inlineSourceFSDirective:
   FS_DIRECTIVE;
 
-inlineSourceLineComment:
-  FS_COMMENT | FS_BEGIN_BLOCK_COMMENT inlineSourceLineComment* FS_END_BLOCK_COMMENT; 
+inlineSourceFSLineComment:
+  FS_COMMENT | FS_BEGIN_BLOCK_COMMENT inlineSourceFSLineComment* FS_END_BLOCK_COMMENT; 
 
-inlineSourceBlockComment:
-  FS_BEGIN_BLOCK_COMMENT (FS_COMMENT | FS_EOL | inlineSourceBlockComment)* FS_END_BLOCK_COMMENT;
+inlineSourceFSBlockComment:
+  FS_BEGIN_BLOCK_COMMENT (FS_COMMENT | FS_EOL | inlineSourceFSBlockComment)* FS_END_BLOCK_COMMENT;
 
-inlineSourceLineCutComment:
-  FS_BEGIN_BLOCK_COMMENT inlineSourceWhitespace* inlineSourceLineCutComment?;
+inlineSourceFSLineCutComment:
+  FS_BEGIN_BLOCK_COMMENT inlineSourceFSWhitespace* inlineSourceFSLineCutComment?;
 
-inlineSourceWhitespace:
-  FS_WHITESPACE | FS_COMMENT | inlineSourceBlockComment;
+inlineSourceFSWhitespace:
+  FS_WHITESPACE | FS_COMMENT | inlineSourceFSBlockComment;
 
 /* --------- */
 /* Operators */

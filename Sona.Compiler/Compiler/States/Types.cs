@@ -223,7 +223,7 @@ namespace Sona.Compiler.States
         {
             Out.EnterNestedScope();
             Out.Write('(');
-            EnterState<InlineSource>().EnterInlineSourceFree(context);
+            EnterState<InlineSourceType>().EnterInlineSourceFree(context);
         }
 
         public sealed override void ExitInlineSourceFree(InlineSourceFreeContext context)

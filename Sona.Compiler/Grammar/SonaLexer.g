@@ -50,7 +50,7 @@ BEGIN_CHAR:
   '\'' -> pushMode(Char);
 
 COMMENT:
-  '/*' .*? '*/' -> skip;
+  '/*' (~[*] | '*' ~[/])* '*'+ '/' -> skip;
 
 fragment EOL:
   '\r'? ('\n' | EOF);
@@ -910,13 +910,29 @@ CHAR_LITERAL:
 
 mode InlineDirective;
 
-InlineDirective_STRING_LITERAL: STRING_LITERAL -> type(STRING_LITERAL), mode(FS);
-InlineDirective_VERBATIM_STRING_LITERAL: VERBATIM_STRING_LITERAL -> type(VERBATIM_STRING_LITERAL), mode(FS);
+InlineDirective_FS_LITERAL: '"' [fF] ('#' | [sS] [hH] [aA] [rR] [pP]) '"' -> type(STRING_LITERAL), mode(FS);
+InlineDirective_VERBATIM_FS_LITERAL: '@' InlineDirective_FS_LITERAL -> type(VERBATIM_STRING_LITERAL), mode(FS);
+
+InlineDirective_JS_LITERAL: '"' [jJ] ([sS] | [aA] [vV] [aA] [sS] [cC] [rR] [iI] [pP] [tT]) '"' -> type(STRING_LITERAL), mode(JSBegin);
+InlineDirective_VERBATIM_JS_LITERAL: '@' InlineDirective_JS_LITERAL -> type(VERBATIM_STRING_LITERAL), mode(JSBegin);
+
+InlineDirective_STRING_LITERAL: STRING_LITERAL -> type(STRING_LITERAL), mode(InlineUnknown);
+InlineDirective_VERBATIM_STRING_LITERAL: VERBATIM_STRING_LITERAL -> type(VERBATIM_STRING_LITERAL), mode(InlineUnknown);
 
 InlineDirective_COMMENT: COMMENT -> skip;
 InlineDirective_DOC_COMMENT: DOC_COMMENT -> channel(Documentation);
 InlineDirective_LINE_COMMENT: LINE_COMMENT -> skip;
 InlineDirective_WHITESPACE: (WHITESPACE | NEWLINE_ESCAPE) -> type(WHITESPACE);
+
+mode InlineUnknown;
+
+/* Unrecognized language */
+
+END_INLINE_SOURCE:
+  '#endinline' ' '? -> mode(Directive);
+
+InlineUnknown_ERROR:
+  ('#' | ~[#]+) -> type(ERROR);
 
 mode FS;
 
@@ -964,8 +980,8 @@ FS_COMMENT:
 FS_WHITESPACE:
   ' '+;
 
-END_INLINE_SOURCE:
-  EOL '#endinline' ' '? -> mode(Directive);
+FS_END_INLINE_SOURCE:
+  EOL END_INLINE_SOURCE -> type(END_INLINE_SOURCE), mode(Directive);
 
 FS_DIRECTIVE:
   EOL '#' (LOWERCASE | UPPERCASE | DIGIT | '_' | '\'' | UNICODE)*;
@@ -1081,3 +1097,137 @@ FSInterpolation_EOL: FS_EOL -> type(FS_EOL);
 
 FSInterpolation_BEGIN_BLOCK_COMMENT:
   FS_BEGIN_BLOCK_COMMENT -> type(FS_PART), pushMode(FSComment);
+
+mode JS;
+
+/* JavaScript lite mode */
+
+fragment JS_ESCAPE:
+  '\\' .;
+
+fragment JS_EOL:
+  [\n\r\u2028\u2029]+;
+
+fragment JS_KEYWORD:
+  // Ignoring true, false, null, super, this because they form a single expression
+  'break' | 'case' | 'catch' | 'class' | 'const' | 'continue' |
+  'debugger' | 'default' | 'delete' | 'do' | 'else' | 'export' |
+  'extends' | 'finally' | 'for' | 'function' | 'if' | 'import' |
+  'in' | 'instanceof' | 'new' | 'return' | 'switch' | 'throw' |
+  'try' | 'typeof' | 'var' | 'void' | 'while' | 'with' | 'enum';
+
+fragment JS_SOFT_KEYWORD:
+  // Not reserved in certain situations
+  'let' | 'static' | 'yield' | 'await' | 'implements' |
+  'interface' | 'package' | 'private' | 'protected' |
+  'public' | 'of';
+
+fragment JS_BEGIN_REGEXP:
+  // Must appear in combination with constructs that do not end an expression
+  JS_WHITESPACE* (('++' | '--') JS_WHITESPACE*)* '/';
+
+fragment JS_COMMENT_CONTENT:
+  // Already after `/`
+  '/' ~[\n\r\u2028\u2029]* |
+  '*' (~[*] | '*' ~[/])* '*'+ '/';
+
+// There are no parser-specific rules for JS; only JS_PART and END_INLINE_SOURCE must be emitted.
+
+JS_WHITESPACE:
+  // Priority over JS_PART_BEGIN_REGEXP to prevent `//` being matched
+  (
+    [ \t\u000B\f\u00A0\uFEFF]+ |
+    // No need to take semicolon insertion into account
+    JS_EOL |
+    '/' JS_COMMENT_CONTENT
+  ) -> type(JS_PART);
+
+JS_BEGIN_TEMPLATE:
+  '`' -> type(JS_PART), pushMode(JSTemplate);
+
+JS_BEGIN_BLOCK_REGEXP:
+  '{' JS_BEGIN_REGEXP -> type(JS_PART), pushMode(JSBlock), pushMode(JSRegexpBegin);
+
+JS_BEGIN_BLOCK:
+  '{' -> type(JS_PART), pushMode(JSBlock);
+
+JS_END_BLOCK:
+  // When not in block, abandon lexing
+  '}' -> type(JS_PART), mode(InlineUnknown);
+
+JS_PART_BEGIN_REGEXP:
+  // An operator or keyword followed by / must indicate a regexp start
+  (~[\])}a-zA-Z0-9_$. \t\u000B\f\n\r\u0080-\uFFFF] | JS_KEYWORD) JS_BEGIN_REGEXP -> type(JS_PART), pushMode(JSRegexpBegin);
+
+JS_END_INLINE_SOURCE:
+  END_INLINE_SOURCE -> type(END_INLINE_SOURCE), mode(Directive);
+
+JS_AMBIGUOUS:
+  // Interpretation depends on the parser, better leave as error token (if what follows is not a comment)
+  ('++' | '--' | JS_SOFT_KEYWORD) JS_WHITESPACE '/' ~[/*];
+
+JS_PART:
+  // Optimistically any non-whitespace/EOL Unicode character is either an identifier part or is illegal
+  // A member can be a keyword (includes #endinline but JS_END_INLINE_SOURCE has priority)
+  ([.#] JS_WHITESPACE*)? [a-zA-Z0-9_$\u0080-\u2027\u202A-\uFEFE\uFF00-\uFFFF]+ |
+  '"' (JS_ESCAPE | ~["\\])* '"' |
+  '\'' (JS_ESCAPE | ~['\\])*  '\'' |
+  .;
+
+mode JSBegin;
+
+// Only at the beginning, same tokens as above but also recognizes JS_BEGIN_REGEXP
+
+JSBegin_WHITESPACE: JS_WHITESPACE -> mode(JS), type(JS_PART);
+JSBegin_BEGIN_TEMPLATE: JS_BEGIN_TEMPLATE -> mode(JS), type(JS_PART), pushMode(JSTemplate);
+JSBegin_BEGIN_BLOCK_REGEXP: JS_BEGIN_BLOCK_REGEXP -> mode(JS), type(JS_PART), pushMode(JSBlock), pushMode(JSRegexpBegin);
+JSBegin_BEGIN_BLOCK: JS_BEGIN_BLOCK -> mode(JS), type(JS_PART), pushMode(JSBlock);
+JSBegin_END_BLOCK: JS_END_BLOCK -> type(JS_PART), mode(InlineUnknown);
+JSBegin_PART_BEGIN_REGEXP: JS_PART_BEGIN_REGEXP -> mode(JS), type(JS_PART), pushMode(JSRegexpBegin);
+JSBegin_BEGIN_REGEXP: JS_BEGIN_REGEXP -> mode(JS), type(JS_PART), pushMode(JSRegexpBegin);
+JSBegin_END_INLINE_SOURCE: JS_END_INLINE_SOURCE -> type(END_INLINE_SOURCE), mode(Directive);
+JSBegin_AMBIGUOUS: JS_AMBIGUOUS -> mode(JS), type(JS_AMBIGUOUS);
+JSBegin_PART: JS_PART -> mode(JS), type(JS_PART);
+
+mode JSBlock;
+
+// Same as above but inside {...}, so #endinline is not recognized
+
+JSBlock_WHITESPACE: JS_WHITESPACE -> type(JS_PART);
+JSBlock_BEGIN_TEMPLATE: JS_BEGIN_TEMPLATE -> type(JS_PART), pushMode(JSTemplate);
+JSBlock_BEGIN_BLOCK_REGEXP: JS_BEGIN_BLOCK_REGEXP -> type(JS_PART), pushMode(JSBlock), pushMode(JSRegexpBegin);
+JSBlock_BEGIN_BLOCK: JS_BEGIN_BLOCK -> type(JS_PART), pushMode(JSBlock);
+JSBlock_END_BLOCK: JS_END_BLOCK -> type(JS_PART), popMode;
+JSBlock_PART_BEGIN_REGEXP: JS_PART_BEGIN_REGEXP -> type(JS_PART), pushMode(JSRegexpBegin);
+JSBlock_BEGIN_REGEXP: JS_BEGIN_REGEXP -> type(JS_PART), pushMode(JSRegexpBegin);
+JSBlock_AMBIGUOUS: JS_AMBIGUOUS -> type(JS_AMBIGUOUS);
+JSBlock_PART: JS_PART -> type(JS_PART);
+
+mode JSTemplate;
+
+JSTemplate_BEGIN_BLOCK:
+  '${' -> type(JS_PART), pushMode(JSBlock);
+
+JS_END_TEMPLATE:
+  '`' -> popMode;
+
+JSTemplate_PART:
+  (~[`$\\]+ | '$' | JS_ESCAPE) -> type(JS_PART);
+
+mode JSRegexp;
+
+JS_END_REGEXP: (SLASH | JS_EOL) -> type(JS_PART), popMode;
+
+JSRegexp_PART:
+  (
+    '[' ('^'? ']')? (~[\]\\] | '\\' .)* ']' |
+    '\\'? ~[\n\r\u2028\u2029]
+  ) -> type(JS_PART);
+
+mode JSRegexpBegin;
+
+// Same as above but this might actually be a comment
+
+JSRegexpBegin_END_REGEXP: (JS_COMMENT_CONTENT | JS_EOL) -> type(JS_PART), popMode;
+
+JSRegexpBegin_PART: JSRegexp_PART -> mode(JSRegexp), type(JS_PART);
