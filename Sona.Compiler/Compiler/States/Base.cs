@@ -1,5 +1,4 @@
-﻿using Antlr4.Runtime.Tree;
-using Sona.Compiler.States;
+﻿using Sona.Compiler.States;
 using Sona.Grammar;
 using static Sona.Grammar.SonaParser;
 
@@ -319,8 +318,6 @@ namespace Sona.Compiler
         {
             try
             {
-                base.ExitUnaryOperator(context);
-
                 string text = context.GetText();
                 switch(text)
                 {

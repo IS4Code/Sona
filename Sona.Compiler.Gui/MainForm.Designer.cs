@@ -335,7 +335,6 @@ namespace Sona.Compiler.Gui
 
         #endregion
 
-        private SplitContainer diagnosticsSplit;
         private SplitContainer codeSplit;
         private TextBox messageBox;
         private DoubleBufferedRichTextBox resultRichText;
@@ -345,10 +344,6 @@ namespace Sona.Compiler.Gui
         private ToolStripButton zoomButton;
         private ToolStripButton blockDelimitersButton;
         private ToolStripButton adjustLineNumbersButton;
-        private MenuStrip menuStrip;
-        private ToolStripMenuItem saveMenuButton;
-        private ToolStripMenuItem saveAsMenuButton;
-        private ToolStripMenuItem loadMenuButton;
         private ToolStripMenuItem runMenuButton;
         private StatusStrip statusStrip;
         private ToolStripProgressBar progressBar;

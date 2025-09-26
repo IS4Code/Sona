@@ -9,7 +9,7 @@ using Sona.Grammar;
 
 namespace Sona.Compiler
 {
-    internal abstract partial class ScriptState : SonaParserBaseListener
+    internal abstract partial class ScriptState : ParserListener
     {
         public ScriptEnvironment Environment { get; private set; } = null!;
         public ScriptState? Parent { get; private set; }

@@ -199,7 +199,6 @@ namespace Sona.Compiler.States
         {
             AddFill();
             EnterState<Components>().EnterInterpStrComponentFormat(context);
-            base.EnterInterpStrComponentFormat(context);
         }
 
         public sealed override void ExitInterpStrComponentFormat(InterpStrComponentFormatContext context)

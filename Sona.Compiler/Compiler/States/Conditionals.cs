@@ -2278,12 +2278,11 @@ namespace Sona.Compiler.States
         {
             public override void EnterPrimitiveExpr(PrimitiveExprContext context)
             {
-                base.EnterPrimitiveExpr(context);
+
             }
 
             public override void ExitPrimitiveExpr(PrimitiveExprContext context)
             {
-                base.ExitPrimitiveExpr(context);
                 ExitState().ExitPrimitiveExpr(context);
             }
         }

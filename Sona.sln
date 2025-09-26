@@ -12,6 +12,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sona.Compiler.Grammar.Gener
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sona.Compiler.Gui", "Sona.Compiler.Gui\Sona.Compiler.Gui.csproj", "{82C36DC6-E3E3-4B1A-B479-0FC1CAAA4DAD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sona.Compiler.SourceGenerator", "Sona.Compiler.SourceGenerator\Sona.Compiler.SourceGenerator.csproj", "{2C605BEE-BEE6-490C-95FF-8A68523A86CC}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sona.Compiler.Tool", "Sona.Compiler.Tool\Sona.Compiler.Tool.csproj", "{C75CD402-6929-4E58-9F25-132E0793E769}"
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Sona.Shared", "Sona.Shared\Sona.Shared.shproj", "{4765072B-47AA-4944-914E-94FD30FE24D3}"
@@ -46,6 +48,10 @@ Global
 		{C75CD402-6929-4E58-9F25-132E0793E769}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C75CD402-6929-4E58-9F25-132E0793E769}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C75CD402-6929-4E58-9F25-132E0793E769}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C605BEE-BEE6-490C-95FF-8A68523A86CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C605BEE-BEE6-490C-95FF-8A68523A86CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C605BEE-BEE6-490C-95FF-8A68523A86CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C605BEE-BEE6-490C-95FF-8A68523A86CC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -58,6 +58,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Sona.Runtime\Sona.Runtime.fsproj" ReferenceOutputAssembly="false" Private="true" />
+    <ProjectReference Include="..\Sona.Compiler.SourceGenerator\Sona.Compiler.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 
   <ItemGroup>
