@@ -124,7 +124,7 @@ namespace Sona.Compiler.States
                 Out.Write('>');
             }
             Out.EnterNestedScope();
-            Out.WriteLine("(");
+            Out.WriteLine('(');
             EnterState<BlockState>().EnterValueBlock(context);
         }
 
@@ -150,7 +150,7 @@ namespace Sona.Compiler.States
         void IComputationContext.WriteBeginBlockExpression()
         {
             Out.EnterNestedScope();
-            Out.WriteLine("(");
+            Out.WriteLine('(');
         }
 
         void IComputationContext.WriteEndBlockExpression()

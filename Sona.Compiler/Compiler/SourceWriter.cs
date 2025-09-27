@@ -28,6 +28,7 @@ namespace Sona.Compiler
 
         void WriteLine();
         void WriteLine(string text);
+        void WriteLine(char value);
         void WriteLineEnd(string newline);
 
         void UpdateLine(IToken token);
@@ -479,6 +480,17 @@ namespace Sona.Compiler
             }
 
             WriteLine(text);
+        }
+
+        void ISourceWriter.WriteLine(char value)
+        {
+            if(Recording(out var capture))
+            {
+                Record(capture, x => ((ISourceWriter)x).WriteLine(value));
+                return;
+            }
+
+            WriteLine(value);
         }
 
         public void WriteLineEnd(string newline)

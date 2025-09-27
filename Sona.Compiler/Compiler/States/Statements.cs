@@ -647,7 +647,7 @@ namespace Sona.Compiler.States
         void IComputationContext.WriteBeginBlockExpression()
         {
             Out.EnterNestedScope();
-            Out.WriteLine("(");
+            Out.WriteLine('(');
         }
 
         void IComputationContext.WriteEndBlockExpression()

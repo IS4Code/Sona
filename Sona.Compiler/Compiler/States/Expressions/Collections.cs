@@ -296,7 +296,7 @@ namespace Sona.Compiler.States
             Out.EnterNestedScope();
             Out.Write('(');
             Out.WriteCoreOperatorName("seq");
-            Out.WriteLine("{");
+            Out.WriteLine('{');
         }
 
         public override void WriteEndBlockExpression()

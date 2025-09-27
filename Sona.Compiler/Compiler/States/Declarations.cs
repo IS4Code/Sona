@@ -143,7 +143,7 @@ namespace Sona.Compiler.States
                 Out.WriteOptionAbbreviation(optionType);
             }
             Out.WriteOperator('=');
-            Out.WriteLine("(");
+            Out.WriteLine('(');
             Out.EnterScope();
             EnterState<BlockState>().EnterValueBlock(context);
         }
@@ -167,7 +167,7 @@ namespace Sona.Compiler.States
         void IComputationContext.WriteBeginBlockExpression()
         {
             Out.EnterNestedScope();
-            Out.WriteLine("(");
+            Out.WriteLine('(');
         }
 
         void IComputationContext.WriteEndBlockExpression()

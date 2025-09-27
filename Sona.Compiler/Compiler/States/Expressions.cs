@@ -420,7 +420,7 @@ namespace Sona.Compiler.States
         public override void EnterInlineExpr(InlineExprContext context)
         {
             Out.EnterNestedScope();
-            Out.WriteLine("(");
+            Out.WriteLine('(');
         }
 
         public override void ExitInlineExpr(InlineExprContext context)
@@ -444,7 +444,7 @@ namespace Sona.Compiler.States
         public override void WriteBeginBlockExpression()
         {
             Out.EnterNestedScope();
-            Out.WriteLine("(");
+            Out.WriteLine('(');
         }
 
         public override void WriteEndBlockExpression()
