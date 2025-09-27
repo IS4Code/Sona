@@ -295,7 +295,7 @@ namespace Sona.Compiler
             }
         }
 
-        static readonly char[] escapedChars = { '"', '\r', '\n' };
+        static readonly char[] escapedChars = Enumerable.Range(0, 32).Select(i => (char)i).Concat(new[] { '"', '\\' }).ToArray();
 
         public static void WriteStringPart(this ISourceWriter writer, string part)
         {
@@ -305,9 +305,20 @@ namespace Sona.Compiler
             while(part.AsSpan(start).IndexOfAny(search) is (not -1) and int offset)
             {
                 writer.Write(part.Substring(start, offset));
-                writer.Write(@"\u");
                 start += offset;
-                writer.Write(((ushort)part[start]).ToString("X4"));
+                writer.Write(part[start] switch
+                {
+                    '\a' => @"\a",
+                    '\b' => @"\b",
+                    '\f' => @"\f",
+                    '\n' => @"\n",
+                    '\r' => @"\r",
+                    '\t' => @"\t",
+                    '\v' => @"\v",
+                    '\\' => @"\\",
+                    '"' => @"\""",
+                    var c => $@"\u{(ushort)c:X4}"
+                });
                 start++;
             }
 
