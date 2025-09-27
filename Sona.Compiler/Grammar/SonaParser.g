@@ -2712,8 +2712,11 @@ fullConstructPattern:
   basicConstructPattern |
   tupleConstructorPattern;
 
+emptyFieldAssignment:
+  name;
+
 recordConstructorPattern:
-  '{' fieldAssignment patternArgument (',' fieldAssignment patternArgument)* '}';
+  '{' (emptyFieldAssignment ',')* fieldAssignment pattern (',' (fieldAssignment pattern | emptyFieldAssignment))* '}';
 
 arrayConstructorPattern:
   '[' (

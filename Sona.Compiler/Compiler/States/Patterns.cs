@@ -557,6 +557,32 @@ namespace Sona.Compiler.States
             {
                 Out.WriteOperator('=');
             }
+
+            public override void EnterEmptyFieldAssignment(EmptyFieldAssignmentContext context)
+            {
+                if(first)
+                {
+                    first = false;
+                    return;
+                }
+                Out.Write(';');
+            }
+
+            public override void ExitEmptyFieldAssignment(EmptyFieldAssignmentContext context)
+            {
+                Out.WriteOperator('=');
+                Out.Write('_');
+            }
+
+            public override void EnterPattern(PatternContext context)
+            {
+                EnterState<PatternState>().EnterPattern(context);
+            }
+
+            public override void ExitPattern(PatternContext context)
+            {
+
+            }
         }
 
         sealed class TuplePattern : PatternState
