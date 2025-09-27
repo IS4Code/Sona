@@ -52,7 +52,7 @@ namespace Sona.Compiler
 
         protected TState EnterState<TState>() where TState : ScriptState, new()
         {
-            var state = new TState();
+            var state = Tools.StatePool.Get<TState>();
             state.Initialize(Environment, this);
 
             var list = (List<IParseTreeListener>)Environment.Parser.ParseListeners;
@@ -70,6 +70,9 @@ namespace Sona.Compiler
             var list = (List<IParseTreeListener>)Environment.Parser.ParseListeners;
             CollectionsMarshal.AsSpan(list)[0] = Parent ?? Empty.Instance;
             Parent?.ExitLevel();
+
+            Tools.StatePool.Return(this);
+
             return Parent;
         }
 
