@@ -82,20 +82,6 @@ namespace Sona.Compiler.States
         }
     }
 
-    [LexerStateName("echo")]
-    internal sealed class EchoPragma : IdentifierPragma
-    {
-        public EchoPragma() : base("echo")
-        {
-
-        }
-
-        public override LexerState ForkNew(IToken token)
-        {
-            return new EchoPragma();
-        }
-    }
-
     /// <summary>
     /// Represents a pragma taking a single enum argument.
     /// </summary>
@@ -131,6 +117,70 @@ namespace Sona.Compiler.States
         public ClassStructPragma(string name) : base(name)
         {
             
+        }
+    }
+
+    /// <summary>
+    /// Represents a pragma whose argument must be a string.
+    /// </summary>
+    internal abstract class StringPragma : SingleArgumentPragma
+    {
+        public string? Value { get; private set; }
+
+        public StringPragma(string name) : base(name)
+        {
+
+        }
+
+        [MemberNotNullWhen(true, nameof(Value))]
+        public override bool OnArgument(IToken token)
+        {
+            if(!base.OnArgument(token))
+            {
+                return false;
+            }
+            Value = GetString(Token);
+            return true;
+        }
+    }
+
+    internal abstract class BooleanPragma : EnumPragma<BooleanPragma.BooleanLabels>
+    {
+        public new bool? Value => base.Value switch
+        {
+            BooleanLabels.False => false,
+            BooleanLabels.True => true,
+            _ => null
+        };
+
+        public BooleanPragma(string name) : base(name)
+        {
+
+        }
+
+        public enum BooleanLabels
+        {
+            False = 0,
+            Off = 0,
+            Disabled = 0,
+
+            True = 1,
+            On = 1,
+            Enabled = 1
+        }
+    }
+
+    [LexerStateName("echo")]
+    internal sealed class EchoPragma : IdentifierPragma
+    {
+        public EchoPragma() : base("echo")
+        {
+
+        }
+
+        public override LexerState ForkNew(IToken token)
+        {
+            return new EchoPragma();
         }
     }
 
@@ -176,30 +226,6 @@ namespace Sona.Compiler.States
         }
     }
 
-    /// <summary>
-    /// Represents a pragma whose argument must be a string.
-    /// </summary>
-    internal abstract class StringPragma : SingleArgumentPragma
-    {
-        public string? Value { get; private set; }
-
-        public StringPragma(string name) : base(name)
-        {
-
-        }
-
-        [MemberNotNullWhen(true, nameof(Value))]
-        public override bool OnArgument(IToken token)
-        {
-            if(!base.OnArgument(token))
-            {
-                return false;
-            }
-            Value = GetString(Token);
-            return true;
-        }
-    }
-
     [LexerStateName("newline")]
     internal sealed class NewlinePragma : StringPragma
     {
@@ -226,32 +252,6 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal abstract class BooleanPragma : EnumPragma<BooleanPragma.BooleanLabels>
-    {
-        public new bool? Value => base.Value switch
-        {
-            BooleanLabels.False => false,
-            BooleanLabels.True => true,
-            _ => null
-        };
-
-        public BooleanPragma(string name) : base(name)
-        {
-
-        }
-
-        public enum BooleanLabels
-        {
-            False = 0,
-            Off = 0,
-            Disabled = 0,
-
-            True = 1,
-            On = 1,
-            Enabled = 1
-        }
-    }
-
     [LexerStateName("recursive")]
     internal sealed class RecursivePragma : BooleanPragma
     {
@@ -263,6 +263,22 @@ namespace Sona.Compiler.States
         public override LexerState ForkNew(IToken token)
         {
             return new RecursivePragma();
+        }
+    }
+
+    [LexerStateName("collection")]
+    internal sealed class CollectionPragma : EnumPragma<CollectionImplementationType>
+    {
+        public CollectionImplementationType? Type => Value;
+
+        public CollectionPragma() : base("collection")
+        {
+
+        }
+
+        public override LexerState ForkNew(IToken token)
+        {
+            return new CollectionPragma();
         }
     }
 }

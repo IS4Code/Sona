@@ -326,6 +326,8 @@ namespace Sona.Compiler
                     return new NewlinePragma();
                 case "recursive":
                     return new RecursivePragma();
+                case "collection":
+                    return new CollectionPragma();
             }
             throw new Exception($"'{name}' is not recognized as a valid pragma name.");
         }

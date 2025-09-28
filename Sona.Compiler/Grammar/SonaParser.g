@@ -219,10 +219,12 @@ anonymousRecordMemberDeclaration:
 
 typeSuffix:
   arrayTypeSuffix |
+  multiArrayTypeSuffix |
   optionTypeSuffix |
   sequenceTypeSuffix;
 
-arrayTypeSuffix: '[' ','* ']';
+arrayTypeSuffix: '[' ']';
+multiArrayTypeSuffix: '[' ','+ ']';
 optionTypeSuffix: '?';
 sequenceTypeSuffix: '..';
 

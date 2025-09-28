@@ -20,6 +20,7 @@ namespace Sona.Compiler
         protected ImplementationType OptionImplementationType => LexerContext.GetState<OptionPragma>()?.Type ?? ImplementationType.Struct;
         protected ImplementationType TupleImplementationType => LexerContext.GetState<TuplePragma>()?.Type ?? ImplementationType.Struct;
         protected ImplementationType RecordImplementationType => LexerContext.GetState<RecordPragma>()?.Type ?? ImplementationType.Class;
+        protected CollectionImplementationType CollectionImplementationType => LexerContext.GetState<CollectionPragma>()?.Type ?? CollectionImplementationType.Array;
 
         public int StateLevel { get; private set; }
 

@@ -181,6 +181,38 @@ namespace Sona.Compiler
                 ImplementationType.Struct => " |})"
             });
         }
+
+        public static void WriteCollectionOpen(this ISourceWriter writer, CollectionImplementationType collectionType)
+        {
+            writer.Write(collectionType switch
+            {
+                CollectionImplementationType.Array => "[|",
+                CollectionImplementationType.List => "["
+            });
+        }
+
+        public static void WriteCollectionClose(this ISourceWriter writer, CollectionImplementationType collectionType)
+        {
+            writer.Write(collectionType switch
+            {
+                CollectionImplementationType.Array => "|]",
+                CollectionImplementationType.List => "]"
+            });
+        }
+
+        public static void WriteCollectionTypeSuffix(this ISourceWriter writer, CollectionImplementationType collectionType)
+        {
+            switch(collectionType)
+            {
+                case CollectionImplementationType.Array:
+                    writer.Write("[]");
+                    break;
+                case CollectionImplementationType.List:
+                    writer.Write(' ');
+                    writer.WriteCollectionName("list");
+                    break;
+            }
+        }
 #pragma warning restore CS8524
 
         public static void WriteCustomOperator(this ISourceWriter writer, string name)

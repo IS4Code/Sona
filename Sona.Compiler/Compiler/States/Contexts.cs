@@ -60,6 +60,12 @@ namespace Sona.Compiler.States
         Struct
     }
 
+    internal enum CollectionImplementationType
+    {
+        Array,
+        List
+    }
+
     internal interface IInterruptibleStatementContext : IStatementContext
     {
         InterruptFlags Flags { get; }

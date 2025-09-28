@@ -68,7 +68,7 @@ namespace Sona.Compiler.States
 
         public sealed override bool IsCollection => true;
 
-        protected sealed override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
@@ -227,10 +227,21 @@ namespace Sona.Compiler.States
 
     internal sealed class ArrayState : CollectionState
     {
+        CollectionImplementationType collectionType;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            collectionType = default;
+        }
+
         public override void EnterArrayConstructor(ArrayConstructorContext context)
         {
+            collectionType = CollectionImplementationType;
+
             Out.EnterNestedScope();
-            Out.Write("[|");
+            Out.WriteCollectionOpen(collectionType);
         }
 
         public override void ExitArrayConstructor(ArrayConstructorContext context)
@@ -240,20 +251,20 @@ namespace Sona.Compiler.States
                 Out.Write(' ');
             }
             Out.ExitNestedScope();
-            Out.Write("|]");
+            Out.WriteCollectionClose(collectionType);
             ExitState().ExitArrayConstructor(context);
         }
 
         public override void WriteBeginBlockExpression()
         {
             Out.EnterNestedScope();
-            Out.WriteLine("[|");
+            Out.WriteCollectionOpen(collectionType);
         }
 
         public override void WriteEndBlockExpression()
         {
             Out.ExitNestedScope();
-            Out.Write("|]");
+            Out.WriteCollectionClose(collectionType);
         }
     }
 

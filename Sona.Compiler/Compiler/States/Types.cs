@@ -249,10 +249,20 @@ namespace Sona.Compiler.States
 
         public sealed override void EnterArrayTypeSuffix(ArrayTypeSuffixContext context)
         {
-            EnterState<ArraySuffix>().EnterArrayTypeSuffix(context);
+            Out.WriteCollectionTypeSuffix(CollectionImplementationType);
         }
 
         public sealed override void ExitArrayTypeSuffix(ArrayTypeSuffixContext context)
+        {
+
+        }
+
+        public sealed override void EnterMultiArrayTypeSuffix(MultiArrayTypeSuffixContext context)
+        {
+            EnterState<MultiArraySuffix>().EnterMultiArrayTypeSuffix(context);
+        }
+
+        public sealed override void ExitMultiArrayTypeSuffix(MultiArrayTypeSuffixContext context)
         {
 
         }
@@ -435,16 +445,16 @@ namespace Sona.Compiler.States
             }
         }
 
-        sealed class ArraySuffix : NodeState
+        sealed class MultiArraySuffix : NodeState
         {
-            public override void EnterArrayTypeSuffix(ArrayTypeSuffixContext context)
+            public override void EnterMultiArrayTypeSuffix(MultiArrayTypeSuffixContext context)
             {
 
             }
 
-            public override void ExitArrayTypeSuffix(ArrayTypeSuffixContext context)
+            public override void ExitMultiArrayTypeSuffix(MultiArrayTypeSuffixContext context)
             {
-                ExitState().ExitArrayTypeSuffix(context);
+                ExitState().ExitMultiArrayTypeSuffix(context);
             }
 
             public override void VisitTerminal(ITerminalNode node)

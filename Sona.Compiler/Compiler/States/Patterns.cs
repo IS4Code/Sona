@@ -471,18 +471,22 @@ namespace Sona.Compiler.States
         internal sealed class ArrayPattern : PatternState
         {
             bool first;
+            CollectionImplementationType collectionType;
 
             protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
             {
                 base.Initialize(environment, parent);
 
                 first = true;
+                collectionType = default;
             }
 
             public override void EnterArrayConstructorPattern(ArrayConstructorPatternContext context)
             {
+                collectionType = CollectionImplementationType;
+
                 Out.EnterNestedScope();
-                Out.Write("[|");
+                Out.WriteCollectionOpen(collectionType);
             }
 
             public override void ExitArrayConstructorPattern(ArrayConstructorPatternContext context)
@@ -492,7 +496,7 @@ namespace Sona.Compiler.States
                     Out.Write(' ');
                 }
                 Out.ExitNestedScope();
-                Out.Write("|]");
+                Out.WriteCollectionClose(collectionType);
                 ExitState().ExitArrayConstructorPattern(context);
             }
 
