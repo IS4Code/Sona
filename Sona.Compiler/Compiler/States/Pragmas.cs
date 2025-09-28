@@ -221,7 +221,7 @@ namespace Sona.Compiler.States
             {
                 return false;
             }
-            NewLineSequence = String.Join("", Value.Select(c => $"\\u{(ushort)c:X4}"));
+            NewLineSequence = String.Join("", Tools.Syntax.EscapeString(Value));
             return true;
         }
     }

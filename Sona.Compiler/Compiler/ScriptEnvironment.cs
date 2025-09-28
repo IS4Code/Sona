@@ -14,7 +14,7 @@ namespace Sona.Compiler
         readonly ConcurrentBag<RecognitionException> errors = new();
         public IReadOnlyCollection<RecognitionException> Errors => errors;
 
-        public static string DefaultNewLineSequence { get; } = String.Join("", Environment.NewLine.Select(c => $"\\u{(ushort)c:X4}"));
+        public static string DefaultNewLineSequence { get; } = String.Join("", Tools.Syntax.EscapeString(Environment.NewLine));
 
         readonly bool buildParseTreeDefault = Parser.BuildParseTree;
         int buildParseTreeLevel = 0;

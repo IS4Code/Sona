@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
@@ -20,6 +22,33 @@ namespace Sona.Compiler.Tools
         public static bool IsValidEnclosedIdentifierName(string name)
         {
             return name.Length != 0 && !name.EndsWith('`') && !invalidEnclosedIdentifier.IsMatch(name);
+        }
+
+        static readonly char[] escapedChars = Enumerable.Range(0, 32).Select(i => (char)i).Concat(new[] { '"', '\\' }).ToArray();
+        public static IEnumerable<string> EscapeString(string part)
+        {
+            int start = 0;
+            while(part.AsSpan(start).IndexOfAny(escapedChars) is (not -1) and int offset)
+            {
+                yield return part.Substring(start, offset);
+                start += offset;
+                yield return part[start] switch
+                {
+                    '\a' => @"\a",
+                    '\b' => @"\b",
+                    '\f' => @"\f",
+                    '\n' => @"\n",
+                    '\r' => @"\r",
+                    '\t' => @"\t",
+                    '\v' => @"\v",
+                    '\\' => @"\\",
+                    '"' => @"\""",
+                    var c => $@"\u{(ushort)c:X4}"
+                };
+                start++;
+            }
+
+            yield return part.Substring(start);
         }
 
         private static void Tokenize(string str, Converter<FSharpToken, Unit> visitor)
