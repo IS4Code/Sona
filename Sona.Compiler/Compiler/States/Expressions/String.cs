@@ -4,7 +4,19 @@ using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
 {
-    internal class StringState : NodeState
+    internal abstract class StringBaseState : NodeState
+    {
+        protected string NewLineSequence { get; private set; } = "";
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            NewLineSequence = LexerContext.GetState<NewlinePragma>()?.NewLineSequence ?? ScriptEnvironment.DefaultNewLineSequence;
+        }
+    }
+
+    internal class StringState : StringBaseState
     {
         public override void EnterChar(CharContext context)
         {
@@ -50,7 +62,7 @@ namespace Sona.Compiler.States
                     Out.Write(token.Text);
                     break;
                 case SonaLexer.LITERAL_NEWLINE:
-                    Out.Write(LexerContext.GetState<NewlinePragma>()?.NewLineSequence ?? ScriptEnvironment.DefaultNewLineSequence);
+                    Out.Write(NewLineSequence);
                     break;
                 case SonaLexer.LITERAL_ESCAPE_NEWLINE:
                     Out.Write(token.Text.Substring(1));

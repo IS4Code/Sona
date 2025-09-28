@@ -9,7 +9,7 @@ using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
 {
-    internal sealed class InterpolatedString : NodeState
+    internal sealed class InterpolatedString : StringBaseState
     {
         readonly List<string> parts = new();
         string? fillName;
@@ -75,7 +75,7 @@ namespace Sona.Compiler.States
                     parts.Add(token.Text);
                     break;
                 case SonaLexer.LITERAL_NEWLINE:
-                    parts.Add(LexerContext.GetState<NewlinePragma>()?.NewLineSequence ?? ScriptEnvironment.DefaultNewLineSequence);
+                    parts.Add(NewLineSequence);
                     break;
                 case SonaLexer.LITERAL_ESCAPE_NEWLINE:
                     parts.Add(token.Text.Substring(1));
@@ -602,7 +602,7 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal abstract class LiteralInterpolatedString : NodeState
+    internal abstract class LiteralInterpolatedString : StringBaseState
     {
         protected sealed override void OnEnterToken(IToken token)
         {
@@ -650,7 +650,7 @@ namespace Sona.Compiler.States
                     Out.Write(token.Text);
                     break;
                 case SonaLexer.LITERAL_NEWLINE:
-                    Out.Write(LexerContext.GetState<NewlinePragma>()?.NewLineSequence ?? ScriptEnvironment.DefaultNewLineSequence);
+                    Out.Write(NewLineSequence);
                     break;
                 case SonaLexer.LITERAL_ESCAPE_NEWLINE:
                     Out.Write(token.Text.Substring(1));
