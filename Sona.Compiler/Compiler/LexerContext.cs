@@ -23,6 +23,13 @@ namespace Sona.Compiler
 
         readonly Queue<ContextRecord> contexts = new();
 
+        record LexerStateRecord(IToken CreatedAt)
+        {
+            public IToken? RemovedAt { get; set; }
+        }
+
+        readonly Dictionary<LexerState, LexerStateRecord> activeStates = new(Tools.ReferenceEqualityComparer<LexerState>.Instance);
+
         // As observed by the parser
         ContextStacks parserContext;
 
@@ -32,7 +39,7 @@ namespace Sona.Compiler
         // Pragma parsing
         ParseState state;
         PragmaOperation pragmaOperation;
-        LexerState? currentPragma;
+        LexerState? currentlyLexedPragma;
 
         const string docCommentStateName = "#C";
 
@@ -54,23 +61,23 @@ namespace Sona.Compiler
                 AddComment(token);
                 return;
             }
-            if(currentPragma != null)
+            if(currentlyLexedPragma != null)
             {
                 // Inside a #pragma when a name was provided
                 if(type == SonaLexer.END_PRAGMA)
                 {
-                    if(!currentPragma.OnEnd(token))
+                    if(!currentlyLexedPragma.OnEnd(token))
                     {
                         // End signal rejected
-                        Error($"Pragma '{currentPragma.Name}' is missing arguments.", token);
+                        Error($"Pragma '{currentlyLexedPragma.Name}' is missing arguments.", token);
                     }
                     state = ParseState.None;
-                    currentPragma = null;
+                    currentlyLexedPragma = null;
                     return;
                 }
-                if(!currentPragma.OnArgument(token))
+                if(!currentlyLexedPragma.OnArgument(token))
                 {
-                    Error($"Unexpected token '{token.Text}' for pragma '{currentPragma.Name}'.", token);
+                    Error($"Unexpected token '{token.Text}' for pragma '{currentlyLexedPragma.Name}'.", token);
                 }
                 return;
             }
@@ -147,14 +154,39 @@ namespace Sona.Compiler
         public TState? GetState<TState>() where TState : LexerState
         {
             var stateName = NameCache<TState>.Name;
-            if(!parserContext.TryGetValue(stateName, out var stack) || stack.IsEmpty)
-            {
-                return null;
-            }
-            if(stack.Peek() is not TState state)
+            if(!parserContext.TryGetValue(stateName, out var stack) || stack.IsEmpty || stack.Peek() is not TState state)
             {
                 // Nothing in effect
                 return null;
+            }
+            while(state.Lifetime == LexerStateLifetime.Temporary)
+            {
+                // Pop locally
+                stack = stack.Pop();
+
+                // This is only an optimization for the current parser context,
+                // the lexer context could be well ahead and contain the old stack,
+                // which is why another collection is necessary to track
+                // if the state was actually used or not.
+                parserContext = parserContext.SetItem(stateName, stack);
+
+                if(activeStates.Remove(state))
+                {
+                    // Not used before
+                    return state;
+                }
+
+                if(stack.IsEmpty)
+                {
+                    return null;
+                }
+
+                if(stack.Peek() is not TState nextState)
+                {
+                    // Nothing in effect
+                    return null;
+                }
+                state = nextState;
             }
             return state;
         }
@@ -169,7 +201,8 @@ namespace Sona.Compiler
         {
             Normal,
             Push,
-            Pop
+            Pop,
+            Once
         }
 
         private void OnPragma(string name, IToken token)
@@ -183,49 +216,97 @@ namespace Sona.Compiler
             switch(pragmaOperation)
             {
                 case PragmaOperation.Pop:
+                    // End of the pragma is handled normally
+                    currentlyLexedPragma = PopPragma.Instance;
+
                     // Remove from the top
                     if(stack.IsEmpty)
                     {
                         Error($"'#pragma pop {name}' used without a corresponding 'push'.", token);
+                        break;
                     }
-                    else
+
+                    stack = stack.Pop(out var currentState);
+                    while(currentState.Lifetime > LexerStateLifetime.Permanent)
                     {
-                        stack = stack.Pop(out var current);
+                        // This pragma is parser-controlled, so either it will have been already removed, or the program is invalid
+                        MarkShadowedPragma(currentState, token);
+                        if(stack.IsEmpty)
+                        {
+                            break;
+                        }
+                        stack = stack.Pop(out currentState);
                     }
-                    // End of the pragma is handled normally
-                    currentPragma = PopPragma.Instance;
+                    if(currentState.Lifetime == LexerStateLifetime.Permanent)
+                    {
+                        // Lexer-controlled pragma
+                        activeStates.Remove(currentState);
+                    }
                     break;
                 case PragmaOperation.Push:
-                    currentPragma = NewPragma();
-                    stack = stack.Push(currentPragma);
+                    currentlyLexedPragma = NewPragma(LexerStateLifetime.Permanent);
+                    stack = stack.Push(currentlyLexedPragma);
+                    break;
+                case PragmaOperation.Once:
+                    currentlyLexedPragma = NewPragma(LexerStateLifetime.Temporary);
+                    stack = stack.Push(currentlyLexedPragma);
                     break;
                 default:
-                    currentPragma = NewPragma();
+                    currentlyLexedPragma = NewPragma(LexerStateLifetime.Permanent);
                     if(!stack.IsEmpty)
                     {
                         // Replace the top
                         stack = stack.Pop();
                     }
-                    stack = stack.Push(currentPragma);
+                    stack = stack.Push(currentlyLexedPragma);
                     break;
             }
+
             // Update the context at this token
             AddContext(token, name, stack);
 
-            LexerState NewPragma()
+            LexerState NewPragma(LexerStateLifetime lifetime)
             {
+                if(lifetime != LexerStateLifetime.Permanent)
+                {
+                    // Remove any pragmas shadowed by the new one
+                    while(!stack.IsEmpty)
+                    {
+                        // A copy of the stack
+                        var poppedStack = stack.Pop(out var topState);
+                        if(topState.Lifetime < lifetime)
+                        {
+                            break;
+                        }
+                        // Assume any parser-controlled pragma with the same or shorter lifetime will have been removed
+                        stack = poppedStack;
+                        MarkShadowedPragma(topState, token);
+                    }
+                }
+
+                LexerState newPragma;
                 if(stack.IsEmpty)
                 {
                     // Create a brand new one
-                    return CreatePragma(name, token);
+                    newPragma = CreatePragma(name, token);
                 }
                 else
                 {
                     // Duplicate the top one
-                    var top = stack.Peek();
-                    var fork = top.ForkNew(token);
-                    return fork;
+                    var topState = stack.Peek();
+                    newPragma = topState.ForkNew(token);
                 }
+                newPragma.Lifetime = lifetime;
+                activeStates[newPragma] = new(token);
+                return newPragma;
+            }
+        }
+
+        private void MarkShadowedPragma(LexerState state, IToken token)
+        {
+            if(activeStates.TryGetValue(state, out var pragmaRecord))
+            {
+                pragmaRecord.RemovedAt ??= token;
             }
         }
 

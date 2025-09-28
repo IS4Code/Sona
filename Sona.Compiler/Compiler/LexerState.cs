@@ -9,6 +9,8 @@ namespace Sona.Compiler
     {
         public string Name { get; }
 
+        public LexerStateLifetime Lifetime { get; internal set; }
+
         public LexerState(string name)
         {
             Name = name;
@@ -52,5 +54,11 @@ namespace Sona.Compiler
         {
             Name = name;
         }
+    }
+
+    internal enum LexerStateLifetime
+    {
+        Permanent,
+        Temporary
     }
 }
