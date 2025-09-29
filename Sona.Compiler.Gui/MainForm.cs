@@ -938,6 +938,11 @@ ReadKey(true)!");
 
                 var resultText = result.IntermediateCode ?? "";
 
+                if(result.GlobalCode?.Length > 0)
+                {
+                    resultText = result.GlobalCode + Environment.NewLine + resultText;
+                }
+
                 Invoke(() => {
                     if(latest)
                     {

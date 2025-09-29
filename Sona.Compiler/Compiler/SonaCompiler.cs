@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -61,13 +62,15 @@ namespace Sona.Compiler
             writer.AdjustLines = (options.Flags & CompilerFlags.IgnoreLineNumbers) == 0;
             writer.SkipEmptyLines = !debugBeginEnd;
 
+            using var globalWriter = new SourceWriter(new StringWriter(result.GlobalCode = new()));
+
             if(!debugging)
             {
                 // Parse tree shall be kept only in localized cases
                 parser.BuildParseTree = false;
             }
 
-            var context = new ScriptEnvironment(parser, writer, lexerContext, debugBeginEnd ? "(*begin*)" : "", debugBeginEnd ? "(*end*)" : "");
+            var context = new ScriptEnvironment(parser, writer, globalWriter, lexerContext, debugBeginEnd ? "(*begin*)" : "", debugBeginEnd ? "(*end*)" : "");
             lexerContext.Environment = context;
 
             // Main state to process the chunk
@@ -215,7 +218,7 @@ namespace Sona.Compiler
             var result = CompileToString(inputStream, options);
             var source = result.IntermediateCode!;
 
-            var fs = GetFileSystem(source, fileName, options, out var inputPath, out var outputPath, out var manifestPath, out var depsPath);
+            var fs = GetFileSystem(PrepareCode(source, result), fileName, options, out var inputPath, out var outputPath, out var manifestPath, out var depsPath);
 
             fs.OutputFiles[outputPath] = outputStream;
 
@@ -285,6 +288,21 @@ namespace Sona.Compiler
             return CompileToStream(inputStream, fileName, new BlockBufferStream(), options, cancellationToken: cancellationToken);
         }
 
+        private string PrepareCode(string source, CompilerResult result)
+        {
+            if(result.GlobalCode?.Length > 0)
+            {
+                var newResult = new StringBuilder();
+                newResult.Append(result.GlobalCode);
+                newResult.Append(Environment.NewLine);
+                newResult.Append(source);
+                newResult.Append(Environment.NewLine);
+                newResult.Append("()");
+                return newResult.ToString();
+            }
+            return source + Environment.NewLine + "()";
+        }
+
         readonly ConcurrentDictionary<CompilerOptions, FsiEvaluationSession> sessionCache = new();
 
         private FsiEvaluationSession CheckEvaluation(CompilerResult result, string manifestPath, string depsPath, CompilerOptions options)
@@ -307,8 +325,10 @@ namespace Sona.Compiler
                 return FsiEvaluationSession.Create(config, args, Console.In, Console.Out, Console.Error, collectible: true, legacyReferenceResolver: null);
             });
 
+            string source = PrepareCode(result.IntermediateCode!, result);
+
             // Check for errors separately 
-            var (parseResults, fileResults, projectResults) = session.ParseAndCheckInteraction(result.IntermediateCode!);
+            var (parseResults, fileResults, projectResults) = session.ParseAndCheckInteraction(source);
 
             foreach(var diagnostic in parseResults.Diagnostics.Concat(fileResults.Diagnostics).Concat(projectResults.Diagnostics).Distinct())
             {
@@ -359,9 +379,9 @@ namespace Sona.Compiler
 
             Task EvalInteraction()
             {
-                var (result, diagnostics) = session.EvalInteractionNonThrowing(source + Environment.NewLine + "()", inputPath, cancelTokenOption);
+                var (evalResult, evalDiagnostics) = session.EvalInteractionNonThrowing(PrepareCode(source, result), inputPath, cancelTokenOption);
 
-                if(result is FSharpChoice<FSharpOption<FsiValue>, Exception>.Choice2Of2 { Item: { } exception })
+                if(evalResult is FSharpChoice<FSharpOption<FsiValue>, Exception>.Choice2Of2 { Item: { } exception })
                 {
                     // Unwrap exception
                     return Task.FromException(exception);

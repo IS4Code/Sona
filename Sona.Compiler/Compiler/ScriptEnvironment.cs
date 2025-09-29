@@ -1,18 +1,22 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 
 namespace Sona.Compiler
 {
-    internal record class ScriptEnvironment(Parser Parser, ISourceWriter Output, LexerContext LexerContext, string Begin, string End)
+    internal record class ScriptEnvironment(Parser Parser, ISourceWriter Output, ISourceWriter GlobalOutput, LexerContext LexerContext, string Begin, string End)
     {
         public string ErrorIdentifier => "<error>";
+        public string GlobalModuleIdentifier => "<" + nameof(Sona) + ">";
 
         readonly ConcurrentBag<RecognitionException> errors = new();
         public IReadOnlyCollection<RecognitionException> Errors => errors;
+
+        ConcurrentDictionary<string, Microsoft.FSharp.Core.Unit?>? globalSymbols;
+        public ICollection<string> DefinedGlobalSymbols => globalSymbols?.Keys ?? Array.Empty<string>();
 
         public static string DefaultNewLineSequence { get; } = String.Join("", Tools.Syntax.EscapeString(Environment.NewLine));
 
@@ -33,6 +37,20 @@ namespace Sona.Compiler
             {
                 Parser.BuildParseTree = buildParseTreeDefault;
             }
+        }
+
+        public bool DefineGlobalSymbol(string name)
+        {
+            if(Interlocked.CompareExchange(ref globalSymbols, new(), null) == null)
+            {
+                // Initialize the module
+                GlobalOutput.Write("module internal ");
+                GlobalOutput.WriteIdentifier(GlobalModuleIdentifier);
+                GlobalOutput.WriteOperator('=');
+                GlobalOutput.WriteLine();
+                GlobalOutput.EnterScope();
+            }
+            return globalSymbols.TryAdd(name, null);
         }
 
         public void ReportError(string message, ParserRuleContext context)

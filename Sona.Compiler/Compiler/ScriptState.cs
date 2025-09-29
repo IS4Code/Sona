@@ -15,6 +15,7 @@ namespace Sona.Compiler
         public ScriptState? Parent { get; private set; }
 
         protected ISourceWriter Out => Environment.Output;
+        protected ISourceWriter GlobalOut => Environment.GlobalOutput;
         protected LexerContext LexerContext => Environment.LexerContext;
 
         protected ImplementationType OptionImplementationType => LexerContext.GetState<OptionPragma>()?.Type ?? ImplementationType.Struct;

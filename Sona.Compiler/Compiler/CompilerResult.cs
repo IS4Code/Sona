@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Antlr4.Runtime;
@@ -17,6 +18,7 @@ namespace Sona.Compiler
         public CompilerOptions Options { get; }
         public Exception? Exception { get; internal set; }
         public string? IntermediateCode { get; internal set; }
+        public StringBuilder? GlobalCode { get; internal set; }
         public Stream? Stream { get; internal set; }
 
         public IReadOnlyCollection<CompilerDiagnostic> Diagnostics => diagnostics;
