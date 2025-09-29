@@ -28,7 +28,7 @@ namespace Sona.Compiler.Tools
 
         public override bool FileExistsShim(string fileName)
         {
-            if(fileName.StartsWith(FileNamePrefix, StringComparison.Ordinal))
+            if(fileName.StartsWith(FileNamePrefix, StringComparison.Ordinal) && (InputFiles.ContainsKey(fileName) || OutputFiles.ContainsKey(fileName)))
             {
                 return true;
             }
