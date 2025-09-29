@@ -51,6 +51,12 @@ namespace Sona.Compiler.Tools
             yield return part.Substring(start);
         }
 
+        static readonly char[] nameTrimChars = { '@' };
+        public static string GetIdentifierFromName(string name)
+        {
+            return name.TrimStart(nameTrimChars);
+        }
+
         private static void Tokenize(string str, Converter<FSharpToken, Unit> visitor)
         {
             var text = SourceText.ofString(str);

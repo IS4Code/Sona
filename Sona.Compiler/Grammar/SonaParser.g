@@ -2666,6 +2666,7 @@ atomicPattern:
   unaryCharConvertExpr |
   somePattern |
   fullConstructPattern |
+  memberTestPattern |
   namedPattern |
   memberPattern |
   nestedPattern;
@@ -2740,6 +2741,9 @@ structTupleConstructorPattern:
 
 tuplePattern_Contents:
   patternArgument (',' patternArgument)+;
+
+memberTestPattern:
+  'with' recordConstructorPattern;
 
 /* ----------- */
 /* Expressions */

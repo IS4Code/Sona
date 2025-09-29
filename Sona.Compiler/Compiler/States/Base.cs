@@ -15,7 +15,7 @@ namespace Sona.Compiler
         {
             try
             {
-                Out.WriteIdentifier(context.GetText().TrimStart('@'));
+                Out.WriteIdentifier(Tools.Syntax.GetIdentifierFromName(context.GetText()));
             }
             finally
             {

@@ -256,6 +256,16 @@ namespace Sona.Compiler.States
 
         }
 
+        public override void EnterMemberTestPattern(MemberTestPatternContext context)
+        {
+            EnterState<MembersPattern>().EnterMemberTestPattern(context);
+        }
+
+        public override void ExitMemberTestPattern(MemberTestPatternContext context)
+        {
+
+        }
+
         public sealed class Argument : PatternState
         {
             bool hasPattern;
@@ -546,8 +556,8 @@ namespace Sona.Compiler.States
                 Out.Write(" }");
                 ExitState().ExitRecordConstructorPattern(context);
             }
-            
-            public override void EnterFieldAssignment(FieldAssignmentContext context)
+
+            private void OnEnterField()
             {
                 if(first)
                 {
@@ -555,6 +565,11 @@ namespace Sona.Compiler.States
                     return;
                 }
                 Out.Write(';');
+            }
+            
+            public override void EnterFieldAssignment(FieldAssignmentContext context)
+            {
+                OnEnterField();
             }
 
             public override void ExitFieldAssignment(FieldAssignmentContext context)
@@ -564,12 +579,7 @@ namespace Sona.Compiler.States
 
             public override void EnterEmptyFieldAssignment(EmptyFieldAssignmentContext context)
             {
-                if(first)
-                {
-                    first = false;
-                    return;
-                }
-                Out.Write(';');
+                OnEnterField();
             }
 
             public override void ExitEmptyFieldAssignment(EmptyFieldAssignmentContext context)
@@ -676,6 +686,113 @@ namespace Sona.Compiler.States
             public override void ExitPatternArgument(PatternArgumentContext context)
             {
 
+            }
+        }
+
+        sealed class MembersPattern : PatternState
+        {
+            bool first;
+
+            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+            {
+                base.Initialize(environment, parent);
+
+                first = true;
+            }
+
+            public override void EnterMemberTestPattern(MemberTestPatternContext context)
+            {
+                Out.Write('(');
+            }
+
+            public override void ExitMemberTestPattern(MemberTestPatternContext context)
+            {
+                Out.Write(')');
+                ExitState().ExitMemberTestPattern(context);
+            }
+
+            public override void EnterRecordConstructorPattern(RecordConstructorPatternContext context)
+            {
+
+            }
+
+            public override void ExitRecordConstructorPattern(RecordConstructorPatternContext context)
+            {
+
+            }
+
+            private void OnEnterField()
+            {
+                if(first)
+                {
+                    first = false;
+                    return;
+                }
+                Out.WriteOperator('&');
+            }
+
+            public override void EnterFieldAssignment(FieldAssignmentContext context)
+            {
+                OnEnterField();
+            }
+
+            public override void ExitFieldAssignment(FieldAssignmentContext context)
+            {
+
+            }
+
+            public override void EnterEmptyFieldAssignment(EmptyFieldAssignmentContext context)
+            {
+                OnEnterField();
+            }
+
+            public override void ExitEmptyFieldAssignment(EmptyFieldAssignmentContext context)
+            {
+                Out.Write("(_)");
+            }
+
+            public override void EnterName(NameContext context)
+            {
+                Environment.EnableParseTree();
+            }
+
+            public override void ExitName(NameContext context)
+            {
+                string identifier;
+                try
+                {
+                    identifier = Tools.Syntax.GetIdentifierFromName(context.GetText());
+                }
+                finally
+                {
+                    Environment.DisableParseTree();
+                }
+
+                var patternIdentifier = "Get " + identifier;
+
+                if(Environment.DefineGlobalSymbol($"|{patternIdentifier}|"))
+                {
+                    GlobalOut.Write("let inline (|");
+                    GlobalOut.WriteIdentifier(patternIdentifier);
+                    GlobalOut.Write("|) (x : ^T) = (^T : (member ");
+                    GlobalOut.WriteIdentifier(identifier);
+                    GlobalOut.WriteLine(" : _) x)");
+                }
+
+                Out.WriteIdentifier(Environment.GlobalModuleIdentifier);
+                Out.Write('.');
+                Out.WriteIdentifier(patternIdentifier);
+            }
+
+            public override void EnterPattern(PatternContext context)
+            {
+                Out.Write('(');
+                EnterState<PatternState>().EnterPattern(context);
+            }
+
+            public override void ExitPattern(PatternContext context)
+            {
+                Out.Write(')');
             }
         }
     }

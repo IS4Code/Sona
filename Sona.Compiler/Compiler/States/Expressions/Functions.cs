@@ -48,7 +48,7 @@ namespace Sona.Compiler.States
         {
             base.ExitName(context);
 
-            name = context.GetText();
+            name = Tools.Syntax.GetIdentifierFromName(context.GetText());
             Out.WriteOperator('=');
         }
 
