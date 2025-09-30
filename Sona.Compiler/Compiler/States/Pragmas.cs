@@ -281,4 +281,18 @@ namespace Sona.Compiler.States
             return new CollectionPragma();
         }
     }
+
+    [LexerStateName("forwardref")]
+    internal sealed class ForwardRefPragma : EmptyPragma
+    {
+        public ForwardRefPragma() : base("forwardref")
+        {
+
+        }
+
+        public override LexerState ForkNew(IToken token)
+        {
+            return new ForwardRefPragma();
+        }
+    }
 }

@@ -16,6 +16,16 @@ namespace Sona.Compiler.States
             argument = null;
         }
 
+        public override void EnterTopLevelStatement(TopLevelStatementContext context)
+        {
+
+        }
+
+        public override void ExitTopLevelStatement(TopLevelStatementContext context)
+        {
+            ExitState().ExitTopLevelStatement(context);
+        }
+
         public override void EnterImportStatement(ImportStatementContext context)
         {
             Out.Write("open ");
@@ -41,14 +51,19 @@ namespace Sona.Compiler.States
             Out.Write("#r ");
         }
 
+        public override void EnterPackageStatement(PackageStatementContext context)
+        {
+            EnterState<PackageState>().EnterPackageStatement(context);
+        }
+
         public override void ExitImportStatement(ImportStatementContext context)
         {
-            ExitState().ExitImportStatement(context);
+
         }
 
         public override void ExitImportTypeStatement(ImportTypeStatementContext context)
         {
-            ExitState().ExitImportTypeStatement(context);
+
         }
 
         public override void ExitImportFileStatement(ImportFileStatementContext context)
@@ -69,18 +84,21 @@ namespace Sona.Compiler.States
             }
 
             Out.WriteIdentifier(name);
-
-            ExitState().ExitImportFileStatement(context);
         }
 
         public override void ExitIncludeStatement(IncludeStatementContext context)
         {
-            ExitState().ExitIncludeStatement(context);
+
         }
 
         public override void ExitRequireStatement(RequireStatementContext context)
         {
-            ExitState().ExitRequireStatement(context);
+
+        }
+
+        public override void ExitPackageStatement(PackageStatementContext context)
+        {
+
         }
 
         public override void EnterString(StringContext context)

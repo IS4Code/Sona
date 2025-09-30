@@ -2534,7 +2534,8 @@ topLevelStatement:
   importTypeStatement |
   importFileStatement |
   includeStatement |
-  requireStatement;
+  requireStatement |
+  packageStatement;
 
 importStatement:
   'import' symbolArg;
@@ -2554,6 +2555,9 @@ includeStatement:
 
 requireStatement:
   'require' stringArg;
+
+packageStatement:
+  localAttrList 'package' name mainBlock 'end';
 
 /* ---------------------------- */
 /* Declarations and assignments */

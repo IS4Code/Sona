@@ -328,6 +328,8 @@ namespace Sona.Compiler
                     return new RecursivePragma();
                 case "collection":
                     return new CollectionPragma();
+                case "forwardref":
+                    return new ForwardRefPragma();
             }
             throw new Exception($"'{name}' is not recognized as a valid pragma name.");
         }

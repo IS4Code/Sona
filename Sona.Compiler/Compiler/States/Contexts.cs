@@ -20,6 +20,11 @@ namespace Sona.Compiler.States
 
     }
 
+    internal interface IDeclarationsBlockContext : IFunctionContext
+    {
+        bool Recursive { get; }
+    }
+
     internal interface IComputationContext : IInterruptibleStatementContext, IStatementContext
     {
         bool IsCollection { get; }

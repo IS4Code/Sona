@@ -434,31 +434,6 @@ namespace Sona.Compiler.States
             EnterState<InlineSourceStatement>().EnterInlineSourceTerminating(context);
         }
 
-        public sealed override void EnterImportStatement(ImportStatementContext context)
-        {
-            EnterState<TopLevelStatement>().EnterImportStatement(context);
-        }
-
-        public sealed override void EnterImportTypeStatement(ImportTypeStatementContext context)
-        {
-            EnterState<TopLevelStatement>().EnterImportTypeStatement(context);
-        }
-
-        public sealed override void EnterImportFileStatement(ImportFileStatementContext context)
-        {
-            EnterState<TopLevelStatement>().EnterImportFileStatement(context);
-        }
-
-        public sealed override void EnterIncludeStatement(IncludeStatementContext context)
-        {
-            EnterState<TopLevelStatement>().EnterIncludeStatement(context);
-        }
-
-        public sealed override void EnterRequireStatement(RequireStatementContext context)
-        {
-            EnterState<TopLevelStatement>().EnterRequireStatement(context);
-        }
-
         public sealed override void EnterStatement(StatementContext context)
         {
             OnEnterStatement(StatementFlags.None, context);
@@ -522,6 +497,7 @@ namespace Sona.Compiler.States
         public sealed override void EnterTopLevelStatement(TopLevelStatementContext context)
         {
             OnEnterStatement(StatementFlags.None, context);
+            EnterState<TopLevelStatement>().EnterTopLevelStatement(context);
         }
 
         public sealed override void ExitTopLevelStatement(TopLevelStatementContext context)
@@ -617,7 +593,7 @@ namespace Sona.Compiler.States
         #endregion
     }
 
-    internal sealed class ChunkState : BlockState, IFunctionContext
+    internal sealed class ChunkState : BlockState, IFunctionContext, IDeclarationsBlockContext
     {
         // Main block return is currently ignored
         string? IReturnableStatementContext.ReturnVariable => null;
@@ -633,6 +609,8 @@ namespace Sona.Compiler.States
         bool IComputationContext.IsCollection => false;
 
         string? IComputationContext.BuilderVariable => null;
+
+        bool IDeclarationsBlockContext.Recursive => false;
 
         public ChunkState(ScriptEnvironment environment)
         {
@@ -681,9 +659,9 @@ namespace Sona.Compiler.States
     {
         public override void EnterMemberOrAssignment(MemberOrAssignmentContext context)
         {
-            if(FindContext<IStatementContext>() is ChunkState)
+            if(FindContext<IStatementContext>() is IDeclarationsBlockContext)
             {
-                // Top-level statement requires unit return
+                // Module-level statement requires unit return
                 Out.Write("do ");
             }
         }
