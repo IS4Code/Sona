@@ -73,6 +73,9 @@ namespace Sona.Compiler
             var context = new ScriptEnvironment(parser, writer, globalWriter, lexerContext, debugBeginEnd ? "(*begin*)" : "", debugBeginEnd ? "(*end*)" : "");
             lexerContext.Environment = context;
 
+            // Lexer context is fully set up
+            tokenStream.StartReceiving();
+
             // Main state to process the chunk
             parser.AddParseListener(new ChunkState(context));
 

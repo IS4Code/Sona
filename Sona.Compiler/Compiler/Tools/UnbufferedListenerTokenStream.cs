@@ -17,26 +17,25 @@ namespace Sona.Compiler.Tools
         public UnbufferedListenerTokenStream(ITokenSource tokenSource, ChannelTokenReceiver tokenReceiver) : base(tokenSource)
         {
             this.tokenReceiver = tokenReceiver ?? throw new ArgumentNullException(nameof(tokenReceiver));
-
-            Init(ref readFromConstructor, tokenReceiver);
         }
 
         public UnbufferedListenerTokenStream(ITokenSource tokenSource, ChannelTokenReceiver tokenReceiver, int bufferSize) : base(tokenSource, bufferSize)
         {
             this.tokenReceiver = tokenReceiver ?? throw new ArgumentNullException(nameof(tokenReceiver));
-
-            Init(ref readFromConstructor, tokenReceiver);
         }
 
-        private void Init(ref List<IToken> list, ChannelTokenReceiver tokenReceiver)
+        public void StartReceiving()
         {
+            if(tokenReceiver == null)
+            {
+                throw new InvalidOperationException();
+            }
             // Base constructor calls Add which puts the token into list before tokenReceiver is set
-            foreach(var token in list)
+            foreach(var token in readFromConstructor)
             {
                 tokenReceiver(token);
             }
-            // No longer needed
-            list = null!;
+            readFromConstructor.Clear();
         }
 
         protected override void Add(IToken t)
