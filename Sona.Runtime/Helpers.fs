@@ -466,6 +466,23 @@ module Patterns =
   [<return: Struct>]
   let inline (|LessThanOrEqual|_|) y x = if x <= y then ValueSome() else ValueNone
 
+  [<Literal>]
+  let private errorMessage = "The use of this operator is not valid in a parametrized pattern."
+  [<Literal>]
+  let private errorNumber = 723
+  [<CompilerMessage(errorMessage, errorNumber, IsError = true, IsHidden = true)>]
+  let inline Equality x = Unchecked.defaultof<_>
+  [<CompilerMessage(errorMessage, errorNumber, IsError = true, IsHidden = true)>]
+  let inline Inequality x = Unchecked.defaultof<_>
+  [<CompilerMessage(errorMessage, errorNumber, IsError = true, IsHidden = true)>]
+  let inline GreaterThan x = Unchecked.defaultof<_>
+  [<CompilerMessage(errorMessage, errorNumber, IsError = true, IsHidden = true)>]
+  let inline LessThan x = Unchecked.defaultof<_>
+  [<CompilerMessage(errorMessage, errorNumber, IsError = true, IsHidden = true)>]
+  let inline GreaterThanOrEqual x = Unchecked.defaultof<_>
+  [<CompilerMessage(errorMessage, errorNumber, IsError = true, IsHidden = true)>]
+  let inline LessThanOrEqual x = Unchecked.defaultof<_>
+
 [<AbstractClass; AllowNullLiteral>]
 type InferenceBase internal() =
   static member inline ``operator date|timespan``(_:InferenceBase, x:``trait date``<^T>): ^T = x
