@@ -48,6 +48,11 @@ namespace Sona.Compiler.States
             EnterState<FunctionExprState>().EnterFuncExpr(context);
         }
 
+        public override void EnterCaseFuncRefExpr(CaseFuncRefExprContext context)
+        {
+            EnterState<CaseFunctionRefExprState>().EnterCaseFuncRefExpr(context);
+        }
+
         public override void EnterInlineExpr(InlineExprContext context)
         {
             EnterState<InlineStatementState>().EnterInlineExpr(context);

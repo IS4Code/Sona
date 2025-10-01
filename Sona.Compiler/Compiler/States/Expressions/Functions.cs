@@ -179,4 +179,80 @@ namespace Sona.Compiler.States
 
         }
     }
+
+    internal sealed class CaseFunctionRefExprState : MemberExprState
+    {
+        bool firstName;
+        bool hasParent;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            firstName = true;
+            hasParent = false;
+        }
+
+        public override void EnterCaseFuncRefExpr(CaseFuncRefExprContext context)
+        {
+
+        }
+
+        public override void ExitCaseFuncRefExpr(CaseFuncRefExprContext context)
+        {
+            Out.Write("|)");
+            ExitState().ExitCaseFuncRefExpr(context);
+        }
+
+        public override void EnterCompoundNameGeneric(CompoundNameGenericContext context)
+        {
+            hasParent = true;
+            base.EnterCompoundNameGeneric(context);
+        }
+
+        private void OnEnterCaseName()
+        {
+            if(hasParent == true)
+            {
+                Out.Write('.');
+            }
+            Out.Write("(|");
+        }
+
+        public override void EnterMemberName(MemberNameContext context)
+        {
+            OnEnterCaseName();
+            firstName = false;
+            base.EnterMemberName(context);
+        }
+
+        public override void EnterCaseFuncName(CaseFuncNameContext context)
+        {
+            OnEnterCaseName();
+        }
+
+        public override void EnterName(NameContext context)
+        {
+            if(firstName)
+            {
+                firstName = false;
+            }
+            else
+            {
+                Out.Write('|');
+            }
+
+            base.EnterName(context);
+        }
+
+        public override void EnterOptionSuffix(OptionSuffixContext context)
+        {
+            Out.Write("|_");
+        }
+
+        public override void ExitOptionSuffix(OptionSuffixContext context)
+        {
+
+        }
+    }
 }

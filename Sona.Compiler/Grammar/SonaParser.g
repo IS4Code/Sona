@@ -2836,6 +2836,7 @@ atomicExpr:
   simpleExpr |
   fullConstructExpr |
   funcExpr |
+  caseFuncRefExpr |
   inlineExpr;
 
 hashExpr:
@@ -2871,6 +2872,12 @@ namedValue:
 
 funcExpr:
   'function' name? optionSuffix? funcBody;
+
+caseFuncRefExpr:
+  'case' (
+    compoundNameGeneric ('.' caseFuncName | memberName) |
+    caseFuncName
+  ) optionSuffix?;
 
 inlineExpr:
   'inline' expressionStatement;
