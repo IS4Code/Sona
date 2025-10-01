@@ -91,6 +91,7 @@ namespace Sona.Compiler.States
             base.Initialize(environment, parent);
 
             hasType = false;
+            ReturnOptionType = default;
         }
 
         public override void EnterOptionSuffix(OptionSuffixContext context)
