@@ -252,7 +252,7 @@ UNDERSCORE: '_';
 SEMICOLON: ';';
 EQ: '==';
 NEQ: '!=';
-NEQ_ALT: '~=';
+NEQ_ALT: '~=' -> type(NEQ);
 COMMA: ',';
 DOLLAR: '$';
 HASH: '#';
@@ -461,7 +461,7 @@ Directive_UNDERSCORE: UNDERSCORE -> type(UNDERSCORE);
 Directive_SEMICOLON: SEMICOLON -> type(SEMICOLON);
 Directive_EQ: EQ -> type(EQ);
 Directive_NEQ: NEQ -> type(NEQ);
-Directive_NEQ_ALT: NEQ_ALT -> type(NEQ_ALT);
+Directive_NEQ_ALT: NEQ_ALT -> type(NEQ);
 Directive_COMMA: COMMA ((LINE_WHITESPACE | NEWLINE_ESCAPE)* EOL)? -> type(COMMA);
 Directive_DOLLAR: DOLLAR -> type(DOLLAR);
 // no Directive_HASH
@@ -836,7 +836,7 @@ Interpolation_UNDERSCORE: UNDERSCORE -> type(UNDERSCORE);
 Interpolation_SEMICOLON: SEMICOLON -> type(SEMICOLON);
 Interpolation_EQ: EQ -> type(EQ);
 Interpolation_NEQ: NEQ -> type(NEQ);
-Interpolation_NEQ_ALT: NEQ_ALT -> type(NEQ_ALT);
+Interpolation_NEQ_ALT: NEQ_ALT -> type(NEQ);
 // no Interpolation_COMMA
 Interpolation_DOLLAR: DOLLAR -> type(DOLLAR);
 Interpolation_HASH: HASH -> type(HASH);

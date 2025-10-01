@@ -440,7 +440,6 @@ namespace Sona.Compiler.States
                 case SonaLexer.ASSIGN:
                 case SonaLexer.EQ:
                 case SonaLexer.NEQ:
-                case SonaLexer.NEQ_ALT:
                 case SonaLexer.PLUS:
                 case SonaLexer.MINUS:
                 case SonaLexer.ASTERISK:
@@ -522,7 +521,6 @@ namespace Sona.Compiler.States
                     text = "=";
                     break;
                 case SonaLexer.NEQ:
-                case SonaLexer.NEQ_ALT:
                     text = "<>";
                     break;
             }

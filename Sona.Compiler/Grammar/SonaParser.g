@@ -3213,7 +3213,7 @@ unaryOperator:
   '+' | '-' | '~';
 
 relationalOperator:
-  '<' | '<=' | '>' | tokenGTE | '==' | '!=' | '~=';
+  '<' | '<=' | '>' | tokenGTE | '==' | '!=';
 
 tokenGTE:
   '>' {combinedOperator}? '=';
