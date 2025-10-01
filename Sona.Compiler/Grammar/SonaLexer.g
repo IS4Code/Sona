@@ -284,6 +284,8 @@ TILDE: '~';
 COLON: ':';
 DOT: '.';
 
+RESERVED: '+' '+'+ | '-' '-'+ | '=' [<>=]+;
+
 NAME:
   (LOWERCASE | UPPERCASE | '_' | UNICODE) (LOWERCASE | UPPERCASE | DIGIT | '_' | UNICODE)*;
 
@@ -492,6 +494,7 @@ Directive_EXCLAMATION: EXCLAMATION -> type(EXCLAMATION);
 Directive_TILDE: TILDE -> type(TILDE);
 Directive_COLON: COLON -> type(COLON);
 Directive_DOT: DOT -> type(DOT);
+Directive_RESERVED: RESERVED -> type(RESERVED);
 
 Directive_NAME: NAME -> type(NAME);
 
@@ -867,6 +870,7 @@ Interpolation_EXCLAMATION: EXCLAMATION -> type(EXCLAMATION);
 Interpolation_TILDE: TILDE -> type(TILDE);
 // no Interpolation_COLON
 Interpolation_DOT: DOT -> type(DOT);
+Interpolation_RESERVED: RESERVED -> type(RESERVED);
 
 Interpolation_NAME: NAME -> type(NAME);
 
