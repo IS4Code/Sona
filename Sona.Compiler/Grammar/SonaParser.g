@@ -2776,10 +2776,10 @@ booleanExpr:
   relationalExpr (('&&' | '||') relationalExpr)*;
 
 relationalExpr:
-  coalesceExpr (('<' | '<=' | '>' | '>' {combinedOperator}? '=' | '==' | '!=' | '~=') coalesceExpr)*;
+  coalesceExpr (relationalOperator coalesceExpr)*;
 
 coalesceExpr:
-  concatExpr ('?' {combinedOperator}? '?' concatExpr)*;
+  concatExpr (tokenDOUBLEQUESTION concatExpr)*;
 
 concatExpr:
   concatExpr_Inner ('..' concatExpr_Inner)*;
@@ -2796,7 +2796,7 @@ bitAndExpr:
   bitShiftExpr ('&' bitShiftExpr)*;
 
 bitShiftExpr:
-  innerExpr (('<<' | '>' {combinedOperator}? '>') innerExpr)*;
+  innerExpr (('<<' | tokenRSHIFT) innerExpr)*;
 
 innerExpr:
   annotationExpr (('+' | '-' | '*' | '/' | '%') annotationExpr)*;
@@ -3211,6 +3211,18 @@ inlineSourceFSWhitespace:
 
 unaryOperator:
   '+' | '-' | '~';
+
+relationalOperator:
+  '<' | '<=' | '>' | tokenGTE | '==' | '!=' | '~=';
+
+tokenGTE:
+  '>' {combinedOperator}? '=';
+
+tokenRSHIFT:
+  '>' {combinedOperator}? '>';
+
+tokenDOUBLEQUESTION:
+  '?' {combinedOperator}? '?';
 
 /* ---------- */
 /* Primitives */

@@ -1,4 +1,10 @@
-﻿using Sona.Compiler.States;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using Antlr4.Runtime;
+using Antlr4.Runtime.Misc;
+using Antlr4.Runtime.Tree;
+using Sona.Compiler.States;
 using Sona.Grammar;
 using static Sona.Grammar.SonaParser;
 
@@ -83,6 +89,36 @@ namespace Sona.Compiler
         }
 
         public override void ExitGenericArguments(GenericArgumentsContext context)
+        {
+
+        }
+
+        public override void EnterTokenGTE(TokenGTEContext context)
+        {
+            EnterState<CompoundTerminal>().EnterTokenGTE(context);
+        }
+
+        public override void ExitTokenGTE(TokenGTEContext context)
+        {
+
+        }
+
+        public override void EnterTokenRSHIFT(TokenRSHIFTContext context)
+        {
+            EnterState<CompoundTerminal>().EnterTokenRSHIFT(context);
+        }
+
+        public override void ExitTokenRSHIFT(TokenRSHIFTContext context)
+        {
+
+        }
+
+        public override void EnterTokenDOUBLEQUESTION(TokenDOUBLEQUESTIONContext context)
+        {
+            EnterState<CompoundTerminal>().EnterTokenDOUBLEQUESTION(context);
+        }
+
+        public override void ExitTokenDOUBLEQUESTION(TokenDOUBLEQUESTIONContext context)
         {
 
         }
@@ -351,6 +387,120 @@ namespace Sona.Compiler
         public override void ExitGlobalAttribute(GlobalAttributeContext context)
         {
 
+        }
+
+        sealed class CompoundTerminal : NodeState
+        {
+            readonly List<ITerminalNode> nodes = new();
+            readonly StringBuilder text = new();
+
+            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+            {
+                base.Initialize(environment, parent);
+
+                nodes.Clear();
+                text.Clear();
+            }
+
+            private ScriptState ExitState(int type, RuleContext context)
+            {
+                var parent = base.ExitState();
+
+                parent.VisitTerminal(new TerminalNode(text.ToString(), type, nodes[0], nodes[nodes.Count - 1], context.Parent));
+
+                return parent;
+            }
+
+            public override void EnterTokenGTE(TokenGTEContext context)
+            {
+
+            }
+
+            public override void ExitTokenGTE(TokenGTEContext context)
+            {
+                ExitState(SonaLexer.GTE, context).ExitTokenGTE(context);
+            }
+
+            public override void EnterTokenRSHIFT(TokenRSHIFTContext context)
+            {
+
+            }
+
+            public override void ExitTokenRSHIFT(TokenRSHIFTContext context)
+            {
+                ExitState(SonaLexer.RSHIFT, context).ExitTokenRSHIFT(context);
+            }
+
+            public override void EnterTokenDOUBLEQUESTION(TokenDOUBLEQUESTIONContext context)
+            {
+
+            }
+
+            public override void ExitTokenDOUBLEQUESTION(TokenDOUBLEQUESTIONContext context)
+            {
+                ExitState(SonaLexer.DOUBLE_QUESTION, context).ExitTokenDOUBLEQUESTION(context);
+            }
+
+            public override void VisitTerminal(ITerminalNode node)
+            {
+                // Do not call base because the virtual token will be visited as a whole
+
+                nodes.Add(node);
+                text.Append(node.Symbol.Text);
+            }
+
+            sealed record TerminalNode(string Text, int Type, ITerminalNode First, ITerminalNode Last, RuleContext Context) : ITerminalNode, IToken
+            {
+                IToken ITerminalNode.Symbol => this;
+
+                IRuleNode ITerminalNode.Parent => Context.Parent;
+
+                IParseTree IParseTree.Parent => Context.Parent;
+
+                ITree ITree.Parent => Context.Parent;
+
+                Interval ISyntaxTree.SourceInterval => new(First.SourceInterval.a, Last.SourceInterval.b);
+
+                object ITree.Payload => Context.Payload;
+
+                int ITree.ChildCount => 0;
+
+                int IToken.Line => First.Symbol.Line;
+
+                int IToken.Column => First.Symbol.Column;
+
+                int IToken.Channel => First.Symbol.Channel;
+
+                int IToken.TokenIndex => Last.Symbol.TokenIndex;
+
+                int IToken.StartIndex => First.Symbol.StartIndex;
+
+                int IToken.StopIndex => Last.Symbol.StopIndex;
+
+                ITokenSource IToken.TokenSource => First.Symbol.TokenSource;
+
+                ICharStream IToken.InputStream => First.Symbol.InputStream;
+
+                T IParseTree.Accept<T>(IParseTreeVisitor<T> visitor)
+                {
+                    return visitor.VisitTerminal(this);
+                }
+
+                IParseTree IParseTree.GetChild(int i)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(i));
+                }
+
+                ITree ITree.GetChild(int i)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(i));
+                }
+
+                string IParseTree.GetText() => Text;
+                string IParseTree.ToStringTree(Parser parser) => Text;
+                string ITree.ToStringTree() => Text;
+                public override string ToString() => Text;
+            }
         }
     }
 

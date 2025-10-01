@@ -897,7 +897,10 @@ InterpolationEnd_CLOSEB: CLOSEB -> type(CLOSEB), popMode;
 
 mode Empty;
 
+// Matches everything with highest priority
 ERROR: (~'\u0000'+ | '\u0000'+);
+
+// Helper tokens that are never matched:
 
 STRING_LITERAL:
   BEGIN_STRING STRING_PART* END_STRING;
@@ -907,6 +910,10 @@ VERBATIM_STRING_LITERAL:
 
 CHAR_LITERAL:
   BEGIN_CHAR CHAR_PART END_CHAR;
+
+GTE: '>=';
+RSHIFT: '>>';
+DOUBLE_QUESTION: '??';
 
 mode InlineDirective;
 
