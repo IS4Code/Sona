@@ -240,6 +240,11 @@ namespace Sona.Compiler
             writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "Tuples", name);
         }
 
+        public static void WriteCustomPattern(this ISourceWriter writer, string name)
+        {
+            writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "Patterns", name);
+        }
+
         public static void WriteSpecialMember(this ISourceWriter writer, string name)
         {
             writer.Write('.');

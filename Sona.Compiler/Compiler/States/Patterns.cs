@@ -144,6 +144,16 @@ namespace Sona.Compiler.States
 
         }
 
+        public override void EnterRelationalPattern(RelationalPatternContext context)
+        {
+            EnterState<RelationalPattern>().EnterRelationalPattern(context);
+        }
+
+        public override void ExitRelationalPattern(RelationalPatternContext context)
+        {
+
+        }
+
         public sealed override void EnterTypeArgument(TypeArgumentContext context)
         {
             EnterState<TypeState.Argument>().EnterTypeArgument(context);
@@ -302,6 +312,37 @@ namespace Sona.Compiler.States
             }
         }
 
+        abstract class UnaryPattern : PatternState
+        {
+            public sealed override void EnterAnnotationPattern(AnnotationPatternContext context)
+            {
+                EnterState<Argument>().EnterAnnotationPattern(context);
+            }
+
+            public sealed override void ExitAnnotationPattern(AnnotationPatternContext context)
+            {
+
+            }
+
+            new sealed class Argument : PatternState
+            {
+                protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+                {
+                    base.Initialize(environment, parent);
+                }
+
+                public override void EnterAnnotationPattern(AnnotationPatternContext context)
+                {
+
+                }
+
+                public override void ExitAnnotationPattern(AnnotationPatternContext context)
+                {
+                    ExitState().ExitAnnotationPattern(context);
+                }
+            }
+        }
+
         sealed class NestedPattern : PatternState
         {
             public sealed override void EnterNestedPattern(NestedPatternContext context)
@@ -326,7 +367,7 @@ namespace Sona.Compiler.States
             }
         }
 
-        sealed class SomePattern : PatternState
+        sealed class SomePattern : UnaryPattern
         {
             public sealed override void EnterSomePattern(SomePatternContext context)
             {
@@ -588,6 +629,16 @@ namespace Sona.Compiler.States
                 Out.Write('_');
             }
 
+            public override void EnterFieldRelation(FieldRelationContext context)
+            {
+                OnEnterField();
+            }
+
+            public override void ExitFieldRelation(FieldRelationContext context)
+            {
+
+            }
+
             public override void EnterPattern(PatternContext context)
             {
                 EnterState<PatternState>().EnterPattern(context);
@@ -596,6 +647,17 @@ namespace Sona.Compiler.States
             public override void ExitPattern(PatternContext context)
             {
 
+            }
+
+            public override void EnterRelationalPattern(RelationalPatternContext context)
+            {
+                Out.WriteOperator('=');
+                base.EnterRelationalPattern(context);
+            }
+
+            public override void ExitRelationalPattern(RelationalPatternContext context)
+            {
+                base.ExitRelationalPattern(context);
             }
         }
 
@@ -751,6 +813,16 @@ namespace Sona.Compiler.States
                 Out.Write("(_)");
             }
 
+            public override void EnterFieldRelation(FieldRelationContext context)
+            {
+                OnEnterField();
+            }
+
+            public override void ExitFieldRelation(FieldRelationContext context)
+            {
+                
+            }
+
             public override void EnterName(NameContext context)
             {
                 Environment.EnableParseTree();
@@ -793,6 +865,62 @@ namespace Sona.Compiler.States
             public override void ExitPattern(PatternContext context)
             {
                 Out.Write(')');
+            }
+
+            public override void EnterRelationalPattern(RelationalPatternContext context)
+            {
+                Out.Write('(');
+                base.EnterRelationalPattern(context);
+            }
+
+            public override void ExitRelationalPattern(RelationalPatternContext context)
+            {
+                base.ExitRelationalPattern(context);
+                Out.Write(')');
+            }
+        }
+
+        sealed class RelationalPattern : UnaryPattern
+        {
+            public sealed override void EnterRelationalPattern(RelationalPatternContext context)
+            {
+
+            }
+
+            public sealed override void ExitRelationalPattern(RelationalPatternContext context)
+            {
+                Out.Write(')');
+                ExitState().ExitRelationalPattern(context);
+            }
+
+            public override void VisitTerminal(ITerminalNode node)
+            {
+                base.VisitTerminal(node);
+
+                switch(node.Symbol.Type)
+                {
+                    case SonaLexer.EQ:
+                        Out.WriteCustomPattern("Equality");
+                        break;
+                    case SonaLexer.NEQ:
+                        Out.WriteCustomPattern("Inequality");
+                        break;
+                    case SonaLexer.GT:
+                        Out.WriteCustomPattern("GreaterThan");
+                        break;
+                    case SonaLexer.LT:
+                        Out.WriteCustomPattern("LessThan");
+                        break;
+                    case SonaLexer.GTE:
+                        Out.WriteCustomPattern("GreaterThanOrEqual");
+                        break;
+                    case SonaLexer.LTE:
+                        Out.WriteCustomPattern("LessThanOrEqual");
+                        break;
+                    default:
+                        return;
+                }
+                Out.Write('(');
             }
         }
     }

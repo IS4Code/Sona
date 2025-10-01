@@ -2669,6 +2669,7 @@ atomicPattern:
   unaryNumberConvertExpr |
   unaryCharConvertExpr |
   somePattern |
+  relationalPattern |
   fullConstructPattern |
   memberTestPattern |
   namedPattern |
@@ -2692,6 +2693,9 @@ memberPattern:
     simplePatternArgument |
     patternArguments
   );
+
+relationalPattern:
+  relationalOperator annotationPattern;
 
 // Calls
 
@@ -2722,8 +2726,11 @@ fullConstructPattern:
 emptyFieldAssignment:
   name;
 
+fieldRelation:
+  name relationalPattern;
+
 recordConstructorPattern:
-  '{' (emptyFieldAssignment ',')* fieldAssignment pattern (',' (fieldAssignment pattern | emptyFieldAssignment))* '}';
+  '{' (emptyFieldAssignment ',')* (fieldAssignment pattern | fieldRelation) (',' (fieldAssignment pattern | fieldRelation | emptyFieldAssignment))* '}';
 
 arrayConstructorPattern:
   '[' (

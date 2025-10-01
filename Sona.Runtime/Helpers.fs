@@ -448,6 +448,24 @@ module Patterns =
     | :? Exception -> ValueNone
     | _ -> ValueSome x
 
+  [<return: Struct>]
+  let inline (|Equality|_|) y x = if x = y then ValueSome() else ValueNone
+
+  [<return: Struct>]
+  let inline (|Inequality|_|) y x = if x <> y then ValueSome() else ValueNone
+
+  [<return: Struct>]
+  let inline (|GreaterThan|_|) y x = if x > y then ValueSome() else ValueNone
+
+  [<return: Struct>]
+  let inline (|LessThan|_|) y x = if x < y then ValueSome() else ValueNone
+
+  [<return: Struct>]
+  let inline (|GreaterThanOrEqual|_|) y x = if x >= y then ValueSome() else ValueNone
+
+  [<return: Struct>]
+  let inline (|LessThanOrEqual|_|) y x = if x <= y then ValueSome() else ValueNone
+
 [<AbstractClass; AllowNullLiteral>]
 type InferenceBase internal() =
   static member inline ``operator date|timespan``(_:InferenceBase, x:``trait date``<^T>): ^T = x
