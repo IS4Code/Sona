@@ -71,15 +71,20 @@ namespace Sona.Compiler
 
     public record CompilerDiagnostic(DiagnosticLevel Level, string Code, string Message, int Line, int? Column, object? Data) : IComparable<CompilerDiagnostic>
     {
-        public CompilerDiagnostic(FSharpDiagnostic diagnostic) : this(
+        public CompilerDiagnostic(string message, FSharpDiagnostic diagnostic) : this(
             diagnostic.Severity.IsError ? DiagnosticLevel.Error :
             diagnostic.Severity.IsWarning ? DiagnosticLevel.Warning :
             DiagnosticLevel.Info,
             diagnostic.ErrorNumberText,
-            diagnostic.Message,
+            message,
             diagnostic.StartLine,
             Int32.MinValue + diagnostic.StartColumn,
             diagnostic.ExtendedData?.Value)
+        {
+
+        }
+
+        public CompilerDiagnostic(FSharpDiagnostic diagnostic) : this(diagnostic.Message, diagnostic)
         {
 
         }

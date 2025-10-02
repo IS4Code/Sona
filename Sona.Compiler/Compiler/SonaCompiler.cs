@@ -2,12 +2,10 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Antlr4.Runtime;
@@ -252,38 +250,25 @@ namespace Sona.Compiler
 
             foreach(var diagnostic in diagnostics)
             {
-                if(ShouldIgnoreDiagnostic(diagnostic))
-                {
-                    continue;
-                }
-                result.AddDiagnostic(new(diagnostic));
+                AddDiagnostic(result, diagnostic);
             }
 
             return result;
         }
 
-        static readonly CultureInfo diagnosticsCulture = new CultureInfo("en");
-
-        static readonly Regex NonRigidTypar1 = Resources.GetRegex("NonRigidTypar1", diagnosticsCulture);
-        static readonly Regex chkUnusedValue = Resources.GetRegex("chkUnusedValue", diagnosticsCulture);
-
-        private static bool ShouldIgnoreDiagnostic(FSharp.Compiler.Diagnostics.FSharpDiagnostic diagnostic)
+        private static void AddDiagnostic(CompilerResult result, FSharp.Compiler.Diagnostics.FSharpDiagnostic diagnostic)
         {
-            if(diagnostic.Severity.IsError)
+            var message = CompilerMessages.ProcessDiagnostic(diagnostic.ErrorNumber, diagnostic.Message);
+            if(message == null)
             {
-                return false;
+                if(diagnostic.Severity.IsError)
+                {
+                    // Don't ignore non-errors
+                    result.AddDiagnostic(new(diagnostic));
+                }
+                return;
             }
-            switch(diagnostic.ErrorNumber)
-            {
-                case 64 when NonRigidTypar1.IsMatch(diagnostic.Message):
-                    // This construct causes code to be less generic than indicated by its type annotations. The type variable implied by the use of a '#', '_' or other type annotation at or near '%s' has been constrained to be type '%s'.
-                    return true;
-                // Compiler-generated unused variables are reported even when they start on _.
-                case 1182 when chkUnusedValue.Match(diagnostic.Message) is { Success: true } match && Syntax.GetIdentifierValue(match.Groups[1].Value).StartsWith("_"):
-                    // The value '%s' is unused
-                    return true;
-            }
-            return false;
+            result.AddDiagnostic(new(message, diagnostic));
         }
 
         public Task<CompilerResult> CompileToBinary(AntlrInputStream inputStream, string fileName, CompilerOptions options, CancellationToken cancellationToken = default)
@@ -335,11 +320,7 @@ namespace Sona.Compiler
 
             foreach(var diagnostic in parseResults.Diagnostics.Concat(fileResults.Diagnostics).Concat(projectResults.Diagnostics).Distinct())
             {
-                if(ShouldIgnoreDiagnostic(diagnostic))
-                {
-                    continue;
-                }
-                result.AddDiagnostic(new(diagnostic));
+                AddDiagnostic(result, diagnostic);
             }
 
             if(projectResults.HasCriticalErrors)
@@ -413,71 +394,6 @@ namespace Sona.Compiler
             CheckEvaluation(result, manifestPath, depsPath, options);
         }
 
-        static readonly int[] ignoredWarnings =
-        {
-            // Wildcards are not generics
-            464, // This code is less generic than indicated by its annotations. A unit-of-measure specified using '_' has been determined to be '1', i.e. dimensionless.
-
-            // Code style
-            3220, // This method or property is not normally used from F# code, use an explicit tuple pattern for deconstruction instead.
-
-            // Triggered by unused generic returns
-            3559, // A type has been implicitly inferred as 'obj', which may be unintended. Consider adding explicit type annotations.
-        };
-
-        static readonly int[] enabledWarnings =
-        {
-            // Recursion checked at run time
-            21,
-
-            // Implicit copies of structs
-            52,
-
-            // Implicit equality/comparison
-            1178,
-
-            // Unused anything not starting with `_`
-            1182, // The value '%s' is unused
-            
-            3387, // This expression has type '%s' and is only made compatible with type '%s' through an ambiguous implicit conversion. Consider using an explicit call to 'op_Implicit'.
-            
-            // Additional implicit upcast
-            3388, // This expression implicitly converts type '%s' to type '%s'.
-            
-            // Implicit widening
-            3389, // This expression uses a built-in implicit conversion to convert type '%s' to type '%s'.
-            
-            // Malformed XML doc comments
-            3390, // This XML comment is invalid: '%s'
-
-            // f() should not work for function(object)
-            3397, // This expression uses 'unit' for an 'obj'-typed argument. This will lead to passing 'null' at runtime.
-            
-            // Ineffective inline lambda
-            3517, // The value '%s' was marked 'InlineIfLambda' but was not determined to have a lambda value.
-        };
-
-        static readonly int[] errorWarnings =
-        {
-            // Explicit discard required
-            20, // The result of this expression has type '%s' and is implicitly ignored.
-
-            // No hidden exceptions
-            25, // Incomplete pattern matches on this expression.
-
-            // Pattern variables must be lowercase
-            49, // Uppercase variable identifiers should not generally be used in patterns, and may indicate a missing open declaration or a misspelt pattern name.
-            
-            // Explicit discard required
-            193, // This expression is a function value, i.e. is missing arguments. Its type is %s.
-
-             // Nullness warning
-            3261,
-            
-            // Ineffective inline lambda
-            3517, // The value '%s' was marked 'InlineIfLambda' but was not determined to have a lambda value.
-        };
-
         static readonly string[] executableFlags =
         {
             "--subsystemversion:6.00",
@@ -503,16 +419,16 @@ namespace Sona.Compiler
             "--debug:embedded",
             "--deterministic+",
 
-            "--preferreduilang:" + diagnosticsCulture.Name,
+            "--preferreduilang:" + CompilerMessages.Culture.Name,
             //"--flaterrors",
             //"--parallelcompilation",
 
             "--simpleresolution",
 
             "--langversion:latest",
-            "--nowarn:" + String.Join(",", ignoredWarnings),
-            "--warnon:" + String.Join(",", enabledWarnings),
-            "--warnaserror+:" + String.Join(",", errorWarnings),
+            "--nowarn:" + String.Join(",", CompilerMessages.IgnoredWarnings),
+            "--warnon:" + String.Join(",", CompilerMessages.EnabledWarnings),
+            "--warnaserror+:" + String.Join(",", CompilerMessages.ErrorWarnings),
             "--checknulls+",
         };
 
