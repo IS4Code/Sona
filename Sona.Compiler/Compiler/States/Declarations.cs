@@ -356,12 +356,16 @@ namespace Sona.Compiler.States
             ExitState().ExitVariableDecl(context);
         }
 
-        public override void EnterDeclaration(DeclarationContext context)
+        private void WriteRec()
         {
             if(LexerContext.GetState<RecursivePragma>()?.Value ?? false)
             {
                 Out.Write("rec ");
             }
+        }
+
+        public override void EnterDeclaration(DeclarationContext context)
+        {
             EnterState<DeclarationState>().EnterDeclaration(context);
         }
 
@@ -390,6 +394,7 @@ namespace Sona.Compiler.States
         public override void EnterLetDecl(LetDeclContext context)
         {
             Out.Write("let ");
+            WriteRec();
         }
 
         public override void ExitLetDecl(LetDeclContext context)
@@ -399,7 +404,9 @@ namespace Sona.Compiler.States
 
         public override void EnterVarDecl(VarDeclContext context)
         {
-            Out.Write("let mutable ");
+            Out.Write("let ");
+            WriteRec();
+            Out.Write("mutable ");
         }
 
         public override void ExitVarDecl(VarDeclContext context)
@@ -413,6 +420,7 @@ namespace Sona.Compiler.States
             Out.WriteCoreName("LiteralAttribute");
             Out.WriteLine(">]");
             Out.Write("let ");
+            WriteRec();
             type = ExpressionType.Literal;
         }
 
@@ -424,6 +432,7 @@ namespace Sona.Compiler.States
         public override void EnterUseDecl(UseDeclContext context)
         {
             Out.Write("use ");
+            WriteRec();
         }
 
         public override void ExitUseDecl(UseDeclContext context)
@@ -433,7 +442,9 @@ namespace Sona.Compiler.States
 
         public override void EnterUseVarDecl(UseVarDeclContext context)
         {
-            Out.Write("use mutable ");
+            Out.Write("use ");
+            WriteRec();
+            Out.Write("mutable ");
         }
 
         public override void ExitUseVarDecl(UseVarDeclContext context)
