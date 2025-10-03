@@ -2638,19 +2638,35 @@ pattern:
   inlineSourceFree;
 
 logicPattern:
+  logicPattern_AndPrefix logicPattern_AndSuffix* |
   typePattern (
-    (
-      'and' (typePattern 'and')* |
-      'or' (typePattern 'or')*
-    ) typePattern
+    logicPattern_AndSuffix+ |
+    ('or' typePattern)+
   )?;
 
+// Arbitrarily nested pattern consisting only of `and`.
+logicPattern_AndPrefix:
+  '('
+    (
+      logicPattern_AndPrefix |
+      typePattern logicPattern_AndSuffix
+    )
+    (logicPattern_AndSuffix)*
+  ')';
+
+logicPattern_AndSuffix:
+  'and' (logicPattern_AndPrefix | typePattern);
+
 typePattern:
+  typePattern_Contents |
+  annotationPattern;
+
+typePattern_Contents:
+  '(' typePattern_Contents ')' |
   'is' (
     '<' typeArgument '>' typePatternExplicit? |
     typePatternImplicit
-  ) |
-  annotationPattern;
+  );
 
 typePatternExplicit:
   annotationPattern;
