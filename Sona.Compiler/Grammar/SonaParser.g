@@ -2638,24 +2638,44 @@ pattern:
   inlineSourceFree;
 
 logicPattern:
-  logicPattern_AndPrefix logicPattern_AndSuffix* |
-  typePattern (
-    logicPattern_AndSuffix+ |
-    ('or' typePattern)+
-  )?;
+  logicPattern_AndPrefix logicPattern_AndSuffix? |
+  logicPattern_Argument (
+    logicPattern_AndSuffix |
+    ('or' logicPattern_Argument)* (
+        'or' unaryPattern
+    )
+  )? |
+  unaryPattern;
 
 // Arbitrarily nested pattern consisting only of `and`.
 logicPattern_AndPrefix:
   '('
     (
-      logicPattern_AndPrefix |
-      typePattern logicPattern_AndSuffix
+      logicPattern_AndPrefix logicPattern_AndSuffix? |
+      logicPattern_Argument logicPattern_AndSuffix
     )
-    (logicPattern_AndSuffix)*
   ')';
 
 logicPattern_AndSuffix:
-  'and' (logicPattern_AndPrefix | typePattern);
+  ('and' (logicPattern_AndPrefix | logicPattern_Argument))*
+  'and' (
+    logicPattern_AndPrefix |
+    unaryPattern
+  );
+
+logicPattern_Argument:
+  '(' unaryLogicPattern ')' |
+  atomicNotNullPattern |
+  typePattern;
+
+unaryLogicPattern:
+  '(' unaryLogicPattern ')' |
+  notNullPattern;
+
+unaryPattern:
+  unaryLogicPattern |
+  atomicNotNullPattern |
+  typePattern;
 
 typePattern:
   typePattern_Contents |
@@ -2674,12 +2694,26 @@ typePatternExplicit:
 typePatternImplicit:
   annotationPattern;
 
+notNullPattern:
+  'not' nullArg;
+
+atomicNotNullPattern:
+  '!' nullArg;
+
+nullPattern:
+  nullArg;
+
+nullArg:
+  'null' |
+  '(' nullArg ')';
+
 annotationPattern:
   atomicPattern (
     'as' type
   )*;
 
 atomicPattern:
+  nullPattern |
   primitiveExpr |
   unit ('(' ')')? |
   unaryNumberConvertExpr |
@@ -2698,7 +2732,7 @@ nestedPattern:
 somePattern:
   'some' (
     '(' patternArgument ')' |
-    annotationPattern
+    unaryPattern
   );
 
 namedPattern:
@@ -2711,7 +2745,7 @@ memberPattern:
   );
 
 relationalPattern:
-  relationalOperator annotationPattern;
+  relationalOperator unaryPattern;
 
 // Calls
 

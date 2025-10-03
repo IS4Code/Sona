@@ -8,6 +8,7 @@ namespace Sona.Compiler.States
     internal class PatternState : NodeState, IExpressionContext
     {
         int parenthesisLevel;
+        bool patternExpected;
 
         ExpressionType IExpressionContext.Type => ExpressionType.Pattern;
 
@@ -16,6 +17,7 @@ namespace Sona.Compiler.States
             base.Initialize(environment, parent);
 
             parenthesisLevel = 0;
+            patternExpected = false;
         }
 
         public override void EnterPattern(PatternContext context)
@@ -31,6 +33,11 @@ namespace Sona.Compiler.States
 
         private void CloseParentheses()
         {
+            if(patternExpected)
+            {
+                Out.Write('_');
+                patternExpected = false;
+            }
             while(parenthesisLevel > 0)
             {
                 Out.Write(')');
@@ -50,8 +57,15 @@ namespace Sona.Compiler.States
             switch(token.Type)
             {
                 case SonaLexer.AND:
-                    Out.Write(" as(");
-                    parenthesisLevel++;
+                    if(patternExpected)
+                    {
+                        patternExpected = false;
+                    }
+                    else
+                    {
+                        Out.Write(" as(");
+                        parenthesisLevel++;
+                    }
                     break;
                 case SonaLexer.OR:
                     // Needs to close parentheses opened by `is`
@@ -186,6 +200,42 @@ namespace Sona.Compiler.States
 
         }
 
+        public sealed override void EnterNotNullPattern(NotNullPatternContext context)
+        {
+            Out.WriteCustomPattern("NonNull");
+            parenthesisLevel++;
+            Out.Write('(');
+            patternExpected = true;
+        }
+
+        public sealed override void ExitNotNullPattern(NotNullPatternContext context)
+        {
+
+        }
+
+        public sealed override void EnterAtomicNotNullPattern(AtomicNotNullPatternContext context)
+        {
+            Out.WriteCustomPattern("NonNull");
+            parenthesisLevel++;
+            Out.Write('(');
+            patternExpected = true;
+        }
+
+        public sealed override void ExitAtomicNotNullPattern(AtomicNotNullPatternContext context)
+        {
+
+        }
+
+        public sealed override void EnterNullPattern(NullPatternContext context)
+        {
+            Out.WriteCustomPattern("Null");
+        }
+
+        public sealed override void ExitNullPattern(NullPatternContext context)
+        {
+
+        }
+
         public sealed override void EnterSimplePatternArgument(SimplePatternArgumentContext context)
         {
             Out.Write('(');
@@ -312,14 +362,14 @@ namespace Sona.Compiler.States
             }
         }
 
-        abstract class UnaryPattern : PatternState
+        abstract class OperatorPattern : PatternState
         {
-            public sealed override void EnterAnnotationPattern(AnnotationPatternContext context)
+            public sealed override void EnterUnaryPattern(UnaryPatternContext context)
             {
-                EnterState<Argument>().EnterAnnotationPattern(context);
+                EnterState<Argument>().EnterUnaryPattern(context);
             }
 
-            public sealed override void ExitAnnotationPattern(AnnotationPatternContext context)
+            public sealed override void ExitUnaryPattern(UnaryPatternContext context)
             {
 
             }
@@ -331,14 +381,15 @@ namespace Sona.Compiler.States
                     base.Initialize(environment, parent);
                 }
 
-                public override void EnterAnnotationPattern(AnnotationPatternContext context)
+                public override void EnterUnaryPattern(UnaryPatternContext context)
                 {
 
                 }
 
-                public override void ExitAnnotationPattern(AnnotationPatternContext context)
+                public override void ExitUnaryPattern(UnaryPatternContext context)
                 {
-                    ExitState().ExitAnnotationPattern(context);
+                    OnExit();
+                    ExitState().ExitUnaryPattern(context);
                 }
             }
         }
@@ -367,7 +418,7 @@ namespace Sona.Compiler.States
             }
         }
 
-        sealed class SomePattern : UnaryPattern
+        sealed class SomePattern : OperatorPattern
         {
             public sealed override void EnterSomePattern(SomePatternContext context)
             {
@@ -880,7 +931,7 @@ namespace Sona.Compiler.States
             }
         }
 
-        sealed class RelationalPattern : UnaryPattern
+        sealed class RelationalPattern : OperatorPattern
         {
             public sealed override void EnterRelationalPattern(RelationalPatternContext context)
             {

@@ -466,6 +466,11 @@ module Patterns =
   [<return: Struct>]
   let inline (|LessThanOrEqual|_|) y x = if x <= y then ValueSome() else ValueNone
 
+  let inline (|Null|NonNull|) x = FSharp.Core.Operators.(|Null|NonNull|) x
+  
+  [<GeneralizableValue>]
+  let inline Null<^T when ^T : null> : ^T = null
+
   [<Literal>]
   let private errorMessage = "The use of this operator is not valid in a parametrized pattern."
   [<Literal>]
