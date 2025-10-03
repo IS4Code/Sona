@@ -10,34 +10,24 @@ namespace Sona.Compiler
 
         }
 
-        public sealed override void EnterErrorUnderscoreReserved(ErrorUnderscoreReservedContext context)
-        {
-
-        }
-
-        public sealed override void EnterErrorUnsupportedNumberSuffix(ErrorUnsupportedNumberSuffixContext context)
-        {
-            Environment.EnableParseTree();
-        }
-
-        public sealed override void EnterErrorUnsupportedEndCharSuffix(ErrorUnsupportedEndCharSuffixContext context)
-        {
-            Environment.EnableParseTree();
-        }
-
-        public sealed override void EnterErrorUnsupportedEndStringSuffix(ErrorUnsupportedEndStringSuffixContext context)
-        {
-            Environment.EnableParseTree();
-        }
-
         public sealed override void ExitErrorMissingExpression(ErrorMissingExpressionContext context)
         {
             Error("This construct requires an expression.", context);
         }
 
+        public sealed override void EnterErrorUnderscoreReserved(ErrorUnderscoreReservedContext context)
+        {
+
+        }
+
         public sealed override void ExitErrorUnderscoreReserved(ErrorUnderscoreReservedContext context)
         {
             Error("A single underscore is a reserved identifier.", context);
+        }
+
+        public sealed override void EnterErrorUnsupportedNumberSuffix(ErrorUnsupportedNumberSuffixContext context)
+        {
+            Environment.EnableParseTree();
         }
 
         public sealed override void ExitErrorUnsupportedNumberSuffix(ErrorUnsupportedNumberSuffixContext context)
@@ -52,6 +42,11 @@ namespace Sona.Compiler
             }
         }
 
+        public sealed override void EnterErrorUnsupportedEndCharSuffix(ErrorUnsupportedEndCharSuffixContext context)
+        {
+            Environment.EnableParseTree();
+        }
+
         public sealed override void ExitErrorUnsupportedEndCharSuffix(ErrorUnsupportedEndCharSuffixContext context)
         {
             try
@@ -62,6 +57,11 @@ namespace Sona.Compiler
             {
                 Environment.DisableParseTree();
             }
+        }
+
+        public sealed override void EnterErrorUnsupportedEndStringSuffix(ErrorUnsupportedEndStringSuffixContext context)
+        {
+            Environment.EnableParseTree();
         }
 
         public sealed override void ExitErrorUnsupportedEndStringSuffix(ErrorUnsupportedEndStringSuffixContext context)
