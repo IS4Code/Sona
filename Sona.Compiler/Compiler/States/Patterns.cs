@@ -168,6 +168,16 @@ namespace Sona.Compiler.States
 
         }
 
+        public override void EnterRegexPattern(RegexPatternContext context)
+        {
+            EnterState<RegexPatternState>().EnterRegexPattern(context);
+        }
+
+        public override void ExitRegexPattern(RegexPatternContext context)
+        {
+
+        }
+
         public sealed override void EnterTypeArgument(TypeArgumentContext context)
         {
             EnterState<TypeState.Argument>().EnterTypeArgument(context);

@@ -281,10 +281,14 @@ SINGLE_XOR: '^';
 LSHIFT: '<<';
 EXCLAMATION: '!';
 TILDE: '~';
+AT: '@';
 COLON: ':';
 DOT: '.';
 
 RESERVED: '+' '+'+ | '-' '-'+ | '=' [<>=]+;
+
+BEGIN_REGEX_GROUP: '(?{' -> pushMode(DEFAULT_MODE), pushMode(DEFAULT_MODE);
+ESCAPE: '\\' .;
 
 NAME:
   (LOWERCASE | UPPERCASE | '_' | UNICODE) (LOWERCASE | UPPERCASE | DIGIT | '_' | UNICODE)*;
@@ -492,9 +496,12 @@ Directive_SINGLE_XOR: SINGLE_XOR -> type(SINGLE_XOR);
 Directive_LSHIFT: LSHIFT -> type(LSHIFT);
 Directive_EXCLAMATION: EXCLAMATION -> type(EXCLAMATION);
 Directive_TILDE: TILDE -> type(TILDE);
+Directive_AT: AT -> type(AT);
 Directive_COLON: COLON -> type(COLON);
 Directive_DOT: DOT -> type(DOT);
 Directive_RESERVED: RESERVED -> type(RESERVED);
+Directive_BEGIN_REGEX_GROUP: BEGIN_REGEX_GROUP -> type(BEGIN_REGEX_GROUP), pushMode(DEFAULT_MODE), pushMode(DEFAULT_MODE);
+Directive_ESCAPE: ESCAPE -> type(ESCAPE);
 
 Directive_NAME: NAME -> type(NAME);
 
@@ -868,9 +875,12 @@ Interpolation_SINGLE_XOR: SINGLE_XOR -> type(SINGLE_XOR);
 Interpolation_LSHIFT: LSHIFT -> type(LSHIFT);
 Interpolation_EXCLAMATION: EXCLAMATION -> type(EXCLAMATION);
 Interpolation_TILDE: TILDE -> type(TILDE);
+Interpolation_AT: AT -> type(AT);
 // no Interpolation_COLON
 Interpolation_DOT: DOT -> type(DOT);
 Interpolation_RESERVED: RESERVED -> type(RESERVED);
+Interpolation_BEGIN_REGEX_GROUP: BEGIN_REGEX_GROUP -> type(BEGIN_REGEX_GROUP), pushMode(DEFAULT_MODE), pushMode(DEFAULT_MODE);
+Interpolation_ESCAPE: ESCAPE -> type(ESCAPE);
 
 Interpolation_NAME: NAME -> type(NAME);
 

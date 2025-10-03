@@ -471,6 +471,33 @@ module Patterns =
   [<GeneralizableValue>]
   let inline Null<^T when ^T : null> : ^T = null
 
+  open System.Text.RegularExpressions
+  let inline CreateRegex s = Regex(s, RegexOptions.Compiled ||| RegexOptions.CultureInvariant ||| RegexOptions.ExplicitCapture ||| RegexOptions.IgnorePatternWhitespace);
+  
+  type RegexGroupMatch = RegexGroupMatch of string * Group with
+    static member op_Explicit(RegexGroupMatch(_, grp)) = grp.Value
+    static member op_Explicit(RegexGroupMatch(s, grp)) = s.AsMemory(grp.Index, grp.Length)
+    static member op_Explicit(RegexGroupMatch(s, grp)) = s.AsSpan(grp.Index, grp.Length)
+    
+    static member op_Explicit(RegexGroupMatch(_, grp)) = if grp.Success then Some(grp.Value) else None
+    static member op_Explicit(RegexGroupMatch(s, grp)) = if grp.Success then Some(s.AsMemory(grp.Index, grp.Length)) else None
+    static member op_Explicit(RegexGroupMatch(_, grp)) = if grp.Success then ValueSome(grp.Value) else ValueNone
+    static member op_Explicit(RegexGroupMatch(s, grp)) = if grp.Success then ValueSome(s.AsMemory(grp.Index, grp.Length)) else ValueNone
+  
+  [<return: Struct>]
+  let (|MatchRegex|_|) (r : Regex) (s : string) =
+    let results = r.Match s
+    if not results.Success then
+      ValueNone
+    else
+      let groups = results.Groups
+      let result = Array.zeroCreate(groups.Count - 1)
+      for i in 1..(groups.Count - 1) do
+        result[i - 1] <- RegexGroupMatch(s, groups[i])
+      ValueSome result
+  
+  let inline (|UnpackRegexGroup|) g = (^T : (static member op_Explicit : ^T -> _) g)
+  
   [<Literal>]
   let private errorMessage = "The use of this operator is not valid in a parametrized pattern."
   [<Literal>]
