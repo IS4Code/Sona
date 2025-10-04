@@ -505,7 +505,7 @@ namespace Sona.Compiler.States
                 }
             }
 
-            public override void EnterPatternArgument(PatternArgumentContext context)
+            private void OnEnterArgument(ParserRuleContext context)
             {
                 if(namedArg)
                 {
@@ -527,12 +527,33 @@ namespace Sona.Compiler.States
                 {
                     Out.Write(',');
                 }
+            }
+
+            private void OnExitArgument(ParserRuleContext context)
+            {
+                namedArg = false;
+            }
+
+            public override void EnterPatternArgument(PatternArgumentContext context)
+            {
+                OnEnterArgument(context);
                 EnterState<CallArgument>().EnterPatternArgument(context);
             }
 
             public override void ExitPatternArgument(PatternArgumentContext context)
             {
-                namedArg = false;
+                OnExitArgument(context);
+            }
+
+            public override void EnterPattern(PatternContext context)
+            {
+                OnEnterArgument(context);
+                EnterState<PatternState>().EnterPattern(context);
+            }
+
+            public override void ExitPattern(PatternContext context)
+            {
+                OnExitArgument(context);
             }
 
             public override void EnterFieldAssignment(FieldAssignmentContext context)
