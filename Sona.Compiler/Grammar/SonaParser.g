@@ -3123,7 +3123,7 @@ anonymousStructRecordConstructor:
   '{' 'as' 'struct' ';'? recordConstructor_Contents '}';
 
 recordConstructor_Contents:
-  fieldAssignment expression (',' fieldAssignment expression)*;
+  (emptyFieldAssignment ',')* (fieldAssignment expression) (',' (fieldAssignment expression | emptyFieldAssignment))*;
 
 arrayConstructor:
   '[' (simpleCollectionContents | complexCollectionContents)? ']';

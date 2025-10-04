@@ -84,6 +84,26 @@ namespace Sona.Compiler.States
         {
 
         }
+
+        public override void EnterEmptyFieldAssignment(EmptyFieldAssignmentContext context)
+        {
+            Environment.EnableParseTree();
+        }
+
+        public override void ExitEmptyFieldAssignment(EmptyFieldAssignmentContext context)
+        {
+            string name;
+            try
+            {
+                name = Tools.Syntax.GetIdentifierFromName(context.GetText());
+            }
+            finally
+            {
+                Environment.DisableParseTree();
+            }
+            Out.WriteOperator('=');
+            Out.WriteIdentifier(name);
+        }
     }
 
     internal sealed class TupleState : NodeState
