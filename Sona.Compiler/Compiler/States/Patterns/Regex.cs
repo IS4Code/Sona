@@ -68,9 +68,9 @@ namespace Sona.Compiler.States
                 var regex = new Regex(pattern, validateRegexOptions);
 
                 var groupNames = regex.GetGroupNames();
-                if(groupNames.Length != groups + 1 || groupNames[0] != "0" || groupNames.Skip(1).Any(n => !n.StartsWith("_", StringComparison.Ordinal)) || Enumerable.Range(1, groups).Any(n => regex.GroupNumberFromName("_" + n) == -1))
+                if(groupNames.Length != groups + 1 || groupNames[0] != "0" || groupNames.Skip(1).Any(n => n.Length == 0 || n[0] is not (>= '0' and <= '9')) || Enumerable.Range(1, groups).Any(n => regex.GroupNumberFromName(n.ToString()) == -1))
                 {
-                    Error("Regular expressions may not contain additional capturing groups.", context);
+                    Error("Regular expressions in patterns may not contain more capturing groups than those indicated by pattern captures.", context);
                 }
             }
             catch(ArgumentException e)
@@ -254,7 +254,7 @@ namespace Sona.Compiler.States
             OnNextToken(token);
             ProcessToken(token, false);
 
-            regexBuilder.Append("(?<_");
+            regexBuilder.Append("(?<");
             regexBuilder.Append(++groups);
 
             // The full regex needs to be known first
