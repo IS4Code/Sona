@@ -292,7 +292,7 @@ AT: '@';
 COLON: ':';
 DOT: '.';
 
-RESERVED: '+' '+'+ | '-' '-'+ | '=' [<>=]+;
+RESERVED: '+' '+'+ | '-' '-'+ | [!~]? '=' [<>=]+;
 
 BEGIN_REGEX_GROUP: '(?{' -> pushMode(DEFAULT_MODE), pushMode(DEFAULT_MODE);
 
