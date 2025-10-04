@@ -682,12 +682,22 @@ namespace Sona.Compiler.States
             public override void EnterEmptyFieldAssignment(EmptyFieldAssignmentContext context)
             {
                 OnEnterField();
+                Environment.EnableParseTree();
             }
 
             public override void ExitEmptyFieldAssignment(EmptyFieldAssignmentContext context)
             {
+                string name;
+                try
+                {
+                    name = Tools.Syntax.GetIdentifierFromName(context.GetText());
+                }
+                finally
+                {
+                    Environment.DisableParseTree();
+                }
                 Out.WriteOperator('=');
-                Out.Write('_');
+                Out.WriteIdentifier(name);
             }
 
             public override void EnterFieldRelation(FieldRelationContext context)
@@ -867,11 +877,23 @@ namespace Sona.Compiler.States
             public override void EnterEmptyFieldAssignment(EmptyFieldAssignmentContext context)
             {
                 OnEnterField();
+                Environment.EnableParseTree();
             }
 
             public override void ExitEmptyFieldAssignment(EmptyFieldAssignmentContext context)
             {
-                Out.Write("(_)");
+                string name;
+                try
+                {
+                    name = Tools.Syntax.GetIdentifierFromName(context.GetText());
+                }
+                finally
+                {
+                    Environment.DisableParseTree();
+                }
+                Out.Write('(');
+                Out.WriteIdentifier(name);
+                Out.Write(')');
             }
 
             public override void EnterFieldRelation(FieldRelationContext context)
