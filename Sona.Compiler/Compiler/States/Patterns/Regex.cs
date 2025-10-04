@@ -191,16 +191,31 @@ namespace Sona.Compiler.States
             }
             lastToken = token;
 
-            if(token.Type is SonaLexer.COMMENT or SonaLexer.DOC_COMMENT)
+            switch(token.Type)
             {
-                Error("Comments are not allowed within regular expressions.", token);
+                case SonaLexer.COMMENT:
+                case SonaLexer.DOC_COMMENT:
+                    Error("Comments are not allowed within regular expressions.", token);
+                    break;
+                case SonaLexer.BEGIN_STRING:
+                case SonaLexer.BEGIN_VERBATIM_STRING:
+                case SonaLexer.BEGIN_INTERPOLATED_STRING:
+                case SonaLexer.BEGIN_VERBATIM_INTERPOLATED_STRING:
+                case SonaLexer.STRING_LITERAL:
+                case SonaLexer.VERBATIM_STRING_LITERAL:
+                    Error("The `\"` character in a regular expression must be escaped.", token);
+                    break;
+                case SonaLexer.BEGIN_CHAR:
+                case SonaLexer.CHAR_LITERAL:
+                    Error("The `'` character in a regular expression must be escaped.", token);
+                    break;
             }
 
             var text = token.Text;
 
             if(text.StartsWith("#", StringComparison.Ordinal))
             {
-                Error("The '#' character in a regular expression must be escaped.", token);
+                Error("The `#` character in a regular expression must be escaped.", token);
             }
 
             if(token.Type == SonaLexer.SLASH)
@@ -222,7 +237,7 @@ namespace Sona.Compiler.States
             switch(position)
             {
                 case RegexPosition.Start:
-                    Error($"COMPILER ERROR: Unexpected token '{text}' at the beginning of regular expression.", token);
+                    Error($"COMPILER ERROR: Unexpected token `{text}` at the beginning of regular expression.", token);
                     break;
                 case RegexPosition.Middle when write:
                     regexBuilder.Append(text);
