@@ -497,6 +497,8 @@ module Patterns =
       ValueSome result
   
   let inline (|UnpackRegexGroup|) g = (^T : (static member op_Explicit : ^T -> _) g)
+
+  let inline (|Any|) x = x
   
   [<Literal>]
   let private errorMessage = "The use of this operator is not valid in a parametrized pattern."
@@ -514,6 +516,8 @@ module Patterns =
   let inline GreaterThanOrEqual x = Unchecked.defaultof<_>
   [<CompilerMessage(errorMessage, errorNumber, IsError = true, IsHidden = true)>]
   let inline LessThanOrEqual x = Unchecked.defaultof<_>
+  [<CompilerMessage(errorMessage, errorNumber, IsError = true, IsHidden = true)>]
+  let inline Any x = Unchecked.defaultof<_>
 
 [<AbstractClass; AllowNullLiteral>]
 type InferenceBase internal() =
