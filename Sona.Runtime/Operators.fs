@@ -28,14 +28,27 @@ type UnaryOperators2 = class end
 type UnaryOperators1 with
   static member inline ``operator Length``(_:UnaryOperators1, _:UnaryOperators2, x) =
     (^T : (member Count : int) x)
+    
+  static member inline ``operator Not``(_:UnaryOperators1, _:UnaryOperators2, x) =
+    not x
+  
+  // Impossible overload needed with the same signature as the one in UnaryOperators2
+  static member inline ``operator Not``(_:UnaryOperators1, _:UnaryOperators2, _ : ^T when ^T :> System.Enum and ^T : not struct and ^T : (new : unit -> ^T)) =
+    ()
 
 type UnaryOperators2 with
   static member inline ``operator Length``(_:UnaryOperators1, _:UnaryOperators2, x) =
     (^T : (member Length : int) x)
+  
+  // Require op_True and op_False to indicate a bool-like type
+  static member inline ``operator Not``(_:UnaryOperators1, _:UnaryOperators2, x : ^T when ^T : (static member op_True : ^T -> bool) and ^T : (static member op_False : ^T -> bool)) =
+    (^T : (static member (~~~) : ^T -> _) x)
     
 [<RequireQualifiedAccess>]
 module UnaryOperators =
   let inline Length x = ((^self1 or ^self2 or ^x) : (static member ``operator Length``: ^self1 * ^self2 * ^x -> int) (null : UnaryOperators1), (null : UnaryOperators2), x)
+  
+  let inline Not x = ((^self1 or ^self2 or ^x) : (static member ``operator Not``: ^self1 * ^self2 * ^x -> _) (null : UnaryOperators1), (null : UnaryOperators2), x)
   
   let inline SByte x = sbyte x
 

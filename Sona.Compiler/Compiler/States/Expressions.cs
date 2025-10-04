@@ -240,7 +240,7 @@ namespace Sona.Compiler.States
         public override void ExitHashExpr(HashExprContext context)
         {
             Out.Write(')');
-            if(Type == ExpressionType.Literal)
+            if(IsLiteral)
             {
                 Out.Write(".Length");
             }
@@ -252,7 +252,14 @@ namespace Sona.Compiler.States
 
         public override void EnterNotExpr(NotExprContext context)
         {
-            Out.WriteCoreOperatorName("not");
+            if(IsLiteral)
+            {
+                Out.WriteCoreOperatorName("not");
+            }
+            else
+            {
+                Out.WriteCustomUnaryOperator("Not");
+            }
             Out.Write('(');
         }
 

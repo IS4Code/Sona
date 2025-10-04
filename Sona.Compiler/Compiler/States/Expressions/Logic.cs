@@ -51,7 +51,14 @@ namespace Sona.Compiler.States
                     Out.WriteOperator("||");
                     break;
                 case SonaLexer.NOT:
-                    Out.WriteCoreOperatorName("not");
+                    if(IsLiteral)
+                    {
+                        Out.WriteCoreOperatorName("not");
+                    }
+                    else
+                    {
+                        Out.WriteCustomUnaryOperator("Not");
+                    }
                     Out.Write('(');
                     notLevel++;
                     break;
@@ -89,7 +96,14 @@ namespace Sona.Compiler.States
             base.VisitTerminal(node);
             if(node.Symbol.Type == SonaLexer.NOT)
             {
-                Out.WriteCoreOperatorName("not");
+                if(IsLiteral)
+                {
+                    Out.WriteCoreOperatorName("not");
+                }
+                else
+                {
+                    Out.WriteCustomUnaryOperator("Not");
+                }
                 Out.Write('(');
                 notLevel++;
             }
