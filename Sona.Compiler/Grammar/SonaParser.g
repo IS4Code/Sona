@@ -2765,12 +2765,14 @@ regexGroupStart:
 // Calls
 
 patternArguments:
-  ('(' patternArgTuple (';' patternArgTuple)* ')')+;
+  ('(' (emptyPatternArgTuple | patternArgTuple) (';' (emptyPatternArgTuple | patternArgTuple))* ')')+;
 
 simplePatternArgument:
   basicConstructPattern |
   char |
   string;
+
+emptyPatternArgTuple:;
 
 patternArgTuple:
   (fieldAssignment pattern | patternArgument) (',' (fieldAssignment pattern | patternArgument))*;
