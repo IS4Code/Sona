@@ -21,7 +21,7 @@ namespace Sona.Compiler.States
         ISourceCapture? patternCapture;
         int groups;
 
-        const RegexOptions validateRegexOptions = RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace;
+        const RegexOptions validateRegexOptions = RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {

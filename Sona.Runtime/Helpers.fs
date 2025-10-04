@@ -472,7 +472,7 @@ module Patterns =
   let inline Null<^T when ^T : null> : ^T = null
 
   open System.Text.RegularExpressions
-  let inline CreateRegex s = Regex(s, RegexOptions.Compiled ||| RegexOptions.CultureInvariant ||| RegexOptions.ExplicitCapture ||| RegexOptions.IgnorePatternWhitespace);
+  let inline CreateRegex s = Regex(s, RegexOptions.Compiled ||| RegexOptions.CultureInvariant ||| RegexOptions.ExplicitCapture);
   
   type RegexGroupMatch = RegexGroupMatch of string * Group with
     static member op_Explicit(RegexGroupMatch(_, grp)) = grp.Value
