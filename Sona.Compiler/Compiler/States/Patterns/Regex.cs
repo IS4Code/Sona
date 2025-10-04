@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using Sona.Grammar;
 using static Sona.Grammar.SonaParser;
@@ -14,7 +15,7 @@ namespace Sona.Compiler.States
         readonly StringBuilder regexBuilder = new();
         readonly StringBuilder flagsBuilder = new();
         RegexPosition position;
-        int line, column;
+        IToken? lastToken;
 
         readonly List<ISourceCapture> captures = new();
         ISourceCapture? patternCapture;
@@ -29,6 +30,7 @@ namespace Sona.Compiler.States
             regexBuilder.Clear();
             flagsBuilder.Clear();
             position = RegexPosition.Start;
+            lastToken = null;
             captures.Clear();
             patternCapture = null;
             groups = 0;
@@ -36,12 +38,7 @@ namespace Sona.Compiler.States
 
         public override void EnterRegexPattern(RegexPatternContext context)
         {
-            var token = context.Start;
-            line = token.Line;
-            column = token.Column;
 
-            //Out.WriteCustomPattern("MatchRegex");
-            //Out.Write('(');
         }
 
         public override void ExitRegexPattern(RegexPatternContext context)
@@ -141,24 +138,70 @@ namespace Sona.Compiler.States
 
         public override void VisitTerminal(ITerminalNode node)
         {
-            // Do not call base
+            // Do not call base to prevent additional validation
 
             var token = node.Symbol;
 
-            if(token.Line != line)
+            // Parser state must be updated however
+            OnEnterToken(token);
+
+            // Check all previous tokens
+            OnNextToken(token);
+
+            ProcessToken(token, true);
+        }
+
+        private void OnNextToken(IToken token)
+        {
+            if(lastToken != null && LexerContext.Whitespace?.ReadTokens() is { Count: > 0 } previous)
             {
-                Error("Regular expressions may not span multiple lines.", node);
-                line = token.Line;
-                column = token.Column;
+                int lastIndex = lastToken.TokenIndex;
+                int tokenIndex = token.TokenIndex;
+
+                // Previous whitespace tokens to process
+                foreach(var previousToken in previous)
+                {
+                    var index = previousToken.TokenIndex;
+                    if(index > lastIndex && index < tokenIndex)
+                    {
+                        // A whitespace token
+                        ProcessToken(previousToken, true);
+                    }
+                }
             }
-            else if(token.Column != column)
+        }
+
+        private void ProcessToken(IToken token, bool write)
+        {
+            if(lastToken != null)
             {
-                Error("Regular expressions may not contain unescaped whitespace characters.", node);
-                column = token.Column;
+                if(token.Line != lastToken.Line)
+                {
+                    Error("Regular expressions may not span multiple lines.", token);
+                }
+                else if(position == RegexPosition.Middle)
+                {
+                    int distance = token.StartIndex - lastToken.StopIndex - 1;
+                    if(distance > 0)
+                    {
+                        // Fill with spaces (other whitespace tokens are preserved)
+                        regexBuilder.Append(' ', distance);
+                    }
+                }
+            }
+            lastToken = token;
+
+            if(token.Type is SonaLexer.COMMENT or SonaLexer.DOC_COMMENT)
+            {
+                Error("Comments are not allowed within regular expressions.", token);
             }
 
             var text = token.Text;
-            column += text.Length;
+
+            if(text.StartsWith("#", StringComparison.Ordinal))
+            {
+                Error("The '#' character in a regular expression must be escaped.", token);
+            }
 
             if(token.Type == SonaLexer.SLASH)
             {
@@ -171,7 +214,7 @@ namespace Sona.Compiler.States
                         position = RegexPosition.End;
                         return;
                     default:
-                        Error("Invalid regular expression syntax.", node);
+                        Error("Invalid regular expression syntax.", token);
                         return;
                 }
             }
@@ -179,9 +222,9 @@ namespace Sona.Compiler.States
             switch(position)
             {
                 case RegexPosition.Start:
-                    Error($"COMPILER ERROR: Unexpected token '{text}' at the beginning of regular expression.", node);
+                    Error($"COMPILER ERROR: Unexpected token '{text}' at the beginning of regular expression.", token);
                     break;
-                case RegexPosition.Middle:
+                case RegexPosition.Middle when write:
                     regexBuilder.Append(text);
                     break;
                 case RegexPosition.End:
@@ -207,6 +250,10 @@ namespace Sona.Compiler.States
 
         public override void EnterRegexGroupStart(RegexGroupStartContext context)
         {
+            var token = context.Start;
+            OnNextToken(token);
+            ProcessToken(token, false);
+
             regexBuilder.Append("(?<_");
             regexBuilder.Append(++groups);
 
@@ -222,8 +269,7 @@ namespace Sona.Compiler.States
 
             regexBuilder.Append('>');
 
-            var token = context.Stop;
-            column = token.Column + token.Text.Length;
+            lastToken = context.Stop;
         }
 
         enum RegexPosition

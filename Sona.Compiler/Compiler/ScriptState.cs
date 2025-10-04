@@ -229,6 +229,18 @@ namespace Sona.Compiler
             return ErrorIdentifierCapture;
         }
 
+        protected string Error(string message, IToken token)
+        {
+            Environment.ReportError(message, token);
+            return Environment.ErrorIdentifier;
+        }
+
+        protected ISourceCapture ErrorCapture(string message, IToken token)
+        {
+            Environment.ReportError(message, token);
+            return ErrorIdentifierCapture;
+        }
+
         ISourceCapture ErrorIdentifierCapture {
             get {
                 var capture = Out.StartCapture();

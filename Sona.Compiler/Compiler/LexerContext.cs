@@ -41,7 +41,9 @@ namespace Sona.Compiler
         PragmaOperation pragmaOperation;
         LexerState? currentlyLexedPragma;
 
-        const string docCommentStateName = "#C";
+        const string whitespaceStateName = "# ";
+
+        public TokensPragma? Whitespace => GetState<WhitespaceState>();
 
         public LexerContext(SonaLexer lexer)
         {
@@ -55,10 +57,10 @@ namespace Sona.Compiler
         public void OnLexerToken(IToken token)
         {
             int type = token.Type;
-            if(type == SonaLexer.DOC_COMMENT)
+            if(type is SonaLexer.WHITESPACE or SonaLexer.COMMENT or SonaLexer.DOC_COMMENT)
             {
-                // Comments are recognized everywhere
-                AddComment(token);
+                // Stash significant whitespace
+                AddWhitespace(token);
                 return;
             }
             if(currentlyLexedPragma != null)
@@ -263,7 +265,7 @@ namespace Sona.Compiler
             }
 
             // Update the context at this token
-            AddContext(token, name, stack);
+            UpdateContext(token, name, stack);
 
             LexerState NewPragma(LexerStateLifetime lifetime)
             {
@@ -334,46 +336,47 @@ namespace Sona.Compiler
             throw new Exception($"'{name}' is not recognized as a valid pragma name.");
         }
 
-        private void AddComment(IToken token)
+        private void AddWhitespace(IToken token)
         {
-            if(!lexerContext.TryGetValue(docCommentStateName, out var stack))
+            if(!lexerContext.TryGetValue(whitespaceStateName, out var stack))
             {
                 // Start with an empty stack
                 stack = ImmutableStack<LexerState>.Empty;
             }
             if(stack.IsEmpty)
             {
-                stack = stack.Push(new DocComment(token));
+                stack = stack.Push(new WhitespaceState(token));
             }
             else
             {
-                var comment = stack.Peek();
-                var newComment = comment.ForkNew(token);
-                if(newComment == comment)
+                var topState = stack.Peek();
+                var newState = topState.ForkNew(token);
+                if(newState == topState)
                 {
-                    // Optimization for consecutive comments
+                    // Optimization for consecutive whitespace
                     return;
                 }
-                // This stack should always have at most one item
-                stack = ImmutableStack.Create(newComment);
+                // The stack should always have at most one item
+                stack = ImmutableStack.Create(newState);
             }
-            AddContext(token, docCommentStateName, stack);
+            UpdateContext(token, whitespaceStateName, stack);
         }
 
-        private void AddContext(IToken token, string name, ImmutableStack<LexerState> stack)
+        private void UpdateContext(IToken token, string name, ImmutableStack<LexerState> stack)
         {
             var index = token.TokenIndex;
             lexerContext = lexerContext.SetItem(name, stack);
             contexts.Enqueue(new(index, lexerContext));
         }
 
-        sealed class DocComment : DocumentationCommentState
+        [LexerStateName(whitespaceStateName)]
+        sealed class WhitespaceState : TokensPragma
         {
             int index;
 
             readonly ImmutableList<IToken>.Builder value;
 
-            public DocComment(IToken token) : base(docCommentStateName)
+            public WhitespaceState(IToken token) : base(whitespaceStateName)
             {
                 index = token.TokenIndex;
 
@@ -386,13 +389,13 @@ namespace Sona.Compiler
                 int newIndex = token.TokenIndex;
                 if(newIndex == index + 1)
                 {
-                    // Consecutive comment
+                    // Consecutive whitespace
                     index = newIndex;
                     value.Add(token);
                     return this;
                 }
-                // There is a gap, so this is likely a block of comments for a new element
-                return new DocComment(token);
+                // There is a gap
+                return new WhitespaceState(token);
             }
 
             public override bool OnArgument(IToken token)
@@ -439,11 +442,6 @@ namespace Sona.Compiler
             {
                 var type = typeof(TState);
 
-                if(type.IsAssignableFrom(typeof(DocComment)))
-                {
-                    // Documentation comment implementation
-                    return docCommentStateName;
-                }
                 var attr = type.GetCustomAttribute<LexerStateNameAttribute>();
                 if(attr == null)
                 {

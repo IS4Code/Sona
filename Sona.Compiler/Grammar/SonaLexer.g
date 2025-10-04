@@ -1,7 +1,7 @@
 lexer grammar SonaLexer;
 
 channels {
-  Documentation,
+  SignificantWhitespace,
   Pragma
 }
 
@@ -49,29 +49,36 @@ BEGIN_VERBATIM_INTERPOLATED_STRING:
 BEGIN_CHAR:
   '\'' -> pushMode(Char);
 
+DOC_COMMENT:
+  '///' ~[\n\r]* -> channel(SignificantWhitespace);
+
 COMMENT:
-  '/*' (~[*] | '*' ~[/])* '*'+ '/' -> skip;
+  '/' (
+    // Block comment, must not contain `*/`
+    '*' (~[*] | '*' ~[/])* '*'+ '/' |
+    // Line comment, terminates before EOL
+    '/' ~[\n\r]*
+  ) -> channel(SignificantWhitespace);
 
 fragment EOL:
   '\r'? ('\n' | EOF);
 
-DOC_COMMENT:
-  '///' ~[\n\r]* -> channel(Documentation);
-
-LINE_COMMENT:
-  '//' ~[\n\r]* -> skip;
-
 fragment LINE_WHITESPACE:
-  ' ' | '\t' | '\u000C';
+  [ \t\u000C];
 
 fragment UNICODE:
   [\u00A1-\uFFFF];
 
+// Space or newline followed by any whitespace should be always ignored.
 WHITESPACE:
-  (LINE_WHITESPACE | '\r' | '\n') -> skip;
+  (' ' | [\r\n]+ LINE_WHITESPACE*)+ -> skip;
+
+// Any other whitespace is preserved.
+SIGNIFICANT_WHITESPACE:
+  LINE_WHITESPACE+ -> type(WHITESPACE), channel(SignificantWhitespace);
 
 fragment IGNORE:
-  (WHITESPACE | COMMENT | LINE_COMMENT)+;
+  (WHITESPACE | SIGNIFICANT_WHITESPACE | COMMENT)+;
 
 fragment ATTR_TARGET_LOCAL:
   'item' | 'type' | 'method' | 'property' | 'return' | 'param' | 'field' | 'event' | 'constructor';
@@ -315,10 +322,9 @@ Directive_BEGIN_STRING: BEGIN_STRING -> type(BEGIN_STRING), pushMode(String);
 Directive_BEGIN_VERBATIM_STRING: BEGIN_VERBATIM_STRING -> type(BEGIN_VERBATIM_STRING), pushMode(VerbatimString);
 Directive_BEGIN_CHAR: BEGIN_CHAR -> type(BEGIN_CHAR), pushMode(Char);
 
-Directive_COMMENT: COMMENT -> skip;
-Directive_DOC_COMMENT: DOC_COMMENT -> channel(Documentation);
-Directive_LINE_COMMENT: LINE_COMMENT -> skip;
-Directive_WHITESPACE: (WHITESPACE | NEWLINE_ESCAPE) -> type(WHITESPACE);
+Directive_DOC_COMMENT: DOC_COMMENT -> type(DOC_COMMENT), channel(SignificantWhitespace);
+Directive_COMMENT: COMMENT -> type(COMMENT), channel(SignificantWhitespace);
+Directive_WHITESPACE: (LINE_WHITESPACE | NEWLINE_ESCAPE) -> type(WHITESPACE);
 
 Directive_LITERAL_NAME: LITERAL_NAME -> type(LITERAL_NAME);
 Directive_MEMBER_NAME: MEMBER_NAME -> type(MEMBER_NAME);
@@ -518,10 +524,9 @@ PragmaDirective_STRING_LITERAL: STRING_LITERAL -> type(STRING_LITERAL), channel(
 PragmaDirective_VERBATIM_STRING_LITERAL: VERBATIM_STRING_LITERAL -> type(VERBATIM_STRING_LITERAL), channel(Pragma);
 PragmaDirective_CHAR_LITERAL: CHAR_LITERAL -> type(CHAR_LITERAL), channel(Pragma);
 
-PragmaDirective_COMMENT: COMMENT -> skip;
-PragmaDirective_DOC_COMMENT: DOC_COMMENT -> channel(Documentation);
-PragmaDirective_LINE_COMMENT: LINE_COMMENT -> skip;
-PragmaDirective_WHITESPACE: (WHITESPACE | NEWLINE_ESCAPE) -> skip;
+PragmaDirective_DOC_COMMENT: DOC_COMMENT -> type(DOC_COMMENT), channel(SignificantWhitespace);
+PragmaDirective_COMMENT: COMMENT -> type(COMMENT), channel(SignificantWhitespace);
+PragmaDirective_WHITESPACE: (LINE_WHITESPACE | NEWLINE_ESCAPE) -> skip;
 
 PragmaDirective_LITERAL_NAME: LITERAL_NAME -> type(LITERAL_NAME), channel(Pragma);
 
@@ -610,11 +615,11 @@ fragment GENERAL_PRECISION:
 
 // A valid string (must not be a single letter).
 INTERP_FORMAT_CUSTOM:
-  ':' WHITESPACE* (STRING_LITERAL | VERBATIM_STRING_LITERAL);
+  ':' LINE_WHITESPACE* (STRING_LITERAL | VERBATIM_STRING_LITERAL);
   
 // A valid character (must be a letter).
 INTERP_FORMAT_STANDARD:
-  ':' WHITESPACE* CHAR_LITERAL;
+  ':' LINE_WHITESPACE* CHAR_LITERAL;
 
 INTERP_FORMAT_NUMBER:
   ':' (STANDARD_NUM_FORMAT | CUSTOM_NUM_FORMAT) -> mode(InterpolationEnd);
@@ -677,7 +682,7 @@ fragment CUSTOM_NUM_DIGITS:
   (CUSTOM_NUM_LITERAL [eE] [-+]? '0'+)?;
 
 INTERP_ALIGNMENT:
-  ',' WHITESPACE* ('+' | '-')? INT_LITERAL;
+  ',' LINE_WHITESPACE* ('+' | '-')? INT_LITERAL;
 
 Interpolation_INT_LITERAL: INT_LITERAL -> type(INT_LITERAL);
 Interpolation_FLOAT_LITERAL: FLOAT_LITERAL -> type(FLOAT_LITERAL);
@@ -693,11 +698,10 @@ Interpolation_BEGIN_INTERPOLATED_STRING: BEGIN_INTERPOLATED_STRING -> type(BEGIN
 Interpolation_BEGIN_VERBATIM_INTERPOLATED_STRING: BEGIN_VERBATIM_INTERPOLATED_STRING -> type(BEGIN_VERBATIM_INTERPOLATED_STRING), pushMode(VerbatimInterpolatedString);
 Interpolation_BEGIN_CHAR: BEGIN_CHAR -> type(BEGIN_CHAR), pushMode(Char);
 
-Interpolation_COMMENT: COMMENT -> skip;
-Interpolation_DOC_COMMENT: DOC_COMMENT -> channel(Documentation);
-Interpolation_LINE_COMMENT: LINE_COMMENT -> skip;
-
+Interpolation_DOC_COMMENT: DOC_COMMENT -> type(DOC_COMMENT), channel(SignificantWhitespace);
+Interpolation_COMMENT: COMMENT -> type(COMMENT), channel(SignificantWhitespace);
 Interpolation_WHITESPACE: WHITESPACE -> skip;
+Interpolation_SIGNIFICANT_WHITESPACE: SIGNIFICANT_WHITESPACE -> type(WHITESPACE), channel(SignificantWhitespace);
 
 Interpolation_LITERAL_NAME: LITERAL_NAME -> type(LITERAL_NAME);
 Interpolation_MEMBER_NAME: MEMBER_NAME -> type(MEMBER_NAME);
@@ -940,10 +944,9 @@ InlineDirective_VERBATIM_JS_LITERAL: '@' InlineDirective_JS_LITERAL -> type(VERB
 InlineDirective_STRING_LITERAL: STRING_LITERAL -> type(STRING_LITERAL), mode(InlineUnknown);
 InlineDirective_VERBATIM_STRING_LITERAL: VERBATIM_STRING_LITERAL -> type(VERBATIM_STRING_LITERAL), mode(InlineUnknown);
 
-InlineDirective_COMMENT: COMMENT -> skip;
-InlineDirective_DOC_COMMENT: DOC_COMMENT -> channel(Documentation);
-InlineDirective_LINE_COMMENT: LINE_COMMENT -> skip;
-InlineDirective_WHITESPACE: (WHITESPACE | NEWLINE_ESCAPE) -> type(WHITESPACE);
+InlineDirective_DOC_COMMENT: DOC_COMMENT -> type(DOC_COMMENT), channel(SignificantWhitespace);
+InlineDirective_COMMENT: COMMENT -> type(COMMENT), channel(SignificantWhitespace);
+InlineDirective_WHITESPACE: (LINE_WHITESPACE | NEWLINE_ESCAPE) -> type(WHITESPACE);
 
 mode InlineUnknown;
 

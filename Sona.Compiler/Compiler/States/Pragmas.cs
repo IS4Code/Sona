@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Antlr4.Runtime;
@@ -110,6 +111,9 @@ namespace Sona.Compiler.States
         }
     }
 
+    /// <summary>
+    /// Represents a pragma with a <c>class</c>/<c>struct</c> argument.
+    /// </summary>
     internal abstract class ClassStructPragma : EnumPragma<ImplementationType>
     {
         public ImplementationType? Type => Value;
@@ -144,6 +148,9 @@ namespace Sona.Compiler.States
         }
     }
 
+    /// <summary>
+    /// Represents a pragma taking a boolean value.
+    /// </summary>
     internal abstract class BooleanPragma : EnumPragma<BooleanPragma.BooleanLabels>
     {
         public new bool? Value => base.Value switch
@@ -168,6 +175,23 @@ namespace Sona.Compiler.States
             On = 1,
             Enabled = 1
         }
+    }
+
+    /// <summary>
+    /// Represents a pragma capturing its arguments for later retrieval.
+    /// </summary>
+    internal abstract class TokensPragma : LexerState
+    {
+        public TokensPragma(string name) : base(name)
+        {
+
+        }
+
+        /// <summary>
+        /// Reads out all tokens captured by the pragma.
+        /// </summary>
+        /// <returns>A newly formed collection of <see cref="IToken"/> instances for all the pragma's arguments.</returns>
+        public abstract IReadOnlyCollection<IToken> ReadTokens();
     }
 
     [LexerStateName("echo")]
