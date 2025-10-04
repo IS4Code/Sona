@@ -109,12 +109,28 @@ namespace Sona.Compiler.States
             Out.Write(')');
         }
 
+        public override void EnterCompoundName(CompoundNameContext context)
+        {
+
+        }
+
         public override void ExitCompoundName(CompoundNameContext context)
         {
             Out.Write('(');
         }
 
-        public void EnterAttrArgument()
+        public override void EnterCompiledNameAttr(CompiledNameAttrContext context)
+        {
+            Out.WriteCoreName("CompiledNameAttribute");
+            Out.Write('(');
+        }
+
+        public override void ExitCompiledNameAttr(CompiledNameAttrContext context)
+        {
+            firstArgument = false;
+        }
+
+        private void EnterAttrArgument()
         {
             if(firstArgument)
             {

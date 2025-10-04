@@ -271,7 +271,10 @@ globalAttrTarget:
   BEGIN_TARGETED_GLOBAL_ATTRIBUTE;
 
 attrGroup:
-  WHITESPACE* compoundName (WHITESPACE* (attrNamedArg | attrPosArg) (WHITESPACE+ (attrNamedArg | attrPosArg))*)? WHITESPACE*;
+  WHITESPACE* (compoundName | compiledNameAttr) (WHITESPACE* (attrNamedArg | attrPosArg) (WHITESPACE+ (attrNamedArg | attrPosArg))*)? WHITESPACE*;
+
+compiledNameAttr:
+  anyStringArg;
 
 attrPosArg:
    unaryExpr;
