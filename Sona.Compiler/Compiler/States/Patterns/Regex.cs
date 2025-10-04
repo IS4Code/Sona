@@ -209,6 +209,9 @@ namespace Sona.Compiler.States
                 case SonaLexer.CHAR_LITERAL:
                     Error("The `'` character in a regular expression must be escaped.", token);
                     break;
+                case SonaLexer.FAKE_REGEX_GROUP:
+                    Error("The `(` character in a regular expression must be escaped when used literally.", token);
+                    break;
             }
 
             var text = token.Text;

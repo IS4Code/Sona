@@ -295,6 +295,11 @@ DOT: '.';
 RESERVED: '+' '+'+ | '-' '-'+ | '=' [<>=]+;
 
 BEGIN_REGEX_GROUP: '(?{' -> pushMode(DEFAULT_MODE), pushMode(DEFAULT_MODE);
+
+FAKE_REGEX_GROUP:
+  // An unescaped `[` starts a character class, where `(?{` is invalid but should not be recognized.
+  '[' (ESCAPE | ~[/\\()[\]{}#"'\r\n])* BEGIN_REGEX_GROUP -> pushMode(DEFAULT_MODE), pushMode(DEFAULT_MODE), pushMode(DEFAULT_MODE);
+
 ESCAPE: '\\' .;
 
 NAME:
@@ -509,6 +514,7 @@ Directive_COLON: COLON -> type(COLON);
 Directive_DOT: DOT -> type(DOT);
 Directive_RESERVED: RESERVED -> type(RESERVED);
 Directive_BEGIN_REGEX_GROUP: BEGIN_REGEX_GROUP -> type(BEGIN_REGEX_GROUP), pushMode(DEFAULT_MODE), pushMode(DEFAULT_MODE);
+Directive_FAKE_REGEX_GROUP: FAKE_REGEX_GROUP -> type(FAKE_REGEX_GROUP), pushMode(DEFAULT_MODE), pushMode(DEFAULT_MODE), pushMode(DEFAULT_MODE);
 Directive_ESCAPE: ESCAPE -> type(ESCAPE);
 
 Directive_NAME: NAME -> type(NAME);
@@ -886,6 +892,7 @@ Interpolation_AT: AT -> type(AT);
 Interpolation_DOT: DOT -> type(DOT);
 Interpolation_RESERVED: RESERVED -> type(RESERVED);
 Interpolation_BEGIN_REGEX_GROUP: BEGIN_REGEX_GROUP -> type(BEGIN_REGEX_GROUP), pushMode(DEFAULT_MODE), pushMode(DEFAULT_MODE);
+Interpolation_FAKE_REGEX_GROUP: FAKE_REGEX_GROUP -> type(FAKE_REGEX_GROUP), pushMode(DEFAULT_MODE), pushMode(DEFAULT_MODE), pushMode(DEFAULT_MODE);
 Interpolation_ESCAPE: ESCAPE -> type(ESCAPE);
 
 Interpolation_NAME: NAME -> type(NAME);
