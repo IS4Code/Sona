@@ -497,6 +497,9 @@ module Patterns =
       ValueSome result
   
   let inline (|UnpackRegexGroup|) g = (^T : (static member op_Explicit : ^T -> _) g)
+  
+  let inline (|Empty|) _ = ()
+  let inline Empty() = ()
 
   let inline (|Any|) x = x
   

@@ -336,39 +336,53 @@ namespace Sona.Compiler.States
 
         }
 
-        public sealed class Argument : PatternState
+        public class Argument : PatternState
         {
             bool hasPattern;
 
-            protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+            protected sealed override void Initialize(ScriptEnvironment environment, ScriptState? parent)
             {
                 base.Initialize(environment, parent);
 
                 hasPattern = false;
             }
 
-            public override void EnterPattern(PatternContext context)
+            public sealed override void EnterPattern(PatternContext context)
             {
                 hasPattern = true;
             }
 
-            public override void ExitPattern(PatternContext context)
+            public sealed override void ExitPattern(PatternContext context)
             {
                 OnExit();
             }
 
-            public override void EnterPatternArgument(PatternArgumentContext context)
+            public sealed override void EnterPatternArgument(PatternArgumentContext context)
             {
 
             }
 
-            public override void ExitPatternArgument(PatternArgumentContext context)
+            public sealed override void ExitPatternArgument(PatternArgumentContext context)
             {
                 if(!hasPattern)
                 {
-                    Out.Write('_');
+                    OnNoPattern();
                 }
                 ExitState().ExitPatternArgument(context);
+            }
+
+            protected virtual void OnNoPattern()
+            {
+                Out.Write('_');
+            }
+        }
+
+        public sealed class CallArgument : Argument
+        {
+            protected override void OnNoPattern()
+            {
+                Out.WriteCustomPattern("Empty");
+                Out.Write("()");
             }
         }
 
@@ -513,7 +527,7 @@ namespace Sona.Compiler.States
                 {
                     Out.Write(',');
                 }
-                base.EnterPatternArgument(context);
+                EnterState<CallArgument>().EnterPatternArgument(context);
             }
 
             public override void ExitPatternArgument(PatternArgumentContext context)
