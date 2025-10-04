@@ -311,9 +311,11 @@ namespace Sona.Compiler
 
         protected virtual IExpressionContext? GetExpressionContext() => FindContext<IExpressionContext>();
 
+        private ExpressionType? ContextExpressionType => (this as IExpressionContext ?? GetExpressionContext())?.Type;
+
         public override void EnterPlainInterpolatedString(PlainInterpolatedStringContext context)
         {
-            if(GetExpressionContext()?.Type == ExpressionType.Literal)
+            if(ContextExpressionType == ExpressionType.Literal)
             {
                 EnterState<LiteralNormalInterpolatedString>().EnterPlainInterpolatedString(context);
             }
@@ -325,7 +327,7 @@ namespace Sona.Compiler
 
         public override void EnterVerbatimInterpolatedString(VerbatimInterpolatedStringContext context)
         {
-            if(GetExpressionContext()?.Type == ExpressionType.Literal)
+            if(ContextExpressionType == ExpressionType.Literal)
             {
                 EnterState<LiteralVerbatimInterpolatedString>().EnterVerbatimInterpolatedString(context);
             }
