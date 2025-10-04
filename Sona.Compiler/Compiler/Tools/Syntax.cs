@@ -15,7 +15,7 @@ namespace Sona.Compiler.Tools
     {
         public static bool IsValidIdentifierName(string name)
         {
-            return PrettyNaming.IsIdentifierName(name);
+            return name != "_" && PrettyNaming.IsIdentifierName(name);
         }
 
         static readonly Regex invalidEnclosedIdentifier = new(@"[\r\n\t]|``", RegexOptions.Compiled | RegexOptions.CultureInvariant);
