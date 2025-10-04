@@ -50,7 +50,7 @@ namespace Sona.Compiler.States
                 Out.WriteIdentifier(TypeIdentifier(identifier));
 
                 // Type parameters
-                WriteSingletonTypeParameters();
+                Out.WriteSingletonTypeParameters(singletonTypeParam);
                 Out.Write(" private() = ");
                 Out.WriteLine(_begin_);
                 Out.EnterScope();
@@ -104,9 +104,8 @@ namespace Sona.Compiler.States
                 Out.Write("()");
                 Out.WriteOperator('=');
                 Out.WriteIdentifier(TypeIdentifier(identifier));
-                Out.Write('<');
-                Out.WriteSystemName("Enum");
-                Out.Write(">.");
+                Out.WriteSingletonTypeArguments();
+                Out.Write('.');
                 Out.WriteIdentifier(identifier);
                 Out.WriteLine();
 
@@ -118,7 +117,7 @@ namespace Sona.Compiler.States
                 Out.WriteStringPart("<get>" + identifier);
                 Out.Write("\")>]inline ");
                 Out.WriteIdentifier(identifier);
-                WriteSingletonTypeParameters();
+                Out.WriteSingletonTypeParameters(singletonTypeParam);
                 Out.WriteOperator('=');
                 Out.WriteIdentifier(TypeIdentifier(identifier));
                 Out.Write("<'");
@@ -133,9 +132,7 @@ namespace Sona.Compiler.States
                 // Open each type to get to the property directly (unnecessary but better diagnostics)
                 Out.Write("open type ");
                 Out.WriteIdentifier(TypeIdentifier(members[i].identifier));
-                Out.Write('<');
-                Out.WriteSystemName("Enum");
-                Out.Write('>');
+                Out.WriteSingletonTypeArguments();
 
                 if(i < members.Count - 1)
                 {
@@ -145,19 +142,6 @@ namespace Sona.Compiler.States
             }
 
             ExitState().ExitLazyDecl(context);
-        }
-
-        void WriteSingletonTypeParameters()
-        {
-            Out.Write("<'");
-            Out.WriteIdentifier(singletonTypeParam);
-            Out.Write(" when '");
-            Out.WriteIdentifier(singletonTypeParam);
-            Out.Write(" :> ");
-            Out.WriteSystemName("Enum");
-            Out.Write(" and '");
-            Out.WriteIdentifier(singletonTypeParam);
-            Out.Write(" : not struct>");
         }
 
         static string TypeIdentifier(string identifier)

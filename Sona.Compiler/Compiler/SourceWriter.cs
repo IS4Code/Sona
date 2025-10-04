@@ -224,6 +224,28 @@ namespace Sona.Compiler
             writer.Write(">]");
         }
 
+        public static void WriteSingletonTypeParameters(this ISourceWriter writer, string paramName)
+        {
+            // Write parameters that match only a single type
+            writer.Write("<'");
+            writer.WriteIdentifier(paramName);
+            writer.Write(" when '");
+            writer.WriteIdentifier(paramName);
+            writer.Write(" :> ");
+            writer.WriteSystemName("Enum");
+            writer.Write(" and '");
+            writer.WriteIdentifier(paramName);
+            writer.Write(" : not struct>");
+        }
+
+        public static void WriteSingletonTypeArguments(this ISourceWriter writer)
+        {
+            // The type for WriteSingletonTypeParameters
+            writer.Write('<');
+            writer.WriteSystemName("Enum");
+            writer.Write('>');
+        }
+
         public static void WriteCustomOperator(this ISourceWriter writer, string name)
         {
             writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", name);

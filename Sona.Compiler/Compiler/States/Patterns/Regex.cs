@@ -87,6 +87,7 @@ namespace Sona.Compiler.States
                 GlobalOut.Write("type ");
                 GlobalOut.WriteStaticTypeAttributes();
                 GlobalOut.WriteIdentifier(storageIdentifier);
+                GlobalOut.WriteSingletonTypeParameters("_");
                 GlobalOut.WriteLine(" private() =");
                 GlobalOut.EnterScope();
                 GlobalOut.Write("static member val Instance");
@@ -97,6 +98,12 @@ namespace Sona.Compiler.States
                 GlobalOut.Write("\")");
                 GlobalOut.ExitScope();
                 GlobalOut.WriteLine();
+                GlobalOut.Write("let inline ");
+                GlobalOut.WriteIdentifier(storageIdentifier);
+                GlobalOut.Write("() = ");
+                GlobalOut.WriteIdentifier(storageIdentifier);
+                GlobalOut.WriteSingletonTypeArguments();
+                GlobalOut.WriteLine(".Instance");
             }
 
             // Refer to the stored instance
@@ -105,8 +112,7 @@ namespace Sona.Compiler.States
             Out.WriteIdentifier(Environment.GlobalModuleIdentifier);
             Out.Write('.');
             Out.WriteIdentifier(storageIdentifier);
-            Out.Write(".Instance");
-            Out.Write(")([| ");
+            Out.Write("())([| ");
 
             // Play back the captures
             bool first = true;
