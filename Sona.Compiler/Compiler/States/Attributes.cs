@@ -107,13 +107,9 @@ namespace Sona.Compiler.States
             Out.Write(')');
         }
 
-        public override void EnterCompoundName(CompoundNameContext context)
-        {
-
-        }
-
         public override void ExitCompoundName(CompoundNameContext context)
         {
+            base.ExitCompoundName(context);
             Out.Write('(');
         }
 
