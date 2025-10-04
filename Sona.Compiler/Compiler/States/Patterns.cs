@@ -577,10 +577,6 @@ namespace Sona.Compiler.States
             {
                 if(usesFields == false)
                 {
-                    if(!first)
-                    {
-                        Out.Write(',');
-                    }
                     FieldMismatchError(context);
                     EnterState<IgnoredFieldAssignment>().EnterFieldAssignment(context);
                     return;
