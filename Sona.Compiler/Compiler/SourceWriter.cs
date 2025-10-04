@@ -215,6 +215,15 @@ namespace Sona.Compiler
         }
 #pragma warning restore CS8524
 
+        public static void WriteStaticTypeAttributes(this ISourceWriter writer)
+        {
+            writer.Write("[<");
+            writer.WriteCoreName("AbstractClassAttribute");
+            writer.Write(';');
+            writer.WriteCoreName("SealedAttribute");
+            writer.Write(">]");
+        }
+
         public static void WriteCustomOperator(this ISourceWriter writer, string name)
         {
             writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "Operators", name);

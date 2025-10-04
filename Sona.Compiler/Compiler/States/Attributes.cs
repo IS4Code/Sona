@@ -6,7 +6,6 @@ namespace Sona.Compiler.States
     {
         bool firstGroup;
         bool firstArgument;
-        bool isNamed;
 
         ExpressionType IExpressionContext.Type => ExpressionType.Literal;
 
@@ -44,12 +43,11 @@ namespace Sona.Compiler.States
             Environment.EnableParseTree();
         }
 
-        static readonly char[] targetTrimChars = { '#', ':', ' ', '\t', '\xc' };
         public override void ExitLocalAttrTarget(LocalAttrTargetContext context)
         {
             try
             {
-                var target = context.GetText().Trim(targetTrimChars);
+                var target = Tools.Syntax.GetAttributeTargetFromToken(context.GetText());
                 switch(target)
                 {
                     case "item":
@@ -73,7 +71,7 @@ namespace Sona.Compiler.States
         {
             try
             {
-                var target = context.GetText().Trim(targetTrimChars);
+                var target = Tools.Syntax.GetAttributeTargetFromToken(context.GetText());
                 switch(target)
                 {
                     case "entry":
@@ -145,39 +143,71 @@ namespace Sona.Compiler.States
         public override void EnterAttrPosArg(AttrPosArgContext context)
         {
             EnterAttrArgument();
-            isNamed = false;
+            EnterState<Argument>().EnterAttrPosArg(context);
         }
 
         public override void EnterAttrNamedArg(AttrNamedArgContext context)
         {
             EnterAttrArgument();
-            isNamed = true;
+            EnterState<Argument>().EnterAttrNamedArg(context);
         }
 
-        public override void EnterUnaryExpr(UnaryExprContext context)
+        public override void ExitAttrPosArg(AttrPosArgContext context)
         {
-            if(isNamed)
+
+        }
+
+        public override void ExitAttrNamedArg(AttrNamedArgContext context)
+        {
+
+        }
+
+        sealed class Argument : ExpressionState
+        {
+            bool isNamed;
+
+            public override void EnterAttrNamedArg(AttrNamedArgContext context)
             {
-                Out.WriteOperator('=');
+                isNamed = true;
             }
-            EnterState<Expression>().EnterUnaryExpr(context);
-        }
 
-        public override void ExitUnaryExpr(UnaryExprContext context)
-        {
+            public override void ExitAttrNamedArg(AttrNamedArgContext context)
+            {
+                ExitState().ExitAttrNamedArg(context);
+            }
 
-        }
+            public override void EnterAttrPosArg(AttrPosArgContext context)
+            {
+                isNamed = false;
+            }
 
-        sealed class Expression : ExpressionState
-        {
+            public override void ExitAttrPosArg(AttrPosArgContext context)
+            {
+                ExitState().ExitAttrPosArg(context);
+            }
+
+            public override void EnterExpression(ExpressionContext context)
+            {
+                EnterState<ExpressionState>().EnterExpression(context);
+            }
+
             public override void ExitExpression(ExpressionContext context)
             {
 
             }
 
+            public override void EnterUnaryExpr(UnaryExprContext context)
+            {
+                if(isNamed)
+                {
+                    Out.WriteOperator('=');
+                    isNamed = false;
+                }
+            }
+
             public override void ExitUnaryExpr(UnaryExprContext context)
             {
-                ExitState().ExitUnaryExpr(context);
+
             }
         }
     }

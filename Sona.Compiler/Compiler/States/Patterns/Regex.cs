@@ -84,11 +84,8 @@ namespace Sona.Compiler.States
             if(Environment.DefineGlobalSymbol(storageIdentifier))
             {
                 // Define a type whose static constructor creates the regex
-                GlobalOut.Write("type [<");
-                GlobalOut.WriteCoreName("AbstractClassAttribute");
-                GlobalOut.Write(';');
-                GlobalOut.WriteCoreName("SealedAttribute");
-                GlobalOut.Write(">]");
+                GlobalOut.Write("type ");
+                GlobalOut.WriteStaticTypeAttributes();
                 GlobalOut.WriteIdentifier(storageIdentifier);
                 GlobalOut.WriteLine(" private() =");
                 GlobalOut.EnterScope();

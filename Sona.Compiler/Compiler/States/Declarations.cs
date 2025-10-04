@@ -452,6 +452,16 @@ namespace Sona.Compiler.States
 
         }
 
+        public override void EnterLazyDecl(LazyDeclContext context)
+        {
+            EnterState<LazyDeclarationState>().EnterLazyDecl(context);
+        }
+
+        public override void ExitLazyDecl(LazyDeclContext context)
+        {
+
+        }
+
         public override void EnterExpression(ExpressionContext context)
         {
             Out.WriteOperator('=');
@@ -482,13 +492,13 @@ namespace Sona.Compiler.States
             ExitState().ExitDeclaration(context);
         }
 
-        public sealed override void EnterPattern(PatternContext context)
+        public override void EnterPattern(PatternContext context)
         {
             Out.Write('(');
             EnterState<PatternState>().EnterPattern(context);
         }
 
-        public sealed override void ExitPattern(PatternContext context)
+        public override void ExitPattern(PatternContext context)
         {
             Out.Write(')');
         }

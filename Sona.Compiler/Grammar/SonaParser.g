@@ -2567,7 +2567,9 @@ packageStatement:
 /* ---------------------------- */
 
 variableDecl:
-  localAttrList (letDecl | varDecl | constDecl | useDecl | useVarDecl);
+  localAttrList (letDecl | varDecl | constDecl | useDecl | useVarDecl) |
+  // Attributes are captured inside
+  lazyDecl;
 
 letDecl:
   'let' (multiDeclAssignment | declaration '=' expression);
@@ -2583,6 +2585,9 @@ useDecl:
 
 useVarDecl:
   'use' 'var' (multiDeclAssignment | declaration '=' expression);
+
+lazyDecl:
+  localAttrList 'lazy' declaration '=' expression (',' declaration '=' expression)*;
 
 multiDeclAssignment:
   declaration '=' expression (',' declaration '=' expression)+;

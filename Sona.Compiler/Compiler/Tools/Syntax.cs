@@ -57,6 +57,12 @@ namespace Sona.Compiler.Tools
             return name.TrimStart(nameTrimChars);
         }
 
+        static readonly char[] targetTrimChars = { '#', ':', ' ', '\t', '\xc' };
+        public static string GetAttributeTargetFromToken(string token)
+        {
+            return token.Trim(targetTrimChars);
+        }
+
         private static void Tokenize(string str, Converter<FSharpToken, Unit> visitor)
         {
             var text = SourceText.ofString(str);
