@@ -1594,6 +1594,7 @@ namespace Sona.Compiler.States
         protected bool HasMatch { get; private set; }
 
         int level;
+        ISourceCapture? patternCapture;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -1602,6 +1603,7 @@ namespace Sona.Compiler.States
             HasElse = false;
             HasMatch = false;
             level = 0;
+            patternCapture = null;
         }
 
         public sealed override void EnterIf(IfContext context)
@@ -1691,10 +1693,20 @@ namespace Sona.Compiler.States
         public sealed override void ExitExpression(ExpressionContext context)
         {
             Out.Write(')');
+            if(patternCapture != null)
+            {
+                patternCapture.Play(Out);
+                patternCapture = null;
+            }
         }
 
         public override void EnterPattern(PatternContext context)
         {
+            if(patternCapture != null)
+            {
+                Error("COMPILER ERROR: Entered pattern while another is being captured.", context);
+            }
+            patternCapture = Out.StartCapture();
             Out.WriteLine("with");
             Out.Write("| (");
             base.EnterPattern(context);
@@ -1704,16 +1716,20 @@ namespace Sona.Compiler.States
         {
             base.ExitPattern(context);
             Out.Write(')');
+            if(patternCapture != null)
+            {
+                Out.StopCapture(patternCapture);
+            }
         }
 
         public sealed override void EnterWhenClause(WhenClauseContext context)
         {
-            Out.Write("when(");
+            Out.Write("when");
         }
 
         public sealed override void ExitWhenClause(WhenClauseContext context)
         {
-            Out.Write(')');
+
         }
 
         protected override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)

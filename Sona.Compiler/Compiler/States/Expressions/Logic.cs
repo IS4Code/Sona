@@ -112,40 +112,163 @@ namespace Sona.Compiler.States
 
     internal sealed class InlineIfExpression : ExpressionState
     {
+        bool hasMatch;
+        int level;
+        ISourceCapture? patternCapture;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            hasMatch = false;
+            level = 0;
+            patternCapture = null;
+        }
+
         public override void EnterInlineIfExpr(InlineIfExprContext context)
         {
-            Out.Write("(if(");
+            Out.Write('(');
         }
 
         public override void ExitInlineIfExpr(InlineIfExprContext context)
         {
+            while(level > 0)
+            {
+                Out.Write(')');
+                level--;
+            }
+            // One more due to `else` not starting a normal expression
             Out.Write("))");
             ExitState().ExitInlineIfExpr(context);
         }
 
-        public override void VisitTerminal(ITerminalNode node)
+        public sealed override void EnterIf(IfContext context)
         {
-            base.VisitTerminal(node);
-            switch(node.Symbol.Type)
+            Out.Write("if");
+        }
+
+        public sealed override void ExitIf(IfContext context)
+        {
+            Out.Write("then");
+            hasMatch = false;
+        }
+
+        public sealed override void EnterCaseIf(CaseIfContext context)
+        {
+            Out.Write("match");
+        }
+
+        public sealed override void ExitCaseIf(CaseIfContext context)
+        {
+            Out.WriteOperator("->");
+            hasMatch = true;
+        }
+
+        public sealed override void EnterElseif(ElseifContext context)
+        {
+            if(hasMatch)
             {
-                case SonaLexer.THEN:
-                    Out.Write(")then(");
-                    break;
-                case SonaLexer.ELSE:
-                    Out.Write(")else(");
-                    break;
-                case SonaLexer.ELSEIF:
-                    Out.Write(")elif(");
-                    break;
+                level++;
+                Out.Write("|_");
+                Out.WriteOperator("->");
+                Out.Write("(if");
             }
+            else
+            {
+                Out.Write("elif");
+            }
+        }
+
+        public sealed override void ExitElseif(ElseifContext context)
+        {
+            Out.Write("then");
+            hasMatch = false;
+        }
+
+        public sealed override void EnterCaseElseif(CaseElseifContext context)
+        {
+            if(hasMatch)
+            {
+                Out.Write("|_");
+                Out.WriteOperator("->");
+            }
+            else
+            {
+                Out.Write("else");
+            }
+            level++;
+            Out.Write("(match");
+        }
+
+        public sealed override void ExitCaseElseif(CaseElseifContext context)
+        {
+            Out.WriteOperator("->");
+            hasMatch = true;
+        }
+
+        public sealed override void EnterElse(ElseContext context)
+        {
+            if(hasMatch)
+            {
+                Out.Write("|_");
+                Out.WriteOperator("->");
+            }
+            else
+            {
+                Out.Write("else");
+            }
+            // Due to not starting a normal expression
+            Out.Write('(');
+        }
+
+        public sealed override void ExitElse(ElseContext context)
+        {
+
         }
 
         public override void EnterExpression(ExpressionContext context)
         {
+            Out.Write('(');
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
         public override void ExitExpression(ExpressionContext context)
+        {
+            Out.Write(')');
+            if(patternCapture != null)
+            {
+                patternCapture.Play(Out);
+                patternCapture = null;
+            }
+        }
+
+        public override void EnterPattern(PatternContext context)
+        {
+            if(patternCapture != null)
+            {
+                Error("COMPILER ERROR: Entered pattern while another is being captured.", context);
+            }
+            patternCapture = Out.StartCapture();
+            Out.Write("with|(");
+            base.EnterPattern(context);
+        }
+
+        public sealed override void ExitPattern(PatternContext context)
+        {
+            base.ExitPattern(context);
+            Out.Write(')');
+            if(patternCapture != null)
+            {
+                Out.StopCapture(patternCapture);
+            }
+        }
+
+        public sealed override void EnterWhenClause(WhenClauseContext context)
+        {
+            Out.Write("when");
+        }
+
+        public sealed override void ExitWhenClause(WhenClauseContext context)
         {
 
         }

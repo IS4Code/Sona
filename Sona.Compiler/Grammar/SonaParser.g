@@ -503,10 +503,10 @@ elseif:
   'elseif' expression 'then';
 
 caseIf:
-  'if' expression 'case' pattern whenClause? 'then';
+  'if' 'let' pattern '=' expression whenClause? 'then';
 
 caseElseif:
-  'elseif' expression 'case' pattern whenClause? 'then';
+  'elseif' 'let' pattern '=' expression whenClause? 'then';
 
 else:
   'else';
@@ -2850,7 +2850,7 @@ logicExpr:
   )?;
 
 inlineIfExpr:
-  'if' expression 'then' expression ('elseif' expression 'then' expression)* 'else' (booleanExpr | atomicLogicExpr);
+  (caseIf | if) expression ((caseElseif | elseif) expression)* else (booleanExpr | atomicLogicExpr);
 
 booleanExpr:
   relationalExpr (('&&' | '||') relationalExpr)*;
