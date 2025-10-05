@@ -56,13 +56,22 @@ namespace Sona.Compiler
         /// <param name="token">The read token.</param>
         public void OnLexerToken(IToken token)
         {
-            int type = token.Type;
-            if(type is SonaLexer.WHITESPACE or SonaLexer.COMMENT or SonaLexer.DOC_COMMENT)
+            // Always stash the token if needed
+            AddWhitespace(token);
+
+            int channel = token.Channel;
+            if(channel == SonaLexer.SignificantWhitespace)
             {
-                // Stash significant whitespace
-                AddWhitespace(token);
+                // Whitespace has no additional processing
                 return;
             }
+            if(channel != SonaLexer.Pragma)
+            {
+                Error($"Unexpected token '{token.Text}'.", token);
+                return;
+            }
+
+            int type = token.Type;
             if(currentlyLexedPragma != null)
             {
                 // Inside a #pragma when a name was provided
