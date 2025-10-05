@@ -2757,7 +2757,7 @@ relationalPattern:
   relationalOperator unaryPattern;
 
 regexPattern:
-  '/' (regexGroupStart | ~BEGIN_REGEX_GROUP)+? '/' ({combinedOperator}? NAME)? ({combinedOperator}? '-' {combinedOperator}? NAME)?;
+  '/' (regexGroupStart | ~BEGIN_REGEX_GROUP)*? '/' ({combinedOperator}? NAME)? ({combinedOperator}? '-' {combinedOperator}? NAME)?;
 
 regexGroupStart:
   BEGIN_REGEX_GROUP patternArgument '}';
