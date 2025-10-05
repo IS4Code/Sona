@@ -92,11 +92,22 @@ namespace Sona.Compiler.Tools
                 last = ~last;
             }
 
+            if(last < first)
+            {
+                throw new ArgumentException($"interval {interval} is not valid", nameof(interval));
+            }
+
             var sb = new StringBuilder();
+            var pos = tokens[first].StartIndex;
             for(int i = first; i <= last; i++)
             {
                 var token = tokens[i];
+                if(pos < token.StartIndex)
+                {
+                    sb.Append(' ');
+                }
                 sb.Append(token.Text);
+                pos = token.StopIndex + 1;
             }
             return sb.ToString();
         }
