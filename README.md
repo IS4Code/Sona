@@ -38,6 +38,7 @@ The compiler and runtime rely on the latest version of F# to properly function �
 The project uses semantic versioning:
 * **[0.1](//github.com/IS4Code/Sona/releases/tag/v0.1)** ‒ statements, value expressions, attributes.
 * **[0.2](//github.com/IS4Code/Sona/releases/tag/v0.2)** ‒ type expressions, conversions and constructions.
-* **0.3** ‒ patterns, exception handling.
-* **0.<i>*</i>** ‒ declarations, generic parameters, namespaces, packages, monads.
+* **[0.3](//github.com/IS4Code/Sona/releases/tag/v0.3)** ‒ patterns, exception handling, packages.
+* **0.4** ‒ monads/computation blocks. 
+* **0.<i>*</i>** ‒ type declarations, generic parameters, namespaces.
 * **1.0** ‒ full release of the initial feature set.
