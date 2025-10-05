@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using Antlr4.Runtime;
+using Antlr4.Runtime.Misc;
 
 namespace Sona.Compiler.Tools
 {
@@ -68,6 +71,60 @@ namespace Sona.Compiler.Tools
 
                 // Get a replacement for this token
                 t = TokenSource.NextToken();
+            }
+        }
+
+        public override string GetText(Interval interval)
+        {
+            if(tokens[0].TokenIndex > interval.a || tokens[n - 1].TokenIndex < interval.b)
+            {
+                throw new NotSupportedException($"interval {interval} not in token buffer window");
+            }
+
+            int first = Array.BinarySearch(tokens, 0, n, interval.a, TokenPositionComparer.Instance);
+            if(first < 0)
+            {
+                first = ~first;
+            }
+            int last = Array.BinarySearch(tokens, 0, n, interval.b, TokenPositionComparer.Instance);
+            if(last < 0)
+            {
+                last = ~last;
+            }
+
+            var sb = new StringBuilder();
+            for(int i = first; i <= last; i++)
+            {
+                var token = tokens[i];
+                sb.Append(token.Text);
+            }
+            return sb.ToString();
+        }
+
+        sealed class TokenPositionComparer : IComparer
+        {
+            public static readonly IComparer Instance = new TokenPositionComparer();
+
+            private TokenPositionComparer()
+            {
+
+            }
+
+            public int Compare(object? x, object? y)
+            {
+                return GetIndex(x).CompareTo(GetIndex(y));
+
+                static int GetIndex(object? obj)
+                {
+                    switch(obj)
+                    {
+                        case IToken { TokenIndex: var index }:
+                            return index;
+                        case int index:
+                            return index;
+                    }
+                    throw new ArgumentException("Only tokens and integers can be compared.");
+                }
             }
         }
     }
