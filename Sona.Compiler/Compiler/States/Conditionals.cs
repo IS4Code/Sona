@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using Antlr4.Runtime;
+using Antlr4.Runtime.Tree;
+using Sona.Grammar;
 using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
@@ -1589,39 +1591,90 @@ namespace Sona.Compiler.States
     internal abstract class IfStatement : ControlStatement
     {
         protected bool HasElse { get; private set; }
+        protected bool HasMatch { get; private set; }
+
+        int level;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             HasElse = false;
+            HasMatch = false;
+            level = 0;
         }
 
         public sealed override void EnterIf(IfContext context)
         {
-            Out.Write("if(");
-        }
-
-        public sealed override void EnterElseif(ElseifContext context)
-        {
-            Out.WriteLine();
-            Out.Write("elif(");
-        }
-
-        public sealed override void EnterElse(ElseContext context)
-        {
-            Out.WriteLine();
-            Out.Write("else ");
+            Out.Write("if");
         }
 
         public sealed override void ExitIf(IfContext context)
         {
+            Out.Write("then ");
+            HasMatch = false;
+        }
 
+        public sealed override void EnterCaseIf(CaseIfContext context)
+        {
+            Out.Write("match");
+        }
+
+        public sealed override void ExitCaseIf(CaseIfContext context)
+        {
+            Out.WriteOperator("->");
+            HasMatch = true;
+        }
+
+        public sealed override void EnterElseif(ElseifContext context)
+        {
+            if(HasMatch)
+            {
+                Out.WriteLine(_begin_);
+                Out.EnterScope();
+                level++;
+
+                Out.Write("if");
+            }
+            else
+            {
+                Out.WriteLine();
+                Out.Write("elif");
+            }
         }
 
         public sealed override void ExitElseif(ElseifContext context)
         {
+            Out.Write("then ");
+            HasMatch = false;
+        }
 
+        public sealed override void EnterCaseElseif(CaseElseifContext context)
+        {
+            if(!HasMatch)
+            {
+                Out.WriteLine();
+                Out.Write("else ");
+            }
+            Out.WriteLine(_begin_);
+            Out.EnterScope();
+            level++;
+            Out.Write("match");
+        }
+
+        public sealed override void ExitCaseElseif(CaseElseifContext context)
+        {
+            Out.WriteOperator("->");
+            HasMatch = true;
+        }
+
+        public sealed override void EnterElse(ElseContext context)
+        {
+            if(!HasMatch)
+            {
+                Out.WriteLine();
+                Out.Write("else ");
+            }
         }
 
         public sealed override void ExitElse(ElseContext context)
@@ -1631,12 +1684,94 @@ namespace Sona.Compiler.States
 
         public sealed override void EnterExpression(ExpressionContext context)
         {
+            Out.Write('(');
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
         public sealed override void ExitExpression(ExpressionContext context)
         {
-            Out.Write(")then ");
+            Out.Write(')');
+        }
+
+        public override void EnterPattern(PatternContext context)
+        {
+            Out.WriteLine("with");
+            Out.Write("| (");
+            base.EnterPattern(context);
+        }
+
+        public sealed override void ExitPattern(PatternContext context)
+        {
+            base.ExitPattern(context);
+            Out.Write(')');
+        }
+
+        public sealed override void EnterWhenClause(WhenClauseContext context)
+        {
+            Out.Write("when(");
+        }
+
+        public sealed override void ExitWhenClause(WhenClauseContext context)
+        {
+            Out.Write(')');
+        }
+
+        protected override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
+        {
+            base.OnEnterBlock(flags, context);
+        }
+
+        protected override void OnExitBlock(StatementFlags flags, ParserRuleContext context)
+        {
+            base.OnExitBlock(flags, context);
+            if(HasMatch && !HasElse)
+            {
+                Out.WriteLine();
+                Out.Write("| _");
+                Out.WriteOperator("->");
+            }
+        }
+
+        private void OnClose()
+        {
+            if(HasMatch && !HasElse)
+            {
+                // The _ pattern is waiting
+                Out.WriteCoreOperatorName("Unchecked");
+                Out.Write(".defaultof<_>");
+            }
+            while(level > 0)
+            {
+                Out.ExitScope();
+                Out.WriteLine();
+                Out.Write(_end_);
+                level--;
+            }
+        }
+
+        public override void VisitTerminal(ITerminalNode node)
+        {
+            base.VisitTerminal(node);
+
+            if(node.Symbol.Type == SonaLexer.END)
+            {
+                // Ending the last block (cannot use OnExit because ignored trail bypasses it)
+                if(this is not IfStatementTrailFromElse)
+                {
+                    // Trail is not inside
+                    OnClose();
+                }
+            }
+        }
+
+        protected override void OnExitTrail(StatementFlags flags, ParserRuleContext context)
+        {
+            base.OnExitTrail(flags, context);
+            if(this is IfStatementTrailFromElse)
+            {
+                // Trail is inside
+                OnClose();
+            }
         }
     }
 
@@ -1707,7 +1842,7 @@ namespace Sona.Compiler.States
 
         protected override void OnEnterTrail(StatementFlags flags, ParserRuleContext context)
         {
-            if(!HasElse)
+            if(!HasElse && !HasMatch)
             {
                 Out.WriteLine();
                 Out.Write("else ");

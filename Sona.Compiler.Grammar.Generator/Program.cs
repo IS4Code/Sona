@@ -148,7 +148,11 @@ namespace Sona.Compiler.Grammar.Generator
 
                 // Write main rule
                 var mainTag = alternative.Sample(p => p.Key.Tag);
-                output.Write(mainTag);
+                output.Write(mainTag switch
+                {
+                    "if" => "(caseIf | if)",
+                    _ => mainTag
+                });
                 output.Write(' ');
 
                 // Write main blocks
@@ -164,7 +168,7 @@ namespace Sona.Compiler.Grammar.Generator
                     switch(mainTag)
                     {
                         case "if":
-                            output.WriteSingleBlockCover(mainCategories, "elseif");
+                            output.WriteSingleBlockCover(mainCategories, "(caseElseif | elseif)");
                             output.Write(' ');
                             break;
                         case "try":
@@ -294,6 +298,7 @@ namespace Sona.Compiler.Grammar.Generator
                                     string tagName = tag switch
                                     {
                                         "case" => "(case | catchCase)",
+                                        "elseif" => "(caseElseif | elseif)",
                                         _ => tag
                                     };
                                     output.Write(tagName);
