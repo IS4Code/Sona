@@ -16,7 +16,7 @@ namespace Sona.Tests
 
         static readonly char[] newlineChars = Environment.NewLine.ToCharArray();
 
-        private protected const string not = "global.Microsoft.FSharp.Core.Operators.``not``";
+        private protected const string not = "global.Sona.Runtime.CompilerServices.UnaryOperators.Not";
         private protected const string cat = " |> global.Sona.Runtime.CompilerServices.BinaryOperators.Concat";
         private protected const string each = ".``operator AsEnumerable``(global.Sona.Runtime.CompilerServices.SequenceHelpers.Marker)";
         private protected const string set = ".``operator Assign``";
