@@ -447,6 +447,7 @@ namespace Sona.Compiler.States
         {
             bool namedArg, first, errorFieldMismatch;
 
+            ISourceCapture? ignoredCapture;
             bool? usesFields;
 
             protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
@@ -455,6 +456,7 @@ namespace Sona.Compiler.States
 
                 errorFieldMismatch = false;
                 usesFields = null;
+                ignoredCapture = null;
             }
 
             public override void EnterPatternArguments(PatternArgumentsContext context)
@@ -573,12 +575,25 @@ namespace Sona.Compiler.States
                 OnExitArgument(context);
             }
 
-            public override void EnterFieldAssignment(FieldAssignmentContext context)
+            public override void EnterRelationalPattern(RelationalPatternContext context)
+            {
+                OnExitField(context);
+                OnEnterArgument(context);
+                base.EnterRelationalPattern(context);
+            }
+
+            public override void ExitRelationalPattern(RelationalPatternContext context)
+            {
+                base.ExitRelationalPattern(context);
+                OnExitArgument(context);
+            }
+
+            private void OnEnterField(ParserRuleContext context)
             {
                 if(usesFields == false)
                 {
                     FieldMismatchError(context);
-                    EnterState<IgnoredFieldAssignment>().EnterFieldAssignment(context);
+                    ignoredCapture = Out.StartCapture();
                     return;
                 }
                 if(first)
@@ -593,7 +608,31 @@ namespace Sona.Compiler.States
                 namedArg = true;
             }
 
+            private void OnExitField(ParserRuleContext context)
+            {
+                if(ignoredCapture != null)
+                {
+                    Out.StopCapture(ignoredCapture);
+                    ignoredCapture = null;
+                }
+            }
+
+            public override void EnterFieldAssignment(FieldAssignmentContext context)
+            {
+                OnEnterField(context);
+            }
+
             public override void ExitFieldAssignment(FieldAssignmentContext context)
+            {
+                OnExitField(context);
+            }
+
+            public override void EnterFieldRelation(FieldRelationContext context)
+            {
+                OnEnterField(context);
+            }
+
+            public override void ExitFieldRelation(FieldRelationContext context)
             {
 
             }
@@ -606,25 +645,6 @@ namespace Sona.Compiler.States
                 }
                 errorFieldMismatch = true;
                 Error("Using both named and positional fields in a single pattern discriminator is not supported.", context);
-            }
-
-            sealed class IgnoredFieldAssignment : NodeState
-            {
-                ISourceCapture? capture;
-
-                public override void EnterFieldAssignment(FieldAssignmentContext context)
-                {
-                    capture = Out.StartCapture();
-                }
-
-                public override void ExitFieldAssignment(FieldAssignmentContext context)
-                {
-                    if(capture != null)
-                    {
-                        Out.StopCapture(capture);
-                    }
-                    ExitState().ExitFieldAssignment(context);
-                }
             }
         }
 

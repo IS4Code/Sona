@@ -2781,7 +2781,7 @@ simplePatternArgument:
 emptyPatternArgTuple:;
 
 patternArgTuple:
-  (fieldAssignment pattern | patternArgument) (',' (fieldAssignment pattern | patternArgument))*;
+  (fieldAssignment pattern | fieldRelation | patternArgument) (',' (fieldAssignment pattern | fieldRelation | patternArgument))*;
 
 // Records, collections, and tuples
 
