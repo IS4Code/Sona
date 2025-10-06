@@ -147,13 +147,13 @@ namespace Sona.Compiler.States
             Out.Write(')');
         }
 
-        void IComputationContext.WriteBeginBlockExpression()
+        void IComputationContext.WriteBeginBlockExpression(ParserRuleContext context)
         {
             Out.EnterNestedScope();
             Out.WriteLine('(');
         }
 
-        void IComputationContext.WriteEndBlockExpression()
+        void IComputationContext.WriteEndBlockExpression(ParserRuleContext context)
         {
             Out.ExitNestedScope();
             Out.Write(')');

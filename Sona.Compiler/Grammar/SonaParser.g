@@ -23,6 +23,8 @@ mainBlock:
 // openBlock | terminatingBlock | interruptingBlock | returningBlock | conditionalBlock
 valueBlock:
   (statement ';'?)*? ((closingStatement | conditionalStatement) ';'? | implicitReturnStatement);
+valueTrail:
+  (';'? statement)*? (';'? (closingStatement | conditionalStatement) | implicitReturnStatement);
 
 // openBlock | terminatingBlock
 freeBlock:
@@ -297,6 +299,7 @@ statement:
   echoStatement |
   yieldStatement |
   yieldEachStatement |
+  followStatement |
   inlineSourceFree |
   ifStatementFree |
   doStatementFree |
@@ -351,11 +354,18 @@ continueStatement:
 throwStatement:
   'throw' expression?;
 
+withStatement:
+  'with' (expression | errorMissingExpression) valueTrail;
+
+followStatement:
+  'follow' (expression | errorMissingExpression);
+
 // A statement that has a returning path and all other paths are closing
 returningStatement:
   returnOptionStatement |
   returnStatement |
   yieldBreakStatement |
+  withStatement |
   inlineSourceReturning |
   doStatementReturning |
   ifStatementReturning |

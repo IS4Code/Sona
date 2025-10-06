@@ -57,8 +57,8 @@ namespace Sona.Compiler.States
 
         }
 
-        public abstract void WriteBeginBlockExpression();
-        public abstract void WriteEndBlockExpression();
+        public abstract void WriteBeginBlockExpression(ParserRuleContext context);
+        public abstract void WriteEndBlockExpression(ParserRuleContext context);
     }
 
     internal abstract class CollectionState : IsolatedState
@@ -255,13 +255,13 @@ namespace Sona.Compiler.States
             ExitState().ExitArrayConstructor(context);
         }
 
-        public override void WriteBeginBlockExpression()
+        public override void WriteBeginBlockExpression(ParserRuleContext context)
         {
             Out.EnterNestedScope();
             Out.WriteCollectionOpen(collectionType);
         }
 
-        public override void WriteEndBlockExpression()
+        public override void WriteEndBlockExpression(ParserRuleContext context)
         {
             Out.ExitNestedScope();
             Out.WriteCollectionClose(collectionType);
@@ -302,7 +302,7 @@ namespace Sona.Compiler.States
             base.OnOperand(simple);
         }
 
-        public override void WriteBeginBlockExpression()
+        public override void WriteBeginBlockExpression(ParserRuleContext context)
         {
             Out.EnterNestedScope();
             Out.Write('(');
@@ -310,7 +310,7 @@ namespace Sona.Compiler.States
             Out.WriteLine('{');
         }
 
-        public override void WriteEndBlockExpression()
+        public override void WriteEndBlockExpression(ParserRuleContext context)
         {
             Out.ExitNestedScope();
             Out.Write("})");

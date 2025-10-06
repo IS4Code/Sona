@@ -29,8 +29,8 @@ namespace Sona.Compiler.States
     {
         bool IsCollection { get; }
         string? BuilderVariable { get; }
-        void WriteBeginBlockExpression();
-        void WriteEndBlockExpression();
+        void WriteBeginBlockExpression(ParserRuleContext context);
+        void WriteEndBlockExpression(ParserRuleContext context);
     }
 
     internal interface IExpressionContext

@@ -31,7 +31,7 @@ namespace Sona.Compiler.States
 
                 Out.WriteCoreOperatorName("ignore");
                 Out.Write(" ");
-                scope?.WriteBeginBlockExpression();
+                scope?.WriteBeginBlockExpression(context);
             }
 
             void OnExitTrail()
@@ -45,7 +45,7 @@ namespace Sona.Compiler.States
             public override void ExitIgnoredTrail(IgnoredTrailContext context)
             {
                 OnExitTrail();
-                scope?.WriteEndBlockExpression();
+                scope?.WriteEndBlockExpression(context);
                 Out.WriteLine();
                 ExitState()?.ExitIgnoredTrail(context);
             }
@@ -275,6 +275,11 @@ namespace Sona.Compiler.States
                 if(OriginalReturnVariable is null)
                 {
                     // Nowhere to assign, return
+                    if(FindContext<IComputationContext>() is { IsCollection: true } or { BuilderVariable: not null })
+                    {
+                        // Exiting from a computation
+                        Out.Write("return ");
+                    }
                     Out.WriteIdentifier(ReturnVariable);
                 }
                 else
@@ -567,6 +572,17 @@ namespace Sona.Compiler.States
         }
 
         #region Trail types
+        public sealed override void EnterValueTrail(ValueTrailContext context)
+        {
+            OnEnterTrail(StatementFlags.None, context);
+            EnterState<TrailingStatements>().EnterValueTrail(context);
+        }
+
+        public sealed override void ExitValueTrail(ValueTrailContext context)
+        {
+            OnExitTrail(StatementFlags.None, context);
+        }
+
         public sealed override void EnterOpenTrail(OpenTrailContext context)
         {
             OnEnterTrail(StatementFlags.OpenPath, context);

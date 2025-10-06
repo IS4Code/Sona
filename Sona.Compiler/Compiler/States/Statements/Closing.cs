@@ -55,6 +55,11 @@ namespace Sona.Compiler.States
                 Out.WriteIdentifier(result);
                 Out.WriteOperator("<-");
             }
+            else if(FindContext<IComputationContext>() is { IsCollection: true } or { BuilderVariable: not null })
+            {
+                // Exiting directly from a computation
+                Out.Write("return ");
+            }
             if(this is not ReturnOptionState && FindContext<IFunctionContext>() is { ReturnOptionType: { } optionType })
             {
                 // Explicit returning depends on the function
@@ -85,6 +90,11 @@ namespace Sona.Compiler.States
                 {
                     Out.WriteIdentifier(result);
                     Out.WriteOperator("<-");
+                }
+                else if(FindContext<IComputationContext>() is { IsCollection: true } or { BuilderVariable: not null })
+                {
+                    // Exiting directly from a computation
+                    Out.Write("return ");
                 }
                 if(this is not ReturnOptionState && FindContext<IFunctionContext>() is { ReturnOptionType: { } optionType })
                 {

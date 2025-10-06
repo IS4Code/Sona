@@ -67,20 +67,41 @@ namespace Sona.Compiler.States
         public override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
         {
             OnEnterStatement(StatementFlags.None, context);
-            if(FindContext<IComputationContext>() is { IsCollection: true })
+            var computationContext = FindContext<IComputationContext>();
+            if(computationContext is { IsCollection: true })
             {
+                // () in a collection has a different interpretation
                 Out.Write("if false then yield ");
                 Out.WriteCoreOperatorName("Unchecked");
                 Out.WriteLine(".defaultof<_>");
             }
-            else if(FindContext<IStatementContext>() is { ReturnOptionType: { } optionType })
-            {
-                // Implicit returning depends on the statement
-                Out.WriteOptionNone(optionType);
-            }
             else
             {
-                Out.Write("()");
+                var statementContext = FindContext<IStatementContext>();
+                if(computationContext is { BuilderVariable: not null } && computationContext == statementContext)
+                {
+                    // Exiting directly from a computation
+                    if(computationContext is not IFunctionContext)
+                    {
+                        // In-function computation (i.e. `with` block)
+                        var parentReturnableContext = ((ScriptState)computationContext).FindContext<IReturnableStatementContext>();
+                        if(parentReturnableContext is { ReturnVariable: not null })
+                        {
+                            // But this computation is returning through a variable
+                            Error("It is not possible to escape from a computation block directly to the outside code. Use `return` to return explicitly.", context);
+                        }
+                    }
+                    Out.Write("return ");
+                }
+                if(statementContext is { ReturnOptionType: { } optionType })
+                {
+                    // Implicit returning depends on the statement
+                    Out.WriteOptionNone(optionType);
+                }
+                else
+                {
+                    Out.Write("()");
+                }
             }
         }
 
@@ -132,6 +153,16 @@ namespace Sona.Compiler.States
         public sealed override void EnterYieldBreakStatement(YieldBreakStatementContext context)
         {
             EnterState<YieldBreakState>().EnterYieldBreakStatement(context);
+        }
+
+        public sealed override void EnterWithStatement(WithStatementContext context)
+        {
+            EnterState<WithStatementState>().EnterWithStatement(context);
+        }
+
+        public sealed override void EnterFollowStatement(FollowStatementContext context)
+        {
+            EnterState<FollowState>().EnterFollowStatement(context);
         }
 
         public sealed override void EnterVariableDecl(VariableDeclContext context)
@@ -622,13 +653,13 @@ namespace Sona.Compiler.States
 
         }
 
-        void IComputationContext.WriteBeginBlockExpression()
+        void IComputationContext.WriteBeginBlockExpression(ParserRuleContext context)
         {
             Out.EnterNestedScope();
             Out.WriteLine('(');
         }
 
-        void IComputationContext.WriteEndBlockExpression()
+        void IComputationContext.WriteEndBlockExpression(ParserRuleContext context)
         {
             Out.ExitNestedScope();
             Out.Write(')');

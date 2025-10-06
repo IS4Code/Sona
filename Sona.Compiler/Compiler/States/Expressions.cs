@@ -1,4 +1,5 @@
-﻿using Sona.Grammar;
+﻿using Antlr4.Runtime;
+using Sona.Grammar;
 using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
@@ -453,13 +454,13 @@ namespace Sona.Compiler.States
 
         }
 
-        public override void WriteBeginBlockExpression()
+        public override void WriteBeginBlockExpression(ParserRuleContext context)
         {
             Out.EnterNestedScope();
             Out.WriteLine('(');
         }
 
-        public override void WriteEndBlockExpression()
+        public override void WriteEndBlockExpression(ParserRuleContext context)
         {
             Out.ExitNestedScope();
             Out.Write(')');
