@@ -23,6 +23,8 @@ namespace Sona.Compiler
         protected ImplementationType RecordImplementationType => LexerContext.GetState<RecordPragma>()?.Type ?? ImplementationType.Class;
         protected CollectionImplementationType CollectionImplementationType => LexerContext.GetState<CollectionPragma>()?.Type ?? CollectionImplementationType.Array;
 
+        protected Defaults Defaults => new(this);
+
         public int StateLevel { get; private set; }
 
         protected virtual bool IgnoreContext => false;

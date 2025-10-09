@@ -1154,7 +1154,7 @@ ReadKey(true)!");
                         }
                         if(pretext != ")" && !String.IsNullOrWhiteSpace(pretext))
                         {
-                            if(pretext.Contains("(*begin*)", StringComparison.Ordinal) || pretext.Contains("(*end*)", StringComparison.Ordinal))
+                            if(pretext.Contains("(*begin*)", StringComparison.Ordinal) || pretext.Contains("(*end*)", StringComparison.Ordinal) || pretext.Contains("(*return*)", StringComparison.Ordinal))
                             {
                                 receiver(pretext, FontStyle.Italic | FontStyle.Bold);
                             }

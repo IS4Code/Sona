@@ -67,8 +67,7 @@ namespace Sona.Compiler.States
     internal abstract class FunctionBaseState : NodeState, IFunctionContext
     {
         // Establish a scope to return from
-        string? IReturnableStatementContext.ReturnVariable => null;
-        string? IReturnableStatementContext.ReturningVariable => null;
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags.None;
 
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
 
@@ -76,7 +75,7 @@ namespace Sona.Compiler.States
 
         ExpressionType IExpressionContext.Type => ExpressionType.Regular;
 
-        public ImplementationType? ReturnOptionType { get; private set; }
+        ImplementationType? returnOptionType;
 
         string? IComputationContext.BuilderVariable => null;
 
@@ -91,12 +90,12 @@ namespace Sona.Compiler.States
             base.Initialize(environment, parent);
 
             hasType = false;
-            ReturnOptionType = default;
+            returnOptionType = default;
         }
 
         public override void EnterOptionSuffix(OptionSuffixContext context)
         {
-            ReturnOptionType = OptionImplementationType;
+            returnOptionType = OptionImplementationType;
         }
 
         public override void ExitOptionSuffix(OptionSuffixContext context)
@@ -118,7 +117,7 @@ namespace Sona.Compiler.States
         {
             hasType = true;
             Out.WriteOperator(':');
-            if(ReturnOptionType is { } optionType)
+            if(returnOptionType is { } optionType)
             {
                 Out.WriteOptionType(optionType);
                 Out.Write('<');
@@ -129,7 +128,7 @@ namespace Sona.Compiler.States
         public sealed override void ExitType(TypeContext context)
         {
             base.ExitType(context);
-            if(ReturnOptionType != null)
+            if(returnOptionType != null)
             {
                 Out.Write('>');
             }
@@ -137,7 +136,7 @@ namespace Sona.Compiler.States
 
         public sealed override void EnterValueBlock(ValueBlockContext context)
         {
-            if(!hasType && ReturnOptionType is { } optionType && this is not CaseFunctionDeclState)
+            if(!hasType && returnOptionType is { } optionType && this is not CaseFunctionDeclState)
             {
                 Out.WriteOperator(':');
                 Out.Write("_ ");
@@ -177,24 +176,84 @@ namespace Sona.Compiler.States
             Out.Write(')');
         }
 
+        void IReturnableStatementContext.WriteEarlyReturn(ParserRuleContext context)
+        {
+            Defaults.WriteEarlyReturn(context);
+        }
+
+        void IReturnableStatementContext.WriteReturnStatement(ParserRuleContext context)
+        {
+            Defaults.WriteReturnStatement(context);
+        }
+
+        void IReturnableStatementContext.WriteAfterReturnStatement(ParserRuleContext context)
+        {
+            Defaults.WriteAfterReturnStatement(context);
+        }
+
+        void IReturnableStatementContext.WriteReturnValue(bool isOption, ParserRuleContext context)
+        {
+            if(returnOptionType is { } optionType)
+            {
+                if(isOption)
+                {
+                    isOption = false;
+                }
+                else
+                {
+                    Out.WriteOptionSome(optionType);
+                }
+            }
+            Defaults.WriteReturnValue(isOption, context);
+        }
+
+        void IReturnableStatementContext.WriteAfterReturnValue(ParserRuleContext context)
+        {
+            Defaults.WriteAfterReturnValue(context);
+        }
+
+        void IReturnableStatementContext.WriteEmptyReturnValue(ParserRuleContext context)
+        {
+            if(returnOptionType is { } optionType)
+            {
+                Out.WriteOptionNone(optionType);
+            }
+            else
+            {
+                Defaults.WriteEmptyReturnValue(context);
+            }
+        }
+
+        void IBlockStatementContext.WriteImplicitReturnStatement(ParserRuleContext context)
+        {
+            if(returnOptionType is { } optionType)
+            {
+                Out.WriteOptionNone(optionType);
+            }
+            else
+            {
+                Defaults.WriteImplicitReturnStatement(context);
+            }
+        }
+
         void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
         {
-            Error("`break` must be used in a statement that supports it.", context);
+            Defaults.WriteBreak(hasExpression, context);
         }
 
         void IInterruptibleStatementContext.WriteContinue(bool hasExpression, ParserRuleContext context)
         {
-            Error("`continue` must be used in a statement that supports it.", context);
+            Defaults.WriteContinue(hasExpression, context);
         }
 
         void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
         {
-
+            Defaults.WriteAfterBreak(context);
         }
 
         void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
         {
-
+            Defaults.WriteAfterContinue(context);
         }
     }
 

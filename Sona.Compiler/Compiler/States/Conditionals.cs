@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using Sona.Grammar;
@@ -207,17 +208,15 @@ namespace Sona.Compiler.States
         IReturnableStatementContext? returnScope;
         IInterruptibleStatementContext? interruptScope;
 
-        protected string? OriginalReturnVariable => returnScope?.ReturnVariable;
-        protected string? OriginalReturningVariable => returnScope?.ReturningVariable;
+        ReturnFlags OriginalReturnFlags => returnScope?.Flags ?? 0;
 
-        // Nested returns will be stored here
-        protected string? ScopeReturnVariable => ReturnVariable ?? OriginalReturnVariable;
-        protected string? ScopeReturningVariable => ReturningVariable ?? OriginalReturningVariable;
+        protected ReturnFlags ReturnFlags => OriginalReturnFlags | (ReturnVariable is not null ? ReturnFlags.Indirect : 0);
+
+        [MemberNotNullWhen(false, nameof(returnScope))]
+        bool HasOwnControlVariables => (OriginalReturnFlags & ReturnFlags.Indirect) == 0;
 
         bool IStatementContext.TrailAllowed => true;
         protected override bool IgnoreContext => exited;
-
-        ImplementationType? IStatementContext.ReturnOptionType => null;
 
         StatementFlags enterFlags;
         bool exited;
@@ -244,9 +243,12 @@ namespace Sona.Compiler.States
         {
             if((flags & conditionalFlags) == conditionalFlags)
             {
-                if(OriginalReturnVariable is null)
+                // Indirect returning necessary
+
+                if(HasOwnControlVariables)
                 {
-                    // Initialize variables for conditional return
+                    // Initialize new variables for conditional return
+
                     ReturningVariable = Out.CreateTemporaryIdentifier();
                     ReturnVariable = Out.CreateTemporaryIdentifier();
                     // var success = false
@@ -269,24 +271,7 @@ namespace Sona.Compiler.States
             if((flags & conditionalFlags) == conditionalFlags)
             {
                 Out.WriteLine();
-                Out.Write("if ");
-                Out.WriteIdentifier(ScopeReturningVariable ?? Error("Returning from a scope that does not support return.", context));
-                Out.Write(" then ");
-                if(OriginalReturnVariable is null)
-                {
-                    // Nowhere to assign, return
-                    if(FindContext<IComputationContext>() is { IsCollection: true } or { BuilderVariable: not null })
-                    {
-                        // Exiting from a computation
-                        Out.Write("return ");
-                    }
-                    Out.WriteIdentifier(ReturnVariable);
-                }
-                else
-                {
-                    // Variables already assigned
-                    Out.Write("()");
-                }
+                WriteEarlyReturn(false, context);
                 Out.WriteLine();
                 if(interruptScope != null && (flags & interruptibleFlags) == interruptibleFlags)
                 {
@@ -309,6 +294,136 @@ namespace Sona.Compiler.States
                 Out.Write("else ");
             }
         }
+
+        protected void WriteEarlyReturn(bool fromNested, ParserRuleContext context)
+        {
+            if(!HasOwnControlVariables)
+            {
+                // Propagate upwards
+                returnScope.WriteEarlyReturn(context);
+                return;
+            }
+
+            Out.Write("if ");
+            Out.WriteIdentifier(ReturningVariable ?? Error("Returning from a scope that does not support return.", context));
+            Out.Write(" then ");
+            if(fromNested)
+            {
+                // Called from a sub-block, actual result will be retrieved in OnExit
+                Out.Write("()");
+                return;
+            }
+
+            // Return the value properly
+            if(returnScope != null)
+            {
+                returnScope.WriteReturnStatement(context);
+                Out.WriteIdentifier(ReturnVariable);
+                returnScope.WriteAfterReturnStatement(context);
+            }
+            else
+            {
+                Defaults.WriteReturnStatement(context);
+                Out.WriteIdentifier(ReturnVariable);
+                Defaults.WriteAfterReturnStatement(context);
+            }
+        }
+
+        #region IReturnableStatementContext implementation
+        public void WriteEarlyReturn(ParserRuleContext context)
+        {
+            WriteEarlyReturn(true, context);
+        }
+
+        public void WriteReturnStatement(ParserRuleContext context)
+        {
+            if(!HasOwnControlVariables || ReturnVariable is null)
+            {
+                // Default implementation
+                if(returnScope != null)
+                {
+                    returnScope.WriteReturnStatement(context);
+                }
+                else
+                {
+                    Defaults.WriteReturnStatement(context);
+                }
+                return;
+            }
+
+            // Store result in variable
+            Out.WriteIdentifier(ReturnVariable);
+            Out.WriteOperator("<-");
+        }
+
+        public void WriteAfterReturnStatement(ParserRuleContext context)
+        {
+            if(!HasOwnControlVariables || ReturningVariable is null)
+            {
+                // Default implementation
+                if(returnScope != null)
+                {
+                    returnScope.WriteAfterReturnStatement(context);
+                }
+                else
+                {
+                    Defaults.WriteAfterReturnStatement(context);
+                }
+                return;
+            }
+
+            // Mark that value is returned
+            Out.Write(';');
+            Out.WriteIdentifier(ReturningVariable);
+            Out.WriteOperator("<-");
+            Out.Write("true");
+        }
+
+        public void WriteImplicitReturnStatement(ParserRuleContext context)
+        {
+            // Nothing happening when exiting sub-blocks
+            Out.Write("()");
+        }
+
+        public void WriteReturnValue(bool isOption, ParserRuleContext context)
+        {
+            // Default implementation
+            if(returnScope != null)
+            {
+                returnScope.WriteReturnValue(isOption, context);
+            }
+            else
+            {
+                Defaults.WriteReturnValue(isOption, context);
+            }
+        }
+
+        public void WriteAfterReturnValue(ParserRuleContext context)
+        {
+            // Default implementation
+            if(returnScope != null)
+            {
+                returnScope.WriteAfterReturnValue(context);
+            }
+            else
+            {
+                Defaults.WriteAfterReturnValue(context);
+            }
+        }
+
+        public void WriteEmptyReturnValue(ParserRuleContext context)
+        {
+            // Default implementation
+            if(returnScope != null)
+            {
+                returnScope.WriteEmptyReturnValue(context);
+            }
+            else
+            {
+                Defaults.WriteEmptyReturnValue(context);
+            }
+        }
+        #endregion
 
         protected virtual void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
         {
@@ -1885,8 +2000,7 @@ namespace Sona.Compiler.States
 
     internal sealed class IfStatementControl : IfStatement, IReturnableStatementContext
     {
-        string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
-        string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
     }
 
     internal abstract class DoStatement : ControlStatement
@@ -1910,8 +2024,7 @@ namespace Sona.Compiler.States
 
     internal sealed class DoStatementControl : DoStatement, IReturnableStatementContext
     {
-        string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
-        string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
     }
 
     internal abstract class WhileStatement : ControlStatement, IInterruptibleStatementContext
@@ -2120,8 +2233,7 @@ namespace Sona.Compiler.States
 
     internal sealed class WhileStatementControl : WhileStatementTrailInterrupted, IReturnableStatementContext
     {
-        string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
-        string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
     }
 
     internal abstract class RepeatStatement : ControlStatement, IInterruptibleStatementContext
@@ -2317,8 +2429,7 @@ namespace Sona.Compiler.States
 
     internal sealed class RepeatStatementControl : RepeatStatementTrailInterrupted, IReturnableStatementContext
     {
-        string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
-        string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
     }
 
     internal abstract class ForStatement : ControlStatement, IInterruptibleStatementContext
@@ -2952,8 +3063,7 @@ namespace Sona.Compiler.States
 
     internal sealed class ForStatementControl : ForStatementTrailInterrupted, IReturnableStatementContext
     {
-        string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
-        string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
     }
 
     internal abstract class SwitchStatementBase : ControlStatement
@@ -3224,8 +3334,7 @@ namespace Sona.Compiler.States
 
     internal sealed class SwitchStatementControl : SwitchStatementInterrupted, IReturnableStatementContext
     {
-        string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
-        string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
     }
 
     internal abstract class TryStatementBase : ControlStatement, IInterruptibleStatementContext
@@ -3407,8 +3516,7 @@ namespace Sona.Compiler.States
 
     internal abstract class TryStatementControl : TryStatementBase, IReturnableStatementContext
     {
-        string? IReturnableStatementContext.ReturnVariable => ScopeReturnVariable;
-        string? IReturnableStatementContext.ReturningVariable => ScopeReturningVariable;
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
     }
 
     internal sealed class TryCatchStatementNoTrail : TryStatementNoTrail

@@ -49,23 +49,17 @@ namespace Sona.Compiler.States
 
         protected sealed override void OnEnterExpression(ParserRuleContext context)
         {
-            if(returnScope?.ReturnVariable is { } result)
+            bool isOption = this is ReturnOptionState;
+            if(returnScope != null)
             {
-                // Store result in variable
-                Out.WriteIdentifier(result);
-                Out.WriteOperator("<-");
+                returnScope.WriteReturnStatement(context);
+                returnScope.WriteReturnValue(isOption, context);
             }
-            else if(FindContext<IComputationContext>() is { IsCollection: true } or { BuilderVariable: not null })
+            else
             {
-                // Exiting directly from a computation
-                Out.Write("return ");
+                Defaults.WriteReturnStatement(context);
+                Defaults.WriteReturnValue(isOption, context);
             }
-            if(this is not ReturnOptionState && FindContext<IFunctionContext>() is { ReturnOptionType: { } optionType })
-            {
-                // Explicit returning depends on the function
-                Out.WriteOptionSome(optionType);
-            }
-            Out.Write('(');
             base.OnEnterExpression(context);
         }
 
@@ -76,49 +70,43 @@ namespace Sona.Compiler.States
 
         protected virtual void OnEnter(ParserRuleContext context)
         {
-            if(FindContext<IComputationContext>() is { IsCollection: true, BuilderVariable: null })
-            {
-                Error("`return` is not allowed in a collection without a builder.", context);
-            }
+
         }
 
         protected virtual void OnExit(ParserRuleContext context)
         {
             if(!HasExpression)
             {
-                if(returnScope?.ReturnVariable is { } result)
+                if(returnScope != null)
                 {
-                    Out.WriteIdentifier(result);
-                    Out.WriteOperator("<-");
-                }
-                else if(FindContext<IComputationContext>() is { IsCollection: true } or { BuilderVariable: not null })
-                {
-                    // Exiting directly from a computation
-                    Out.Write("return ");
-                }
-                if(this is not ReturnOptionState && FindContext<IFunctionContext>() is { ReturnOptionType: { } optionType })
-                {
-                    Out.WriteOptionNone(optionType);
+                    returnScope.WriteReturnStatement(context);
+                    returnScope.WriteEmptyReturnValue(context);
                 }
                 else
                 {
-                    Out.Write("()");
+                    Defaults.WriteReturnStatement(context);
+                    Defaults.WriteEmptyReturnValue(context);
                 }
             }
             else
             {
-                Out.Write(")");
+                if(returnScope != null)
+                {
+                    returnScope.WriteAfterReturnValue(context);
+                }
+                else
+                {
+                    Defaults.WriteAfterReturnValue(context);
+                }
             }
 
-            // Control variables must be set last, in case the expression throws
-
-            if(returnScope?.ReturningVariable is { } success)
+            if(returnScope != null)
             {
-                // Value returned
-                Out.WriteLine();
-                Out.WriteIdentifier(success);
-                Out.WriteOperator("<-");
-                Out.Write("true");
+                returnScope.WriteAfterReturnStatement(context);
+            }
+            else
+            {
+                Defaults.WriteAfterReturnStatement(context);
             }
 
             var interruptScope = FindContext<IInterruptibleStatementContext>();
@@ -146,10 +134,6 @@ namespace Sona.Compiler.States
     {
         public override void EnterReturnOptionStatement(ReturnOptionStatementContext context)
         {
-            if(FindContext<IFunctionContext>() is { ReturnOptionType: null })
-            {
-                Error("`return` with an option passthrough is permitted only within an optional function.", context);
-            }
             OnEnter(context);
         }
 

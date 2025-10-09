@@ -5,16 +5,14 @@ using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
 {
-    internal sealed class WithStatementState : NodeState, IComputationContext, IReturnableStatementContext
+    internal sealed class WithStatementState : NodeState, IComputationContext
     {
         bool IStatementContext.TrailAllowed => true;
-        ImplementationType? IStatementContext.ReturnOptionType => null;
 
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
         string? IInterruptibleStatementContext.InterruptingVariable => null;
 
-        string? IReturnableStatementContext.ReturnVariable => null;
-        string? IReturnableStatementContext.ReturningVariable => null;
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags.None;
 
         bool IComputationContext.IsCollection => false;
         public string? BuilderVariable { get; private set; }
@@ -32,11 +30,13 @@ namespace Sona.Compiler.States
         {
             BuilderVariable = Out.CreateTemporaryIdentifier();
 
-            if(returnScope?.ReturnVariable is { } result)
+            if(returnScope != null)
             {
-                // Store result in variable
-                Out.WriteIdentifier(result);
-                Out.WriteOperator("<-");
+                returnScope.WriteReturnStatement(context);
+            }
+            else
+            {
+                Defaults.WriteReturnStatement(context);
             }
 
             Out.EnterNestedScope(true);
@@ -55,13 +55,13 @@ namespace Sona.Compiler.States
             Out.ExitNestedScope();
             Out.Write(')');
 
-            if(returnScope?.ReturningVariable is { } success)
+            if(returnScope != null)
             {
-                // Value returned
-                Out.WriteLine();
-                Out.WriteIdentifier(success);
-                Out.WriteOperator("<-");
-                Out.Write("true");
+                returnScope.WriteAfterReturnStatement(context);
+            }
+            else
+            {
+                Defaults.WriteAfterReturnStatement(context);
             }
 
             ExitState().ExitWithStatement(context);
@@ -105,24 +105,90 @@ namespace Sona.Compiler.States
             Out.Write("})");
         }
 
+        void IReturnableStatementContext.WriteEarlyReturn(ParserRuleContext context)
+        {
+            Defaults.WriteEarlyReturn(context);
+        }
+
+        void IReturnableStatementContext.WriteReturnStatement(ParserRuleContext context)
+        {
+            Out.Write("return ");
+        }
+
+        void IReturnableStatementContext.WriteAfterReturnStatement(ParserRuleContext context)
+        {
+
+        }
+
+        void IReturnableStatementContext.WriteReturnValue(bool isOption, ParserRuleContext context)
+        {
+            if(returnScope != null)
+            {
+                returnScope.WriteReturnValue(isOption, context);
+            }
+            else
+            {
+                Defaults.WriteReturnValue(isOption, context);
+            }
+        }
+
+        void IReturnableStatementContext.WriteAfterReturnValue(ParserRuleContext context)
+        {
+            if(returnScope != null)
+            {
+                returnScope.WriteAfterReturnValue(context);
+            }
+            else
+            {
+                Defaults.WriteAfterReturnValue(context);
+            }
+        }
+
+        void IReturnableStatementContext.WriteEmptyReturnValue(ParserRuleContext context)
+        {
+            if(returnScope != null)
+            {
+                returnScope.WriteEmptyReturnValue(context);
+            }
+            else
+            {
+                Defaults.WriteEmptyReturnValue(context);
+            }
+        }
+
+        void IBlockStatementContext.WriteImplicitReturnStatement(ParserRuleContext context)
+        {
+            if(FindContext<IBlockStatementContext>() is { } blockContext)
+            {
+                if(blockContext == FindContext<IComputationContext>())
+                {
+                    // At the end of function/computation
+                    blockContext.WriteImplicitReturnStatement(context);
+                    return;
+                }
+            }
+            
+            Error("It is not possible to escape from a computation block directly to the outside code. Use `return` to return explicitly.", context);
+        }
+
         void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
         {
-            Error("`break` cannot be used accross a computation block boundary.", context);
+            Defaults.WriteBreak(hasExpression, context);
         }
 
         void IInterruptibleStatementContext.WriteContinue(bool hasExpression, ParserRuleContext context)
         {
-            Error("`continue` cannot be used accross a computation block boundary.", context);
+            Defaults.WriteContinue(hasExpression, context);
         }
 
         void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
         {
-
+            Defaults.WriteAfterBreak(context);
         }
 
         void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
         {
-
+            Defaults.WriteAfterContinue(context);
         }
 
         sealed class Trail : BlockState

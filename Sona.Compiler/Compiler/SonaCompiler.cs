@@ -68,7 +68,7 @@ namespace Sona.Compiler
                 parser.BuildParseTree = false;
             }
 
-            var context = new ScriptEnvironment(parser, writer, globalWriter, lexerContext, debugBeginEnd ? "(*begin*)" : "", debugBeginEnd ? "(*end*)" : "");
+            var context = new ScriptEnvironment(parser, writer, globalWriter, lexerContext, debugBeginEnd ? "(*begin*)" : "", debugBeginEnd ? "(*end*)" : "", debugBeginEnd ? "(*return*)" : "");
             lexerContext.Environment = context;
 
             // Lexer context is fully set up

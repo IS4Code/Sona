@@ -5,16 +5,13 @@ namespace Sona.Compiler.States
 {
     internal class PackageState : BlockState, IDeclarationsBlockContext
     {
-        // Package return is currently ignored
-        string? IReturnableStatementContext.ReturnVariable => null;
-        string? IReturnableStatementContext.ReturningVariable => null;
         ExpressionType IExpressionContext.Type => ExpressionType.Regular;
+
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags.None;
 
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
-
-        ImplementationType? IStatementContext.ReturnOptionType => null;
 
         bool IComputationContext.IsCollection => false;
 
@@ -76,24 +73,59 @@ namespace Sona.Compiler.States
             Out.Write(')');
         }
 
+        void IReturnableStatementContext.WriteEarlyReturn(ParserRuleContext context)
+        {
+            Defaults.WriteEarlyReturn(context);
+        }
+
+        void IReturnableStatementContext.WriteReturnStatement(ParserRuleContext context)
+        {
+            Error("`return` is not supported in a package.", context);
+        }
+
+        void IReturnableStatementContext.WriteAfterReturnStatement(ParserRuleContext context)
+        {
+
+        }
+
+        void IBlockStatementContext.WriteImplicitReturnStatement(ParserRuleContext context)
+        {
+            Defaults.WriteImplicitReturnStatement(context);
+        }
+
+        void IReturnableStatementContext.WriteReturnValue(bool isOption, ParserRuleContext context)
+        {
+            Defaults.WriteReturnValue(isOption, context);
+        }
+
+        void IReturnableStatementContext.WriteAfterReturnValue(ParserRuleContext context)
+        {
+            Defaults.WriteAfterReturnValue(context);
+        }
+
+        void IReturnableStatementContext.WriteEmptyReturnValue(ParserRuleContext context)
+        {
+            Defaults.WriteEmptyReturnValue(context);
+        }
+
         void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
         {
-            Error("`break` must be used in a statement that supports it.", context);
+            Defaults.WriteBreak(hasExpression, context);
         }
 
         void IInterruptibleStatementContext.WriteContinue(bool hasExpression, ParserRuleContext context)
         {
-            Error("`continue` must be used in a statement that supports it.", context);
+            Defaults.WriteContinue(hasExpression, context);
         }
 
         void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
         {
-
+            Defaults.WriteAfterBreak(context);
         }
 
         void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
         {
-
+            Defaults.WriteAfterContinue(context);
         }
     }
 }

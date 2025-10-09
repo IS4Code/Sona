@@ -7,7 +7,7 @@ using Antlr4.Runtime.Tree;
 
 namespace Sona.Compiler
 {
-    internal record class ScriptEnvironment(Parser Parser, ISourceWriter Output, ISourceWriter GlobalOutput, LexerContext LexerContext, string Begin, string End)
+    internal record class ScriptEnvironment(Parser Parser, ISourceWriter Output, ISourceWriter GlobalOutput, LexerContext LexerContext, string Begin, string End, string Return)
     {
         public string ErrorIdentifier => "<error>";
         public string GlobalModuleIdentifier => "<" + nameof(Sona) + ">";

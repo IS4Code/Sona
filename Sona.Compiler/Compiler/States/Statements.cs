@@ -1,7 +1,5 @@
 ﻿using System;
-using System.IO;
 using Antlr4.Runtime;
-using Sona.Compiler.Tools;
 using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
@@ -19,8 +17,6 @@ namespace Sona.Compiler.States
     internal class BlockState : ScriptState, IStatementContext
     {
         bool IStatementContext.TrailAllowed => true;
-
-        ImplementationType? IStatementContext.ReturnOptionType => FindContext<IStatementContext>()?.ReturnOptionType;
 
         public sealed override void EnterMultiFuncDecl(MultiFuncDeclContext context)
         {
@@ -67,6 +63,16 @@ namespace Sona.Compiler.States
         public override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
         {
             OnEnterStatement(StatementFlags.None, context);
+            WriteImplicitReturnStatement(context);
+        }
+
+        public override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
+        {
+            OnExitStatement(StatementFlags.None, context);
+        }
+
+        public void WriteImplicitReturnStatement(ParserRuleContext context)
+        {
             var computationContext = FindContext<IComputationContext>();
             if(computationContext is { IsCollection: true })
             {
@@ -75,39 +81,14 @@ namespace Sona.Compiler.States
                 Out.WriteCoreOperatorName("Unchecked");
                 Out.WriteLine(".defaultof<_>");
             }
+            else if(FindContext<IBlockStatementContext>() is { } blockContext)
+            {
+                blockContext.WriteImplicitReturnStatement(context);
+            }
             else
             {
-                var statementContext = FindContext<IStatementContext>();
-                if(computationContext is { BuilderVariable: not null } && computationContext == statementContext)
-                {
-                    // Exiting directly from a computation
-                    if(computationContext is not IFunctionContext)
-                    {
-                        // In-function computation (i.e. `with` block)
-                        var parentReturnableContext = ((ScriptState)computationContext).FindContext<IReturnableStatementContext>();
-                        if(parentReturnableContext is { ReturnVariable: not null })
-                        {
-                            // But this computation is returning through a variable
-                            Error("It is not possible to escape from a computation block directly to the outside code. Use `return` to return explicitly.", context);
-                        }
-                    }
-                    Out.Write("return ");
-                }
-                if(statementContext is { ReturnOptionType: { } optionType })
-                {
-                    // Implicit returning depends on the statement
-                    Out.WriteOptionNone(optionType);
-                }
-                else
-                {
-                    Out.Write("()");
-                }
+                Defaults.WriteImplicitReturnStatement(context);
             }
-        }
-
-        public override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
-        {
-            OnExitStatement(StatementFlags.None, context);
         }
 
         public sealed override void EnterReturnStatement(ReturnStatementContext context)
@@ -626,16 +607,13 @@ namespace Sona.Compiler.States
 
     internal sealed class ChunkState : BlockState, IFunctionContext, IDeclarationsBlockContext
     {
-        // Main block return is currently ignored
-        string? IReturnableStatementContext.ReturnVariable => null;
-        string? IReturnableStatementContext.ReturningVariable => null;
         ExpressionType IExpressionContext.Type => ExpressionType.Regular;
+
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags.None;
 
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
-
-        ImplementationType? IStatementContext.ReturnOptionType => null;
 
         bool IComputationContext.IsCollection => false;
 
@@ -665,24 +643,59 @@ namespace Sona.Compiler.States
             Out.Write(')');
         }
 
+        void IReturnableStatementContext.WriteEarlyReturn(ParserRuleContext context)
+        {
+            Defaults.WriteEarlyReturn(context);
+        }
+
+        void IReturnableStatementContext.WriteReturnStatement(ParserRuleContext context)
+        {
+            Error("`return` is not supported in the main block.", context);
+        }
+
+        void IReturnableStatementContext.WriteAfterReturnStatement(ParserRuleContext context)
+        {
+
+        }
+
+        void IBlockStatementContext.WriteImplicitReturnStatement(ParserRuleContext context)
+        {
+            Defaults.WriteImplicitReturnStatement(context);
+        }
+
+        void IReturnableStatementContext.WriteReturnValue(bool isOption, ParserRuleContext context)
+        {
+            Defaults.WriteReturnValue(isOption, context);
+        }
+
+        void IReturnableStatementContext.WriteAfterReturnValue(ParserRuleContext context)
+        {
+            Defaults.WriteAfterReturnValue(context);
+        }
+
+        void IReturnableStatementContext.WriteEmptyReturnValue(ParserRuleContext context)
+        {
+            Defaults.WriteEmptyReturnValue(context);
+        }
+
         void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
         {
-            Error("`break` must be used in a statement that supports it.", context);
+            Defaults.WriteBreak(hasExpression, context);
         }
 
         void IInterruptibleStatementContext.WriteContinue(bool hasExpression, ParserRuleContext context)
         {
-            Error("`continue` must be used in a statement that supports it.", context);
+            Defaults.WriteContinue(hasExpression, context);
         }
 
         void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
         {
-
+            Defaults.WriteAfterBreak(context);
         }
 
         void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
         {
-
+            Defaults.WriteAfterContinue(context);
         }
     }
 
