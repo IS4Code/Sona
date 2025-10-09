@@ -84,8 +84,19 @@ namespace Sona.Compiler
 
         public static readonly CultureInfo Culture = new CultureInfo("en");
 
+        const string typeMismatch = "Type mismatch: The type returned by this branch is `$2` but was expected to be `$1`.";
+        const string tupleTypeMismatch = "Type mismatch: The type returned by this branch is `$4` (a tuple of $3 elements) but was expected to be `$2` (a tuple of $1 elements).";
+
         static readonly MessageReplacementDictionary messageReplacement = new()
         {
+            // All control statements may result in these errors
+            { 1, "ifExpression", typeMismatch }, // The 'if' expression needs to have type '%s' to satisfy context type requirements.
+            { 1, "ifExpressionTuple", tupleTypeMismatch }, // The 'if' expression needs to return a tuple of length %d of type\n    %s    \nto satisfy context type requirements.
+            { 1, "elseBranchHasWrongType", typeMismatch }, // All branches of an 'if' expression must return values implicitly convertible to the type of the first branch
+            { 1, "elseBranchHasWrongTypeTuple", tupleTypeMismatch }, // All branches of an 'if' expression must return values implicitly convertible to the type of the first branch
+            { 1, "followingPatternMatchClauseHasWrongType", typeMismatch }, // All branches of a pattern match expression must return values implicitly convertible to the type of the first branch
+            { 1, "followingPatternMatchClauseHasWrongTypeTuple", tupleTypeMismatch }, // All branches of a pattern match expression must return values implicitly convertible to the type of the first branch
+
             // Simplify wording and remove F#-specific parts
             { 40, "LetRecCheckedAtRuntime", "This value depends on variables declared later in the code whose value may not yet be available. Consider using functions instead of variables." }, // This and other recursive references to the object(s) being defined will be checked for initialization-soundness at runtime through the use of a delayed reference. This is because you are defining one or more recursive objects, rather than recursive functions. This warning may be suppressed by using '#nowarn "40"' or '--nowarn:40'.
 
@@ -93,16 +104,16 @@ namespace Sona.Compiler
             { 64, "NonRigidTypar1", m => null }, // This construct causes code to be less generic than indicated by its type annotations. The type variable implied by the use of a '#', '_' or other type annotation at or near '%s' has been constrained to be type '%s'.
 
             // Different mechanism
-            { 821, "tcBindingCannotBeUseAndRec", "A 'use' declaration is not permitted together with '#pragma recursive'." }, // A binding cannot be marked both 'use' and 'rec'
+            { 821, "tcBindingCannotBeUseAndRec", "A `use` declaration is not permitted together with `#pragma recursive`." }, // A binding cannot be marked both 'use' and 'rec'
             
             // Different mechanism
-            { 874, "tcOnlyRecordFieldsAndSimpleLetCanBeMutable", "A 'var' declaration is not permitted together with '#pragma recursive' or '#pragma forwardref'." }, // Mutable 'let' bindings can't be recursive or defined in recursive modules or namespaces
+            { 874, "tcOnlyRecordFieldsAndSimpleLetCanBeMutable", "A `var` declaration is not permitted together with `#pragma recursive` or `#pragma forwardref`." }, // Mutable 'let' bindings can't be recursive or defined in recursive modules or namespaces
 
             // Compiler-generated unused variables are reported even when they start on _.
             { 1182, "chkUnusedValue", m => Syntax.GetIdentifierValue(m.Groups[1].Value).StartsWith("_", StringComparison.Ordinal) ? null : m.Value }, // The value '%s' is unused
 
             // Not a warning anymore
-            { 3517, "optFailedToInlineSuggestedValue", "The function parameter is declared as 'inline' but the provided argument cannot be inlined. Consider passing an inlineable anonymous function." }, // The value '%s' was marked 'InlineIfLambda' but was not determined to have a lambda value.
+            { 3517, "optFailedToInlineSuggestedValue", "The function parameter is declared as `inline` but the provided argument cannot be inlined. Consider passing an inlineable anonymous function." }, // The value '%s' was marked 'InlineIfLambda' but was not determined to have a lambda value.
 
             // Syntactically valid
             { 3521, "tcInvalidMemberDeclNameMissingOrHasParen", "A complex pattern is not permitted in this declaration." }, // Invalid member declaration. The name of the member is missing or has parentheses.
@@ -121,8 +132,14 @@ namespace Sona.Compiler
                 switch(replacer)
                 {
                     case string str:
-                        // Simple replacement, always succeeds
-                        return pattern.Replace(message, str);
+                        // Simple replacement
+                        var newMessage = pattern.Replace(message, str);
+                        if(newMessage != message)
+                        {
+                            // Success
+                            return newMessage;
+                        }
+                        break;
 
                     case Func<Match, string?> func:
                         // Replacement function

@@ -57,31 +57,55 @@ namespace Sona.Compiler
             return new(sb.ToString(), RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
         }
 
+        const int intSubstStart = Int32.MaxValue / 2;
+        static readonly Regex intSubstRegex = new("[0-9]+", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
         static Regex RegexFromMethod(MethodInfo method)
         {
+            bool hasIntSubsts = false;
+
             var methodParams = method.GetParameters();
             var args = new object[methodParams.Length];
             for(int i = 0; i < args.Length; i++)
             {
                 var type = methodParams[i].ParameterType;
-                if(!typeof(string).Equals(type))
+
+                switch(Type.GetTypeCode(type))
                 {
-                    throw new NotSupportedException("Resources with non-string parameters are not supported.");
+                    case TypeCode.String:
+                        args[i] = $"{{{i}}}";
+                        break;
+                    case TypeCode.Int32:
+                        hasIntSubsts = true;
+                        args[i] = intSubstStart + i;
+                        break;
+                    default:
+                        throw new NotSupportedException($"Resources with parameters of type {type} are not supported.");
                 }
-                args[i] = $"{{{i}}}";
             }
 
             var result = method.Invoke(null, args);
 
-            switch(result)
+            string text = result switch
             {
-                case string str:
-                    return RegexFromString(str);
-                case Tuple<int, string> tuple:
-                    return RegexFromString(tuple.Item2);
-                default:
-                    throw new NotSupportedException($"Unexpected resource result of type '{result?.GetType().ToString() ?? "<null>"}'.");
+                string str => str,
+                Tuple<int, string> tuple => tuple.Item2,
+                _ => throw new NotSupportedException($"Unexpected resource result of type '{result?.GetType().ToString() ?? "<null>"}'.")
+            };
+
+            if(hasIntSubsts)
+            {
+                text = intSubstRegex.Replace(text, m => {
+                    var value = m.Value;
+                    if(!Int32.TryParse(value, out var num) || num < intSubstStart)
+                    {
+                        return value;
+                    }
+                    return $"{{{num - intSubstStart}}}";
+                });
             }
+
+            return RegexFromString(text);
         }
     }
 }
