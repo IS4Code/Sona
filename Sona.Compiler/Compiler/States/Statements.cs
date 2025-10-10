@@ -62,13 +62,12 @@ namespace Sona.Compiler.States
 
         public override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
         {
-            OnEnterStatement(StatementFlags.None, context);
             WriteImplicitReturnStatement(context);
         }
 
         public override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
         {
-            OnExitStatement(StatementFlags.None, context);
+
         }
 
         public void WriteImplicitReturnStatement(ParserRuleContext context)
@@ -139,6 +138,21 @@ namespace Sona.Compiler.States
         public sealed override void EnterWithStatement(WithStatementContext context)
         {
             EnterState<WithStatementState>().EnterWithStatement(context);
+        }
+
+        public sealed override void EnterFollowWithTrailing(FollowWithTrailingContext context)
+        {
+            EnterState<FollowWithStatementState>().EnterFollowWithTrailing(context);
+        }
+
+        public sealed override void EnterFollowWithReturning(FollowWithReturningContext context)
+        {
+            EnterState<FollowWithStatementState>().EnterFollowWithReturning(context);
+        }
+
+        public sealed override void EnterFollowDiscardStatement(FollowDiscardStatementContext context)
+        {
+            EnterState<FollowDiscardState>().EnterFollowDiscardStatement(context);
         }
 
         public sealed override void EnterFollowStatement(FollowStatementContext context)
@@ -456,6 +470,16 @@ namespace Sona.Compiler.States
             OnExitStatement(StatementFlags.None, context);
         }
 
+        public sealed override void EnterTrailingStatement(TrailingStatementContext context)
+        {
+            OnEnterStatement(StatementFlags.None, context);
+        }
+
+        public sealed override void ExitTrailingStatement(TrailingStatementContext context)
+        {
+            OnExitStatement(StatementFlags.None, context);
+        }
+
         public sealed override void EnterReturningStatement(ReturningStatementContext context)
         {
             OnEnterStatement(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
@@ -750,7 +774,8 @@ namespace Sona.Compiler.States
     {
         public override void EnterMemberDiscard(MemberDiscardContext context)
         {
-
+            Out.Write("let _");
+            Out.WriteOperator('=');
         }
 
         public override void ExitMemberDiscard(MemberDiscardContext context)
@@ -760,8 +785,6 @@ namespace Sona.Compiler.States
 
         public override void EnterMemberExpr(MemberExprContext context)
         {
-            Out.Write("let _");
-            Out.WriteOperator('=');
             EnterState<MemberExprState>().EnterMemberExpr(context);
         }
 
@@ -772,8 +795,6 @@ namespace Sona.Compiler.States
 
         public override void EnterAltMemberExpr(AltMemberExprContext context)
         {
-            Out.Write("let _");
-            Out.WriteOperator('=');
             EnterState<AltMemberExprState>().EnterAltMemberExpr(context);
         }
 

@@ -698,6 +698,17 @@ namespace Sona.Compiler.States
             OnExitTrail(StatementFlags.None, context);
         }
 
+        public sealed override void EnterFreeTrail(FreeTrailContext context)
+        {
+            OnEnterTrail(StatementFlags.None, context);
+            EnterState<TrailingStatements>().EnterFreeTrail(context);
+        }
+
+        public sealed override void ExitFreeTrail(FreeTrailContext context)
+        {
+            OnExitTrail(StatementFlags.OpenPath, context);
+        }
+
         public sealed override void EnterOpenTrail(OpenTrailContext context)
         {
             OnEnterTrail(StatementFlags.OpenPath, context);

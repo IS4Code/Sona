@@ -18,23 +18,25 @@ finishing statement take as much of the block as possible.
 
 // The program's body, supporting top-level statements and conditionals
 mainBlock:
-  (globalAttrList (topLevelStatement | statement) ';'?)*? globalAttrList ((closingStatement | conditionalStatement) ';'? | implicitReturnStatement);
+  (globalAttrList (topLevelStatement | statement) ';'?)*? globalAttrList ((closingStatement | conditionalStatement) ';'? | trailingStatement);
 
 // openBlock | terminatingBlock | interruptingBlock | returningBlock | conditionalBlock
 valueBlock:
-  (statement ';'?)*? ((closingStatement | conditionalStatement) ';'? | implicitReturnStatement);
+  (statement ';'?)*? ((closingStatement | conditionalStatement) ';'? | trailingStatement);
 valueTrail:
-  (';'? statement)*? (';'? (closingStatement | conditionalStatement) | implicitReturnStatement);
+  (';'? statement)*? (';'? (closingStatement | conditionalStatement) | trailingStatement);
 
 // openBlock | terminatingBlock
 freeBlock:
-  (statement ';'?)*? (terminatingStatement ';'? | implicitReturnStatement);
+  (statement ';'?)*? (terminatingStatement ';'? | trailingStatement);
+freeTrail:
+  (';'? statement)*? (';'? terminatingStatement | trailingStatement);
 
 // A block that does not return or throw at all (special handling in a final conditional)
 openBlock:
-  (statement ';'?)* implicitReturnStatement;
+  (statement ';'?)* trailingStatement;
 openTrail:
-  (';'? statement)*? implicitReturnStatement;
+  (';'? statement)*? trailingStatement;
 
 // A block that explicitly returns
 returningBlock:
@@ -74,10 +76,10 @@ interruptibleTrail:
 
 // openBlock | terminatingBlock | interruptingBlock | interruptibleBlock | returningBlock | conditionalBlock
 conditionalCoverBlock:
-  (statement ';'?)*? ((closingStatement | interruptibleStatement | conditionalStatement) ';'? | implicitReturnStatement);
+  (statement ';'?)*? ((closingStatement | interruptibleStatement | conditionalStatement) ';'? | trailingStatement);
 // openTrail | interruptibleTrail | conditionalTrail
 conditionalCoverTrail:
-  (';'? statement)*? (';'? (interruptibleStatement | conditionalStatement) | implicitReturnStatement);
+  (';'? statement)*? (';'? (interruptibleStatement | conditionalStatement) | trailingStatement);
 
 // terminatingBlock | interruptingBlock
 interruptingCoverBlock:
@@ -87,22 +89,22 @@ interruptingCoverTrail:
 
 // openBlock | terminatingBlock | interruptingBlock | interruptibleBlock
 interruptibleCoverBlock:
-  (statement ';'?)*? ((terminatingStatement | interruptingStatement | interruptibleStatement) ';'? | implicitReturnStatement);
+  (statement ';'?)*? ((terminatingStatement | interruptingStatement | interruptibleStatement) ';'? | trailingStatement);
 // openTrail | interruptibleTrail
 interruptibleCoverTrail:
-  (';'? statement)*? (';'? interruptibleStatement | implicitReturnStatement);
+  (';'? statement)*? (';'? interruptibleStatement | trailingStatement);
 
 // openBlock | terminatingBlock
 openCoverBlock:
-  (statement ';'?)*? (terminatingStatement ';'? | implicitReturnStatement);
+  (statement ';'?)*? (terminatingStatement ';'? | trailingStatement);
 
 // openBlock | interruptibleBlock
 openToInterruptibleBlock:
-  (statement ';'?)*? (interruptibleStatement ';'? | implicitReturnStatement);
+  (statement ';'?)*? (interruptibleStatement ';'? | trailingStatement);
 
 // openBlock | interruptibleBlock | conditionalBlock
 openToConditionalBlock:
-  (statement ';'?)*? ((interruptibleStatement | conditionalStatement) ';'? | implicitReturnStatement);
+  (statement ';'?)*? ((interruptibleStatement | conditionalStatement) ';'? | trailingStatement);
 
 // interruptingBlock | interruptibleBlock
 interruptingToInterruptibleBlock:
@@ -114,9 +116,9 @@ returningToConditionalBlock:
 
 // Same but never executed
 ignoredBlock:
-  (statement ';'?)*? ((closingStatement | interruptibleStatement | conditionalStatement) ';'? | implicitReturnStatement);
+  (statement ';'?)*? ((closingStatement | interruptibleStatement | conditionalStatement) ';'? | trailingStatement);
 ignoredTrail:
-  (';'? statement)*? (';'? (closingStatement | interruptibleStatement | conditionalStatement) | implicitReturnStatement);
+  (';'? statement)*? (';'? (closingStatement | interruptibleStatement | conditionalStatement) | trailingStatement);
 
 // Same but empty
 ignoredEmptyBlock:;
@@ -299,6 +301,7 @@ statement:
   echoStatement |
   yieldStatement |
   yieldEachStatement |
+  followDiscardStatement |
   followStatement |
   inlineSourceFree |
   ifStatementFree |
@@ -357,8 +360,22 @@ throwStatement:
 withStatement:
   'with' (expression | errorMissingExpression) valueTrail;
 
+followDiscardStatement:
+  'follow' memberDiscard;
+
 followStatement:
   'follow' (expression | errorMissingExpression);
+
+followWithTrailing:
+  FOLLOW_WITH (expression | errorMissingExpression) freeTrail;
+
+followWithReturning:
+  FOLLOW_WITH (expression | errorMissingExpression) returningTrail;
+
+// A free statement that must be at the end of a block
+trailingStatement:
+  followWithTrailing |
+  implicitReturnStatement;
 
 // A statement that has a returning path and all other paths are closing
 returningStatement:
@@ -366,6 +383,7 @@ returningStatement:
   returnStatement |
   yieldBreakStatement |
   withStatement |
+  followWithReturning |
   inlineSourceReturning |
   doStatementReturning |
   ifStatementReturning |
@@ -2903,7 +2921,7 @@ annotationExpr:
   )*;
 
 unaryExpr:
-  unaryOperator* (
+  (unaryOperator | errorUnsupportedFollow)* (
     atomicExpr |
     hashExpr |
     notExpr |
@@ -3013,6 +3031,9 @@ memberExpr_Standalone:
   name genericArguments? simpleCallArgument?? |
   memberTypeConstructExpr |
   memberNewExpr |
+  memberNumberConvertExpr |
+  memberCharConvertExpr |
+  memberConvertExpr |
   primitiveTypeMemberAccess simpleCallArgument?? |
   nestedExpr |
   nestedAssignment;
@@ -3020,9 +3041,7 @@ memberExpr_Standalone:
 memberExpr_Prefix:
   simpleExpr |
   fullConstructExpr |
-  memberNumberConvertExpr |
-  memberCharConvertExpr |
-  memberConvertExpr;
+  errorUnsupportedFollow nestedExpr;
 
 memberExpr_Suffix:
   callArguments |
@@ -3348,6 +3367,9 @@ unit:
 /* ------------ */
 
 errorMissingExpression:;
+
+errorUnsupportedFollow:
+  'follow';
 
 errorUnsupportedNumberSuffix:
   INT_SUFFIX | FLOAT_SUFFIX | EXP_SUFFIX | HEX_SUFFIX;

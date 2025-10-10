@@ -1,5 +1,4 @@
-﻿using Antlr4.Runtime.Misc;
-using static Sona.Grammar.SonaParser;
+﻿using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler
 {
@@ -13,6 +12,16 @@ namespace Sona.Compiler
         public sealed override void ExitErrorMissingExpression(ErrorMissingExpressionContext context)
         {
             Error("This construct requires an expression.", context);
+        }
+
+        public override void EnterErrorUnsupportedFollow(ErrorUnsupportedFollowContext context)
+        {
+
+        }
+
+        public override void ExitErrorUnsupportedFollow(ErrorUnsupportedFollowContext context)
+        {
+            Error("The `follow` keyword is usable only in specific contexts.", context);
         }
 
         public sealed override void EnterErrorUnderscoreReserved(ErrorUnderscoreReservedContext context)

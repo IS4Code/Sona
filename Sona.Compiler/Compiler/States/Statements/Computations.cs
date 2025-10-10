@@ -1,11 +1,10 @@
-﻿using System;
-using Antlr4.Runtime;
+﻿using Antlr4.Runtime;
 using Sona.Grammar;
 using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
 {
-    internal sealed class WithStatementState : NodeState, IComputationContext
+    internal abstract class WithStatementBase : NodeState, IComputationContext
     {
         bool IStatementContext.TrailAllowed => true;
 
@@ -17,54 +16,32 @@ namespace Sona.Compiler.States
         bool IComputationContext.IsCollection => false;
         public string? BuilderVariable { get; private set; }
 
-        IReturnableStatementContext? returnScope;
+        protected IReturnableStatementContext? ReturnScope { get; private set; }
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            returnScope = FindContext<IReturnableStatementContext>();
+            ReturnScope = FindContext<IReturnableStatementContext>();
         }
 
-        public override void EnterWithStatement(WithStatementContext context)
+        protected void OnEnter(ParserRuleContext context)
         {
             BuilderVariable = Out.CreateTemporaryIdentifier();
 
-            if(returnScope != null)
-            {
-                returnScope.WriteReturnStatement(context);
-            }
-            else
-            {
-                Defaults.WriteReturnStatement(context);
-            }
-
-            Out.EnterNestedScope(true);
+            Out.EnterNestedScope();
             Out.Write("(let ");
             Out.WriteIdentifier(BuilderVariable);
             Out.WriteOperator('=');
         }
 
-        public override void ExitWithStatement(WithStatementContext context)
+        protected void OnExit(ParserRuleContext context)
         {
             Out.ExitScope();
             Out.WriteLine();
             Out.Write(_end_);
-            Out.Write(" }");
-
             Out.ExitNestedScope();
-            Out.Write(')');
-
-            if(returnScope != null)
-            {
-                returnScope.WriteAfterReturnStatement(context);
-            }
-            else
-            {
-                Defaults.WriteAfterReturnStatement(context);
-            }
-
-            ExitState().ExitWithStatement(context);
+            Out.Write("})");
         }
 
         public override void EnterExpression(ExpressionContext context)
@@ -87,6 +64,26 @@ namespace Sona.Compiler.States
         }
 
         public override void ExitValueTrail(ValueTrailContext context)
+        {
+
+        }
+
+        public override void EnterFreeTrail(FreeTrailContext context)
+        {
+            EnterState<Trail>().EnterFreeTrail(context);
+        }
+
+        public override void ExitFreeTrail(FreeTrailContext context)
+        {
+
+        }
+
+        public override void EnterReturningTrail(ReturningTrailContext context)
+        {
+            EnterState<Trail>().EnterReturningTrail(context);
+        }
+
+        public override void ExitReturningTrail(ReturningTrailContext context)
         {
 
         }
@@ -122,9 +119,9 @@ namespace Sona.Compiler.States
 
         void IReturnableStatementContext.WriteReturnValue(bool isOption, ParserRuleContext context)
         {
-            if(returnScope != null)
+            if(ReturnScope != null)
             {
-                returnScope.WriteReturnValue(isOption, context);
+                ReturnScope.WriteReturnValue(isOption, context);
             }
             else
             {
@@ -134,9 +131,9 @@ namespace Sona.Compiler.States
 
         void IReturnableStatementContext.WriteAfterReturnValue(ParserRuleContext context)
         {
-            if(returnScope != null)
+            if(ReturnScope != null)
             {
-                returnScope.WriteAfterReturnValue(context);
+                ReturnScope.WriteAfterReturnValue(context);
             }
             else
             {
@@ -146,9 +143,9 @@ namespace Sona.Compiler.States
 
         void IReturnableStatementContext.WriteEmptyReturnValue(ParserRuleContext context)
         {
-            if(returnScope != null)
+            if(ReturnScope != null)
             {
-                returnScope.WriteEmptyReturnValue(context);
+                ReturnScope.WriteEmptyReturnValue(context);
             }
             else
             {
@@ -156,19 +153,17 @@ namespace Sona.Compiler.States
             }
         }
 
-        void IBlockStatementContext.WriteImplicitReturnStatement(ParserRuleContext context)
+        public virtual void WriteImplicitReturnStatement(ParserRuleContext context)
         {
-            if(FindContext<IBlockStatementContext>() is { } blockContext)
+            Out.Write("return ");
+            if(ReturnScope != null)
             {
-                if(blockContext == FindContext<IComputationContext>())
-                {
-                    // At the end of function/computation
-                    blockContext.WriteImplicitReturnStatement(context);
-                    return;
-                }
+                ReturnScope.WriteEmptyReturnValue(context);
             }
-            
-            Error("It is not possible to escape from a computation block directly to the outside code. Use `return` to return explicitly.", context);
+            else
+            {
+                Defaults.WriteEmptyReturnValue(context);
+            }
         }
 
         void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
@@ -195,15 +190,119 @@ namespace Sona.Compiler.States
         {
             protected override bool IgnoreContext => true;
 
-            public override void EnterValueTrail(SonaParser.ValueTrailContext context)
+            public override void EnterValueTrail(ValueTrailContext context)
             {
 
             }
 
-            public override void ExitValueTrail(SonaParser.ValueTrailContext context)
+            public override void ExitValueTrail(ValueTrailContext context)
             {
                 ExitState()!.ExitValueTrail(context);
             }
+
+            public override void EnterFreeTrail(FreeTrailContext context)
+            {
+
+            }
+
+            public override void ExitFreeTrail(FreeTrailContext context)
+            {
+                ExitState()!.ExitFreeTrail(context);
+            }
+
+            public override void EnterReturningTrail(ReturningTrailContext context)
+            {
+
+            }
+
+            public override void ExitReturningTrail(ReturningTrailContext context)
+            {
+                ExitState()!.ExitReturningTrail(context);
+            }
+        }
+    }
+
+    internal sealed class WithStatementState : WithStatementBase
+    {
+        public override void EnterWithStatement(WithStatementContext context)
+        {
+            if(ReturnScope != null)
+            {
+                ReturnScope.WriteReturnStatement(context);
+            }
+            else
+            {
+                Defaults.WriteReturnStatement(context);
+            }
+
+            OnEnter(context);
+        }
+
+        public override void ExitWithStatement(WithStatementContext context)
+        {
+            OnExit(context);
+
+            if(ReturnScope != null)
+            {
+                ReturnScope.WriteAfterReturnStatement(context);
+            }
+            else
+            {
+                Defaults.WriteAfterReturnStatement(context);
+            }
+
+            ExitState().ExitWithStatement(context);
+        }
+
+        public override void WriteImplicitReturnStatement(ParserRuleContext context)
+        {
+            if(FindContext<IBlockStatementContext>() != FindContext<IComputationContext>())
+            {
+                // Not at the end of function/computation
+                Error("It is not possible to escape from a computation block directly to the outside code. Use `return` to return explicitly.", context);
+            }
+            base.WriteImplicitReturnStatement(context);
+        }
+    }
+
+    internal sealed class FollowWithStatementState : WithStatementBase
+    {
+        private void CheckScope(ParserRuleContext context)
+        {
+            if(FindContext<IComputationContext>() is not { BuilderVariable: not null })
+            {
+                Error("`follow` is not allowed outside a computation.", context);
+            }
+        }
+
+        public override void EnterFollowWithTrailing(FollowWithTrailingContext context)
+        {
+            CheckScope(context);
+
+            Out.Write("do! ");
+
+            OnEnter(context);
+        }
+
+        public override void ExitFollowWithTrailing(FollowWithTrailingContext context)
+        {
+            OnExit(context);
+            ExitState().ExitFollowWithTrailing(context);
+        }
+
+        public override void EnterFollowWithReturning(FollowWithReturningContext context)
+        {
+            CheckScope(context);
+
+            Out.Write("return! ");
+
+            OnEnter(context);
+        }
+
+        public override void ExitFollowWithReturning(FollowWithReturningContext context)
+        {
+            OnExit(context);
+            ExitState().ExitFollowWithReturning(context);
         }
     }
 
@@ -231,6 +330,24 @@ namespace Sona.Compiler.States
         public override void ExitExpression(ExpressionContext context)
         {
 
+        }
+    }
+
+    internal sealed class FollowDiscardState : ExpressionState
+    {
+        public override void EnterFollowDiscardStatement(FollowDiscardStatementContext context)
+        {
+            if(FindContext<IComputationContext>() is not { BuilderVariable: not null })
+            {
+                Error("`follow` is not allowed outside a computation.", context);
+            }
+            Out.Write("let! _");
+            Out.WriteOperator('=');
+        }
+
+        public override void ExitFollowDiscardStatement(FollowDiscardStatementContext context)
+        {
+            ExitState().ExitFollowDiscardStatement(context);
         }
     }
 }
