@@ -26,6 +26,12 @@ namespace Sona.Tests
         [DataRow("true", "true")]
         [DataRow("false", "false")]
         [DataRow("null", "null")]
+        [TestMethod]
+        public void Primitive(string source, string? expected)
+        {
+            AssertExpressionEquivalence(source, expected);
+        }
+
         [DataRow(@"""abc""", @"""abc""")]
         [DataRow(@"""a\""bc""", @"""a\""bc""")]
         [DataRow(@"""\*""", null)]
@@ -47,9 +53,9 @@ namespace Sona.Tests
         [DataRow("@\"a\nc\"", "@\"a\nc\"")]
         [DataRow("@\"a\rc\"", "@\"a\rc\"")]
         [TestMethod]
-        public void Primitive(string source, string? expected)
+        public void PrimitiveString(string source, string? expected)
         {
-            AssertExpressionEquivalence(source, expected);
+            AssertExpressionEquivalence(source, expected, indent: false);
         }
 
         [DataRow("a and b", "(a) && (b)")]

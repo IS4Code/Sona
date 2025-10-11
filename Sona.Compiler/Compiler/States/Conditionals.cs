@@ -390,7 +390,7 @@ namespace Sona.Compiler.States
         public void WriteImplicitReturnStatement(ParserRuleContext context)
         {
             // Nothing happening when exiting sub-blocks
-            Out.Write("()");
+            Defaults.WriteImplicitReturnStatement(context);
         }
 
         public void WriteReturnValue(bool isOption, ParserRuleContext context)
@@ -2041,7 +2041,7 @@ namespace Sona.Compiler.States
 
         public sealed override void ExitWhile(WhileContext context)
         {
-            Out.Write("do");
+            Out.Write("do ");
         }
 
         public sealed override void ExitWhileTrue(WhileTrueContext context)

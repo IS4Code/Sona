@@ -19,6 +19,8 @@ namespace Sona.Compiler
         Optimize = 1,
         Privileged = 2,
         IgnoreLineNumbers = 4,
-        DebuggingComments = 8
+        DebuggingBlockComments = 8,
+        DebuggingStatementComments = 16,
+        DebuggingComments = DebuggingBlockComments | DebuggingStatementComments
     }
 }

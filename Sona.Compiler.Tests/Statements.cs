@@ -5,6 +5,8 @@ namespace Sona.Tests
     [TestClass]
     public class Statements : CompilationTests
     {
+        const string not = "global.Microsoft.FSharp.Core.Operators.``not``";
+
         [DataRow("import a", "open a")]
         [DataRow("import a.n", "open a.n")]
         [DataRow("import(a.n)", "open a.n")]
@@ -84,8 +86,6 @@ open B")]
         const string ignore_end   = "                                              )";
         const string @throw = " |> global.Sona.Runtime.CompilerServices.Operators.Throw";
         const string @default = "global.Microsoft.FSharp.Core.Operators.Unchecked.defaultof<_>";
-        const string _1 = "``_ 1``";
-        const string _2 = "``_ 2``";
 
         [DataRow("if a then end", @"if(a)then begin
  ()
@@ -139,7 +139,7 @@ end
         [TestMethod]
         public void IfNonReturning(string source, string? expected)
         {
-            AssertBlockEquivalence(source, expected);
+            AssertTopLevelBlockEquivalence(source, expected);
         }
 
         [DataRow("if a then throw b end f(c)", $@"if(a)then begin
@@ -159,7 +159,7 @@ else begin
  {ignore_begin}
   ()
  {ignore_end}
- {@default}
+ <?do?>{@default}
 end")]
         [DataRow("if a then throw b else throw c end f()", $@"if true then begin
  if(a)then begin
@@ -174,8 +174,14 @@ else begin
   f()
   ()
  {ignore_end}
- {@default}
+ <?do?>{@default}
 end")]
+        [TestMethod]
+        public void IfThrowing(string source, string? expected)
+        {
+            AssertTopLevelBlockEquivalence(source, expected);
+        }
+        
         [DataRow("if a then throw b else throw c end return d", $@"if true then begin
  if(a)then begin
   (b){@throw}
@@ -219,7 +225,7 @@ else begin
  {@default}
 end")]
         [TestMethod]
-        public void IfThrowing(string source, string? expected)
+        public void IfReturningThrowing(string source, string? expected)
         {
             AssertBlockEquivalence(source, expected);
         }
@@ -255,63 +261,58 @@ else begin
  end
  (e)
 end")]
-        [DataRow("if a then f(b) else return c end", $@"let mutable {_1} = false
-let mutable {_2} = {@default}
+        [DataRow("if a then f(b) else return c end", $@"let mutable <$returning$> = false
+let mutable <$result$> = {@default}
 if(a)then begin
  f(b)
  ()
 end
 else begin
- {_2} <- (c)
- {_1} <- true
+ <$result$> <- (c);<$returning$> <- true
 end
-if {_1} then {_2}
+if <$returning$> then <$result$>
 else begin
  ()
 end")]
-        [DataRow("if a then f(b) else return c end return d", $@"let mutable {_1} = false
-let mutable {_2} = {@default}
+        [DataRow("if a then f(b) else return c end return d", $@"let mutable <$returning$> = false
+let mutable <$result$> = {@default}
 if(a)then begin
  f(b)
  ()
 end
 else begin
- {_2} <- (c)
- {_1} <- true
+ <$result$> <- (c);<$returning$> <- true
 end
-if {_1} then {_2}
+if <$returning$> then <$result$>
 else begin
  (d)
 end")]
-        [DataRow("if a then return b elseif c then f(d) end", $@"let mutable {_1} = false
-let mutable {_2} = {@default}
+        [DataRow("if a then return b elseif c then f(d) end", $@"let mutable <$returning$> = false
+let mutable <$result$> = {@default}
 if(a)then begin
- {_2} <- (b)
- {_1} <- true
+ <$result$> <- (b);<$returning$> <- true
 end
 elif(c)then begin
  f(d)
  ()
 end
-if {_1} then {_2}
+if <$returning$> then <$result$>
 else begin
  ()
 end")]
-        [DataRow("if a then return b elseif c then f(d) else return e end", $@"let mutable {_1} = false
-let mutable {_2} = {@default}
+        [DataRow("if a then return b elseif c then f(d) else return e end", $@"let mutable <$returning$> = false
+let mutable <$result$> = {@default}
 if(a)then begin
- {_2} <- (b)
- {_1} <- true
+ <$result$> <- (b);<$returning$> <- true
 end
 elif(c)then begin
  f(d)
  ()
 end
 else begin
- {_2} <- (e)
- {_1} <- true
+ <$result$> <- (e);<$returning$> <- true
 end
-if {_1} then {_2}
+if <$returning$> then <$result$>
 else begin
  ()
 end")]
@@ -364,8 +365,7 @@ if true then begin
  end
  else begin
   g(y)
-  <$result$> <- (a)
-  <$returning$> <- true
+  <$result$> <- (a);<$returning$> <- true
  end
  if <$returning$> then ()
  else begin
@@ -407,8 +407,7 @@ let mutable <$result$> = {@default}
 while <$continuing$> && (x)do begin
  let mutable <$interrupting$> = false
  f(a)
- <$result$> <- (b)
- <$returning$> <- true
+ <$result$> <- (b);<$returning$> <- true
  <$continuing$> <- false
  <$interrupting$> <- true
 end
@@ -511,8 +510,7 @@ let mutable <$continuing$> = true
 while <$continuing$> do begin
  let mutable <$interrupting$> = false
  f(a)
- <$result$> <- (b)
- <$returning$> <- true
+ <$result$> <- (b);<$returning$> <- true
  <$continuing$> <- false
  <$interrupting$> <- true
  if <$continuing$> then <$continuing$> <- {not}(x)
@@ -560,8 +558,7 @@ try
   let mutable <$interrupting$> = false
   let x = <$enumerator$>.Current
   f(a)
-  <$result$> <- (b)
-  <$returning$> <- true
+  <$result$> <- (b);<$returning$> <- true
   <$continuing$> <- false
   <$interrupting$> <- true
  end
@@ -614,8 +611,7 @@ try
   let mutable <$interrupting$> = false
   let x = <$enumerator$>.Current
   f(a)
-  <$result$> <- (b)
-  <$returning$> <- true
+  <$result$> <- (b);<$returning$> <- true
   <$continuing$> <- false
   <$interrupting$> <- true
  end
@@ -667,8 +663,7 @@ try
   let mutable <$interrupting$> = false
   let x = <$enumerator$>.Current
   f(a)
-  <$result$> <- (b)
-  <$returning$> <- true
+  <$result$> <- (b);<$returning$> <- true
   <$continuing$> <- false
   <$interrupting$> <- true
  end
@@ -714,8 +709,7 @@ try
   let mutable <$interrupting$> = false
   let x = <$enumerator$>.Current
   f(a)
-  <$result$> <- (b)
-  <$returning$> <- true
+  <$result$> <- (b);<$returning$> <- true
   <$continuing$> <- false
   <$interrupting$> <- true
  end

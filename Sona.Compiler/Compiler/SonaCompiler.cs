@@ -54,7 +54,8 @@ namespace Sona.Compiler
             errorListener.AddListener(parser);
             parser.ErrorHandler = errorListener;
 
-            bool debugBeginEnd = (options.Flags & CompilerFlags.DebuggingComments) != 0;
+            bool debugBeginEnd = (options.Flags & CompilerFlags.DebuggingBlockComments) != 0;
+            bool debugReturn = (options.Flags & CompilerFlags.DebuggingStatementComments) != 0;
 
             using var writer = new SourceWriter(output);
             writer.AdjustLines = (options.Flags & CompilerFlags.IgnoreLineNumbers) == 0;
@@ -68,7 +69,7 @@ namespace Sona.Compiler
                 parser.BuildParseTree = false;
             }
 
-            var context = new ScriptEnvironment(parser, writer, globalWriter, lexerContext, debugBeginEnd ? "(*begin*)" : "", debugBeginEnd ? "(*end*)" : "", debugBeginEnd ? "(*return*)" : "");
+            var context = new ScriptEnvironment(parser, writer, globalWriter, lexerContext, debugBeginEnd ? "(*begin*)" : "", debugBeginEnd ? "(*end*)" : "", debugReturn ? "(*return*)" : "");
             lexerContext.Environment = context;
 
             // Lexer context is fully set up

@@ -31,7 +31,7 @@ namespace Sona.Tests
             var options = new CompilerOptions
             (
                 Target: BinaryTarget.Exe,
-                Flags: CompilerFlags.Privileged | CompilerFlags.DebuggingComments |
+                Flags: CompilerFlags.Privileged | CompilerFlags.DebuggingBlockComments |
                     (GenerateLineNumbers ? 0 : CompilerFlags.IgnoreLineNumbers),
                 AssemblyLoader: AssemblyContextLoader.Default
             );
@@ -110,36 +110,55 @@ namespace Sona.Tests
             AssertInnerStatementEquivalence(source, expected);
         }
 
-        protected void AssertBlockEquivalence(string source, string? expected)
+        protected void AssertTopLevelBlockEquivalence(string source, string? expected)
         {
             const string optionalDo = "<?do?>";
 
-            expected = ReplacePlaceholders(expected);
             var actual = CompileToSource(source, expected == null);
-            Assert.AreEqual(expected?.Replace(optionalDo, "do "), actual);
+            Assert.AreEqual(ReplacePlaceholders(expected)?.Replace(optionalDo, "do "), actual);
 
-            var source2 = $"function test() {source} end";
-            string? expected2 = null;
+            AssertBlockEquivalence(source, expected?.Replace(optionalDo, ""));
+        }
+
+        protected void AssertBlockEquivalence(string source, string? expected)
+        {
+            expected = ReplacePlaceholders(expected);
+            source = $"function test() {source} end";
             if(expected != null)
             {
-                var indented = String.Join(Environment.NewLine, expected.Split(Environment.NewLine).Select(l => " " + l.Replace(optionalDo, "")));
+                var indented = String.Join(Environment.NewLine, expected.Split(Environment.NewLine).Select(l => " " + l));
                 expected = expected + Environment.NewLine + "()";
-                expected2 = $@"let rec test() = (
+                expected = $@"let rec test() = (
 {indented}
 )
 ()";
             }
-            var actual2 = CompileToSource(source2, expected2 == null);
-            Assert.AreEqual(expected2, actual2);
+            var actual = CompileToSource(source, expected == null);
+            Assert.AreEqual(expected, actual);
         }
 
-        protected void AssertExpressionEquivalence(string source, string? expected)
+        protected void AssertExpressionEquivalence(string source, string? expected, bool indent = true)
         {
             expected = ReplacePlaceholders(expected);
-            source = "return " + source + ";";
+            source = "function test() return " + source + " end";
             if(expected != null)
             {
-                expected = $"({expected})";
+                bool first = true;
+                var indented = indent ? String.Join(Environment.NewLine, expected.Split(Environment.NewLine).Select(l => {
+                    if(first)
+                    {
+                        first = false;
+                        return l;
+                    }
+                    else
+                    {
+                        return " " + l;
+                    }
+                })) : expected;
+                expected = $@"let rec test() = (
+ ({indented})
+)
+()";
             }
             var actual = CompileToSource(source, expected == null);
             Assert.AreEqual(expected, actual);
