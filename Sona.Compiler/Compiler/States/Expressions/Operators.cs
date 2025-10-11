@@ -734,8 +734,8 @@ namespace Sona.Compiler.States
             alternativeName = Out.CreateTemporaryIdentifier();
             Out.WriteIdentifier(alternativeName);
             Out.WriteOperator('=');
-            Out.WriteCoreOperatorName("Unchecked");
-            Out.Write(".defaultof<_> in match ");
+            Out.WriteDefaultValue();
+            Out.Write(" in match ");
             Out.WriteCustomOperator("BindToLiftedResult");
             Out.Write('(');
             Out.WriteIdentifier(alternativeName);

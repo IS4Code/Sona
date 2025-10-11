@@ -77,8 +77,8 @@ namespace Sona.Compiler.States
             {
                 // () in a collection has a different interpretation
                 Out.Write("if false then yield ");
-                Out.WriteCoreOperatorName("Unchecked");
-                Out.WriteLine(".defaultof<_>");
+                Out.WriteDefaultValue();
+                Out.WriteLine();
             }
             else if(FindContext<IBlockStatementContext>() is { } blockContext)
             {

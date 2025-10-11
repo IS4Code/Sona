@@ -74,6 +74,12 @@ namespace Sona.Compiler
             writer.WriteNamespacedName("System", name);
         }
 
+        public static void WriteDefaultValue(this ISourceWriter writer)
+        {
+            writer.WriteCoreOperatorName("Unchecked");
+            writer.Write(".defaultof<_>");
+        }
+
 #pragma warning disable CS8524
         public static void WriteOptionNone(this ISourceWriter writer, ImplementationType optionType)
         {

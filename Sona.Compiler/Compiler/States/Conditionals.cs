@@ -286,8 +286,8 @@ namespace Sona.Compiler.States
                     Out.Write("let mutable ");
                     Out.WriteIdentifier(ReturnVariable);
                     Out.WriteOperator('=');
-                    Out.WriteCoreOperatorName("Unchecked");
-                    Out.WriteLine(".defaultof<_>");
+                    Out.WriteDefaultValue();
+                    Out.WriteLine();
                 }
             }
         }
@@ -674,8 +674,8 @@ namespace Sona.Compiler.States
 
         public sealed override void ExitIgnoredTrail(IgnoredTrailContext context)
         {
-            Out.WriteCoreOperatorName("Unchecked");
-            Out.WriteLine(".defaultof<_>");
+            Out.WriteDefaultValue();
+            Out.WriteLine();
             Out.ExitScope();
             Out.Write(_end_);
         }
@@ -689,8 +689,7 @@ namespace Sona.Compiler.States
                 Out.WriteLine();
                 Out.Write("else ");
             }
-            Out.WriteCoreOperatorName("Unchecked");
-            Out.Write(".defaultof<_>");
+            Out.WriteDefaultValue();
             // Possible to elide even further if empty trail is predicted
         }
 
@@ -1921,8 +1920,7 @@ namespace Sona.Compiler.States
             if(HasMatch && !HasElse)
             {
                 // The _ pattern is waiting
-                Out.WriteCoreOperatorName("Unchecked");
-                Out.Write(".defaultof<_>");
+                Out.WriteDefaultValue();
             }
             while(level > 0)
             {
@@ -2173,8 +2171,7 @@ namespace Sona.Compiler.States
             {
                 // Return any value
                 Out.WriteLine();
-                Out.WriteCoreOperatorName("Unchecked");
-                Out.Write(".defaultof<_>");
+                Out.WriteDefaultValue();
             }
             if((flags & StatementFlags.OpenPath) == 0)
             {
@@ -2402,8 +2399,7 @@ namespace Sona.Compiler.States
             {
                 // Return any value
                 Out.WriteLine();
-                Out.WriteCoreOperatorName("Unchecked");
-                Out.Write(".defaultof<_>");
+                Out.WriteDefaultValue();
             }
             if((flags & StatementFlags.OpenPath) == 0)
             {
@@ -2640,8 +2636,7 @@ namespace Sona.Compiler.States
             {
                 // Return any value
                 Out.WriteLine();
-                Out.WriteCoreOperatorName("Unchecked");
-                Out.Write(".defaultof<_>");
+                Out.WriteDefaultValue();
             }
             if((flags & StatementFlags.OpenPath) == 0)
             {
@@ -3124,8 +3119,7 @@ namespace Sona.Compiler.States
                 Out.WriteLine();
                 Out.Write("| _ when false");
                 Out.WriteOperator("->");
-                Out.WriteCoreOperatorName("Unchecked");
-                Out.Write(".defaultof<_>");
+                Out.WriteDefaultValue();
             }
             base.OnExit(flags, context);
         }
