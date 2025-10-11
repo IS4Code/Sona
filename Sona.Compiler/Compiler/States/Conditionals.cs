@@ -674,7 +674,18 @@ namespace Sona.Compiler.States
 
         public sealed override void ExitIgnoredTrail(IgnoredTrailContext context)
         {
-            Out.WriteDefaultValue();
+            if(ReturnScope != null)
+            {
+                ReturnScope.WriteReturnStatement(context);
+                Out.WriteDefaultValue();
+                ReturnScope.WriteAfterReturnStatement(context);
+            }
+            else
+            {
+                Defaults.WriteReturnStatement(context);
+                Out.WriteDefaultValue();
+                Defaults.WriteAfterReturnStatement(context);
+            }
             Out.WriteLine();
             Out.ExitScope();
             Out.Write(_end_);
@@ -689,7 +700,18 @@ namespace Sona.Compiler.States
                 Out.WriteLine();
                 Out.Write("else ");
             }
-            Out.WriteDefaultValue();
+            if(ReturnScope != null)
+            {
+                ReturnScope.WriteReturnStatement(context);
+                Out.WriteDefaultValue();
+                ReturnScope.WriteAfterReturnStatement(context);
+            }
+            else
+            {
+                Defaults.WriteReturnStatement(context);
+                Out.WriteDefaultValue();
+                Defaults.WriteAfterReturnStatement(context);
+            }
             // Possible to elide even further if empty trail is predicted
         }
 
