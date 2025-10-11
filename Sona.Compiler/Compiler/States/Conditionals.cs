@@ -17,6 +17,8 @@ namespace Sona.Compiler.States
 
             bool StatementsAllowed => statementsAllowed ??= (Parent!.FindContext<IStatementContext>()?.TrailAllowed ?? true);
 
+            protected override bool IgnoreContext => (Parent as ControlStatement)?.IgnoreTrailContext == true ? true : base.IgnoreContext;
+
             protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
             {
                 base.Initialize(environment, parent);
@@ -61,6 +63,28 @@ namespace Sona.Compiler.States
             {
                 OnExitTrail();
                 ExitState()?.ExitOpenTrail(context);
+            }
+
+            public sealed override void EnterValueTrail(ValueTrailContext context)
+            {
+
+            }
+
+            public sealed override void ExitValueTrail(ValueTrailContext context)
+            {
+                OnExitTrail();
+                ExitState()?.ExitValueTrail(context);
+            }
+
+            public sealed override void EnterFreeTrail(FreeTrailContext context)
+            {
+
+            }
+
+            public sealed override void ExitFreeTrail(FreeTrailContext context)
+            {
+                OnExitTrail();
+                ExitState()?.ExitFreeTrail(context);
             }
 
             public sealed override void EnterReturningTrail(ReturningTrailContext context)
@@ -205,18 +229,20 @@ namespace Sona.Compiler.States
         protected string ReturnVariable { get; private set; }
         protected string ReturningVariable { get; private set; }
 #nullable restore
-        IReturnableStatementContext? returnScope;
-        IInterruptibleStatementContext? interruptScope;
+        protected IReturnableStatementContext? ReturnScope { get; private set; }
+        protected IInterruptibleStatementContext? InterruptScope { get; private set; }
 
-        ReturnFlags OriginalReturnFlags => returnScope?.Flags ?? 0;
+        ReturnFlags OriginalReturnFlags => ReturnScope?.Flags ?? 0;
 
         protected ReturnFlags ReturnFlags => OriginalReturnFlags | (ReturnVariable is not null ? ReturnFlags.Indirect : 0);
 
-        [MemberNotNullWhen(false, nameof(returnScope))]
+        [MemberNotNullWhen(false, nameof(ReturnScope))]
         bool HasOwnControlVariables => (OriginalReturnFlags & ReturnFlags.Indirect) == 0;
 
         bool IStatementContext.TrailAllowed => true;
         protected override bool IgnoreContext => exited;
+
+        protected virtual bool IgnoreTrailContext => false;
 
         StatementFlags enterFlags;
         bool exited;
@@ -228,11 +254,11 @@ namespace Sona.Compiler.States
             enterFlags = StatementFlags.None;
             exited = false;
 
-            returnScope = FindContext<IReturnableStatementContext>();
-            interruptScope = FindContext<IInterruptibleStatementContext>();
-            if(interruptScope?.Flags == 0)
+            ReturnScope = FindContext<IReturnableStatementContext>();
+            InterruptScope = FindContext<IInterruptibleStatementContext>();
+            if(InterruptScope?.Flags == 0)
             {
-                interruptScope = null;
+                InterruptScope = null;
             }
         }
 
@@ -273,10 +299,10 @@ namespace Sona.Compiler.States
                 Out.WriteLine();
                 WriteEarlyReturn(false, context);
                 Out.WriteLine();
-                if(interruptScope != null && (flags & interruptibleFlags) == interruptibleFlags)
+                if(InterruptScope != null && (flags & interruptibleFlags) == interruptibleFlags)
                 {
                     Out.Write("elif ");
-                    Out.WriteIdentifier(interruptScope.InterruptingVariable ?? Error("COMPILER ERROR: Interrupting variable not provided.", context));
+                    Out.WriteIdentifier(InterruptScope.InterruptingVariable ?? Error("COMPILER ERROR: Interrupting variable not provided.", context));
                     Out.WriteLine(" then ()");
                 }
                 // else ...
@@ -285,11 +311,11 @@ namespace Sona.Compiler.States
                 ReturnVariable = null;
                 ReturningVariable = null;
             }
-            else if(interruptScope != null && (flags & interruptibleFlags) == interruptibleFlags)
+            else if(InterruptScope != null && (flags & interruptibleFlags) == interruptibleFlags)
             {
                 Out.WriteLine();
                 Out.Write("if ");
-                Out.WriteIdentifier(interruptScope.InterruptingVariable ?? Error("COMPILER ERROR: Interrupting variable not provided.", context));
+                Out.WriteIdentifier(InterruptScope.InterruptingVariable ?? Error("COMPILER ERROR: Interrupting variable not provided.", context));
                 Out.WriteLine(" then ()");
                 Out.Write("else ");
             }
@@ -300,7 +326,7 @@ namespace Sona.Compiler.States
             if(!HasOwnControlVariables)
             {
                 // Propagate upwards
-                returnScope.WriteEarlyReturn(context);
+                ReturnScope.WriteEarlyReturn(context);
                 return;
             }
 
@@ -315,11 +341,11 @@ namespace Sona.Compiler.States
             }
 
             // Return the value properly
-            if(returnScope != null)
+            if(ReturnScope != null)
             {
-                returnScope.WriteReturnStatement(context);
+                ReturnScope.WriteReturnStatement(context);
                 Out.WriteIdentifier(ReturnVariable);
-                returnScope.WriteAfterReturnStatement(context);
+                ReturnScope.WriteAfterReturnStatement(context);
             }
             else
             {
@@ -340,9 +366,9 @@ namespace Sona.Compiler.States
             if(!HasOwnControlVariables || ReturnVariable is null)
             {
                 // Default implementation
-                if(returnScope != null)
+                if(ReturnScope != null)
                 {
-                    returnScope.WriteReturnStatement(context);
+                    ReturnScope.WriteReturnStatement(context);
                 }
                 else
                 {
@@ -361,9 +387,9 @@ namespace Sona.Compiler.States
             if(!HasOwnControlVariables || ReturningVariable is null)
             {
                 // Default implementation
-                if(returnScope != null)
+                if(ReturnScope != null)
                 {
-                    returnScope.WriteAfterReturnStatement(context);
+                    ReturnScope.WriteAfterReturnStatement(context);
                 }
                 else
                 {
@@ -388,9 +414,9 @@ namespace Sona.Compiler.States
         public void WriteReturnValue(bool isOption, ParserRuleContext context)
         {
             // Default implementation
-            if(returnScope != null)
+            if(ReturnScope != null)
             {
-                returnScope.WriteReturnValue(isOption, context);
+                ReturnScope.WriteReturnValue(isOption, context);
             }
             else
             {
@@ -401,9 +427,9 @@ namespace Sona.Compiler.States
         public void WriteAfterReturnValue(ParserRuleContext context)
         {
             // Default implementation
-            if(returnScope != null)
+            if(ReturnScope != null)
             {
-                returnScope.WriteAfterReturnValue(context);
+                ReturnScope.WriteAfterReturnValue(context);
             }
             else
             {
@@ -414,9 +440,9 @@ namespace Sona.Compiler.States
         public void WriteEmptyReturnValue(ParserRuleContext context)
         {
             // Default implementation
-            if(returnScope != null)
+            if(ReturnScope != null)
             {
-                returnScope.WriteEmptyReturnValue(context);
+                ReturnScope.WriteEmptyReturnValue(context);
             }
             else
             {

@@ -369,12 +369,24 @@ followStatement:
 followWithTrailing:
   FOLLOW_WITH (expression | errorMissingExpression) freeTrail;
 
+followWithTerminating:
+  FOLLOW_WITH (expression | errorMissingExpression) terminatingTrail;
+
+followWithInterrupting:
+  FOLLOW_WITH (expression | errorMissingExpression) interruptingTrail;
+
+followWithInterruptible:
+  FOLLOW_WITH (expression | errorMissingExpression) interruptibleTrail;
+
 followWithReturning:
   FOLLOW_WITH (expression | errorMissingExpression) returningTrail;
 
+followWithConditional:
+  FOLLOW_WITH (expression | errorMissingExpression) conditionalTrail;
+
 // A free statement that must be at the end of a block
 trailingStatement:
-  followWithTrailing |
+  followWithTrailing ';'? |
   implicitReturnStatement;
 
 // A statement that has a returning path and all other paths are closing
@@ -405,6 +417,7 @@ returningStatement:
 interruptingStatement:
   breakStatement |
   continueStatement |
+  followWithInterrupting |
   doStatementInterrupting |
   doStatementInterruptingTrail |
   ifStatementInterrupting |
@@ -412,11 +425,13 @@ interruptingStatement:
 
 // A statement that has interrupting paths and all other paths are open or terminating
 interruptibleStatement:
+  followWithInterruptible |
   doStatementInterruptible |
   ifStatementInterruptible;
 
 // A statement that has returning paths and open paths
 conditionalStatement:
+  followWithConditional |
   doStatementConditional |
   ifStatementConditional |
   whileStatementConditional |
@@ -430,6 +445,7 @@ conditionalStatement:
 // A statement that only has terminating paths
 terminatingStatement:
   throwStatement |
+  followWithTerminating |
   inlineSourceTerminating |
   doStatementTerminating |
   ifStatementTerminating |

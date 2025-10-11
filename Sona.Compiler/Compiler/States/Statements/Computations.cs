@@ -1,32 +1,20 @@
 ﻿using Antlr4.Runtime;
-using Sona.Grammar;
 using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
 {
-    internal abstract class WithStatementBase : NodeState, IComputationContext
+    internal abstract class WithStatementBase : ControlStatement
     {
-        bool IStatementContext.TrailAllowed => true;
-
-        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
-        string? IInterruptibleStatementContext.InterruptingVariable => null;
-
-        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags.None;
-
-        bool IComputationContext.IsCollection => false;
         public string? BuilderVariable { get; private set; }
 
-        protected IReturnableStatementContext? ReturnScope { get; private set; }
+        protected override bool IgnoreContext => false;
 
-        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        protected override bool IgnoreTrailContext => true;
+
+        protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
         {
-            base.Initialize(environment, parent);
+            base.OnEnter(flags, context);
 
-            ReturnScope = FindContext<IReturnableStatementContext>();
-        }
-
-        protected void OnEnter(ParserRuleContext context)
-        {
             BuilderVariable = Out.CreateTemporaryIdentifier();
 
             Out.EnterNestedScope();
@@ -35,57 +23,49 @@ namespace Sona.Compiler.States
             Out.WriteOperator('=');
         }
 
-        protected void OnExit(ParserRuleContext context)
+        protected override void OnExit(StatementFlags flags, ParserRuleContext context)
         {
             Out.ExitScope();
             Out.WriteLine();
             Out.Write(_end_);
             Out.ExitNestedScope();
             Out.Write("})");
+
+            base.OnExit(flags, context);
         }
 
-        public override void EnterExpression(ExpressionContext context)
+        protected sealed override void OnEnterTrail(StatementFlags flags, ParserRuleContext context)
+        {
+            
+        }
+
+        protected sealed override void OnExitTrail(StatementFlags flags, ParserRuleContext context)
+        {
+            
+        }
+
+        protected sealed override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
+        {
+
+        }
+
+        protected sealed override void OnExitBlock(StatementFlags flags, ParserRuleContext context)
+        {
+
+        }
+
+        public sealed override void EnterExpression(ExpressionContext context)
         {
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
-        public override void ExitExpression(ExpressionContext context)
+        public sealed override void ExitExpression(ExpressionContext context)
         {
             Out.Write(" in ");
             Out.WriteIdentifier(BuilderVariable!);
             Out.Write(" { ");
             Out.WriteLine(_begin_);
             Out.EnterScope();
-        }
-
-        public override void EnterValueTrail(ValueTrailContext context)
-        {
-            EnterState<Trail>().EnterValueTrail(context);
-        }
-
-        public override void ExitValueTrail(ValueTrailContext context)
-        {
-
-        }
-
-        public override void EnterFreeTrail(FreeTrailContext context)
-        {
-            EnterState<Trail>().EnterFreeTrail(context);
-        }
-
-        public override void ExitFreeTrail(FreeTrailContext context)
-        {
-
-        }
-
-        public override void EnterReturningTrail(ReturningTrailContext context)
-        {
-            EnterState<Trail>().EnterReturningTrail(context);
-        }
-
-        public override void ExitReturningTrail(ReturningTrailContext context)
-        {
-
         }
 
         public void WriteBeginBlockExpression(ParserRuleContext context)
@@ -100,6 +80,69 @@ namespace Sona.Compiler.States
         {
             Out.ExitNestedScope();
             Out.Write("})");
+        }
+
+        public new virtual void WriteImplicitReturnStatement(ParserRuleContext context)
+        {
+            Out.Write("return ");
+            if(ReturnScope != null)
+            {
+                ReturnScope.WriteEmptyReturnValue(context);
+            }
+            else
+            {
+                Defaults.WriteEmptyReturnValue(context);
+            }
+        }
+    }
+
+    internal sealed class WithStatementState : WithStatementBase, IComputationContext
+    {
+        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
+        string? IInterruptibleStatementContext.InterruptingVariable => null;
+
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
+
+        bool IComputationContext.IsCollection => false;
+        
+        public override void EnterWithStatement(WithStatementContext context)
+        {
+            if(ReturnScope != null)
+            {
+                ReturnScope.WriteReturnStatement(context);
+            }
+            else
+            {
+                Defaults.WriteReturnStatement(context);
+            }
+
+            OnEnter(StatementFlags.None, context);
+        }
+
+        public override void ExitWithStatement(WithStatementContext context)
+        {
+            OnExit(StatementFlags.None, context);
+
+            if(ReturnScope != null)
+            {
+                ReturnScope.WriteAfterReturnStatement(context);
+            }
+            else
+            {
+                Defaults.WriteAfterReturnStatement(context);
+            }
+
+            ExitState().ExitWithStatement(context);
+        }
+
+        public override void WriteImplicitReturnStatement(ParserRuleContext context)
+        {
+            if(FindContext<IBlockStatementContext>() != FindContext<IComputationContext>())
+            {
+                // Not at the end of function/computation
+                Error("It is not possible to escape from a computation block directly to the outside code. Use `return` to return explicitly.", context);
+            }
+            base.WriteImplicitReturnStatement(context);
         }
 
         void IReturnableStatementContext.WriteEarlyReturn(ParserRuleContext context)
@@ -153,19 +196,6 @@ namespace Sona.Compiler.States
             }
         }
 
-        public virtual void WriteImplicitReturnStatement(ParserRuleContext context)
-        {
-            Out.Write("return ");
-            if(ReturnScope != null)
-            {
-                ReturnScope.WriteEmptyReturnValue(context);
-            }
-            else
-            {
-                Defaults.WriteEmptyReturnValue(context);
-            }
-        }
-
         void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
         {
             Defaults.WriteBreak(hasExpression, context);
@@ -185,88 +215,17 @@ namespace Sona.Compiler.States
         {
             Defaults.WriteAfterContinue(context);
         }
-
-        sealed class Trail : BlockState
-        {
-            protected override bool IgnoreContext => true;
-
-            public override void EnterValueTrail(ValueTrailContext context)
-            {
-
-            }
-
-            public override void ExitValueTrail(ValueTrailContext context)
-            {
-                ExitState()!.ExitValueTrail(context);
-            }
-
-            public override void EnterFreeTrail(FreeTrailContext context)
-            {
-
-            }
-
-            public override void ExitFreeTrail(FreeTrailContext context)
-            {
-                ExitState()!.ExitFreeTrail(context);
-            }
-
-            public override void EnterReturningTrail(ReturningTrailContext context)
-            {
-
-            }
-
-            public override void ExitReturningTrail(ReturningTrailContext context)
-            {
-                ExitState()!.ExitReturningTrail(context);
-            }
-        }
     }
 
-    internal sealed class WithStatementState : WithStatementBase
+    internal sealed class FollowWithStatementState : WithStatementBase, IComputationContext
     {
-        public override void EnterWithStatement(WithStatementContext context)
-        {
-            if(ReturnScope != null)
-            {
-                ReturnScope.WriteReturnStatement(context);
-            }
-            else
-            {
-                Defaults.WriteReturnStatement(context);
-            }
+        InterruptFlags IInterruptibleStatementContext.Flags => InterruptScope?.Flags ?? InterruptFlags.None;
+        string? IInterruptibleStatementContext.InterruptingVariable => InterruptScope?.InterruptingVariable;
 
-            OnEnter(context);
-        }
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
 
-        public override void ExitWithStatement(WithStatementContext context)
-        {
-            OnExit(context);
+        bool IComputationContext.IsCollection => false;
 
-            if(ReturnScope != null)
-            {
-                ReturnScope.WriteAfterReturnStatement(context);
-            }
-            else
-            {
-                Defaults.WriteAfterReturnStatement(context);
-            }
-
-            ExitState().ExitWithStatement(context);
-        }
-
-        public override void WriteImplicitReturnStatement(ParserRuleContext context)
-        {
-            if(FindContext<IBlockStatementContext>() != FindContext<IComputationContext>())
-            {
-                // Not at the end of function/computation
-                Error("It is not possible to escape from a computation block directly to the outside code. Use `return` to return explicitly.", context);
-            }
-            base.WriteImplicitReturnStatement(context);
-        }
-    }
-
-    internal sealed class FollowWithStatementState : WithStatementBase
-    {
         private void CheckScope(ParserRuleContext context)
         {
             if(FindContext<IComputationContext>() is not { BuilderVariable: not null })
@@ -281,13 +240,43 @@ namespace Sona.Compiler.States
 
             Out.Write("do! ");
 
-            OnEnter(context);
+            OnEnter(StatementFlags.None, context);
         }
 
         public override void ExitFollowWithTrailing(FollowWithTrailingContext context)
         {
-            OnExit(context);
+            OnExit(StatementFlags.None, context);
             ExitState().ExitFollowWithTrailing(context);
+        }
+
+        public override void EnterFollowWithTerminating(FollowWithTerminatingContext context)
+        {
+            CheckScope(context);
+
+            Out.Write("return! ");
+
+            OnEnter(StatementFlags.Terminating, context);
+        }
+
+        public override void ExitFollowWithTerminating(FollowWithTerminatingContext context)
+        {
+            OnExit(StatementFlags.Terminating, context);
+            ExitState().ExitFollowWithTerminating(context);
+        }
+
+        public override void EnterFollowWithInterrupting(FollowWithInterruptingContext context)
+        {
+            CheckScope(context);
+
+            Out.Write("do! ");
+
+            OnEnter(StatementFlags.InterruptPath, context);
+        }
+
+        public override void ExitFollowWithInterrupting(FollowWithInterruptingContext context)
+        {
+            OnExit(StatementFlags.InterruptPath, context);
+            ExitState().ExitFollowWithInterrupting(context);
         }
 
         public override void EnterFollowWithReturning(FollowWithReturningContext context)
@@ -296,13 +285,101 @@ namespace Sona.Compiler.States
 
             Out.Write("return! ");
 
-            OnEnter(context);
+            OnEnter(StatementFlags.InterruptPath | StatementFlags.ReturnPath, context);
         }
 
         public override void ExitFollowWithReturning(FollowWithReturningContext context)
         {
-            OnExit(context);
+            OnExit(StatementFlags.InterruptPath | StatementFlags.ReturnPath, context);
             ExitState().ExitFollowWithReturning(context);
+        }
+
+        public override void EnterFollowWithInterruptible(FollowWithInterruptibleContext context)
+        {
+            CheckScope(context);
+
+            Out.Write("do! ");
+
+            OnEnter(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+        }
+
+        public override void ExitFollowWithInterruptible(FollowWithInterruptibleContext context)
+        {
+            OnExit(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            ExitState().ExitFollowWithInterruptible(context);
+        }
+
+        public override void EnterFollowWithConditional(FollowWithConditionalContext context)
+        {
+            CheckScope(context);
+
+            Out.Write("do! ");
+
+            OnEnter(StatementFlags.InterruptPath | StatementFlags.ReturnPath | StatementFlags.OpenPath, context);
+        }
+
+        public override void ExitFollowWithConditional(FollowWithConditionalContext context)
+        {
+            OnExit(StatementFlags.InterruptPath | StatementFlags.ReturnPath | StatementFlags.OpenPath, context);
+            ExitState().ExitFollowWithConditional(context);
+        }
+
+        void IReturnableStatementContext.WriteReturnStatement(ParserRuleContext context)
+        {
+            Out.Write("return ");
+        }
+
+        void IReturnableStatementContext.WriteAfterReturnStatement(ParserRuleContext context)
+        {
+
+        }
+
+        void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
+        {
+            if(InterruptScope != null)
+            {
+                InterruptScope.WriteBreak(hasExpression, context);
+            }
+            else
+            {
+                Defaults.WriteBreak(hasExpression, context);
+            }
+        }
+
+        void IInterruptibleStatementContext.WriteContinue(bool hasExpression, ParserRuleContext context)
+        {
+            if(InterruptScope != null)
+            {
+                InterruptScope.WriteContinue(hasExpression, context);
+            }
+            else
+            {
+                Defaults.WriteContinue(hasExpression, context);
+            }
+        }
+
+        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
+        {
+            if(InterruptScope != null)
+            {
+                InterruptScope.WriteAfterBreak(context);
+            }
+            else
+            {
+                Defaults.WriteAfterBreak(context);
+            }
+        }
+
+        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
+        {
+            if(InterruptScope != null)
+            {
+                InterruptScope.WriteAfterContinue(context);
+            }
+            else
+            {
+                Defaults.WriteAfterContinue(context);
+            }
         }
     }
 

@@ -145,9 +145,29 @@ namespace Sona.Compiler.States
             EnterState<FollowWithStatementState>().EnterFollowWithTrailing(context);
         }
 
+        public sealed override void EnterFollowWithTerminating(FollowWithTerminatingContext context)
+        {
+            EnterState<FollowWithStatementState>().EnterFollowWithTerminating(context);
+        }
+
+        public sealed override void EnterFollowWithInterrupting(FollowWithInterruptingContext context)
+        {
+            EnterState<FollowWithStatementState>().EnterFollowWithInterrupting(context);
+        }
+
         public sealed override void EnterFollowWithReturning(FollowWithReturningContext context)
         {
             EnterState<FollowWithStatementState>().EnterFollowWithReturning(context);
+        }
+
+        public sealed override void EnterFollowWithInterruptible(FollowWithInterruptibleContext context)
+        {
+            EnterState<FollowWithStatementState>().EnterFollowWithInterruptible(context);
+        }
+
+        public sealed override void EnterFollowWithConditional(FollowWithConditionalContext context)
+        {
+            EnterState<FollowWithStatementState>().EnterFollowWithConditional(context);
         }
 
         public sealed override void EnterFollowDiscardStatement(FollowDiscardStatementContext context)
