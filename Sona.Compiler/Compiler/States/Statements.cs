@@ -697,7 +697,7 @@ namespace Sona.Compiler.States
 
         void IReturnableStatementContext.WriteReturnStatement(ParserRuleContext context)
         {
-            Error("`return` is not supported in the main block.", context);
+            Out.Write("do ");
         }
 
         void IReturnableStatementContext.WriteAfterReturnStatement(ParserRuleContext context)
