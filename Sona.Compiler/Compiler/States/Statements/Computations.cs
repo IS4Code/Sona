@@ -18,6 +18,19 @@ namespace Sona.Compiler.States
         {
             base.OnEnter(flags, context);
 
+            switch(flags)
+            {
+                case StatementFlags.None:
+                    break;
+                case StatementFlags.Terminating:
+                case StatementFlags.ReturnPath:
+                    Out.Write("return! ");
+                    break;
+                default:
+                    Out.Write("do! ");
+                    break;
+            }
+
             BuilderVariable = Out.CreateTemporaryIdentifier();
 
             Out.EnterNestedScope();
@@ -28,9 +41,7 @@ namespace Sona.Compiler.States
 
         protected override void OnExit(StatementFlags flags, ParserRuleContext context)
         {
-            Out.ExitScope();
             Out.WriteLine();
-            Out.Write(_end_);
             Out.ExitNestedScope();
             Out.Write("})");
 
@@ -39,15 +50,15 @@ namespace Sona.Compiler.States
 
         protected sealed override void OnEnterTrail(StatementFlags flags, ParserRuleContext context)
         {
-            
+            OnEnterBlock(flags, context);
         }
 
         protected sealed override void OnExitTrail(StatementFlags flags, ParserRuleContext context)
         {
-            
+            OnExitBlock(flags, context);
         }
 
-        protected sealed override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
+        /*protected sealed override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
         {
 
         }
@@ -55,7 +66,7 @@ namespace Sona.Compiler.States
         protected sealed override void OnExitBlock(StatementFlags flags, ParserRuleContext context)
         {
 
-        }
+        }*/
 
         public sealed override void EnterExpression(ExpressionContext context)
         {
@@ -67,8 +78,6 @@ namespace Sona.Compiler.States
             Out.Write(" in ");
             Out.WriteIdentifier(BuilderVariable!);
             Out.Write(" { ");
-            Out.WriteLine(_begin_);
-            Out.EnterScope();
         }
 
         public void WriteBeginBlockExpression(ParserRuleContext context)
@@ -87,8 +96,16 @@ namespace Sona.Compiler.States
 
         public new virtual void WriteImplicitReturnStatement(ParserRuleContext context)
         {
-            Out.Write("return ");
-            ReturnScope.WriteEmptyReturnValue(context);
+            if((ReturnFlags & ReturnFlags.Indirect) != 0)
+            {
+                // Nothing
+                Defaults.WriteImplicitReturnStatement(context);
+            }
+            else
+            {
+                Out.Write("return ");
+                ReturnScope.WriteEmptyReturnValue(context);
+            }
         }
     }
 
@@ -199,22 +216,18 @@ namespace Sona.Compiler.States
         {
             CheckScope(context);
 
-            Out.Write("do! ");
-
-            OnEnter(StatementFlags.None, context);
+            OnEnter(StatementFlags.OpenPath, context);
         }
 
         public override void ExitFollowWithTrailing(FollowWithTrailingContext context)
         {
-            OnExit(StatementFlags.None, context);
+            OnExit(StatementFlags.OpenPath, context);
             ExitState().ExitFollowWithTrailing(context);
         }
 
         public override void EnterFollowWithTerminating(FollowWithTerminatingContext context)
         {
             CheckScope(context);
-
-            Out.Write("return! ");
 
             OnEnter(StatementFlags.Terminating, context);
         }
@@ -229,8 +242,6 @@ namespace Sona.Compiler.States
         {
             CheckScope(context);
 
-            Out.Write("do! ");
-
             OnEnter(StatementFlags.InterruptPath, context);
         }
 
@@ -243,8 +254,6 @@ namespace Sona.Compiler.States
         public override void EnterFollowWithReturning(FollowWithReturningContext context)
         {
             CheckScope(context);
-
-            Out.Write("return! ");
 
             OnEnter(StatementFlags.InterruptPath | StatementFlags.ReturnPath, context);
         }
@@ -259,8 +268,6 @@ namespace Sona.Compiler.States
         {
             CheckScope(context);
 
-            Out.Write("do! ");
-
             OnEnter(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
@@ -274,8 +281,6 @@ namespace Sona.Compiler.States
         {
             CheckScope(context);
 
-            Out.Write("do! ");
-
             OnEnter(StatementFlags.InterruptPath | StatementFlags.ReturnPath | StatementFlags.OpenPath, context);
         }
 
@@ -287,12 +292,22 @@ namespace Sona.Compiler.States
 
         void IReturnableStatementContext.WriteReturnStatement(ParserRuleContext context)
         {
-            Out.Write("return ");
+            if((ReturnFlags & ReturnFlags.Indirect) != 0)
+            {
+                WriteReturnStatement(context);
+            }
+            else
+            {
+                Out.Write("return ");
+            }
         }
 
         void IReturnableStatementContext.WriteAfterReturnStatement(ParserRuleContext context)
         {
-
+            if((ReturnFlags & ReturnFlags.Indirect) != 0)
+            {
+                WriteAfterReturnStatement(context);
+            }
         }
 
         void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
