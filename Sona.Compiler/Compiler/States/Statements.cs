@@ -268,6 +268,11 @@ namespace Sona.Compiler.States
             EnterState<DoStatementNoTrail>().EnterDoStatementReturning(context);
         }
 
+        public sealed override void EnterDoStatementReturningTrail(DoStatementReturningTrailContext context)
+        {
+            EnterState<DoStatementControl>().EnterDoStatementReturningTrail(context);
+        }
+
         public sealed override void EnterDoStatementInterrupting(DoStatementInterruptingContext context)
         {
             EnterState<DoStatementNoTrail>().EnterDoStatementInterrupting(context);

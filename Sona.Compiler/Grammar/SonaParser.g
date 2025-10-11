@@ -398,6 +398,7 @@ returningStatement:
   followWithReturning |
   inlineSourceReturning |
   doStatementReturning |
+  doStatementReturningTrail |
   ifStatementReturning |
   ifStatementReturningTrailFromElse |
   ifStatementReturningTrail |
@@ -526,7 +527,9 @@ doStatementInterruptible:
 
 doStatementReturning:
   // Body returns, trail is ignored
-  'do' returningBlock 'end' (ignoredEmptyTrail | ignoredTrail) |
+  'do' returningBlock 'end' (ignoredEmptyTrail | ignoredTrail);
+
+doStatementReturningTrail:
   // Body is interruptible but trail returns
   'do' interruptibleBlock 'end' returningTrail |
   // Body is conditional but trail closes

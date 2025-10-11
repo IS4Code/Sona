@@ -316,6 +316,24 @@ if <$returning$> then <$result$>
 else begin
  ()
 end")]
+        [DataRow("if x then if y then f(z) return a end g(z) end h(z) return b", $@"let mutable <$returning$> = false
+let mutable <$result$> = {@default}
+if(x)then begin
+ if(y)then begin
+  f(z)
+  <$result$> <- (a);<$returning$> <- true
+ end
+ if <$returning$> then ()
+ else begin
+  g(z)
+  ()
+ end
+end
+if <$returning$> then <$result$>
+else begin
+ h(z)
+ (b)
+end")]
         [TestMethod]
         public void IfReturning(string source, string? expected)
         {
@@ -377,6 +395,24 @@ if <$returning$> then <$result$>
 else begin
  i(y)
  ()
+end")]
+        [DataRow("do if x then f(y) return a end g(y) end h(y) return b", $@"let mutable <$returning$> = false
+let mutable <$result$> = {@default}
+if true then begin
+ if(x)then begin
+  f(y)
+  <$result$> <- (a);<$returning$> <- true
+ end
+ if <$returning$> then ()
+ else begin
+  g(y)
+  ()
+ end
+end
+if <$returning$> then <$result$>
+else begin
+ h(y)
+ (b)
 end")]
         [TestMethod]
         public void Do(string source, string? expected)

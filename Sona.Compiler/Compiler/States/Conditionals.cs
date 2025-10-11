@@ -1034,6 +1034,23 @@ namespace Sona.Compiler.States
             }
         }
 
+        public sealed override void EnterDoStatementReturningTrail(DoStatementReturningTrailContext context)
+        {
+            OnEnterInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+        }
+
+        public sealed override void ExitDoStatementReturningTrail(DoStatementReturningTrailContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.ReturnPath | StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitDoStatementReturningTrail(context);
+            }
+        }
+
         public sealed override void EnterDoStatementInterrupting(DoStatementInterruptingContext context)
         {
             OnEnterInner(StatementFlags.InterruptPath, context);
