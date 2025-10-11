@@ -2041,7 +2041,7 @@ namespace Sona.Compiler.States
 
         public sealed override void ExitWhile(WhileContext context)
         {
-
+            Out.Write("do");
         }
 
         public sealed override void ExitWhileTrue(WhileTrueContext context)
@@ -2051,12 +2051,13 @@ namespace Sona.Compiler.States
 
         public sealed override void EnterExpression(ExpressionContext context)
         {
+            Out.Write('(');
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
         public sealed override void ExitExpression(ExpressionContext context)
         {
-            Out.Write(")do ");
+            Out.Write(')');
         }
 
         protected sealed override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
@@ -2147,7 +2148,7 @@ namespace Sona.Compiler.States
 
         public override void EnterWhile(WhileContext context)
         {
-            Out.Write("while(");
+            Out.Write("while");
         }
 
         public override void EnterWhileTrue(WhileTrueContext context)
@@ -2159,12 +2160,16 @@ namespace Sona.Compiler.States
     internal abstract class WhileStatementTrailInterrupted : WhileStatement
     {
         string? continuingVariable;
+        ISourceCapture? patternCapture;
+        bool hasMatch;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             continuingVariable = null;
+            patternCapture = null;
+            hasMatch = false;
         }
 
         protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
@@ -2183,7 +2188,6 @@ namespace Sona.Compiler.States
             Out.Write("while ");
             Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `while` used without a condition variable.", context));
             Out.WriteOperator("&&");
-            Out.Write('(');
         }
 
         public sealed override void EnterWhileTrue(WhileTrueContext context)
@@ -2191,6 +2195,81 @@ namespace Sona.Compiler.States
             Out.Write("while ");
             Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `while` used without a condition variable.", context));
             Out.Write(" do ");
+        }
+
+        public sealed override void EnterCaseWhile(CaseWhileContext context)
+        {
+            Out.Write("while ");
+            Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `while` used without a condition variable.", context));
+            Out.Write(" do ");
+            Out.WriteLine(_begin_);
+            Out.EnterScope();
+            Out.Write("match");
+            hasMatch = true;
+        }
+
+        public sealed override void ExitCaseWhile(CaseWhileContext context)
+        {
+            if(patternCapture != null)
+            {
+                patternCapture.Play(Out);
+                patternCapture = null;
+            }
+            Out.WriteOperator("->");
+        }
+
+        public override void EnterPattern(PatternContext context)
+        {
+            if(patternCapture != null)
+            {
+                Error("COMPILER ERROR: Entered unexpected pattern.", context);
+            }
+            patternCapture = Out.StartCapture();
+            Out.WriteLine("with");
+            Out.Write("| (");
+            base.EnterPattern(context);
+        }
+
+        public sealed override void ExitPattern(PatternContext context)
+        {
+            base.ExitPattern(context);
+            Out.Write(')');
+            if(patternCapture != null)
+            {
+                Out.StopCapture(patternCapture);
+            }
+        }
+
+        public sealed override void EnterWhenClause(WhenClauseContext context)
+        {
+            if(patternCapture != null)
+            {
+                patternCapture.Play(Out);
+                patternCapture = null;
+            }
+            Out.Write("when");
+        }
+
+        public sealed override void ExitWhenClause(WhenClauseContext context)
+        {
+
+        }
+
+        protected override void OnExitBlock(StatementFlags flags, ParserRuleContext context)
+        {
+            base.OnExitBlock(flags, context);
+            if(hasMatch)
+            {
+                Out.WriteLine();
+                Out.Write("| _");
+                Out.WriteOperator("->");
+                Out.WriteIdentifier(continuingVariable ?? Error("COMPILER ERROR: `while` used without a condition variable.", context));
+                Out.WriteOperator("<-");
+                Out.Write("false");
+                Out.WriteLine();
+                Out.ExitScope();
+                Out.Write(_end_);
+            }
         }
 
         public sealed override void WriteBreak(bool hasExpression, ParserRuleContext context)

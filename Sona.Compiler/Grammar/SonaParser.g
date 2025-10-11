@@ -940,6 +940,9 @@ ifStatementConditional:
 while:
   'while' expression 'do';
 
+caseWhile:
+  'while' 'let' pattern '=' expression whenClause? 'do';
+
 whileTrue:
   WHILE_TRUE_DO;
 
@@ -947,8 +950,12 @@ whileStatementFree:
   while freeBlock 'end';
 
 whileStatementFreeInterrupted:
-  // Body may interrupt
-  (whileTrue | while) interruptingToInterruptibleBlock 'end';
+  (
+    // Body may interrupt
+    (whileTrue | while) interruptingToInterruptibleBlock |
+    // Requires interrupt mechanism
+    caseWhile interruptibleCoverBlock
+  ) 'end';
 
 // `while true do` with interrupting body could be terminating too,
 // but we would need to guarantee that only `continue` appears.
@@ -966,11 +973,11 @@ whileStatementReturning:
 
 whileStatementReturningTrail:
   // Body is returning or conditional, but the trail is closing
-  (whileTrue | while) returningToConditionalBlock 'end' returningCoverTrail;
+  (whileTrue | caseWhile | while) returningToConditionalBlock 'end' returningCoverTrail;
 
 whileStatementConditional:
   // Body is returning or conditional, trail is open, interruptible, or conditional
-  (whileTrue | while) returningToConditionalBlock 'end' conditionalCoverTrail;
+  (whileTrue | caseWhile | while) returningToConditionalBlock 'end' conditionalCoverTrail;
 
 // `repeat`
 
