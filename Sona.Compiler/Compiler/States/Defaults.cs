@@ -4,12 +4,21 @@ using Antlr4.Runtime.Tree;
 
 namespace Sona.Compiler.States
 {
-    internal readonly struct Defaults
+    internal sealed class Defaults : IReturnableStatementContext, IInterruptibleStatementContext
     {
         readonly ScriptState state;
 
         ScriptEnvironment Environment => state.Environment;
+        ISourceWriter GlobalOut => Environment.GlobalOutput;
         ISourceWriter Out => Environment.Output;
+
+        ISourceWriter IScopeContext.GlobalWriter => GlobalOut;
+        ISourceWriter IScopeContext.LocalWriter => Out;
+
+        bool IStatementContext.TrailAllowed => false;
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags.None;
+        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
+        string? IInterruptibleStatementContext.InterruptingVariable => null;
 
         public Defaults(ScriptState state)
         {

@@ -23,7 +23,7 @@ namespace Sona.Compiler
         protected ImplementationType RecordImplementationType => LexerContext.GetState<RecordPragma>()?.Type ?? ImplementationType.Class;
         protected CollectionImplementationType CollectionImplementationType => LexerContext.GetState<CollectionPragma>()?.Type ?? CollectionImplementationType.Array;
 
-        protected Defaults Defaults => new(this);
+        protected Defaults Defaults { get; }
 
         public int StateLevel { get; private set; }
 
@@ -31,6 +31,11 @@ namespace Sona.Compiler
 
         private protected string _begin_ => Environment.Begin;
         private protected string _end_ => Environment.End;
+
+        public ScriptState()
+        {
+            Defaults = new(this);
+        }
 
         protected virtual void OnEnterToken(IToken token)
         {
@@ -102,7 +107,7 @@ namespace Sona.Compiler
             StateLevel = 0;
         }
 
-        protected internal T? FindContext<T>() where T : class
+        protected internal T? FindContext<T>() where T : class, IScopeContext
         {
             switch(Parent)
             {
@@ -258,9 +263,12 @@ namespace Sona.Compiler
         }
     }
 
-    internal abstract class NodeState : ScriptState
+    internal abstract class NodeState : ScriptState, IScopeContext
     {
         public new ScriptState Parent => base.Parent!;
+
+        ISourceWriter IScopeContext.GlobalWriter => GlobalOut;
+        ISourceWriter IScopeContext.LocalWriter => Out;
 
         protected new ScriptState ExitState()
         {

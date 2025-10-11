@@ -40,6 +40,8 @@ namespace Sona.Compiler.States
     {
         IReturnableStatementContext? returnScope;
 
+        IReturnableStatementContext ReturnScope => returnScope ?? Defaults;
+
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
@@ -50,16 +52,8 @@ namespace Sona.Compiler.States
         protected sealed override void OnEnterExpression(ParserRuleContext context)
         {
             bool isOption = this is ReturnOptionState;
-            if(returnScope != null)
-            {
-                returnScope.WriteReturnStatement(context);
-                returnScope.WriteReturnValue(isOption, context);
-            }
-            else
-            {
-                Defaults.WriteReturnStatement(context);
-                Defaults.WriteReturnValue(isOption, context);
-            }
+
+            ReturnScope.WriteDirectReturnStatement(isOption, context);
             base.OnEnterExpression(context);
         }
 
@@ -77,36 +71,11 @@ namespace Sona.Compiler.States
         {
             if(!HasExpression)
             {
-                if(returnScope != null)
-                {
-                    returnScope.WriteReturnStatement(context);
-                    returnScope.WriteEmptyReturnValue(context);
-                }
-                else
-                {
-                    Defaults.WriteReturnStatement(context);
-                    Defaults.WriteEmptyReturnValue(context);
-                }
+                ReturnScope.WriteEmptyReturnStatement(context);
             }
             else
             {
-                if(returnScope != null)
-                {
-                    returnScope.WriteAfterReturnValue(context);
-                }
-                else
-                {
-                    Defaults.WriteAfterReturnValue(context);
-                }
-            }
-
-            if(returnScope != null)
-            {
-                returnScope.WriteAfterReturnStatement(context);
-            }
-            else
-            {
-                Defaults.WriteAfterReturnStatement(context);
+                ReturnScope.WriteAfterDirectReturnStatement(context);
             }
 
             var interruptScope = FindContext<IInterruptibleStatementContext>();

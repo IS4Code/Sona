@@ -18,6 +18,9 @@ namespace Sona.Compiler.States
     {
         bool IStatementContext.TrailAllowed => true;
 
+        ISourceWriter IScopeContext.GlobalWriter => GlobalOut;
+        ISourceWriter IScopeContext.LocalWriter => Out;
+
         public sealed override void EnterMultiFuncDecl(MultiFuncDeclContext context)
         {
             EnterState<MultiFunctionState>().EnterMultiFuncDecl(context);

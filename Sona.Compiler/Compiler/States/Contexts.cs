@@ -3,12 +3,18 @@ using Antlr4.Runtime;
 
 namespace Sona.Compiler.States
 {
-    internal interface IStatementContext
+    internal interface IScopeContext
+    {
+        ISourceWriter GlobalWriter { get; }
+        ISourceWriter LocalWriter { get; }
+    }
+
+    internal interface IStatementContext : IScopeContext
     {
         bool TrailAllowed { get; }
     }
 
-    internal interface IBlockStatementContext
+    internal interface IBlockStatementContext : IStatementContext
     {
         /// <summary>
         /// Writes the statement that terminates an open block.
@@ -99,7 +105,7 @@ namespace Sona.Compiler.States
         void WriteEndBlockExpression(ParserRuleContext context);
     }
 
-    internal interface IExpressionContext
+    internal interface IExpressionContext : IScopeContext
     {
         ExpressionType Type { get; }
     }
@@ -147,5 +153,56 @@ namespace Sona.Compiler.States
     {
         Array,
         List
+    }
+
+    internal static class ContextExtensions
+    {
+        /// <summary>
+        /// Writes the beginning of a <c>return</c> statement with a new value.
+        /// </summary>
+        public static void WriteDirectReturnStatement(this IReturnableStatementContext returnScope, bool isOption, ParserRuleContext context)
+        {
+            returnScope.WriteReturnStatement(context);
+            returnScope.WriteReturnValue(isOption, context);
+        }
+
+        /// <summary>
+        /// Writes the ending of a <c>return</c> statement with a new value.
+        /// </summary>
+        public static void WriteAfterDirectReturnStatement(this IReturnableStatementContext returnScope, ParserRuleContext context)
+        {
+            returnScope.WriteAfterReturnValue(context);
+            returnScope.WriteAfterReturnStatement(context);
+        }
+
+        /// <summary>
+        /// Writes a direct <c>return</c> statement with no value.
+        /// </summary>
+        public static void WriteEmptyReturnStatement(this IReturnableStatementContext returnScope, ParserRuleContext context)
+        {
+            returnScope.WriteReturnStatement(context);
+            returnScope.WriteEmptyReturnValue(context);
+            returnScope.WriteAfterReturnStatement(context);
+        }
+
+        /// <summary>
+        /// Writes a synthesized <c>return</c> statement using a pre-existing variable.
+        /// </summary>
+        public static void WriteIndirectReturnStatement(this IReturnableStatementContext returnScope, string identifier, ParserRuleContext context)
+        {
+            returnScope.WriteReturnStatement(context);
+            returnScope.LocalWriter.WriteIdentifier(identifier);
+            returnScope.WriteAfterReturnStatement(context);
+        }
+
+        /// <summary>
+        /// Writes a synthesized <c>return</c> statement using the default value.
+        /// </summary>
+        public static void WriteDefaultReturnStatement(this IReturnableStatementContext returnScope, ParserRuleContext context)
+        {
+            returnScope.WriteReturnStatement(context);
+            returnScope.LocalWriter.WriteDefaultValue();
+            returnScope.WriteAfterReturnStatement(context);
+        }
     }
 }

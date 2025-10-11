@@ -11,6 +11,9 @@ namespace Sona.Compiler.States
 
         protected override bool IgnoreTrailContext => true;
 
+        protected new IReturnableStatementContext ReturnScope => base.ReturnScope ?? Defaults;
+        protected new IInterruptibleStatementContext InterruptScope => base.InterruptScope ?? Defaults;
+
         protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
         {
             base.OnEnter(flags, context);
@@ -85,14 +88,7 @@ namespace Sona.Compiler.States
         public new virtual void WriteImplicitReturnStatement(ParserRuleContext context)
         {
             Out.Write("return ");
-            if(ReturnScope != null)
-            {
-                ReturnScope.WriteEmptyReturnValue(context);
-            }
-            else
-            {
-                Defaults.WriteEmptyReturnValue(context);
-            }
+            ReturnScope.WriteEmptyReturnValue(context);
         }
     }
 
@@ -107,14 +103,7 @@ namespace Sona.Compiler.States
         
         public override void EnterWithStatement(WithStatementContext context)
         {
-            if(ReturnScope != null)
-            {
-                ReturnScope.WriteReturnStatement(context);
-            }
-            else
-            {
-                Defaults.WriteReturnStatement(context);
-            }
+            ReturnScope.WriteReturnStatement(context);
 
             OnEnter(StatementFlags.None, context);
         }
@@ -123,14 +112,7 @@ namespace Sona.Compiler.States
         {
             OnExit(StatementFlags.None, context);
 
-            if(ReturnScope != null)
-            {
-                ReturnScope.WriteAfterReturnStatement(context);
-            }
-            else
-            {
-                Defaults.WriteAfterReturnStatement(context);
-            }
+            ReturnScope.WriteAfterReturnStatement(context);
 
             ExitState().ExitWithStatement(context);
         }
@@ -162,38 +144,17 @@ namespace Sona.Compiler.States
 
         void IReturnableStatementContext.WriteReturnValue(bool isOption, ParserRuleContext context)
         {
-            if(ReturnScope != null)
-            {
-                ReturnScope.WriteReturnValue(isOption, context);
-            }
-            else
-            {
-                Defaults.WriteReturnValue(isOption, context);
-            }
+            ReturnScope.WriteReturnValue(isOption, context);
         }
 
         void IReturnableStatementContext.WriteAfterReturnValue(ParserRuleContext context)
         {
-            if(ReturnScope != null)
-            {
-                ReturnScope.WriteAfterReturnValue(context);
-            }
-            else
-            {
-                Defaults.WriteAfterReturnValue(context);
-            }
+            ReturnScope.WriteAfterReturnValue(context);
         }
 
         void IReturnableStatementContext.WriteEmptyReturnValue(ParserRuleContext context)
         {
-            if(ReturnScope != null)
-            {
-                ReturnScope.WriteEmptyReturnValue(context);
-            }
-            else
-            {
-                Defaults.WriteEmptyReturnValue(context);
-            }
+            ReturnScope.WriteEmptyReturnValue(context);
         }
 
         void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
@@ -336,50 +297,22 @@ namespace Sona.Compiler.States
 
         void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
         {
-            if(InterruptScope != null)
-            {
-                InterruptScope.WriteBreak(hasExpression, context);
-            }
-            else
-            {
-                Defaults.WriteBreak(hasExpression, context);
-            }
+            InterruptScope.WriteBreak(hasExpression, context);
         }
 
         void IInterruptibleStatementContext.WriteContinue(bool hasExpression, ParserRuleContext context)
         {
-            if(InterruptScope != null)
-            {
-                InterruptScope.WriteContinue(hasExpression, context);
-            }
-            else
-            {
-                Defaults.WriteContinue(hasExpression, context);
-            }
+            InterruptScope.WriteContinue(hasExpression, context);
         }
 
         void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
         {
-            if(InterruptScope != null)
-            {
-                InterruptScope.WriteAfterBreak(context);
-            }
-            else
-            {
-                Defaults.WriteAfterBreak(context);
-            }
+            InterruptScope.WriteAfterBreak(context);
         }
 
         void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
         {
-            if(InterruptScope != null)
-            {
-                InterruptScope.WriteAfterContinue(context);
-            }
-            else
-            {
-                Defaults.WriteAfterContinue(context);
-            }
+            InterruptScope.WriteAfterContinue(context);
         }
     }
 

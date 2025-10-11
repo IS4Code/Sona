@@ -341,18 +341,7 @@ namespace Sona.Compiler.States
             }
 
             // Return the value properly
-            if(ReturnScope != null)
-            {
-                ReturnScope.WriteReturnStatement(context);
-                Out.WriteIdentifier(ReturnVariable);
-                ReturnScope.WriteAfterReturnStatement(context);
-            }
-            else
-            {
-                Defaults.WriteReturnStatement(context);
-                Out.WriteIdentifier(ReturnVariable);
-                Defaults.WriteAfterReturnStatement(context);
-            }
+            (ReturnScope ?? Defaults).WriteIndirectReturnStatement(ReturnVariable, context);
         }
 
         #region IReturnableStatementContext implementation
@@ -366,14 +355,7 @@ namespace Sona.Compiler.States
             if(!HasOwnControlVariables || ReturnVariable is null)
             {
                 // Default implementation
-                if(ReturnScope != null)
-                {
-                    ReturnScope.WriteReturnStatement(context);
-                }
-                else
-                {
-                    Defaults.WriteReturnStatement(context);
-                }
+                (ReturnScope ?? Defaults).WriteReturnStatement(context);
                 return;
             }
 
@@ -414,40 +396,19 @@ namespace Sona.Compiler.States
         public void WriteReturnValue(bool isOption, ParserRuleContext context)
         {
             // Default implementation
-            if(ReturnScope != null)
-            {
-                ReturnScope.WriteReturnValue(isOption, context);
-            }
-            else
-            {
-                Defaults.WriteReturnValue(isOption, context);
-            }
+            (ReturnScope ?? Defaults).WriteReturnValue(isOption, context);
         }
 
         public void WriteAfterReturnValue(ParserRuleContext context)
         {
             // Default implementation
-            if(ReturnScope != null)
-            {
-                ReturnScope.WriteAfterReturnValue(context);
-            }
-            else
-            {
-                Defaults.WriteAfterReturnValue(context);
-            }
+            (ReturnScope ?? Defaults).WriteAfterReturnValue(context);
         }
 
         public void WriteEmptyReturnValue(ParserRuleContext context)
         {
             // Default implementation
-            if(ReturnScope != null)
-            {
-                ReturnScope.WriteEmptyReturnValue(context);
-            }
-            else
-            {
-                Defaults.WriteEmptyReturnValue(context);
-            }
+            (ReturnScope ?? Defaults).WriteEmptyReturnValue(context);
         }
         #endregion
 
@@ -674,18 +635,7 @@ namespace Sona.Compiler.States
 
         public sealed override void ExitIgnoredTrail(IgnoredTrailContext context)
         {
-            if(ReturnScope != null)
-            {
-                ReturnScope.WriteReturnStatement(context);
-                Out.WriteDefaultValue();
-                ReturnScope.WriteAfterReturnStatement(context);
-            }
-            else
-            {
-                Defaults.WriteReturnStatement(context);
-                Out.WriteDefaultValue();
-                Defaults.WriteAfterReturnStatement(context);
-            }
+            (ReturnScope ?? Defaults).WriteDefaultReturnStatement(context);
             Out.WriteLine();
             Out.ExitScope();
             Out.Write(_end_);
@@ -700,18 +650,7 @@ namespace Sona.Compiler.States
                 Out.WriteLine();
                 Out.Write("else ");
             }
-            if(ReturnScope != null)
-            {
-                ReturnScope.WriteReturnStatement(context);
-                Out.WriteDefaultValue();
-                ReturnScope.WriteAfterReturnStatement(context);
-            }
-            else
-            {
-                Defaults.WriteReturnStatement(context);
-                Out.WriteDefaultValue();
-                Defaults.WriteAfterReturnStatement(context);
-            }
+            (ReturnScope ?? Defaults).WriteDefaultReturnStatement(context);
             // Possible to elide even further if empty trail is predicted
         }
 
