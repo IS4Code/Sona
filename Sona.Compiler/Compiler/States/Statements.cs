@@ -65,16 +65,6 @@ namespace Sona.Compiler.States
 
         public override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
         {
-            WriteImplicitReturnStatement(context);
-        }
-
-        public override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
-        {
-
-        }
-
-        public void WriteImplicitReturnStatement(ParserRuleContext context)
-        {
             var computationContext = FindContext<IComputationContext>();
             if(computationContext is { IsCollection: true })
             {
@@ -91,6 +81,11 @@ namespace Sona.Compiler.States
             {
                 Defaults.WriteImplicitReturnStatement(context);
             }
+        }
+
+        public override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
+        {
+
         }
 
         public sealed override void EnterReturnStatement(ReturnStatementContext context)
@@ -660,6 +655,8 @@ namespace Sona.Compiler.States
     internal sealed class ChunkState : BlockState, IFunctionContext, IDeclarationsBlockContext
     {
         ExpressionType IExpressionContext.Type => ExpressionType.Regular;
+
+        BlockFlags IBlockStatementContext.Flags => BlockFlags.None;
 
         ReturnFlags IReturnableStatementContext.Flags => ReturnFlags.None;
 

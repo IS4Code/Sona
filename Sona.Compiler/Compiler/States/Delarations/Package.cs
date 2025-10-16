@@ -7,6 +7,8 @@ namespace Sona.Compiler.States
     {
         ExpressionType IExpressionContext.Type => ExpressionType.Regular;
 
+        BlockFlags IBlockStatementContext.Flags => BlockFlags.None;
+
         ReturnFlags IReturnableStatementContext.Flags => ReturnFlags.None;
 
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;

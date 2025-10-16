@@ -14,8 +14,26 @@ namespace Sona.Compiler.States
         bool TrailAllowed { get; }
     }
 
+    [Flags]
+    internal enum BlockFlags
+    {
+        None,
+
+        /// <summary>
+        /// Indicates that execution may flow elsewhere from this block.
+        /// This flag is inherited in nested blocks.
+        /// </summary>
+        /// <remarks>
+        /// This is set for loops (the flow returns to the start of the block)
+        /// or the <c>try</c> block (may jump to <c>catch</c> or <c>finally</c>).
+        /// </remarks>
+        CanJumpFrom = 1
+    }
+
     internal interface IBlockStatementContext : IStatementContext
     {
+        BlockFlags Flags { get; }
+
         /// <summary>
         /// Writes the statement that terminates an open block.
         /// </summary>
@@ -157,6 +175,21 @@ namespace Sona.Compiler.States
 
     internal static class ContextExtensions
     {
+        public static bool HasFlag(this IBlockStatementContext scope, BlockFlags flags)
+        {
+            return (scope.Flags & flags) == flags;
+        }
+
+        public static bool HasFlag(this IReturnableStatementContext scope, ReturnFlags flags)
+        {
+            return (scope.Flags & flags) == flags;
+        }
+
+        public static bool HasFlag(this IInterruptibleStatementContext scope, InterruptFlags flags)
+        {
+            return (scope.Flags & flags) == flags;
+        }
+
         /// <summary>
         /// Writes the beginning of a <c>return</c> statement with a new value.
         /// </summary>

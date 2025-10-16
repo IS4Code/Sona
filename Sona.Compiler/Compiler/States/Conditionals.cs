@@ -7,7 +7,7 @@ using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
 {
-    internal abstract class ControlStatement : NodeState, IStatementContext
+    internal abstract class ControlStatement : NodeState, IBlockStatementContext
     {
         sealed class TrailingStatements : BlockState
         {
@@ -225,6 +225,10 @@ namespace Sona.Compiler.States
             }
         }
 
+        BlockFlags IBlockStatementContext.Flags => BlockFlags;
+
+        protected virtual BlockFlags BlockFlags => FindContext<IBlockStatementContext>()?.Flags ?? BlockFlags.None;
+
 #nullable disable
         protected string ReturnVariable { get; private set; }
         protected string ReturningVariable { get; private set; }
@@ -387,7 +391,7 @@ namespace Sona.Compiler.States
             Out.Write("true");
         }
 
-        public void WriteImplicitReturnStatement(ParserRuleContext context)
+        public virtual void WriteImplicitReturnStatement(ParserRuleContext context)
         {
             // Nothing happening when exiting sub-blocks
             Defaults.WriteImplicitReturnStatement(context);
@@ -2046,6 +2050,8 @@ namespace Sona.Compiler.States
 
         public string? InterruptingVariable { get; private set; }
 
+        protected override BlockFlags BlockFlags => base.BlockFlags | BlockFlags.CanJumpFrom;
+
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
@@ -2335,6 +2341,8 @@ namespace Sona.Compiler.States
 
         public string? ContinuingVariable { get; private set; }
 
+        protected override BlockFlags BlockFlags => base.BlockFlags | BlockFlags.CanJumpFrom;
+
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
@@ -2527,6 +2535,8 @@ namespace Sona.Compiler.States
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
 
         public string? InterruptingVariable { get; private set; }
+
+        protected override BlockFlags BlockFlags => base.BlockFlags | BlockFlags.CanJumpFrom;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -3436,6 +3446,9 @@ namespace Sona.Compiler.States
         bool first;
         bool hasPattern;
         bool inCatch;
+        bool inTry;
+
+        protected override BlockFlags BlockFlags => base.BlockFlags | (inTry ? BlockFlags.CanJumpFrom : 0);
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -3445,6 +3458,7 @@ namespace Sona.Compiler.States
             hasPattern = true;
             inCatch = false;
             first = true;
+            inTry = true;
         }
 
         private void OnCase(ParserRuleContext context)
@@ -3464,6 +3478,7 @@ namespace Sona.Compiler.States
             Out.Write("| ");
             hasPattern = false;
             inCatch = false;
+            inTry = false;
         }
 
         public sealed override void ExitCase(CaseContext context)
@@ -3479,6 +3494,7 @@ namespace Sona.Compiler.States
             Out.Write("| ");
             hasPattern = false;
             inCatch = true;
+            inTry = false;
         }
 
         public sealed override void ExitCatchCase(CatchCaseContext context)
@@ -3501,6 +3517,7 @@ namespace Sona.Compiler.States
         {
             Out.WriteLine();
             Out.Write("finally ");
+            inTry = false;
         }
 
         public override void ExitFinallyBranch(FinallyBranchContext context)

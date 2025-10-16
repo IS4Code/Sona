@@ -66,7 +66,8 @@ namespace Sona.Compiler.States
 
     internal abstract class FunctionBaseState : NodeState, IFunctionContext
     {
-        // Establish a scope to return from
+        BlockFlags IBlockStatementContext.Flags => BlockFlags.None;
+
         ReturnFlags IReturnableStatementContext.Flags => ReturnFlags.None;
 
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;

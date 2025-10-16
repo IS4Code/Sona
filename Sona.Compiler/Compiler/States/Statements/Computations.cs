@@ -18,18 +18,7 @@ namespace Sona.Compiler.States
         {
             base.OnEnter(flags, context);
 
-            switch(flags)
-            {
-                case StatementFlags.None:
-                    break;
-                case StatementFlags.Terminating:
-                case StatementFlags.ReturnPath:
-                    Out.Write("return! ");
-                    break;
-                default:
-                    Out.Write("do! ");
-                    break;
-            }
+            OnComputationEnter(flags, context);
 
             BuilderVariable = Out.CreateTemporaryIdentifier();
 
@@ -45,8 +34,14 @@ namespace Sona.Compiler.States
             Out.ExitNestedScope();
             Out.Write("})");
 
+            OnComputationExit(flags, context);
+
             base.OnExit(flags, context);
         }
+
+        protected abstract void OnComputationEnter(StatementFlags flags, ParserRuleContext context);
+
+        protected abstract void OnComputationExit(StatementFlags flags, ParserRuleContext context);
 
         protected sealed override void OnEnterTrail(StatementFlags flags, ParserRuleContext context)
         {
@@ -94,12 +89,12 @@ namespace Sona.Compiler.States
             Out.Write("})");
         }
 
-        public new virtual void WriteImplicitReturnStatement(ParserRuleContext context)
+        public override void WriteImplicitReturnStatement(ParserRuleContext context)
         {
             if((ReturnFlags & ReturnFlags.Indirect) != 0)
             {
                 // Nothing
-                Defaults.WriteImplicitReturnStatement(context);
+                base.WriteImplicitReturnStatement(context);
             }
             else
             {
@@ -132,6 +127,19 @@ namespace Sona.Compiler.States
             ReturnScope.WriteAfterReturnStatement(context);
 
             ExitState().ExitWithStatement(context);
+        }
+
+        protected override void OnComputationEnter(StatementFlags flags, ParserRuleContext context)
+        {
+            if(FindContext<IBlockStatementContext>()?.HasFlag(BlockFlags.CanJumpFrom) ?? false)
+            {
+                Error("The `with` statement cannot be used in loops and `try` because it is not possible to transfer execution to outside code.", context);
+            }
+        }
+
+        protected override void OnComputationExit(StatementFlags flags, ParserRuleContext context)
+        {
+
         }
 
         public override void WriteImplicitReturnStatement(ParserRuleContext context)
@@ -204,18 +212,17 @@ namespace Sona.Compiler.States
 
         bool IComputationContext.IsCollection => false;
 
-        private void CheckScope(ParserRuleContext context)
+        bool closeReturnStatement;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
-            if(FindContext<IComputationContext>() is not { BuilderVariable: not null })
-            {
-                Error("`follow` is not allowed outside a computation.", context);
-            }
+            base.Initialize(environment, parent);
+
+            closeReturnStatement = false;
         }
 
         public override void EnterFollowWithTrailing(FollowWithTrailingContext context)
         {
-            CheckScope(context);
-
             OnEnter(StatementFlags.OpenPath, context);
         }
 
@@ -227,8 +234,6 @@ namespace Sona.Compiler.States
 
         public override void EnterFollowWithTerminating(FollowWithTerminatingContext context)
         {
-            CheckScope(context);
-
             OnEnter(StatementFlags.Terminating, context);
         }
 
@@ -240,8 +245,6 @@ namespace Sona.Compiler.States
 
         public override void EnterFollowWithInterrupting(FollowWithInterruptingContext context)
         {
-            CheckScope(context);
-
             OnEnter(StatementFlags.InterruptPath, context);
         }
 
@@ -253,8 +256,6 @@ namespace Sona.Compiler.States
 
         public override void EnterFollowWithReturning(FollowWithReturningContext context)
         {
-            CheckScope(context);
-
             OnEnter(StatementFlags.InterruptPath | StatementFlags.ReturnPath, context);
         }
 
@@ -266,8 +267,6 @@ namespace Sona.Compiler.States
 
         public override void EnterFollowWithInterruptible(FollowWithInterruptibleContext context)
         {
-            CheckScope(context);
-
             OnEnter(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
         }
 
@@ -279,8 +278,6 @@ namespace Sona.Compiler.States
 
         public override void EnterFollowWithConditional(FollowWithConditionalContext context)
         {
-            CheckScope(context);
-
             OnEnter(StatementFlags.InterruptPath | StatementFlags.ReturnPath | StatementFlags.OpenPath, context);
         }
 
@@ -288,6 +285,47 @@ namespace Sona.Compiler.States
         {
             OnExit(StatementFlags.InterruptPath | StatementFlags.ReturnPath | StatementFlags.OpenPath, context);
             ExitState().ExitFollowWithConditional(context);
+        }
+
+        protected override void OnComputationEnter(StatementFlags flags, ParserRuleContext context)
+        {
+            if((ReturnFlags & ReturnFlags.Indirect) == 0)
+            {
+                // No conditional variables
+                if(FindContext<IComputationContext>() is not { BuilderVariable: not null })
+                {
+                    // Unwrap directly
+                    ReturnScope.WriteReturnStatement(context);
+                    Out.WriteGlobalComputationOperator("ReturnFrom");
+                    closeReturnStatement = true;
+                }
+                else
+                {
+                    // Can utilize `ReturnFrom`
+                    Out.Write("return! ");
+                }
+            }
+            else
+            {
+                // Returns are handled indirectly
+                if(FindContext<IComputationContext>() is not { BuilderVariable: not null })
+                {
+                    Out.Write("do ");
+                    Out.WriteGlobalComputationOperator("ReturnFrom");
+                }
+                else
+                {
+                    Out.Write("let! () = ");
+                }
+            }
+        }
+
+        protected override void OnComputationExit(StatementFlags flags, ParserRuleContext context)
+        {
+            if(closeReturnStatement)
+            {
+                ReturnScope.WriteAfterReturnStatement(context);
+            }
         }
 
         void IReturnableStatementContext.WriteReturnStatement(ParserRuleContext context)
@@ -337,13 +375,21 @@ namespace Sona.Compiler.States
         {
             if(FindContext<IComputationContext>() is not { BuilderVariable: not null })
             {
-                Error("`follow` is not allowed outside a computation.", context);
+                Out.Write("do ");
+                Out.WriteGlobalComputationOperator("ReturnFrom");
             }
-            Out.Write("do! ");
+            else
+            {
+                // Not `do!` because that sometimes abuses `Return`.
+                Out.Write("let! ()");
+                Out.WriteOperator('=');
+            }
+            Out.Write('(');
         }
 
         public override void ExitFollowStatement(FollowStatementContext context)
         {
+            Out.Write(')');
             ExitState().ExitFollowStatement(context);
         }
 
@@ -364,14 +410,21 @@ namespace Sona.Compiler.States
         {
             if(FindContext<IComputationContext>() is not { BuilderVariable: not null })
             {
-                Error("`follow` is not allowed outside a computation.", context);
+                Out.Write("let _");
+                Out.WriteOperator('=');
+                Out.WriteGlobalComputationOperator("ReturnFrom");
             }
-            Out.Write("let! _");
-            Out.WriteOperator('=');
+            else
+            {
+                Out.Write("let! _");
+                Out.WriteOperator('=');
+            }
+            Out.Write('(');
         }
 
         public override void ExitFollowDiscardStatement(FollowDiscardStatementContext context)
         {
+            Out.Write(')');
             ExitState().ExitFollowDiscardStatement(context);
         }
     }

@@ -79,7 +79,7 @@ namespace Sona.Compiler.States
             }
 
             var interruptScope = FindContext<IInterruptibleStatementContext>();
-            if(interruptScope != null && (interruptScope.Flags & InterruptFlags.CanBreak) == 0)
+            if(interruptScope?.HasFlag(InterruptFlags.CanBreak) != true)
             {
                 // No need for break
                 interruptScope = null;
@@ -163,7 +163,7 @@ namespace Sona.Compiler.States
             base.Initialize(environment, parent);
 
             scope = FindContext<IInterruptibleStatementContext>();
-            if(scope != null && (scope.Flags & InterruptFlags.CanBreak) == 0)
+            if(scope?.HasFlag(InterruptFlags.CanBreak) != true)
             {
                 scope = null;
             }

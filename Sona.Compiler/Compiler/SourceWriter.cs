@@ -282,6 +282,20 @@ namespace Sona.Compiler
             writer.WriteNamespacedName("Sona.Runtime.CompilerServices", "Patterns", name);
         }
 
+        public static void WriteCustomComputation(this ISourceWriter writer, string name)
+        {
+            writer.WriteNamespacedName("Sona.Runtime", "Computations");
+            writer.Write('.');
+            writer.WriteIdentifier(name);
+        }
+
+        public static void WriteGlobalComputationOperator(this ISourceWriter writer, string name)
+        {
+            writer.WriteCustomComputation("global");
+            writer.Write('.');
+            writer.WriteIdentifier(name);
+        }
+
         public static void WriteSpecialMember(this ISourceWriter writer, string name)
         {
             writer.Write('.');

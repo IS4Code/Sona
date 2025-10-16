@@ -132,24 +132,45 @@ type Operators1 with
   static member inline ``operator LiftResult``(_:Operators1, _:Operators2, _ : Result<^T, _>, x : ^T) =
     Ok x
   
+  static member inline ``operator LiftNothing``(_:Operators1, _:Operators2, _ : Nullable<^T>) =
+    Nullable<^T>()
+  
+  static member inline ``operator LiftNothing``(_:Operators1, _:Operators2, _ : ^T option) =
+    Option<^T>.None
+  
+  static member inline ``operator LiftNothing``(_:Operators1, _:Operators2, _ : ^T voption) =
+    ValueOption<^T>.ValueNone
+  
+  static member inline ``operator OptionalLiftResult``(_:Operators1, _:Operators2, _ : Nullable<^T>, x : ^T) =
+    Nullable.op_Implicit(x)
+  
+  static member inline ``operator OptionalLiftResult``(_:Operators1, _:Operators2, _ : ^T option, x : ^T) =
+    Some x
+  
+  static member inline ``operator OptionalLiftResult``(_:Operators1, _:Operators2, _ : ^T voption, x : ^T) =
+    ValueSome x
+  
+  static member inline ``operator OptionalLiftResult``(_:Operators1, _:Operators2, _ : Result<^T, _>, x : ^T) =
+    Ok x
+  
   static member inline ``operator BindToLiftedResult``(_:Operators1, _:Operators2, x : Nullable<_>, y) =
     match x with
-    | NonNullV value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator LiftResult``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
+    | NonNullV value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator OptionalLiftResult``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
     | NullV -> struct(false, Unchecked.defaultof<_>)
   
   static member inline ``operator BindToLiftedResult``(_:Operators1, _:Operators2, x : _ option, y) =
     match x with
-    | Some value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator LiftResult``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
+    | Some value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator OptionalLiftResult``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
     | None -> struct(false, Unchecked.defaultof<_>)
   
   static member inline ``operator BindToLiftedResult``(_:Operators1, _:Operators2, x : _ voption, y) =
     match x with
-    | ValueSome value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator LiftResult``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
+    | ValueSome value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator OptionalLiftResult``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
     | ValueNone -> struct(false, Unchecked.defaultof<_>)
   
   static member inline ``operator BindToLiftedResult``(_:Operators1, _:Operators2, x : Result<_, _>, y) =
     match x with
-    | Ok value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator LiftResult``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
+    | Ok value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator OptionalLiftResult``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
     | Error _ -> struct(false, Unchecked.defaultof<_>)
   
   static member inline ``operator BindToResult``(_:Operators1, _:Operators2, x : Nullable<_>) =
@@ -303,12 +324,12 @@ type Operators2 with
     ExceptionDispatchInfo.Capture(x).Throw()
     x
   
-  static member inline ``operator LiftResult``(_:Operators1, _:Operators2, _ : ^T, x : ^T) =
+  static member inline ``operator OptionalLiftResult``(_:Operators1, _:Operators2, _ : ^T, x : ^T) =
     x
   
   static member inline ``operator BindToLiftedResult``(_:Operators1, _:OperatorsBase, x, y) =
     match x with
-    | NonNull value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator LiftResult``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
+    | NonNull value -> struct(true, ((^self1 or ^self2 or ^y) : (static member ``operator OptionalLiftResult``: ^self1 * ^self2 * ^y * _ -> _) (null : Operators1), (null : Operators2), y, value))
     | Null -> struct(false, Unchecked.defaultof<_>)
   
   static member inline ``operator BindToResult``(_:Operators1, _:Operators2, x) =
@@ -402,6 +423,12 @@ module Operators =
   let inline ThrowObject(x : obj) =
     (# "throw" x #)
     Unchecked.defaultof<_>
+  
+  let inline LiftResult x : ^T =
+    ((^self1 or ^self2 or ^x) : (static member ``operator LiftResult``: ^self1 * ^self2 * ^T * ^x -> ^T) (null : Operators1), (null : Operators2), Unchecked.defaultof<^T>, x)
+  
+  let inline LiftNothing() : ^T =
+    ((^self1 or ^self2 or ^T) : (static member ``operator LiftNothing``: ^self1 * ^self2 * ^T -> ^T) (null : Operators1), (null : Operators2), Unchecked.defaultof<^T>)
   
   let inline BindToLiftedResult(y)(x) =
     ((^self1 or ^self2 or ^x) : (static member ``operator BindToLiftedResult``: ^self1 * ^self2 * ^x * _ -> struct(bool * _)) (null : Operators1), (null : Operators2), x, y)

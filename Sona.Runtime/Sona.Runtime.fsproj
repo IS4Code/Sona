@@ -45,6 +45,7 @@
     <Compile Include="Helpers.fs" />
     <Compile Include="Attributes.fs" />
     <Compile Include="Operators.fs" />
+    <Compile Include="Computations.fs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -52,6 +53,7 @@
     <PackageReference Include="System.Memory" Version="4.6.0" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.6.0" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.0" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.0" />
   </ItemGroup>
 
   <ItemGroup>

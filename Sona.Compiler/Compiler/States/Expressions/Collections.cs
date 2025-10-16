@@ -20,6 +20,8 @@ namespace Sona.Compiler.States
 
         public virtual bool TrailAllowed => false;
 
+        BlockFlags IBlockStatementContext.Flags => BlockFlags.None;
+
         ReturnFlags IReturnableStatementContext.Flags => ReturnFlags.None;
 
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
