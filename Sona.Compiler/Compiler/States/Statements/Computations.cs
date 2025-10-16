@@ -114,7 +114,8 @@ namespace Sona.Compiler.States
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
         string? IInterruptibleStatementContext.InterruptingVariable => null;
 
-        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
+        // Does not provide its own conditional return variables
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags & ~ReturnFlags.Indirect;
 
         bool IComputationContext.IsCollection => false;
         
