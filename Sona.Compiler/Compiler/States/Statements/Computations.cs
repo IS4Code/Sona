@@ -144,9 +144,9 @@ namespace Sona.Compiler.States
 
         public override void WriteImplicitReturnStatement(ParserRuleContext context)
         {
-            if(FindContext<IBlockStatementContext>() != FindContext<IComputationContext>())
+            if(ReturnScope?.HasFlag(ReturnFlags.Indirect) ?? false)
             {
-                // Not at the end of function/computation
+                // Other paths lead past this block so this is not the final result
                 Error("It is not possible to escape from a computation block directly to the outside code. Use `return` to return explicitly.", context);
             }
             base.WriteImplicitReturnStatement(context);
