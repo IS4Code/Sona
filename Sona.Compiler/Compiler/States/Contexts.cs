@@ -20,14 +20,10 @@ namespace Sona.Compiler.States
         None,
 
         /// <summary>
-        /// Indicates that execution may flow elsewhere from this block.
+        /// Indicates that execution may flow elsewhere from within this block.
         /// This flag is inherited in nested blocks.
         /// </summary>
-        /// <remarks>
-        /// This is set for loops (the flow returns to the start of the block)
-        /// or the <c>try</c> block (may jump to <c>catch</c> or <c>finally</c>).
-        /// </remarks>
-        CanJumpFrom = 1
+        HasTrySemantics = 1
     }
 
     internal interface IBlockStatementContext : IStatementContext

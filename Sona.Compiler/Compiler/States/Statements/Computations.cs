@@ -135,9 +135,9 @@ namespace Sona.Compiler.States
 
         protected override void OnComputationEnter(StatementFlags flags, ParserRuleContext context)
         {
-            if(FindContext<IBlockStatementContext>()?.HasFlag(BlockFlags.CanJumpFrom) ?? false)
+            if(FindContext<IBlockStatementContext>()?.HasFlag(BlockFlags.HasTrySemantics) ?? false)
             {
-                Error("The `with` statement cannot be used in loops and `try` because it is not possible to transfer execution to outside code.", context);
+                Error("The `with` statement cannot be used in `try` because it is not possible to transfer execution to outside code.", context);
             }
         }
 

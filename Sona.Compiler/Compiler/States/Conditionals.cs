@@ -2171,8 +2171,6 @@ namespace Sona.Compiler.States
 
         public string? InterruptingVariable { get; private set; }
 
-        protected override BlockFlags BlockFlags => base.BlockFlags | BlockFlags.CanJumpFrom;
-
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
@@ -2462,8 +2460,6 @@ namespace Sona.Compiler.States
 
         public string? ContinuingVariable { get; private set; }
 
-        protected override BlockFlags BlockFlags => base.BlockFlags | BlockFlags.CanJumpFrom;
-
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
@@ -2656,8 +2652,6 @@ namespace Sona.Compiler.States
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
 
         public string? InterruptingVariable { get; private set; }
-
-        protected override BlockFlags BlockFlags => base.BlockFlags | BlockFlags.CanJumpFrom;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -3569,7 +3563,7 @@ namespace Sona.Compiler.States
         bool inCatch;
         bool inTry;
 
-        protected override BlockFlags BlockFlags => base.BlockFlags | (inTry ? BlockFlags.CanJumpFrom : 0);
+        protected override BlockFlags BlockFlags => base.BlockFlags | (inTry ? BlockFlags.HasTrySemantics : 0);
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
