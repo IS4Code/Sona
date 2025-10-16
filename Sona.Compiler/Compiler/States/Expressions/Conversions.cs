@@ -275,7 +275,6 @@ namespace Sona.Compiler.States
                     case SonaLexer.WIDEN:
                     case SonaLexer.NARROW:
                         // Different operator path
-                        Out.Write('(');
                         return;
                 }
                 // Continue next
