@@ -36,6 +36,8 @@ namespace Sona.Compiler
             // Unused anything not starting with `_`
             1182, // The value '%s' is unused
             
+            3264, // Nullness warning: Downcasting from '%s' into '%s' can introduce unexpected null values.
+
             3387, // This expression has type '%s' and is only made compatible with type '%s' through an ambiguous implicit conversion. Consider using an explicit call to 'op_Implicit'.
             
             // Additional implicit upcast
@@ -75,6 +77,7 @@ namespace Sona.Compiler
 
              // Nullness warning
             3261,
+            3264,
             
             // Ineffective inline lambda
             3517, // The value '%s' was marked 'InlineIfLambda' but was not determined to have a lambda value.
@@ -111,6 +114,9 @@ namespace Sona.Compiler
 
             // Compiler-generated unused variables are reported even when they start on _.
             { 1182, "chkUnusedValue", m => Syntax.GetIdentifierValue(m.Groups[1].Value).StartsWith("_", StringComparison.Ordinal) ? null : m.Value }, // The value '%s' is unused
+
+            // Nullnewss warning
+            { 3261, "ConstraintSolverNullnessWarning", "$1." },
 
             // Not a warning anymore
             { 3517, "optFailedToInlineSuggestedValue", "The function parameter is declared as `inline` but the provided argument cannot be inlined. Consider passing an inlineable anonymous function." }, // The value '%s' was marked 'InlineIfLambda' but was not determined to have a lambda value.
