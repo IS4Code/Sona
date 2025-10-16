@@ -810,22 +810,25 @@ namespace Sona.Compiler.States
         }
         #endregion
 
-        private void OnEnterInner(StatementFlags flags, ParserRuleContext context)
+        protected virtual void ModifyFlags(ref StatementFlags flags)
         {
             if(this is IReturnableStatementContext)
             {
+                // The `Control` implementations are always treated as open.
                 flags |= StatementFlags.OpenPath;
             }
+        }
+
+        private void OnEnterInner(StatementFlags flags, ParserRuleContext context)
+        {
+            ModifyFlags(ref flags);
             enterFlags = flags;
             OnEnter(flags, context);
         }
 
         private void OnExitInner(StatementFlags flags, ParserRuleContext context)
         {
-            if(this is IReturnableStatementContext)
-            {
-                flags |= StatementFlags.OpenPath;
-            }
+            ModifyFlags(ref flags);
             if(!exited)
             {
                 exited = true;
@@ -1732,6 +1735,125 @@ namespace Sona.Compiler.States
             finally
             {
                 ExitState().ExitTryCatchFinallyStatementConditional(context);
+            }
+        }
+        
+        public sealed override void EnterWithStatement(WithStatementContext context)
+        {
+            OnEnterInner(StatementFlags.None, context);
+        }
+
+        public sealed override void ExitWithStatement(WithStatementContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.None, context);
+            }
+            finally
+            {
+                ExitState().ExitWithStatement(context);
+            }
+        }
+
+        public sealed override void EnterFollowWithTrailing(FollowWithTrailingContext context)
+        {
+            OnEnterInner(StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void ExitFollowWithTrailing(FollowWithTrailingContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitFollowWithTrailing(context);
+            }
+        }
+
+        public sealed override void EnterFollowWithTerminating(FollowWithTerminatingContext context)
+        {
+            OnEnterInner(StatementFlags.Terminating, context);
+        }
+
+        public sealed override void ExitFollowWithTerminating(FollowWithTerminatingContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.Terminating, context);
+            }
+            finally
+            {
+                ExitState().ExitFollowWithTerminating(context);
+            }
+        }
+
+        public sealed override void EnterFollowWithInterrupting(FollowWithInterruptingContext context)
+        {
+            OnEnterInner(StatementFlags.InterruptPath, context);
+        }
+
+        public sealed override void ExitFollowWithInterrupting(FollowWithInterruptingContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitFollowWithInterrupting(context);
+            }
+        }
+
+        public sealed override void EnterFollowWithReturning(FollowWithReturningContext context)
+        {
+            OnEnterInner(StatementFlags.InterruptPath | StatementFlags.ReturnPath, context);
+        }
+
+        public sealed override void ExitFollowWithReturning(FollowWithReturningContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.InterruptPath | StatementFlags.ReturnPath, context);
+            }
+            finally
+            {
+                ExitState().ExitFollowWithReturning(context);
+            }
+        }
+
+        public sealed override void EnterFollowWithInterruptible(FollowWithInterruptibleContext context)
+        {
+            OnEnterInner(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void ExitFollowWithInterruptible(FollowWithInterruptibleContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitFollowWithInterruptible(context);
+            }
+        }
+
+        public sealed override void EnterFollowWithConditional(FollowWithConditionalContext context)
+        {
+            OnEnterInner(StatementFlags.InterruptPath | StatementFlags.ReturnPath | StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void ExitFollowWithConditional(FollowWithConditionalContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.InterruptPath | StatementFlags.ReturnPath | StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitFollowWithConditional(context);
             }
         }
         #endregion

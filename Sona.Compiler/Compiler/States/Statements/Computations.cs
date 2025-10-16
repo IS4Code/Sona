@@ -63,6 +63,11 @@ namespace Sona.Compiler.States
 
         }*/
 
+        protected override void ModifyFlags(ref StatementFlags flags)
+        {
+            // Leave as is
+        }
+
         public sealed override void EnterExpression(ExpressionContext context)
         {
             EnterState<ExpressionState>().EnterExpression(context);
@@ -113,20 +118,18 @@ namespace Sona.Compiler.States
 
         bool IComputationContext.IsCollection => false;
         
-        public override void EnterWithStatement(WithStatementContext context)
+        protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
         {
             ReturnScope.WriteReturnStatement(context);
 
-            OnEnter(StatementFlags.None, context);
+            base.OnEnter(flags, context);
         }
 
-        public override void ExitWithStatement(WithStatementContext context)
+        protected override void OnExit(StatementFlags flags, ParserRuleContext context)
         {
-            OnExit(StatementFlags.None, context);
+            base.OnExit(flags, context);
 
             ReturnScope.WriteAfterReturnStatement(context);
-
-            ExitState().ExitWithStatement(context);
         }
 
         protected override void OnComputationEnter(StatementFlags flags, ParserRuleContext context)
@@ -219,72 +222,6 @@ namespace Sona.Compiler.States
             base.Initialize(environment, parent);
 
             closeReturnStatement = false;
-        }
-
-        public override void EnterFollowWithTrailing(FollowWithTrailingContext context)
-        {
-            OnEnter(StatementFlags.OpenPath, context);
-        }
-
-        public override void ExitFollowWithTrailing(FollowWithTrailingContext context)
-        {
-            OnExit(StatementFlags.OpenPath, context);
-            ExitState().ExitFollowWithTrailing(context);
-        }
-
-        public override void EnterFollowWithTerminating(FollowWithTerminatingContext context)
-        {
-            OnEnter(StatementFlags.Terminating, context);
-        }
-
-        public override void ExitFollowWithTerminating(FollowWithTerminatingContext context)
-        {
-            OnExit(StatementFlags.Terminating, context);
-            ExitState().ExitFollowWithTerminating(context);
-        }
-
-        public override void EnterFollowWithInterrupting(FollowWithInterruptingContext context)
-        {
-            OnEnter(StatementFlags.InterruptPath, context);
-        }
-
-        public override void ExitFollowWithInterrupting(FollowWithInterruptingContext context)
-        {
-            OnExit(StatementFlags.InterruptPath, context);
-            ExitState().ExitFollowWithInterrupting(context);
-        }
-
-        public override void EnterFollowWithReturning(FollowWithReturningContext context)
-        {
-            OnEnter(StatementFlags.InterruptPath | StatementFlags.ReturnPath, context);
-        }
-
-        public override void ExitFollowWithReturning(FollowWithReturningContext context)
-        {
-            OnExit(StatementFlags.InterruptPath | StatementFlags.ReturnPath, context);
-            ExitState().ExitFollowWithReturning(context);
-        }
-
-        public override void EnterFollowWithInterruptible(FollowWithInterruptibleContext context)
-        {
-            OnEnter(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
-        }
-
-        public override void ExitFollowWithInterruptible(FollowWithInterruptibleContext context)
-        {
-            OnExit(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
-            ExitState().ExitFollowWithInterruptible(context);
-        }
-
-        public override void EnterFollowWithConditional(FollowWithConditionalContext context)
-        {
-            OnEnter(StatementFlags.InterruptPath | StatementFlags.ReturnPath | StatementFlags.OpenPath, context);
-        }
-
-        public override void ExitFollowWithConditional(FollowWithConditionalContext context)
-        {
-            OnExit(StatementFlags.InterruptPath | StatementFlags.ReturnPath | StatementFlags.OpenPath, context);
-            ExitState().ExitFollowWithConditional(context);
         }
 
         protected override void OnComputationEnter(StatementFlags flags, ParserRuleContext context)
