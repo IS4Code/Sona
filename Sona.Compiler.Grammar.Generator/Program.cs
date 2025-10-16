@@ -150,7 +150,7 @@ namespace Sona.Compiler.Grammar.Generator
                 var mainTag = alternative.Sample(p => p.Key.Tag);
                 output.Write(mainTag switch
                 {
-                    "if" => "(caseIf | if)",
+                    "if" => "if_Group",
                     _ => mainTag
                 });
                 output.Write(' ');
@@ -168,7 +168,7 @@ namespace Sona.Compiler.Grammar.Generator
                     switch(mainTag)
                     {
                         case "if":
-                            output.WriteSingleBlockCover(mainCategories, "(caseElseif | elseif)");
+                            output.WriteSingleBlockCover(mainCategories, "elseif_Group");
                             output.Write(' ');
                             break;
                         case "try":
@@ -297,8 +297,8 @@ namespace Sona.Compiler.Grammar.Generator
                                     // Deciding block
                                     string tagName = tag switch
                                     {
-                                        "case" => "(case | catchCase)",
-                                        "elseif" => "(caseElseif | elseif)",
+                                        "case" => mainTag == "try" ? "catch_Group" : "case",
+                                        "elseif" => "elseif_Group",
                                         _ => tag
                                     };
                                     output.Write(tagName);
@@ -555,6 +555,10 @@ namespace Sona.Compiler.Grammar.Generator
 
         public static string ToTrail(string category)
         {
+            if(category == "ignored")
+            {
+                return "ignoredTrail_Group";
+            }
             return category + "Trail";
         }
 

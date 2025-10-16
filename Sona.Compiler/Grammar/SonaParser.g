@@ -505,17 +505,20 @@ expressionStatement:
 /* Block statements */
 /* ---------------- */
 
+ignoredTrail_Group:
+  ignoredEmptyTrail | ignoredTrail;
+
 // `do`
 
 doStatementFree:
   'do' freeBlock 'end';
 
 doStatementTerminating:
-  'do' terminatingBlock 'end' (ignoredEmptyTrail | ignoredTrail);
+  'do' terminatingBlock 'end' ignoredTrail_Group;
 
 doStatementInterrupting:
   // Body interrupts, trail is ignored
-  'do' interruptingBlock 'end' (ignoredEmptyTrail | ignoredTrail);
+  'do' interruptingBlock 'end' ignoredTrail_Group;
 
 doStatementInterruptingTrail:
   // Body is interruptible but trail terminates or interrupts
@@ -527,7 +530,7 @@ doStatementInterruptible:
 
 doStatementReturning:
   // Body returns, trail is ignored
-  'do' returningBlock 'end' (ignoredEmptyTrail | ignoredTrail);
+  'do' returningBlock 'end' ignoredTrail_Group;
 
 doStatementReturningTrail:
   // Body is interruptible but trail returns
@@ -542,6 +545,12 @@ doStatementConditional:
   'do' interruptibleBlock 'end' conditionalTrail;
 
 // `if`
+
+if_Group:
+  caseIf | if;
+
+elseif_Group:
+  caseElseif | elseif;
 
 if:
   'if' expression 'then';
@@ -560,380 +569,380 @@ else:
 
 // Free-standing (may throw from all branches but this is not preferred).
 ifStatementFree:
-  (caseIf | if) freeBlock ((caseElseif | elseif) freeBlock)* (else freeBlock)? 'end';
+  if_Group freeBlock (elseif_Group freeBlock)* (else freeBlock)? 'end';
 
 ifStatementTerminating:
-  (caseIf | if) terminatingBlock ((caseElseif | elseif) terminatingBlock)* else terminatingBlock 'end' ignoredTrail;
+  if_Group terminatingBlock (elseif_Group terminatingBlock)* else terminatingBlock 'end' ignoredTrail_Group;
 
 // The following rules are auto-generated.
 
 ifStatementInterrupting:
-  (caseIf | if) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
-    else interruptingCoverBlock 'end' ignoredTrail |
-    else terminatingBlock 'end' ignoredTrail 
+  if_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
+    else interruptingCoverBlock 'end' ignoredTrail_Group |
+    else terminatingBlock 'end' ignoredTrail_Group 
   ) |
-  (caseIf | if) terminatingBlock ((caseElseif | elseif) terminatingBlock)* (
-    else interruptingBlock 'end' ignoredTrail |
-    (caseElseif | elseif) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
-      else interruptingCoverBlock 'end' ignoredTrail |
-      else terminatingBlock 'end' ignoredTrail 
+  if_Group terminatingBlock (elseif_Group terminatingBlock)* (
+    else interruptingBlock 'end' ignoredTrail_Group |
+    elseif_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
+      else interruptingCoverBlock 'end' ignoredTrail_Group |
+      else terminatingBlock 'end' ignoredTrail_Group 
     ) 
   );
 
 ifStatementInterruptingTrail:
-  (caseIf | if) interruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' interruptingCoverTrail |
-  (caseIf | if) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
+  if_Group interruptibleBlock (elseif_Group interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' interruptingCoverTrail |
+  if_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
     (else openToInterruptibleBlock)? |
-    (caseElseif | elseif) openToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
+    elseif_Group openToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
   ) 'end' interruptingCoverTrail |
-  (caseIf | if) openBlock ((caseElseif | elseif) openCoverBlock)* (
+  if_Group openBlock (elseif_Group openCoverBlock)* (
     else interruptingToInterruptibleBlock |
-    (caseElseif | elseif) interruptingToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
+    elseif_Group interruptingToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
   ) 'end' interruptingCoverTrail |
-  (caseIf | if) terminatingBlock ((caseElseif | elseif) terminatingBlock)* (
+  if_Group terminatingBlock (elseif_Group terminatingBlock)* (
     else interruptibleBlock |
-    (caseElseif | elseif) interruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-    (caseElseif | elseif) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
+    elseif_Group interruptibleBlock (elseif_Group interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
+    elseif_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
       (else openToInterruptibleBlock)? |
-      (caseElseif | elseif) openToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
+      elseif_Group openToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
     ) |
-    (caseElseif | elseif) openBlock ((caseElseif | elseif) openCoverBlock)* (
+    elseif_Group openBlock (elseif_Group openCoverBlock)* (
       else interruptingToInterruptibleBlock |
-      (caseElseif | elseif) interruptingToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
+      elseif_Group interruptingToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
     ) 
   ) 'end' interruptingCoverTrail;
 
 ifStatementInterruptible:
-  (caseIf | if) interruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' interruptibleCoverTrail |
-  (caseIf | if) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
+  if_Group interruptibleBlock (elseif_Group interruptibleCoverBlock)* (else interruptibleCoverBlock)? 'end' interruptibleCoverTrail |
+  if_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
     (else openToInterruptibleBlock)? |
-    (caseElseif | elseif) openToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
+    elseif_Group openToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
   ) 'end' interruptibleCoverTrail |
-  (caseIf | if) openBlock ((caseElseif | elseif) openCoverBlock)* (
+  if_Group openBlock (elseif_Group openCoverBlock)* (
     else interruptingToInterruptibleBlock |
-    (caseElseif | elseif) interruptingToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
+    elseif_Group interruptingToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
   ) 'end' interruptibleCoverTrail |
-  (caseIf | if) terminatingBlock ((caseElseif | elseif) terminatingBlock)* (
+  if_Group terminatingBlock (elseif_Group terminatingBlock)* (
     else interruptibleBlock |
-    (caseElseif | elseif) interruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
-    (caseElseif | elseif) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
+    elseif_Group interruptibleBlock (elseif_Group interruptibleCoverBlock)* (else interruptibleCoverBlock)? |
+    elseif_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
       (else openToInterruptibleBlock)? |
-      (caseElseif | elseif) openToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
+      elseif_Group openToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
     ) |
-    (caseElseif | elseif) openBlock ((caseElseif | elseif) openCoverBlock)* (
+    elseif_Group openBlock (elseif_Group openCoverBlock)* (
       else interruptingToInterruptibleBlock |
-      (caseElseif | elseif) interruptingToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
+      elseif_Group interruptingToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (else interruptibleCoverBlock)? 
     ) 
   ) 'end' interruptibleCoverTrail;
 
 ifStatementReturning:
-  (caseIf | if) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
-    else returningBlock 'end' ignoredTrail |
-    (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
-      else returningCoverBlock 'end' ignoredTrail |
-      else terminatingBlock 'end' ignoredTrail 
+  if_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
+    else returningBlock 'end' ignoredTrail_Group |
+    elseif_Group returningBlock (elseif_Group returningCoverBlock)* (
+      else returningCoverBlock 'end' ignoredTrail_Group |
+      else terminatingBlock 'end' ignoredTrail_Group 
     ) 
   ) |
-  (caseIf | if) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
-    else returningCoverBlock 'end' ignoredTrail |
-    else terminatingBlock 'end' ignoredTrail 
+  if_Group returningBlock (elseif_Group returningCoverBlock)* (
+    else returningCoverBlock 'end' ignoredTrail_Group |
+    else terminatingBlock 'end' ignoredTrail_Group 
   ) |
-  (caseIf | if) terminatingBlock ((caseElseif | elseif) terminatingBlock)* (
-    else returningBlock 'end' ignoredTrail |
-    (caseElseif | elseif) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
-      else returningBlock 'end' ignoredTrail |
-      (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
-        else returningCoverBlock 'end' ignoredTrail |
-        else terminatingBlock 'end' ignoredTrail 
+  if_Group terminatingBlock (elseif_Group terminatingBlock)* (
+    else returningBlock 'end' ignoredTrail_Group |
+    elseif_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
+      else returningBlock 'end' ignoredTrail_Group |
+      elseif_Group returningBlock (elseif_Group returningCoverBlock)* (
+        else returningCoverBlock 'end' ignoredTrail_Group |
+        else terminatingBlock 'end' ignoredTrail_Group 
       ) 
     ) |
-    (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
-      else returningCoverBlock 'end' ignoredTrail |
-      else terminatingBlock 'end' ignoredTrail 
+    elseif_Group returningBlock (elseif_Group returningCoverBlock)* (
+      else returningCoverBlock 'end' ignoredTrail_Group |
+      else terminatingBlock 'end' ignoredTrail_Group 
     ) 
   );
 
 ifStatementReturningTrailFromElse:
-  (caseIf | if) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
+  if_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
     (
       else conditionalBlock |
-      (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* else openToConditionalBlock 
+      elseif_Group returningBlock (elseif_Group returningCoverBlock)* else openToConditionalBlock 
     ) 'end' interruptingCoverTrail |
     (
       else conditionalBlock |
-      (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* else openToConditionalBlock 
+      elseif_Group returningBlock (elseif_Group returningCoverBlock)* else openToConditionalBlock 
     ) 'end' returningTrail 
   ) |
-  (caseIf | if) returningBlock ((caseElseif | elseif) returningCoverBlock)* else openToConditionalBlock 'end' returningCoverTrail |
-  (caseIf | if) terminatingBlock ((caseElseif | elseif) terminatingBlock)* (
+  if_Group returningBlock (elseif_Group returningCoverBlock)* else openToConditionalBlock 'end' returningCoverTrail |
+  if_Group terminatingBlock (elseif_Group terminatingBlock)* (
     (
       else conditionalBlock |
-      (caseElseif | elseif) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
+      elseif_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
         else conditionalBlock |
-        (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* else openToConditionalBlock 
+        elseif_Group returningBlock (elseif_Group returningCoverBlock)* else openToConditionalBlock 
       ) |
-      (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* else openToConditionalBlock 
+      elseif_Group returningBlock (elseif_Group returningCoverBlock)* else openToConditionalBlock 
     ) 'end' interruptingCoverTrail |
     (
       else (conditionalBlock | interruptibleBlock) |
-      (caseElseif | elseif) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
+      elseif_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
         else conditionalBlock |
-        (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* else openToConditionalBlock 
+        elseif_Group returningBlock (elseif_Group returningCoverBlock)* else openToConditionalBlock 
       ) |
-      (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* else openToConditionalBlock 
+      elseif_Group returningBlock (elseif_Group returningCoverBlock)* else openToConditionalBlock 
     ) 'end' returningTrail 
   );
 
 ifStatementReturningTrail:
-  (caseIf | if) conditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 'end' returningCoverTrail |
-  (caseIf | if) interruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+  if_Group conditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 'end' returningCoverTrail |
+  if_Group interruptibleBlock (elseif_Group interruptibleCoverBlock)* (
     (
       else returningToConditionalBlock |
-      (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
     ) 'end' interruptingCoverTrail |
     (
       (else (returningBlock | conditionalBlock | terminatingBlock))? |
-      (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
     ) 'end' returningTrail 
   ) |
-  (caseIf | if) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
+  if_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
     (
       else conditionalBlock |
-      (caseElseif | elseif) conditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (caseElseif | elseif) openToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+      elseif_Group conditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif_Group openToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
         else returningToConditionalBlock |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) |
-      (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
+      elseif_Group returningBlock (elseif_Group returningCoverBlock)* (
         (else openToConditionalBlock)? |
-        (caseElseif | elseif) openToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group openToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) 
     ) 'end' interruptingCoverTrail |
     (
       (else conditionalBlock)? |
-      (caseElseif | elseif) conditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (caseElseif | elseif) openToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+      elseif_Group conditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif_Group openToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
         (else (returningBlock | conditionalBlock | terminatingBlock))? |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) |
-      (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
+      elseif_Group returningBlock (elseif_Group returningCoverBlock)* (
         (else openToConditionalBlock)? |
-        (caseElseif | elseif) openToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group openToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) 
     ) 'end' returningTrail 
   ) |
-  (caseIf | if) openBlock ((caseElseif | elseif) openCoverBlock)* (
+  if_Group openBlock (elseif_Group openCoverBlock)* (
     (
       else returningToConditionalBlock |
-      (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (caseElseif | elseif) interruptingToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+      elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif_Group interruptingToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
         else returningToConditionalBlock |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) 
     ) 'end' interruptingCoverTrail |
     (
       else returningToConditionalBlock |
-      (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (caseElseif | elseif) interruptingToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+      elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif_Group interruptingToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
         (else (returningBlock | conditionalBlock | terminatingBlock))? |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) 
     ) 'end' returningTrail 
   ) |
-  (caseIf | if) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
+  if_Group returningBlock (elseif_Group returningCoverBlock)* (
     (else openToConditionalBlock)? |
-    (caseElseif | elseif) openToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+    elseif_Group openToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
   ) 'end' returningCoverTrail |
-  (caseIf | if) terminatingBlock ((caseElseif | elseif) terminatingBlock)* (
+  if_Group terminatingBlock (elseif_Group terminatingBlock)* (
     (
       else conditionalBlock |
-      (caseElseif | elseif) conditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (caseElseif | elseif) interruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+      elseif_Group conditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif_Group interruptibleBlock (elseif_Group interruptibleCoverBlock)* (
         else returningToConditionalBlock |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) |
-      (caseElseif | elseif) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
+      elseif_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
         else conditionalBlock |
-        (caseElseif | elseif) conditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (caseElseif | elseif) openToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+        elseif_Group conditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif_Group openToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
           else returningToConditionalBlock |
-          (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
         ) |
-        (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
+        elseif_Group returningBlock (elseif_Group returningCoverBlock)* (
           (else openToConditionalBlock)? |
-          (caseElseif | elseif) openToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          elseif_Group openToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
         ) 
       ) |
-      (caseElseif | elseif) openBlock ((caseElseif | elseif) openCoverBlock)* (
+      elseif_Group openBlock (elseif_Group openCoverBlock)* (
         else returningToConditionalBlock |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (caseElseif | elseif) interruptingToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif_Group interruptingToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
           else returningToConditionalBlock |
-          (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
         ) 
       ) |
-      (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
+      elseif_Group returningBlock (elseif_Group returningCoverBlock)* (
         (else openToConditionalBlock)? |
-        (caseElseif | elseif) openToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group openToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) 
     ) 'end' interruptingCoverTrail |
     (
       else (conditionalBlock | interruptibleBlock) |
-      (caseElseif | elseif) conditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (caseElseif | elseif) interruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+      elseif_Group conditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif_Group interruptibleBlock (elseif_Group interruptibleCoverBlock)* (
         (else (returningBlock | conditionalBlock | terminatingBlock))? |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) |
-      (caseElseif | elseif) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
+      elseif_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
         (else conditionalBlock)? |
-        (caseElseif | elseif) conditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (caseElseif | elseif) openToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+        elseif_Group conditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif_Group openToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
           (else (returningBlock | conditionalBlock | terminatingBlock))? |
-          (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
         ) |
-        (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
+        elseif_Group returningBlock (elseif_Group returningCoverBlock)* (
           (else openToConditionalBlock)? |
-          (caseElseif | elseif) openToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          elseif_Group openToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
         ) 
       ) |
-      (caseElseif | elseif) openBlock ((caseElseif | elseif) openCoverBlock)* (
+      elseif_Group openBlock (elseif_Group openCoverBlock)* (
         else returningToConditionalBlock |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (caseElseif | elseif) interruptingToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif_Group interruptingToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
           (else (returningBlock | conditionalBlock | terminatingBlock))? |
-          (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
         ) 
       ) |
-      (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
+      elseif_Group returningBlock (elseif_Group returningCoverBlock)* (
         (else openToConditionalBlock)? |
-        (caseElseif | elseif) openToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group openToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) 
     ) 'end' returningTrail 
   );
 
 ifStatementConditional:
-  (caseIf | if) conditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 'end' conditionalCoverTrail |
-  (caseIf | if) interruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+  if_Group conditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 'end' conditionalCoverTrail |
+  if_Group interruptibleBlock (elseif_Group interruptibleCoverBlock)* (
     (
       (else (returningBlock | conditionalBlock | terminatingBlock))? |
-      (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
     ) 'end' conditionalTrail |
     (
       else returningToConditionalBlock |
-      (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+      elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
     ) 'end' interruptibleCoverTrail 
   ) |
-  (caseIf | if) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
+  if_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
     (
       (else conditionalBlock)? |
-      (caseElseif | elseif) conditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (caseElseif | elseif) openToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+      elseif_Group conditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif_Group openToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
         (else (returningBlock | conditionalBlock | terminatingBlock))? |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) |
-      (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
+      elseif_Group returningBlock (elseif_Group returningCoverBlock)* (
         (else openToConditionalBlock)? |
-        (caseElseif | elseif) openToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group openToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) 
     ) 'end' conditionalTrail |
     (
       else conditionalBlock |
-      (caseElseif | elseif) conditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (caseElseif | elseif) openToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+      elseif_Group conditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif_Group openToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
         else returningToConditionalBlock |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) |
-      (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
+      elseif_Group returningBlock (elseif_Group returningCoverBlock)* (
         (else openToConditionalBlock)? |
-        (caseElseif | elseif) openToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group openToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) 
     ) 'end' interruptibleCoverTrail 
   ) |
-  (caseIf | if) openBlock ((caseElseif | elseif) openCoverBlock)* (
+  if_Group openBlock (elseif_Group openCoverBlock)* (
     (
       else returningToConditionalBlock |
-      (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (caseElseif | elseif) interruptingToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+      elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif_Group interruptingToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
         (else (returningBlock | conditionalBlock | terminatingBlock))? |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) 
     ) 'end' conditionalTrail |
     (
       else returningToConditionalBlock |
-      (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (caseElseif | elseif) interruptingToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+      elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif_Group interruptingToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
         else returningToConditionalBlock |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) 
     ) 'end' interruptibleCoverTrail 
   ) |
-  (caseIf | if) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
+  if_Group returningBlock (elseif_Group returningCoverBlock)* (
     (else openToConditionalBlock)? |
-    (caseElseif | elseif) openToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+    elseif_Group openToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
   ) 'end' conditionalCoverTrail |
-  (caseIf | if) terminatingBlock ((caseElseif | elseif) terminatingBlock)* (
+  if_Group terminatingBlock (elseif_Group terminatingBlock)* (
     (
       else (conditionalBlock | interruptibleBlock) |
-      (caseElseif | elseif) conditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (caseElseif | elseif) interruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+      elseif_Group conditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif_Group interruptibleBlock (elseif_Group interruptibleCoverBlock)* (
         (else (returningBlock | conditionalBlock | terminatingBlock))? |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) |
-      (caseElseif | elseif) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
+      elseif_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
         (else conditionalBlock)? |
-        (caseElseif | elseif) conditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (caseElseif | elseif) openToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+        elseif_Group conditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif_Group openToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
           (else (returningBlock | conditionalBlock | terminatingBlock))? |
-          (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
         ) |
-        (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
+        elseif_Group returningBlock (elseif_Group returningCoverBlock)* (
           (else openToConditionalBlock)? |
-          (caseElseif | elseif) openToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          elseif_Group openToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
         ) 
       ) |
-      (caseElseif | elseif) openBlock ((caseElseif | elseif) openCoverBlock)* (
+      elseif_Group openBlock (elseif_Group openCoverBlock)* (
         else returningToConditionalBlock |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (caseElseif | elseif) interruptingToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif_Group interruptingToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
           (else (returningBlock | conditionalBlock | terminatingBlock))? |
-          (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
         ) 
       ) |
-      (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
+      elseif_Group returningBlock (elseif_Group returningCoverBlock)* (
         (else openToConditionalBlock)? |
-        (caseElseif | elseif) openToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group openToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) 
     ) 'end' conditionalTrail |
     (
       else conditionalBlock |
-      (caseElseif | elseif) conditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-      (caseElseif | elseif) interruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+      elseif_Group conditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+      elseif_Group interruptibleBlock (elseif_Group interruptibleCoverBlock)* (
         else returningToConditionalBlock |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) |
-      (caseElseif | elseif) interruptingBlock ((caseElseif | elseif) interruptingCoverBlock)* (
+      elseif_Group interruptingBlock (elseif_Group interruptingCoverBlock)* (
         else conditionalBlock |
-        (caseElseif | elseif) conditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (caseElseif | elseif) openToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+        elseif_Group conditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif_Group openToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
           else returningToConditionalBlock |
-          (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
         ) |
-        (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
+        elseif_Group returningBlock (elseif_Group returningCoverBlock)* (
           (else openToConditionalBlock)? |
-          (caseElseif | elseif) openToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          elseif_Group openToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
         ) 
       ) |
-      (caseElseif | elseif) openBlock ((caseElseif | elseif) openCoverBlock)* (
+      elseif_Group openBlock (elseif_Group openCoverBlock)* (
         else returningToConditionalBlock |
-        (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? |
-        (caseElseif | elseif) interruptingToInterruptibleBlock ((caseElseif | elseif) interruptibleCoverBlock)* (
+        elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? |
+        elseif_Group interruptingToInterruptibleBlock (elseif_Group interruptibleCoverBlock)* (
           else returningToConditionalBlock |
-          (caseElseif | elseif) returningToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+          elseif_Group returningToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
         ) 
       ) |
-      (caseElseif | elseif) returningBlock ((caseElseif | elseif) returningCoverBlock)* (
+      elseif_Group returningBlock (elseif_Group returningCoverBlock)* (
         (else openToConditionalBlock)? |
-        (caseElseif | elseif) openToConditionalBlock ((caseElseif | elseif) conditionalCoverBlock)* (else conditionalCoverBlock)? 
+        elseif_Group openToConditionalBlock (elseif_Group conditionalCoverBlock)* (else conditionalCoverBlock)? 
       ) 
     ) 'end' interruptibleCoverTrail 
   );
@@ -964,14 +973,14 @@ whileStatementFreeInterrupted:
 // but we would need to guarantee that only `continue` appears.
 whileStatementTerminating:
   // Body either throws or keeps looping forever
-  whileTrue freeBlock 'end' ignoredTrail;
+  whileTrue freeBlock 'end' ignoredTrail_Group;
 
 /*
 // `while true do` could be returning but since a returning block
 // may also interrupt, we cannot guarantee that it won't interrupt here.
 whileStatementReturning:
   // Body may return, trail is ignored
-  whileTrue returningToConditionalBlock 'end' ignoredTrail;
+  whileTrue returningToConditionalBlock 'end' ignoredTrail_Group;
 */
 
 whileStatementReturningTrail:
@@ -996,13 +1005,13 @@ repeatStatementFreeInterrupted:
 
 repeatStatementTerminating:
   // Body always throws and condition is never checked
-  'repeat' terminatingBlock until ignoredTrail;
+  'repeat' terminatingBlock until ignoredTrail_Group;
 
 /*
 // Same issue as with returning `while true do`.
 repeatStatementReturning:
   // Body may return, trail is ignored
-  'repeat' returningBlock until ignoredTrail;
+  'repeat' returningBlock until ignoredTrail_Group;
 */
 
 repeatStatementReturningTrail:
@@ -1085,7 +1094,7 @@ switchStatementFreeInterrupted:
 
 // Having no branch is technically invalid, but is handled through code.
 switchStatementTerminating:
-  switch (case terminatingBlock)* (else terminatingBlock)? 'end' ignoredTrail;
+  switch (case terminatingBlock)* (else terminatingBlock)? 'end' ignoredTrail_Group;
 
 // An "interrupted" branch means another must be entered, so such a branch
 // does not affect the statement's category.
@@ -1093,7 +1102,7 @@ switchStatementTerminatingInterrupted:
   switch (case terminatingBlock)* (
     case interruptingBlock (case interruptingCoverBlock)* (else interruptingCoverBlock)? |
     else interruptingBlock
-  ) 'end' ignoredTrail;
+  ) 'end' ignoredTrail_Group;
 
 // The following rules are auto-generated.
 
@@ -1101,34 +1110,34 @@ switchStatementReturning:
   switch (
     case interruptingBlock (case interruptingCoverBlock)* (
       case returningBlock (case returningCoverBlock)* (
-        'end' ignoredTrail |
-        else returningCoverBlock 'end' ignoredTrail |
-        else terminatingBlock 'end' ignoredTrail 
+        'end' ignoredTrail_Group |
+        else returningCoverBlock 'end' ignoredTrail_Group |
+        else terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      else returningBlock 'end' ignoredTrail 
+      else returningBlock 'end' ignoredTrail_Group 
     ) |
     case returningBlock (case returningCoverBlock)* (
-      'end' ignoredTrail |
-      else returningCoverBlock 'end' ignoredTrail |
-      else terminatingBlock 'end' ignoredTrail 
+      'end' ignoredTrail_Group |
+      else returningCoverBlock 'end' ignoredTrail_Group |
+      else terminatingBlock 'end' ignoredTrail_Group 
     ) |
     case terminatingBlock (case terminatingBlock)* (
       case interruptingBlock (case interruptingCoverBlock)* (
         case returningBlock (case returningCoverBlock)* (
-          'end' ignoredTrail |
-          else returningCoverBlock 'end' ignoredTrail |
-          else terminatingBlock 'end' ignoredTrail 
+          'end' ignoredTrail_Group |
+          else returningCoverBlock 'end' ignoredTrail_Group |
+          else terminatingBlock 'end' ignoredTrail_Group 
         ) |
-        else returningBlock 'end' ignoredTrail 
+        else returningBlock 'end' ignoredTrail_Group 
       ) |
       case returningBlock (case returningCoverBlock)* (
-        'end' ignoredTrail |
-        else returningCoverBlock 'end' ignoredTrail |
-        else terminatingBlock 'end' ignoredTrail 
+        'end' ignoredTrail_Group |
+        else returningCoverBlock 'end' ignoredTrail_Group |
+        else terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      else returningBlock 'end' ignoredTrail 
+      else returningBlock 'end' ignoredTrail_Group 
     ) |
-    else returningBlock 'end' ignoredTrail 
+    else returningBlock 'end' ignoredTrail_Group 
   );
 
 switchStatementReturningTrail:
@@ -1403,203 +1412,206 @@ try:
 finallyBranch:
   'finally';
 
+catch_Group:
+  case | catchCase;
+
 catchCase:
   'catch' (pattern whenClause? | whenClause) 'do';
 
 // Free-standing (may throw from all branches but this is not preferred).
 // Branches may be interrupting but this is not currently supported.
 tryCatchStatementFree:
-  try interruptibleCoverBlock ((case | catchCase) interruptibleCoverBlock)* 'end';
+  try interruptibleCoverBlock (catch_Group interruptibleCoverBlock)* 'end';
 
 tryFinallyStatementFree:
   try interruptibleCoverBlock finallyBranch interruptibleCoverBlock 'end';
 
 tryCatchFinallyStatementFree:
-  try interruptibleCoverBlock ((case | catchCase) interruptibleCoverBlock)+ finallyBranch interruptibleCoverBlock 'end';
+  try interruptibleCoverBlock (catch_Group interruptibleCoverBlock)+ finallyBranch interruptibleCoverBlock 'end';
 
 /*
 // Ignoring interrupting
 tryCatchStatementTerminating:
-  try terminatingBlock ((case | catchCase) terminatingBlock)* 'end' ignoredTrail;
+  try terminatingBlock (catch_Group terminatingBlock)* 'end' ignoredTrail_Group;
 
 // At least one block must be terminating.
 tryFinallyStatementTerminating:
   try (
     terminatingBlock finallyBranch interruptibleCoverBlock |
     interruptibleCoverBlock finallyBranch terminatingBlock
-  ) 'end' ignoredTrail;
+  ) 'end' ignoredTrail_Group;
 
 tryCatchFinallyStatementTerminating:
   try (
-    terminatingBlock ((case | catchCase) terminatingBlock)+ finallyBranch interruptibleCoverBlock |
-    interruptibleCoverBlock ((case | catchCase) interruptibleCoverBlock)+ finallyBranch terminatingBlock
-  ) 'end' ignoredTrail;
+    terminatingBlock (catch_Group terminatingBlock)+ finallyBranch interruptibleCoverBlock |
+    interruptibleCoverBlock (catch_Group interruptibleCoverBlock)+ finallyBranch terminatingBlock
+  ) 'end' ignoredTrail_Group;
 */
 
 // The following rules are auto-generated.
 
 tryCatchStatementTerminating:
   try interruptingBlock (
-    (case | catchCase) interruptingCoverBlock ((case | catchCase) interruptingCoverBlock)* 'end' ignoredTrail |
-    'end' ignoredTrail 
+    catch_Group interruptingCoverBlock (catch_Group interruptingCoverBlock)* 'end' ignoredTrail_Group |
+    'end' ignoredTrail_Group 
   ) |
   try terminatingBlock (
-    (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* 'end' ignoredTrail |
-    (case | catchCase) terminatingBlock ((case | catchCase) terminatingBlock)* (
-      (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* 'end' ignoredTrail |
-      'end' ignoredTrail 
+    catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* 'end' ignoredTrail_Group |
+    catch_Group terminatingBlock (catch_Group terminatingBlock)* (
+      catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* 'end' ignoredTrail_Group |
+      'end' ignoredTrail_Group 
     ) |
-    'end' ignoredTrail 
+    'end' ignoredTrail_Group 
   ) ;
 
 tryCatchStatementConditional:
   try conditionalBlock (
     |
-    (case | catchCase) conditionalCoverBlock ((case | catchCase) conditionalCoverBlock)* 
+    catch_Group conditionalCoverBlock (catch_Group conditionalCoverBlock)* 
   ) 'end' conditionalCoverTrail |
   try interruptibleBlock (
     (
       |
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptibleCoverBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptibleCoverBlock (catch_Group interruptibleCoverBlock)* (
         |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) 
     ) 'end' conditionalTrail |
     (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptibleCoverBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptibleCoverBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
     ) 'end' interruptibleCoverTrail 
   ) |
   try interruptingBlock (
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
         |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) interruptingCoverBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group interruptingCoverBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
     ) 'end' conditionalTrail |
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptingCoverBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptingCoverBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
     ) 'end' interruptibleCoverTrail 
   ) |
   try openBlock (
     (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
         |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) openCoverBlock ((case | catchCase) openCoverBlock)* (
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group openCoverBlock (catch_Group openCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) 
       ) 
     ) 'end' conditionalTrail |
     (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) openCoverBlock ((case | catchCase) openCoverBlock)* (
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group openCoverBlock (catch_Group openCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) 
     ) 'end' interruptibleCoverTrail 
   ) |
   try returningBlock (
-    (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-    (case | catchCase) returningCoverBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+    catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* |
+    catch_Group returningCoverBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
   ) 'end' conditionalCoverTrail |
   try terminatingBlock (
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
         |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group openBlock (catch_Group openCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) terminatingBlock ((case | catchCase) terminatingBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group terminatingBlock (catch_Group terminatingBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
           |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) |
-        (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-          (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-          (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+          catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+          catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
             |
-            (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+            catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
           ) |
-          (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+          catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) |
-        (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-          (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group openBlock (catch_Group openCoverBlock)* (
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+          catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
             |
-            (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+            catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
           ) 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) 
     ) 'end' conditionalTrail |
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group openBlock (catch_Group openCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) terminatingBlock ((case | catchCase) terminatingBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-          (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-          (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-          (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group terminatingBlock (catch_Group terminatingBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+          catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+          catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+          catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) |
-        (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-          (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group openBlock (catch_Group openCoverBlock)* (
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+          catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) 
     ) 'end' interruptibleCoverTrail 
   ) ;
@@ -1608,19 +1620,19 @@ tryCatchStatementConditional:
 
 tryCatchStatementReturning:
   try interruptingBlock (
-    (case | catchCase) interruptingCoverBlock ((case | catchCase) interruptingCoverBlock)* (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* 'end' ignoredTrail |
-    (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* 'end' ignoredTrail 
+    catch_Group interruptingCoverBlock (catch_Group interruptingCoverBlock)* catch_Group returningBlock (catch_Group returningCoverBlock)* 'end' ignoredTrail_Group |
+    catch_Group returningBlock (catch_Group returningCoverBlock)* 'end' ignoredTrail_Group 
   ) |
   try returningBlock (
-    (case | catchCase) returningCoverBlock ((case | catchCase) returningCoverBlock)* 'end' ignoredTrail |
-    'end' ignoredTrail 
+    catch_Group returningCoverBlock (catch_Group returningCoverBlock)* 'end' ignoredTrail_Group |
+    'end' ignoredTrail_Group 
   ) |
   try terminatingBlock (
-    (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* 'end' ignoredTrail |
-    (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* 'end' ignoredTrail |
-    (case | catchCase) terminatingBlock ((case | catchCase) terminatingBlock)* (
-      (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* 'end' ignoredTrail |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* 'end' ignoredTrail 
+    catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* catch_Group returningBlock (catch_Group returningCoverBlock)* 'end' ignoredTrail_Group |
+    catch_Group returningBlock (catch_Group returningCoverBlock)* 'end' ignoredTrail_Group |
+    catch_Group terminatingBlock (catch_Group terminatingBlock)* (
+      catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* catch_Group returningBlock (catch_Group returningCoverBlock)* 'end' ignoredTrail_Group |
+      catch_Group returningBlock (catch_Group returningCoverBlock)* 'end' ignoredTrail_Group 
     ) 
   ) ;
 
@@ -1628,151 +1640,151 @@ tryCatchStatementReturning:
 tryCatchStatementReturningTrail:
   try conditionalBlock (
     |
-    (case | catchCase) conditionalCoverBlock ((case | catchCase) conditionalCoverBlock)* 
+    catch_Group conditionalCoverBlock (catch_Group conditionalCoverBlock)* 
   ) 'end' returningCoverTrail |
   try interruptibleBlock (
     (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptibleCoverBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptibleCoverBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
     ) 'end' interruptingCoverTrail |
     (
       |
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptibleCoverBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptibleCoverBlock (catch_Group interruptibleCoverBlock)* (
         |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) 
     ) 'end' returningTrail 
   ) |
   try interruptingBlock (
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptingCoverBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptingCoverBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
     ) 'end' interruptingCoverTrail |
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
         |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) interruptingCoverBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group interruptingCoverBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
     ) 'end' returningTrail 
   ) |
   try openBlock (
     (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) openCoverBlock ((case | catchCase) openCoverBlock)* (
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group openCoverBlock (catch_Group openCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) 
     ) 'end' interruptingCoverTrail |
     (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
         |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) openCoverBlock ((case | catchCase) openCoverBlock)* (
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group openCoverBlock (catch_Group openCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) 
       ) 
     ) 'end' returningTrail 
   ) |
   try returningBlock (
-    (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-    (case | catchCase) returningCoverBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+    catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* |
+    catch_Group returningCoverBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
   ) 'end' returningCoverTrail |
   try terminatingBlock (
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group openBlock (catch_Group openCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) terminatingBlock ((case | catchCase) terminatingBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-          (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-          (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-          (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group terminatingBlock (catch_Group terminatingBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+          catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+          catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+          catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) |
-        (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-          (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group openBlock (catch_Group openCoverBlock)* (
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+          catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) 
     ) 'end' interruptingCoverTrail |
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
         |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) |
-      (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group openBlock (catch_Group openCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-      (case | catchCase) terminatingBlock ((case | catchCase) terminatingBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-        (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* |
+      catch_Group terminatingBlock (catch_Group terminatingBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+        catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
           |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) |
-        (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-          (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-          (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+          catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* |
+          catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
             |
-            (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+            catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
           ) |
-          (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+          catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
         ) |
-        (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* |
-          (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group openBlock (catch_Group openCoverBlock)* (
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* |
+          catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
             |
-            (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+            catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* 
           ) 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* 
       ) 
     ) 'end' returningTrail 
   ) ;
@@ -1780,14 +1792,14 @@ tryCatchStatementReturningTrail:
 
 tryFinallyStatementTerminating:
   try openToInterruptibleBlock (
-    finallyBranch interruptingBlock 'end' ignoredTrail |
-    finallyBranch terminatingBlock 'end' ignoredTrail 
+    finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+    finallyBranch terminatingBlock 'end' ignoredTrail_Group 
   ) |
   try interruptingCoverBlock (
-    finallyBranch interruptibleBlock 'end' ignoredTrail |
-    finallyBranch interruptingBlock 'end' ignoredTrail |
-    finallyBranch openBlock 'end' ignoredTrail |
-    finallyBranch terminatingBlock 'end' ignoredTrail 
+    finallyBranch interruptibleBlock 'end' ignoredTrail_Group |
+    finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+    finallyBranch openBlock 'end' ignoredTrail_Group |
+    finallyBranch terminatingBlock 'end' ignoredTrail_Group 
   ) ;
 
 tryFinallyStatementConditional:
@@ -1805,24 +1817,24 @@ tryFinallyStatementConditional:
 
 tryFinallyStatementReturning:
   try conditionalBlock (
-    finallyBranch interruptingBlock 'end' ignoredTrail |
-    finallyBranch returningBlock 'end' ignoredTrail |
-    finallyBranch terminatingBlock 'end' ignoredTrail 
+    finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+    finallyBranch returningBlock 'end' ignoredTrail_Group |
+    finallyBranch terminatingBlock 'end' ignoredTrail_Group 
   ) |
   try openToInterruptibleBlock (
-    finallyBranch returningBlock 'end' ignoredTrail 
+    finallyBranch returningBlock 'end' ignoredTrail_Group 
   ) |
   try interruptingCoverBlock (
-    finallyBranch conditionalBlock 'end' ignoredTrail |
-    finallyBranch returningBlock 'end' ignoredTrail 
+    finallyBranch conditionalBlock 'end' ignoredTrail_Group |
+    finallyBranch returningBlock 'end' ignoredTrail_Group 
   ) |
   try returningBlock (
-    finallyBranch conditionalBlock 'end' ignoredTrail |
-    finallyBranch interruptibleBlock 'end' ignoredTrail |
-    finallyBranch interruptingBlock 'end' ignoredTrail |
-    finallyBranch openBlock 'end' ignoredTrail |
-    finallyBranch returningBlock 'end' ignoredTrail |
-    finallyBranch terminatingBlock 'end' ignoredTrail 
+    finallyBranch conditionalBlock 'end' ignoredTrail_Group |
+    finallyBranch interruptibleBlock 'end' ignoredTrail_Group |
+    finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+    finallyBranch openBlock 'end' ignoredTrail_Group |
+    finallyBranch returningBlock 'end' ignoredTrail_Group |
+    finallyBranch terminatingBlock 'end' ignoredTrail_Group 
   ) ;
 
 
@@ -1840,277 +1852,277 @@ tryFinallyStatementReturningTrail:
 
 tryCatchFinallyStatementTerminating:
   try interruptibleBlock (
-    (case | catchCase) interruptibleCoverBlock ((case | catchCase) interruptibleCoverBlock)* (
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group interruptibleCoverBlock (catch_Group interruptibleCoverBlock)* (
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) 
   ) |
   try interruptingBlock (
-    (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) interruptingCoverBlock ((case | catchCase) interruptingCoverBlock)* (
-      (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group interruptingCoverBlock (catch_Group interruptingCoverBlock)* (
+      catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch interruptibleBlock 'end' ignoredTrail |
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch openBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+      finallyBranch interruptibleBlock 'end' ignoredTrail_Group |
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch openBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) 
   ) |
   try openBlock (
-    (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) openCoverBlock ((case | catchCase) openCoverBlock)* (
-      (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group openCoverBlock (catch_Group openCoverBlock)* (
+      catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) 
   ) |
   try terminatingBlock (
-    (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-      (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+      catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch interruptibleBlock 'end' ignoredTrail |
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch openBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+      finallyBranch interruptibleBlock 'end' ignoredTrail_Group |
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch openBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
-      (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group openBlock (catch_Group openCoverBlock)* (
+      catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) terminatingBlock ((case | catchCase) terminatingBlock)* (
-      (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group terminatingBlock (catch_Group terminatingBlock)* (
+      catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-          finallyBranch interruptingBlock 'end' ignoredTrail |
-          finallyBranch terminatingBlock 'end' ignoredTrail 
+      catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+          finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+          finallyBranch terminatingBlock 'end' ignoredTrail_Group 
         ) |
-        finallyBranch interruptibleBlock 'end' ignoredTrail |
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch openBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+        finallyBranch interruptibleBlock 'end' ignoredTrail_Group |
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch openBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-          finallyBranch interruptingBlock 'end' ignoredTrail |
-          finallyBranch terminatingBlock 'end' ignoredTrail 
+      catch_Group openBlock (catch_Group openCoverBlock)* (
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+          finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+          finallyBranch terminatingBlock 'end' ignoredTrail_Group 
         ) |
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch interruptibleBlock 'end' ignoredTrail |
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch openBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+      finallyBranch interruptibleBlock 'end' ignoredTrail_Group |
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch openBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) 
   ) ;
 
 tryCatchFinallyStatementConditional:
-  try conditionalBlock (case | catchCase) conditionalCoverBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 'end' conditionalCoverTrail |
+  try conditionalBlock catch_Group conditionalCoverBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 'end' conditionalCoverTrail |
   try interruptibleBlock (
     (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) interruptibleCoverBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group interruptibleCoverBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch openToConditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) 
     ) 'end' conditionalTrail |
     (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) interruptibleCoverBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group interruptibleCoverBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch conditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) 
     ) 'end' interruptibleCoverTrail 
   ) |
   try interruptingBlock (
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch openToConditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) interruptingCoverBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group interruptingCoverBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch openToConditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
     ) 'end' conditionalTrail |
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch conditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) interruptingCoverBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group interruptingCoverBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch conditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
     ) 'end' interruptibleCoverTrail 
   ) |
   try openBlock (
     (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch openToConditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) openCoverBlock ((case | catchCase) openCoverBlock)* (
+      catch_Group openCoverBlock (catch_Group openCoverBlock)* (
         finallyBranch (conditionalBlock | interruptibleBlock) |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch openToConditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) 
       ) 
     ) 'end' conditionalTrail |
     (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch conditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) openCoverBlock ((case | catchCase) openCoverBlock)* (
+      catch_Group openCoverBlock (catch_Group openCoverBlock)* (
         finallyBranch conditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch conditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) 
       ) 
     ) 'end' interruptibleCoverTrail 
   ) |
   try returningBlock (
-    (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-    (case | catchCase) returningCoverBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+    catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+    catch_Group returningCoverBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
   ) 'end' conditionalCoverTrail |
   try terminatingBlock (
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch openToConditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch openToConditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
+      catch_Group openBlock (catch_Group openCoverBlock)* (
         finallyBranch (conditionalBlock | interruptibleBlock) |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch openToConditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) terminatingBlock ((case | catchCase) terminatingBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group terminatingBlock (catch_Group terminatingBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch openToConditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-          (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-          (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+          catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+          catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
             finallyBranch openToConditionalBlock |
-            (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+            catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
           ) |
-          (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
+        catch_Group openBlock (catch_Group openCoverBlock)* (
           finallyBranch (conditionalBlock | interruptibleBlock) |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-          (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+          catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
             finallyBranch openToConditionalBlock |
-            (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+            catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
           ) 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) 
     ) 'end' conditionalTrail |
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch conditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch conditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
+      catch_Group openBlock (catch_Group openCoverBlock)* (
         finallyBranch conditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch conditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) terminatingBlock ((case | catchCase) terminatingBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group terminatingBlock (catch_Group terminatingBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch conditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-          (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-          (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+          catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+          catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
             finallyBranch conditionalBlock |
-            (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+            catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
           ) |
-          (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
+        catch_Group openBlock (catch_Group openCoverBlock)* (
           finallyBranch conditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-          (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+          catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
             finallyBranch conditionalBlock |
-            (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+            catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
           ) 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) 
     ) 'end' interruptibleCoverTrail 
   ) ;
@@ -2119,471 +2131,471 @@ tryCatchFinallyStatementConditional:
 
 tryCatchFinallyStatementReturning:
   try conditionalBlock (
-    (case | catchCase) conditionalCoverBlock ((case | catchCase) conditionalCoverBlock)* (
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch returningBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group conditionalCoverBlock (catch_Group conditionalCoverBlock)* (
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch returningBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) 
   ) |
   try interruptibleBlock (
-    (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch returningBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch returningBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) interruptibleCoverBlock ((case | catchCase) interruptibleCoverBlock)* (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group interruptibleCoverBlock (catch_Group interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch returningBlock 'end' ignoredTrail 
+      finallyBranch returningBlock 'end' ignoredTrail_Group 
     ) 
   ) |
   try interruptingBlock (
-    (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch returningBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* (
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch returningBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch returningBlock 'end' ignoredTrail 
+      finallyBranch returningBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) interruptingCoverBlock ((case | catchCase) interruptingCoverBlock)* (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group interruptingCoverBlock (catch_Group interruptingCoverBlock)* (
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-          finallyBranch interruptingBlock 'end' ignoredTrail |
-          finallyBranch returningBlock 'end' ignoredTrail |
-          finallyBranch terminatingBlock 'end' ignoredTrail 
+      catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+          finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+          finallyBranch returningBlock 'end' ignoredTrail_Group |
+          finallyBranch terminatingBlock 'end' ignoredTrail_Group 
         ) |
-        finallyBranch returningBlock 'end' ignoredTrail 
+        finallyBranch returningBlock 'end' ignoredTrail_Group 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (
-        (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-          finallyBranch interruptingBlock 'end' ignoredTrail |
-          finallyBranch returningBlock 'end' ignoredTrail |
-          finallyBranch terminatingBlock 'end' ignoredTrail 
+      catch_Group returningBlock (catch_Group returningCoverBlock)* (
+        catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* (
+          finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+          finallyBranch returningBlock 'end' ignoredTrail_Group |
+          finallyBranch terminatingBlock 'end' ignoredTrail_Group 
         ) |
-        finallyBranch conditionalBlock 'end' ignoredTrail |
-        finallyBranch interruptibleBlock 'end' ignoredTrail |
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch openBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+        finallyBranch conditionalBlock 'end' ignoredTrail_Group |
+        finallyBranch interruptibleBlock 'end' ignoredTrail_Group |
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch openBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch conditionalBlock 'end' ignoredTrail |
-      finallyBranch returningBlock 'end' ignoredTrail 
+      finallyBranch conditionalBlock 'end' ignoredTrail_Group |
+      finallyBranch returningBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (
-      (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group returningBlock (catch_Group returningCoverBlock)* (
+      catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch conditionalBlock 'end' ignoredTrail |
-      finallyBranch interruptibleBlock 'end' ignoredTrail |
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch openBlock 'end' ignoredTrail |
-      finallyBranch returningBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+      finallyBranch conditionalBlock 'end' ignoredTrail_Group |
+      finallyBranch interruptibleBlock 'end' ignoredTrail_Group |
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch openBlock 'end' ignoredTrail_Group |
+      finallyBranch returningBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) 
   ) |
   try openBlock (
-    (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch returningBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch returningBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch returningBlock 'end' ignoredTrail 
+      finallyBranch returningBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) openCoverBlock ((case | catchCase) openCoverBlock)* (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group openCoverBlock (catch_Group openCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-          finallyBranch interruptingBlock 'end' ignoredTrail |
-          finallyBranch returningBlock 'end' ignoredTrail |
-          finallyBranch terminatingBlock 'end' ignoredTrail 
+      catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+          finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+          finallyBranch returningBlock 'end' ignoredTrail_Group |
+          finallyBranch terminatingBlock 'end' ignoredTrail_Group 
         ) |
-        finallyBranch returningBlock 'end' ignoredTrail 
+        finallyBranch returningBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch returningBlock 'end' ignoredTrail 
+      finallyBranch returningBlock 'end' ignoredTrail_Group 
     ) 
   ) |
   try returningBlock (
-    (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch returningBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* (
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch returningBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) returningCoverBlock ((case | catchCase) returningCoverBlock)* (
-      (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group returningCoverBlock (catch_Group returningCoverBlock)* (
+      catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch conditionalBlock 'end' ignoredTrail |
-      finallyBranch interruptibleBlock 'end' ignoredTrail |
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch openBlock 'end' ignoredTrail |
-      finallyBranch returningBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+      finallyBranch conditionalBlock 'end' ignoredTrail_Group |
+      finallyBranch interruptibleBlock 'end' ignoredTrail_Group |
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch openBlock 'end' ignoredTrail_Group |
+      finallyBranch returningBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) 
   ) |
   try terminatingBlock (
-    (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch returningBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* (
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch returningBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch returningBlock 'end' ignoredTrail 
+      finallyBranch returningBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-          finallyBranch interruptingBlock 'end' ignoredTrail |
-          finallyBranch returningBlock 'end' ignoredTrail |
-          finallyBranch terminatingBlock 'end' ignoredTrail 
+      catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+          finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+          finallyBranch returningBlock 'end' ignoredTrail_Group |
+          finallyBranch terminatingBlock 'end' ignoredTrail_Group 
         ) |
-        finallyBranch returningBlock 'end' ignoredTrail 
+        finallyBranch returningBlock 'end' ignoredTrail_Group 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (
-        (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-          finallyBranch interruptingBlock 'end' ignoredTrail |
-          finallyBranch returningBlock 'end' ignoredTrail |
-          finallyBranch terminatingBlock 'end' ignoredTrail 
+      catch_Group returningBlock (catch_Group returningCoverBlock)* (
+        catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* (
+          finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+          finallyBranch returningBlock 'end' ignoredTrail_Group |
+          finallyBranch terminatingBlock 'end' ignoredTrail_Group 
         ) |
-        finallyBranch conditionalBlock 'end' ignoredTrail |
-        finallyBranch interruptibleBlock 'end' ignoredTrail |
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch openBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+        finallyBranch conditionalBlock 'end' ignoredTrail_Group |
+        finallyBranch interruptibleBlock 'end' ignoredTrail_Group |
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch openBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch conditionalBlock 'end' ignoredTrail |
-      finallyBranch returningBlock 'end' ignoredTrail 
+      finallyBranch conditionalBlock 'end' ignoredTrail_Group |
+      finallyBranch returningBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group openBlock (catch_Group openCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-          finallyBranch interruptingBlock 'end' ignoredTrail |
-          finallyBranch returningBlock 'end' ignoredTrail |
-          finallyBranch terminatingBlock 'end' ignoredTrail 
+      catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+          finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+          finallyBranch returningBlock 'end' ignoredTrail_Group |
+          finallyBranch terminatingBlock 'end' ignoredTrail_Group 
         ) |
-        finallyBranch returningBlock 'end' ignoredTrail 
+        finallyBranch returningBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch returningBlock 'end' ignoredTrail 
+      finallyBranch returningBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (
-      (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group returningBlock (catch_Group returningCoverBlock)* (
+      catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch conditionalBlock 'end' ignoredTrail |
-      finallyBranch interruptibleBlock 'end' ignoredTrail |
-      finallyBranch interruptingBlock 'end' ignoredTrail |
-      finallyBranch openBlock 'end' ignoredTrail |
-      finallyBranch returningBlock 'end' ignoredTrail |
-      finallyBranch terminatingBlock 'end' ignoredTrail 
+      finallyBranch conditionalBlock 'end' ignoredTrail_Group |
+      finallyBranch interruptibleBlock 'end' ignoredTrail_Group |
+      finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+      finallyBranch openBlock 'end' ignoredTrail_Group |
+      finallyBranch returningBlock 'end' ignoredTrail_Group |
+      finallyBranch terminatingBlock 'end' ignoredTrail_Group 
     ) |
-    (case | catchCase) terminatingBlock ((case | catchCase) terminatingBlock)* (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+    catch_Group terminatingBlock (catch_Group terminatingBlock)* (
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* (
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-          finallyBranch interruptingBlock 'end' ignoredTrail |
-          finallyBranch returningBlock 'end' ignoredTrail |
-          finallyBranch terminatingBlock 'end' ignoredTrail 
+      catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+          finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+          finallyBranch returningBlock 'end' ignoredTrail_Group |
+          finallyBranch terminatingBlock 'end' ignoredTrail_Group 
         ) |
-        finallyBranch returningBlock 'end' ignoredTrail 
+        finallyBranch returningBlock 'end' ignoredTrail_Group 
       ) |
-      (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-          finallyBranch interruptingBlock 'end' ignoredTrail |
-          finallyBranch returningBlock 'end' ignoredTrail |
-          finallyBranch terminatingBlock 'end' ignoredTrail 
+      catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* (
+          finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+          finallyBranch returningBlock 'end' ignoredTrail_Group |
+          finallyBranch terminatingBlock 'end' ignoredTrail_Group 
         ) |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-            finallyBranch interruptingBlock 'end' ignoredTrail |
-            finallyBranch returningBlock 'end' ignoredTrail |
-            finallyBranch terminatingBlock 'end' ignoredTrail 
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+            finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+            finallyBranch returningBlock 'end' ignoredTrail_Group |
+            finallyBranch terminatingBlock 'end' ignoredTrail_Group 
           ) |
-          finallyBranch returningBlock 'end' ignoredTrail 
+          finallyBranch returningBlock 'end' ignoredTrail_Group 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (
-          (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-            finallyBranch interruptingBlock 'end' ignoredTrail |
-            finallyBranch returningBlock 'end' ignoredTrail |
-            finallyBranch terminatingBlock 'end' ignoredTrail 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* (
+          catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* (
+            finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+            finallyBranch returningBlock 'end' ignoredTrail_Group |
+            finallyBranch terminatingBlock 'end' ignoredTrail_Group 
           ) |
-          finallyBranch conditionalBlock 'end' ignoredTrail |
-          finallyBranch interruptibleBlock 'end' ignoredTrail |
-          finallyBranch interruptingBlock 'end' ignoredTrail |
-          finallyBranch openBlock 'end' ignoredTrail |
-          finallyBranch returningBlock 'end' ignoredTrail |
-          finallyBranch terminatingBlock 'end' ignoredTrail 
+          finallyBranch conditionalBlock 'end' ignoredTrail_Group |
+          finallyBranch interruptibleBlock 'end' ignoredTrail_Group |
+          finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+          finallyBranch openBlock 'end' ignoredTrail_Group |
+          finallyBranch returningBlock 'end' ignoredTrail_Group |
+          finallyBranch terminatingBlock 'end' ignoredTrail_Group 
         ) |
-        finallyBranch conditionalBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail 
+        finallyBranch conditionalBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group 
       ) |
-      (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-          finallyBranch interruptingBlock 'end' ignoredTrail |
-          finallyBranch returningBlock 'end' ignoredTrail |
-          finallyBranch terminatingBlock 'end' ignoredTrail 
+      catch_Group openBlock (catch_Group openCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+          finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+          finallyBranch returningBlock 'end' ignoredTrail_Group |
+          finallyBranch terminatingBlock 'end' ignoredTrail_Group 
         ) |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-            finallyBranch interruptingBlock 'end' ignoredTrail |
-            finallyBranch returningBlock 'end' ignoredTrail |
-            finallyBranch terminatingBlock 'end' ignoredTrail 
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* (
+            finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+            finallyBranch returningBlock 'end' ignoredTrail_Group |
+            finallyBranch terminatingBlock 'end' ignoredTrail_Group 
           ) |
-          finallyBranch returningBlock 'end' ignoredTrail 
+          finallyBranch returningBlock 'end' ignoredTrail_Group 
         ) |
-        finallyBranch returningBlock 'end' ignoredTrail 
+        finallyBranch returningBlock 'end' ignoredTrail_Group 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (
-        (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* (
-          finallyBranch interruptingBlock 'end' ignoredTrail |
-          finallyBranch returningBlock 'end' ignoredTrail |
-          finallyBranch terminatingBlock 'end' ignoredTrail 
+      catch_Group returningBlock (catch_Group returningCoverBlock)* (
+        catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* (
+          finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+          finallyBranch returningBlock 'end' ignoredTrail_Group |
+          finallyBranch terminatingBlock 'end' ignoredTrail_Group 
         ) |
-        finallyBranch conditionalBlock 'end' ignoredTrail |
-        finallyBranch interruptibleBlock 'end' ignoredTrail |
-        finallyBranch interruptingBlock 'end' ignoredTrail |
-        finallyBranch openBlock 'end' ignoredTrail |
-        finallyBranch returningBlock 'end' ignoredTrail |
-        finallyBranch terminatingBlock 'end' ignoredTrail 
+        finallyBranch conditionalBlock 'end' ignoredTrail_Group |
+        finallyBranch interruptibleBlock 'end' ignoredTrail_Group |
+        finallyBranch interruptingBlock 'end' ignoredTrail_Group |
+        finallyBranch openBlock 'end' ignoredTrail_Group |
+        finallyBranch returningBlock 'end' ignoredTrail_Group |
+        finallyBranch terminatingBlock 'end' ignoredTrail_Group 
       ) |
-      finallyBranch conditionalBlock 'end' ignoredTrail |
-      finallyBranch returningBlock 'end' ignoredTrail 
+      finallyBranch conditionalBlock 'end' ignoredTrail_Group |
+      finallyBranch returningBlock 'end' ignoredTrail_Group 
     ) 
   ) ;
 
 
 tryCatchFinallyStatementReturningTrail:
-  try conditionalBlock (case | catchCase) conditionalCoverBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 'end' returningCoverTrail |
+  try conditionalBlock catch_Group conditionalCoverBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 'end' returningCoverTrail |
   try interruptibleBlock (
     (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) interruptibleCoverBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group interruptibleCoverBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch conditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) 
     ) 'end' interruptingCoverTrail |
     (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) interruptibleCoverBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group interruptibleCoverBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch openToConditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) 
     ) 'end' returningTrail 
   ) |
   try interruptingBlock (
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch conditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) interruptingCoverBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group interruptingCoverBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch conditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
     ) 'end' interruptingCoverTrail |
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch openToConditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) interruptingCoverBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group interruptingCoverBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch openToConditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
     ) 'end' returningTrail 
   ) |
   try openBlock (
     (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch conditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) openCoverBlock ((case | catchCase) openCoverBlock)* (
+      catch_Group openCoverBlock (catch_Group openCoverBlock)* (
         finallyBranch conditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch conditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) 
       ) 
     ) 'end' interruptingCoverTrail |
     (
-      (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch openToConditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) openCoverBlock ((case | catchCase) openCoverBlock)* (
+      catch_Group openCoverBlock (catch_Group openCoverBlock)* (
         finallyBranch (conditionalBlock | interruptibleBlock) |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch openToConditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) 
       ) 
     ) 'end' returningTrail 
   ) |
   try returningBlock (
-    (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-    (case | catchCase) returningCoverBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+    catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+    catch_Group returningCoverBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
   ) 'end' returningCoverTrail |
   try terminatingBlock (
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch conditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch conditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
+      catch_Group openBlock (catch_Group openCoverBlock)* (
         finallyBranch conditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch conditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) terminatingBlock ((case | catchCase) terminatingBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group terminatingBlock (catch_Group terminatingBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch conditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-          (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-          (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+          catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+          catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
             finallyBranch conditionalBlock |
-            (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+            catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
           ) |
-          (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
+        catch_Group openBlock (catch_Group openCoverBlock)* (
           finallyBranch conditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-          (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+          catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
             finallyBranch conditionalBlock |
-            (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+            catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
           ) 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) 
     ) 'end' interruptingCoverTrail |
     (
-      (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
         finallyBranch openToConditionalBlock |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch openToConditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) |
-      (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
+      catch_Group openBlock (catch_Group openCoverBlock)* (
         finallyBranch (conditionalBlock | interruptibleBlock) |
-        (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch openToConditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) 
       ) |
-      (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-      (case | catchCase) terminatingBlock ((case | catchCase) terminatingBlock)* (
-        (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-        (case | catchCase) interruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+      catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+      catch_Group terminatingBlock (catch_Group terminatingBlock)* (
+        catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+        catch_Group interruptibleBlock (catch_Group interruptibleCoverBlock)* (
           finallyBranch openToConditionalBlock |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) interruptingBlock ((case | catchCase) interruptingCoverBlock)* (
-          (case | catchCase) conditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-          (case | catchCase) openToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+        catch_Group interruptingBlock (catch_Group interruptingCoverBlock)* (
+          catch_Group conditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+          catch_Group openToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
             finallyBranch openToConditionalBlock |
-            (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+            catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
           ) |
-          (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+          catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
         ) |
-        (case | catchCase) openBlock ((case | catchCase) openCoverBlock)* (
+        catch_Group openBlock (catch_Group openCoverBlock)* (
           finallyBranch (conditionalBlock | interruptibleBlock) |
-          (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock |
-          (case | catchCase) interruptingToInterruptibleBlock ((case | catchCase) interruptibleCoverBlock)* (
+          catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock |
+          catch_Group interruptingToInterruptibleBlock (catch_Group interruptibleCoverBlock)* (
             finallyBranch openToConditionalBlock |
-            (case | catchCase) returningToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+            catch_Group returningToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
           ) 
         ) |
-        (case | catchCase) returningBlock ((case | catchCase) returningCoverBlock)* (case | catchCase) openToConditionalBlock ((case | catchCase) conditionalCoverBlock)* finallyBranch openToConditionalBlock 
+        catch_Group returningBlock (catch_Group returningCoverBlock)* catch_Group openToConditionalBlock (catch_Group conditionalCoverBlock)* finallyBranch openToConditionalBlock 
       ) 
     ) 'end' returningTrail 
   ) ;
@@ -2904,7 +2916,7 @@ logicExpr:
   )?;
 
 inlineIfExpr:
-  (caseIf | if) expression ((caseElseif | elseif) expression)* else (booleanExpr | atomicLogicExpr);
+  if_Group expression (elseif_Group expression)* else (booleanExpr | atomicLogicExpr);
 
 booleanExpr:
   relationalExpr (('&&' | '||') relationalExpr)*;

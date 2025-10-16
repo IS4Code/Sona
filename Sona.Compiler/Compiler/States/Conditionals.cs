@@ -617,17 +617,22 @@ namespace Sona.Compiler.States
         }
         #endregion
 
+        private void OnIgnoredTrailEnter(StatementFlags flags, ParserRuleContext context)
+        {
+            OnExitInner(flags, context);
+            if((flags & StatementFlags.OpenPath) == 0)
+            {
+                // `if true` was written previously
+                Out.WriteLine();
+                Out.Write("else ");
+            }
+        }
+
         public sealed override void EnterIgnoredTrail(IgnoredTrailContext context)
         {
             try
             {
-                OnExitInner(enterFlags, context);
-                if((enterFlags & StatementFlags.OpenPath) == 0)
-                {
-                    // `if true` was written previously
-                    Out.WriteLine();
-                    Out.Write("else ");
-                }
+                OnIgnoredTrailEnter(enterFlags, context);
             }
             finally
             {
@@ -647,13 +652,7 @@ namespace Sona.Compiler.States
 
         public sealed override void EnterIgnoredEmptyTrail(IgnoredEmptyTrailContext context)
         {
-            OnExitInner(enterFlags, context);
-            if((enterFlags & StatementFlags.OpenPath) == 0)
-            {
-                // `if true` was written previously
-                Out.WriteLine();
-                Out.Write("else ");
-            }
+            OnIgnoredTrailEnter(enterFlags, context);
             (ReturnScope ?? Defaults).WriteDefaultReturnStatement(context);
             // Possible to elide even further if empty trail is predicted
         }
