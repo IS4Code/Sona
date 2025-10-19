@@ -347,7 +347,7 @@ yieldEachStatement:
   'yield' spreadExpression;
 
 yieldBreakStatement:
-  YIELD_BREAK expression?;
+  YIELD_BREAK;
 
 yieldReturnStatement:
   YIELD_RETURN (expression | errorMissingExpression);

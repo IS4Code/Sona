@@ -70,20 +70,36 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal sealed class YieldBreakState : ArgumentStatementState
+    internal sealed class YieldBreakState : NodeState
     {
+        IReturnableStatementContext? returnScope;
         IComputationContext? computationScope;
+
+        IReturnableStatementContext ReturnScope => returnScope ?? Defaults;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
+            returnScope = FindContext<IReturnableStatementContext>();
             computationScope = FindContext<IComputationContext>();
         }
 
         public override void EnterYieldBreakStatement(YieldBreakStatementContext context)
         {
-            if(computationScope?.HasAnyFlag(ComputationFlags.IsCollection | ComputationFlags.IsComputation) != true)
+            if(computationScope?.HasFlag(ComputationFlags.IsCollection) ?? false)
+            {
+                // Always supported
+            }
+            else if(computationScope?.HasFlag(ComputationFlags.IsComputation) ?? false)
+            {
+                if(returnScope?.HasFlag(ReturnFlags.Indirect) ?? false)
+                {
+                    // There is no mechanism to indicate whether computation ends in `return` or `yield break`.
+                    Error("`yield break` in a computation block is not supported in other positions than the final returning statement.", context);
+                }
+            }
+            else
             {
                 Error("`yield break` is not allowed outside a collection or computation.", context);
             }
@@ -91,45 +107,17 @@ namespace Sona.Compiler.States
 
         public override void ExitYieldBreakStatement(YieldBreakStatementContext context)
         {
-            OnExit(context);
-
-            ExitState().ExitYieldBreakStatement(context);
-        }
-
-        protected sealed override void OnEnterExpression(ParserRuleContext context)
-        {
-            if(computationScope?.HasFlag(ComputationFlags.IsComputation) != true)
+            if(computationScope?.HasFlag(ComputationFlags.IsCollection) ?? false)
             {
-                // Not a computation - there is no use to this
-                Error("`yield break` with an argument cannot be used outside of a computation.", context);
+                // Safe to rely on collection not using `return`.
+                ReturnScope.WriteReturnStatement(context);
+                Defaults.WriteEmptyReturnValue(context);
+                ReturnScope.WriteAfterReturnStatement(context);
             }
             else
             {
-                var returnScope = FindContext<IReturnableStatementContext>();
-                if(returnScope?.HasFlag(ReturnFlags.Indirect) ?? false)
-                {
-                    // There is no mechanism to indicate whether computation ends in `return` or `yield break`.
-                    Error("`yield break` with an argument is not supported in other positions than the final returning statement of a function.", context);
-                }
-                if(returnScope?.HasFlag(ReturnFlags.Optional) ?? false)
-                {
-                    Error("`yield break` with an argument cannot be used in an optional function.", context);
-                }
-            }
-            // Bypass normal returning and just produce the value
-            Defaults.WriteDirectReturnStatement(false, context);
-            base.OnEnterExpression(context);
-        }
-
-        private void OnExit(ParserRuleContext context)
-        {
-            if(!HasExpression)
-            {
+                // Bypass normal returning
                 Defaults.WriteEmptyReturnStatement(context);
-            }
-            else
-            {
-                Defaults.WriteAfterDirectReturnStatement(context);
             }
 
             var interruptScope = FindContext<IInterruptibleStatementContext>();
@@ -144,6 +132,8 @@ namespace Sona.Compiler.States
                 Out.WriteLine();
                 interruptScope.WriteBreak(false, context);
             }
+
+            ExitState().ExitYieldBreakStatement(context);
         }
     }
 
