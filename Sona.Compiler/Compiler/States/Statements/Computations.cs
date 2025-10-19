@@ -117,7 +117,7 @@ namespace Sona.Compiler.States
         // Does not provide its own conditional return variables
         ReturnFlags IReturnableStatementContext.Flags => ReturnFlags & ~ReturnFlags.Indirect;
 
-        bool IComputationContext.IsCollection => false;
+        ComputationFlags IComputationContext.Flags => ComputationFlags.IsComputation;
         
         protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
         {
@@ -214,7 +214,7 @@ namespace Sona.Compiler.States
 
         ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
 
-        bool IComputationContext.IsCollection => false;
+        ComputationFlags IComputationContext.Flags => ComputationFlags.IsComputation;
 
         bool closeReturnStatement;
 
@@ -230,30 +230,30 @@ namespace Sona.Compiler.States
             if((ReturnFlags & ReturnFlags.Indirect) == 0)
             {
                 // No conditional variables
-                if(FindContext<IComputationContext>() is not { BuilderVariable: not null })
+                if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false)
+                {
+                    // Can utilize `ReturnFrom`
+                    Out.Write("return! ");
+                }
+                else
                 {
                     // Unwrap directly
                     ReturnScope.WriteReturnStatement(context);
                     Out.WriteGlobalComputationOperator("ReturnFrom");
                     closeReturnStatement = true;
                 }
-                else
-                {
-                    // Can utilize `ReturnFrom`
-                    Out.Write("return! ");
-                }
             }
             else
             {
                 // Returns are handled indirectly
-                if(FindContext<IComputationContext>() is not { BuilderVariable: not null })
+                if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false)
                 {
-                    Out.Write("do ");
-                    Out.WriteGlobalComputationOperator("ReturnFrom");
+                    Out.Write("let! () = ");
                 }
                 else
                 {
-                    Out.Write("let! () = ");
+                    Out.Write("do ");
+                    Out.WriteGlobalComputationOperator("ReturnFrom");
                 }
             }
         }
@@ -311,16 +311,16 @@ namespace Sona.Compiler.States
     {
         public override void EnterFollowStatement(FollowStatementContext context)
         {
-            if(FindContext<IComputationContext>() is not { BuilderVariable: not null })
-            {
-                Out.Write("do ");
-                Out.WriteGlobalComputationOperator("ReturnFrom");
-            }
-            else
+            if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false)
             {
                 // Not `do!` because that sometimes abuses `Return`.
                 Out.Write("let! ()");
                 Out.WriteOperator('=');
+            }
+            else
+            {
+                Out.Write("do ");
+                Out.WriteGlobalComputationOperator("ReturnFrom");
             }
             Out.Write('(');
         }
@@ -346,16 +346,16 @@ namespace Sona.Compiler.States
     {
         public override void EnterFollowDiscardStatement(FollowDiscardStatementContext context)
         {
-            if(FindContext<IComputationContext>() is not { BuilderVariable: not null })
+            if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false)
+            {
+                Out.Write("let! _");
+                Out.WriteOperator('=');
+            }
+            else
             {
                 Out.Write("let _");
                 Out.WriteOperator('=');
                 Out.WriteGlobalComputationOperator("ReturnFrom");
-            }
-            else
-            {
-                Out.Write("let! _");
-                Out.WriteOperator('=');
             }
             Out.Write('(');
         }

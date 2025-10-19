@@ -66,7 +66,7 @@ namespace Sona.Compiler.States
         public override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
         {
             var computationContext = FindContext<IComputationContext>();
-            if(computationContext is { IsCollection: true })
+            if(computationContext?.HasFlag(ComputationFlags.IsCollection) ?? false)
             {
                 // () in a collection has a different interpretation
                 Out.Write("if false then yield ");
@@ -664,9 +664,7 @@ namespace Sona.Compiler.States
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
 
-        bool IComputationContext.IsCollection => false;
-
-        string? IComputationContext.BuilderVariable => null;
+        ComputationFlags IComputationContext.Flags => ComputationFlags.None;
 
         bool IDeclarationsBlockContext.Recursive => false;
 
@@ -682,14 +680,12 @@ namespace Sona.Compiler.States
 
         void IComputationContext.WriteBeginBlockExpression(ParserRuleContext context)
         {
-            Out.EnterNestedScope();
-            Out.WriteLine('(');
+            Defaults.WriteBeginBlockExpression(context);
         }
 
         void IComputationContext.WriteEndBlockExpression(ParserRuleContext context)
         {
-            Out.ExitNestedScope();
-            Out.Write(')');
+            Defaults.WriteEndBlockExpression(context);
         }
 
         void IReturnableStatementContext.WriteEarlyReturn(ParserRuleContext context)

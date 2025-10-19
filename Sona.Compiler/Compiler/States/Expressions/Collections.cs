@@ -14,9 +14,7 @@ namespace Sona.Compiler.States
             scope = null;
         }
 
-        public abstract bool IsCollection { get; }
-
-        public virtual string? BuilderVariable => null;
+        public abstract ComputationFlags Flags { get; }
 
         public virtual bool TrailAllowed => false;
 
@@ -99,7 +97,7 @@ namespace Sona.Compiler.States
         protected bool IsSimple { get; private set; }
         protected bool IsEmpty { get; private set; }
 
-        public sealed override bool IsCollection => true;
+        public override ComputationFlags Flags => ComputationFlags.IsCollection;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {

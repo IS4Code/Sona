@@ -111,10 +111,25 @@ namespace Sona.Compiler.States
         bool Recursive { get; }
     }
 
+    [Flags]
+    internal enum ComputationFlags
+    {
+        None,
+
+        /// <summary>
+        /// Indicates that this block forms a collection.
+        /// </summary>
+        IsCollection = 1,
+
+        /// <summary>
+        /// Indicates that this block uses a computation builder.
+        /// </summary>
+        IsComputation = 2
+    }
+
     internal interface IComputationContext : IInterruptibleStatementContext, IReturnableStatementContext
     {
-        bool IsCollection { get; }
-        string? BuilderVariable { get; }
+        new ComputationFlags Flags { get; }
         void WriteBeginBlockExpression(ParserRuleContext context);
         void WriteEndBlockExpression(ParserRuleContext context);
     }
@@ -128,8 +143,24 @@ namespace Sona.Compiler.States
     internal enum ExpressionFlags
     {
         None,
+
+        /// <summary>
+        /// Indicates the expression evaluates to a value.
+        /// </summary>
         IsValue = 1,
+
+        /// <summary>
+        /// Indicates the expression must consist of compile-time constants and constant operations.
+        /// </summary>
         IsConstant = 2,
+
+        /// <summary>
+        /// Indicates the expression is a pattern.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="IsValue"/> can be used in combination with this flag
+        /// to indicate the pattern is a parameter and thus semantically an expression.
+        /// </remarks>
         IsPattern = 4
     }
 
@@ -191,6 +222,36 @@ namespace Sona.Compiler.States
         public static bool HasFlag(this IInterruptibleStatementContext scope, InterruptFlags flags)
         {
             return (scope.Flags & flags) == flags;
+        }
+
+        public static bool HasFlag(this IComputationContext scope, ComputationFlags flags)
+        {
+            return (scope.Flags & flags) == flags;
+        }
+        
+        public static bool HasAnyFlag(this IExpressionContext scope, ExpressionFlags flags)
+        {
+            return (scope.Flags & flags) != 0;
+        }
+
+        public static bool HasAnyFlag(this IBlockStatementContext scope, BlockFlags flags)
+        {
+            return (scope.Flags & flags) != 0;
+        }
+
+        public static bool HasAnyFlag(this IReturnableStatementContext scope, ReturnFlags flags)
+        {
+            return (scope.Flags & flags) != 0;
+        }
+
+        public static bool HasAnyFlag(this IInterruptibleStatementContext scope, InterruptFlags flags)
+        {
+            return (scope.Flags & flags) != 0;
+        }
+
+        public static bool HasAnyFlag(this IComputationContext scope, ComputationFlags flags)
+        {
+            return (scope.Flags & flags) != 0;
         }
 
         /// <summary>

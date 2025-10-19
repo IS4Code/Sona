@@ -6,7 +6,7 @@ namespace Sona.Compiler.States
     {
         public override void EnterYieldStatement(YieldStatementContext context)
         {
-            if(FindContext<IComputationContext>() is not ({ IsCollection: true } or { BuilderVariable: not null }))
+            if(FindContext<IComputationContext>()?.HasAnyFlag(ComputationFlags.IsCollection | ComputationFlags.IsComputation) != true)
             {
                 Error("`yield` is not allowed outside a collection or computation.", context);
             }
@@ -33,7 +33,7 @@ namespace Sona.Compiler.States
     {
         public override void EnterYieldEachStatement(YieldEachStatementContext context)
         {
-            if(FindContext<IComputationContext>() is not ({ IsCollection: true } or { BuilderVariable: not null }))
+            if(FindContext<IComputationContext>()?.HasAnyFlag(ComputationFlags.IsCollection | ComputationFlags.IsComputation) != true)
             {
                 Error("`yield` is not allowed outside a collection or computation.", context);
             }
@@ -73,7 +73,7 @@ namespace Sona.Compiler.States
     {
         public override void EnterYieldBreakStatement(YieldBreakStatementContext context)
         {
-            if(FindContext<IComputationContext>() is not ({ IsCollection: true } or { BuilderVariable: not null }))
+            if(FindContext<IComputationContext>()?.HasAnyFlag(ComputationFlags.IsCollection | ComputationFlags.IsComputation) != true)
             {
                 Error("`yield break` is not allowed outside a collection or computation.", context);
             }

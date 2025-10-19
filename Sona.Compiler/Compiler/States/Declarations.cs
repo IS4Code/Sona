@@ -74,13 +74,11 @@ namespace Sona.Compiler.States
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
 
+        ComputationFlags IComputationContext.Flags => ComputationFlags.None;
+
         ExpressionFlags IExpressionContext.Flags => ExpressionFlags.IsValue;
 
         ImplementationType? returnOptionType;
-
-        string? IComputationContext.BuilderVariable => null;
-
-        bool IComputationContext.IsCollection => false;
 
         bool IStatementContext.TrailAllowed => true;
 
@@ -167,14 +165,12 @@ namespace Sona.Compiler.States
 
         void IComputationContext.WriteBeginBlockExpression(ParserRuleContext context)
         {
-            Out.EnterNestedScope();
-            Out.WriteLine('(');
+            Defaults.WriteBeginBlockExpression(context);
         }
 
         void IComputationContext.WriteEndBlockExpression(ParserRuleContext context)
         {
-            Out.ExitNestedScope();
-            Out.Write(')');
+            Defaults.WriteEndBlockExpression(context);
         }
 
         void IReturnableStatementContext.WriteEarlyReturn(ParserRuleContext context)

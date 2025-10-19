@@ -428,7 +428,7 @@ namespace Sona.Compiler.States
 
     internal sealed class InlineStatementState : IsolatedState
     {
-        public override bool IsCollection => false;
+        public override ComputationFlags Flags => ComputationFlags.None;
 
         public override void EnterInlineExpr(InlineExprContext context)
         {
@@ -456,14 +456,12 @@ namespace Sona.Compiler.States
 
         public override void WriteBeginBlockExpression(ParserRuleContext context)
         {
-            Out.EnterNestedScope();
-            Out.WriteLine('(');
+            Defaults.WriteBeginBlockExpression(context);
         }
 
         public override void WriteEndBlockExpression(ParserRuleContext context)
         {
-            Out.ExitNestedScope();
-            Out.Write(')');
+            Defaults.WriteEndBlockExpression(context);
         }
     }
 }
