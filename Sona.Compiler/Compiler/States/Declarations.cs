@@ -68,7 +68,7 @@ namespace Sona.Compiler.States
     {
         BlockFlags IBlockStatementContext.Flags => BlockFlags.None;
 
-        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags.None;
+        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags.None | (returnOptionType != null ? ReturnFlags.Optional : 0);
 
         InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
 

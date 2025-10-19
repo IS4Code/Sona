@@ -44,7 +44,12 @@ namespace Sona.Compiler.States
         /// <summary>
         /// Indicates that returning is performed through pre-existing variables.
         /// </summary>
-        Indirect = 1
+        Indirect = 1,
+
+        /// <summary>
+        /// Indicates that return values are wrapped in an option type.
+        /// </summary>
+        Optional = 2
     }
 
     internal interface IReturnableStatementContext : IBlockStatementContext
