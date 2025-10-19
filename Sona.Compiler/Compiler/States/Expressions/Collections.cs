@@ -28,7 +28,7 @@ namespace Sona.Compiler.States
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
 
-        ExpressionType IExpressionContext.Type => GetExpressionContext()?.Type ?? ExpressionType.Regular;
+        ExpressionFlags IExpressionContext.Flags => GetExpressionContext()?.Flags ?? ExpressionFlags.IsValue;
 
         protected sealed override IExpressionContext? GetExpressionContext()
         {

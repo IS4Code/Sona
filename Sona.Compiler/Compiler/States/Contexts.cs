@@ -49,7 +49,7 @@ namespace Sona.Compiler.States
 
     internal interface IReturnableStatementContext : IBlockStatementContext
     {
-        ReturnFlags Flags { get; }
+        new ReturnFlags Flags { get; }
 
         /// <summary>
         /// Writes an <c>if</c> statement that checks if returning was requested.
@@ -121,14 +121,16 @@ namespace Sona.Compiler.States
 
     internal interface IExpressionContext : IScopeContext
     {
-        ExpressionType Type { get; }
+        ExpressionFlags Flags { get; }
     }
 
-    internal enum ExpressionType
+    [Flags]
+    internal enum ExpressionFlags
     {
-        Regular,
-        Literal,
-        Pattern
+        None,
+        IsValue = 1,
+        IsConstant = 2,
+        IsPattern = 4
     }
 
     internal interface IBindingContext
@@ -171,6 +173,11 @@ namespace Sona.Compiler.States
 
     internal static class ContextExtensions
     {
+        public static bool HasFlag(this IExpressionContext scope, ExpressionFlags flags)
+        {
+            return (scope.Flags & flags) == flags;
+        }
+
         public static bool HasFlag(this IBlockStatementContext scope, BlockFlags flags)
         {
             return (scope.Flags & flags) == flags;

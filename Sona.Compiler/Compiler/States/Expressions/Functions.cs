@@ -13,7 +13,7 @@ namespace Sona.Compiler.States
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
 
-        ExpressionType IExpressionContext.Type => ExpressionType.Regular;
+        ExpressionFlags IExpressionContext.Flags => ExpressionFlags.IsValue;
 
         ImplementationType? returnOptionType;
 

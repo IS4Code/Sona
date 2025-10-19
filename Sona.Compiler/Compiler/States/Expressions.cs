@@ -8,9 +8,9 @@ namespace Sona.Compiler.States
     {
         IExpressionContext? scope;
 
-        protected ExpressionType Type => GetExpressionContext()?.Type ?? ExpressionType.Regular;
+        protected ExpressionFlags Type => GetExpressionContext()?.Flags ?? ExpressionFlags.IsValue;
 
-        protected bool IsLiteral => Type == ExpressionType.Literal;
+        protected bool IsConstant => (Type & ExpressionFlags.IsConstant) == ExpressionFlags.IsConstant;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -241,7 +241,7 @@ namespace Sona.Compiler.States
         public override void ExitHashExpr(HashExprContext context)
         {
             Out.Write(')');
-            if(IsLiteral)
+            if(IsConstant)
             {
                 Out.Write(".Length");
             }
@@ -253,7 +253,7 @@ namespace Sona.Compiler.States
 
         public override void EnterNotExpr(NotExprContext context)
         {
-            if(IsLiteral)
+            if(IsConstant)
             {
                 Out.WriteCoreOperatorName("not");
             }
@@ -317,7 +317,7 @@ namespace Sona.Compiler.States
                 case SonaLexer.INT128:
                 case SonaLexer.UINT128:
                 case SonaLexer.FLOAT16:
-                    bool isPattern = FindContext<IExpressionContext>()?.Type == ExpressionType.Pattern;
+                    bool isPattern = FindContext<IExpressionContext>()?.HasFlag(ExpressionFlags.IsPattern) ?? false;
 
                     if(token.Type == SonaLexer.BOOL)
                     {

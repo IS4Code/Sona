@@ -7,7 +7,7 @@ namespace Sona.Compiler.States
         bool firstGroup;
         bool firstArgument;
 
-        ExpressionType IExpressionContext.Type => ExpressionType.Literal;
+        ExpressionFlags IExpressionContext.Flags => ExpressionFlags.IsValue | ExpressionFlags.IsConstant;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {

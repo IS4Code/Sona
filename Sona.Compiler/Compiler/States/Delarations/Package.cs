@@ -5,7 +5,7 @@ namespace Sona.Compiler.States
 {
     internal class PackageState : BlockState, IDeclarationsBlockContext
     {
-        ExpressionType IExpressionContext.Type => ExpressionType.Regular;
+        ExpressionFlags IExpressionContext.Flags => ExpressionFlags.IsValue;
 
         BlockFlags IBlockStatementContext.Flags => BlockFlags.None;
 

@@ -132,7 +132,7 @@ namespace Sona.Compiler
                     Out.WriteOptionNone(OptionImplementationType);
                     break;
                 case SonaLexer.DEFAULT:
-                    if(GetExpressionContext()?.Type == ExpressionType.Literal)
+                    if(GetExpressionContext()?.HasFlag(ExpressionFlags.IsConstant) ?? false)
                     {
                         Out.Write("(new _())");
                     }
@@ -311,11 +311,11 @@ namespace Sona.Compiler
 
         protected virtual IExpressionContext? GetExpressionContext() => FindContext<IExpressionContext>();
 
-        private ExpressionType? ContextExpressionType => (this as IExpressionContext ?? GetExpressionContext())?.Type;
+        private bool ContextIsConstant => (this as IExpressionContext ?? GetExpressionContext())?.HasFlag(ExpressionFlags.IsConstant) ?? false;
 
         public override void EnterPlainInterpolatedString(PlainInterpolatedStringContext context)
         {
-            if(ContextExpressionType == ExpressionType.Literal)
+            if(ContextIsConstant)
             {
                 EnterState<LiteralNormalInterpolatedString>().EnterPlainInterpolatedString(context);
             }
@@ -327,7 +327,7 @@ namespace Sona.Compiler
 
         public override void EnterVerbatimInterpolatedString(VerbatimInterpolatedStringContext context)
         {
-            if(ContextExpressionType == ExpressionType.Literal)
+            if(ContextIsConstant)
             {
                 EnterState<LiteralVerbatimInterpolatedString>().EnterVerbatimInterpolatedString(context);
             }

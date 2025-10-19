@@ -74,7 +74,7 @@ namespace Sona.Compiler.States
 
         string? IInterruptibleStatementContext.InterruptingVariable => null;
 
-        ExpressionType IExpressionContext.Type => ExpressionType.Regular;
+        ExpressionFlags IExpressionContext.Flags => ExpressionFlags.IsValue;
 
         ImplementationType? returnOptionType;
 
@@ -395,15 +395,15 @@ namespace Sona.Compiler.States
 
     internal sealed class NewVariableState : NodeState, IExpressionContext
     {
-        ExpressionType? type;
+        bool isConst;
 
-        ExpressionType IExpressionContext.Type => type ??= (FindContext<IExpressionContext>()?.Type ?? ExpressionType.Regular);
+        ExpressionFlags IExpressionContext.Flags => (FindContext<IExpressionContext>()?.Flags ?? 0) | ExpressionFlags.IsValue | (isConst ? ExpressionFlags.IsConstant : 0);
         
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            type = null;
+            isConst = false;
         }
 
         public override void EnterVariableDecl(VariableDeclContext context)
@@ -436,7 +436,7 @@ namespace Sona.Compiler.States
 
         public override void EnterMultiDeclAssignment(MultiDeclAssignmentContext context)
         {
-            if(type == ExpressionType.Literal || (LexerContext.GetState<RecursivePragma>()?.Value ?? false))
+            if(isConst || (LexerContext.GetState<RecursivePragma>()?.Value ?? false))
             {
                 EnterState<RecursiveMultiDeclarationState>().EnterMultiDeclAssignment(context);
             }
@@ -481,7 +481,7 @@ namespace Sona.Compiler.States
             Out.WriteLine(">]");
             Out.Write("let ");
             WriteRec();
-            type = ExpressionType.Literal;
+            isConst = true;
         }
 
         public override void ExitConstDecl(ConstDeclContext context)
@@ -677,14 +677,14 @@ namespace Sona.Compiler.States
 
     internal sealed class RecursiveMultiDeclarationState : DeclarationState
     {
-        bool first, isLiteral;
+        bool first, isConst;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             first = true;
-            isLiteral = FindContext<IExpressionContext>()?.Type == ExpressionType.Literal;
+            isConst = FindContext<IExpressionContext>()?.HasFlag(ExpressionFlags.IsConstant) ?? false;
         }
 
         public override void EnterMultiDeclAssignment(MultiDeclAssignmentContext context)
@@ -708,7 +708,7 @@ namespace Sona.Compiler.States
             {
                 Out.WriteLine();
                 Out.Write("and ");
-                if(isLiteral)
+                if(isConst)
                 {
                     Out.Write("[<");
                     Out.WriteCoreName("LiteralAttribute");

@@ -654,7 +654,7 @@ namespace Sona.Compiler.States
 
     internal sealed class ChunkState : BlockState, IFunctionContext, IDeclarationsBlockContext
     {
-        ExpressionType IExpressionContext.Type => ExpressionType.Regular;
+        ExpressionFlags IExpressionContext.Flags => ExpressionFlags.IsValue;
 
         BlockFlags IBlockStatementContext.Flags => BlockFlags.None;
 

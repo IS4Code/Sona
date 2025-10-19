@@ -10,7 +10,7 @@ namespace Sona.Compiler.States
         int parenthesisLevel;
         bool patternExpected;
 
-        ExpressionType IExpressionContext.Type => ExpressionType.Pattern;
+        ExpressionFlags IExpressionContext.Flags => ExpressionFlags.IsPattern;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {

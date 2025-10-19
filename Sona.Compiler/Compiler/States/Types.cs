@@ -508,7 +508,7 @@ namespace Sona.Compiler.States
 
     internal class GenericArgumentState : TypeState, IExpressionContext
     {
-        ExpressionType IExpressionContext.Type => ExpressionType.Literal;
+        ExpressionFlags IExpressionContext.Flags => ExpressionFlags.IsValue | ExpressionFlags.IsConstant;
 
         public override void EnterGenericArgument(GenericArgumentContext context)
         {

@@ -545,7 +545,7 @@ namespace Sona.Compiler.States
             switch(node.Symbol.Type)
             {
                 case SonaLexer.CONCAT:
-                    if(IsLiteral)
+                    if(IsConstant)
                     {
                         Out.WriteOperator("+\"\"+");
                     }
@@ -555,7 +555,7 @@ namespace Sona.Compiler.States
                     }
                     break;
                 case SonaLexer.SINGLE_OR:
-                    if(IsLiteral)
+                    if(IsConstant)
                     {
                         Out.WriteOperator("|||");
                     }
@@ -565,7 +565,7 @@ namespace Sona.Compiler.States
                     }
                     break;
                 case SonaLexer.SINGLE_AND:
-                    if(IsLiteral)
+                    if(IsConstant)
                     {
                         Out.WriteOperator("&&&");
                     }
@@ -575,7 +575,7 @@ namespace Sona.Compiler.States
                     }
                     break;
                 case SonaLexer.LSHIFT:
-                    if(IsLiteral)
+                    if(IsConstant)
                     {
                         Out.WriteOperator("<<<");
                     }
@@ -585,7 +585,7 @@ namespace Sona.Compiler.States
                     }
                     break;
                 case SonaLexer.RSHIFT:
-                    if(IsLiteral)
+                    if(IsConstant)
                     {
                         Out.WriteOperator(">>>");
                     }
@@ -771,7 +771,7 @@ namespace Sona.Compiler.States
 
         protected override void OnNestedOperator(ITerminalNode node)
         {
-            if(IsLiteral)
+            if(IsConstant)
             {
                 Out.WriteOperator("^^^");
             }
