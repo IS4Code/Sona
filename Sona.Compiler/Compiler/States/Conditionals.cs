@@ -14,6 +14,7 @@ namespace Sona.Compiler.States
             bool first;
             IComputationContext? scope;
             bool? statementsAllowed;
+            bool isImplicitReturn;
 
             bool StatementsAllowed => statementsAllowed ??= (Parent!.FindContext<IStatementContext>()?.TrailAllowed ?? true);
 
@@ -26,6 +27,7 @@ namespace Sona.Compiler.States
                 first = true;
                 scope = null;
                 statementsAllowed = null;
+                isImplicitReturn = false;
             }
 
             public override void EnterIgnoredTrail(IgnoredTrailContext context)
@@ -189,10 +191,8 @@ namespace Sona.Compiler.States
 
             protected override void OnEnterStatement(StatementFlags flags, ParserRuleContext context)
             {
-                if(!StatementsAllowed)
-                {
-                    Error("A statement is not allowed in this context.", context);
-                }
+                isImplicitReturn = false;
+
                 if(first)
                 {
                     first = false;
@@ -205,23 +205,16 @@ namespace Sona.Compiler.States
 
             protected override void OnExitStatement(StatementFlags flags, ParserRuleContext context)
             {
-            
+                if(!StatementsAllowed && !isImplicitReturn)
+                {
+                    Error("A statement is not allowed in this context.", context);
+                }
             }
 
             public override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
             {
-                if(StatementsAllowed)
-                {
-                    base.EnterImplicitReturnStatement(context);
-                }
-            }
-
-            public override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)
-            {
-                if(StatementsAllowed)
-                {
-                    base.ExitImplicitReturnStatement(context);
-                }
+                isImplicitReturn = true;
+                base.EnterImplicitReturnStatement(context);
             }
         }
 
