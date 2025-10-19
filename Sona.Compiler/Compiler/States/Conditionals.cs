@@ -7,7 +7,7 @@ using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
 {
-    internal abstract class ControlStatement : NodeState, IBlockStatementContext
+    internal abstract class ControlStatement : NodeState, IBlockContext
     {
         sealed class TrailingStatements : BlockState
         {
@@ -225,16 +225,16 @@ namespace Sona.Compiler.States
             }
         }
 
-        BlockFlags IBlockStatementContext.Flags => BlockFlags;
+        BlockFlags IBlockContext.Flags => BlockFlags;
 
-        protected virtual BlockFlags BlockFlags => FindContext<IBlockStatementContext>()?.Flags ?? BlockFlags.None;
+        protected virtual BlockFlags BlockFlags => FindContext<IBlockContext>()?.Flags ?? BlockFlags.None;
 
 #nullable disable
         protected string ReturnVariable { get; private set; }
         protected string ReturningVariable { get; private set; }
 #nullable restore
-        protected IReturnableStatementContext? ReturnScope { get; private set; }
-        protected IInterruptibleStatementContext? InterruptScope { get; private set; }
+        protected IReturnableContext? ReturnScope { get; private set; }
+        protected IInterruptibleContext? InterruptScope { get; private set; }
 
         ReturnFlags OriginalReturnFlags => ReturnScope?.Flags ?? 0;
 
@@ -258,8 +258,8 @@ namespace Sona.Compiler.States
             enterFlags = StatementFlags.None;
             exited = false;
 
-            ReturnScope = FindContext<IReturnableStatementContext>();
-            InterruptScope = FindContext<IInterruptibleStatementContext>();
+            ReturnScope = FindContext<IReturnableContext>();
+            InterruptScope = FindContext<IInterruptibleContext>();
             if(InterruptScope?.Flags == 0)
             {
                 InterruptScope = null;
@@ -811,7 +811,7 @@ namespace Sona.Compiler.States
 
         protected virtual void ModifyFlags(ref StatementFlags flags)
         {
-            if(this is IReturnableStatementContext)
+            if(this is IReturnableContext)
             {
                 // The `Control` implementations are always treated as open.
                 flags |= StatementFlags.OpenPath;
@@ -2136,9 +2136,9 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal sealed class IfStatementControl : IfStatement, IReturnableStatementContext
+    internal sealed class IfStatementControl : IfStatement, IReturnableContext
     {
-        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
+        ReturnFlags IReturnableContext.Flags => ReturnFlags;
     }
 
     internal abstract class DoStatement : ControlStatement
@@ -2160,14 +2160,14 @@ namespace Sona.Compiler.States
 
     }
 
-    internal sealed class DoStatementControl : DoStatement, IReturnableStatementContext
+    internal sealed class DoStatementControl : DoStatement, IReturnableContext
     {
-        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
+        ReturnFlags IReturnableContext.Flags => ReturnFlags;
     }
 
-    internal abstract class WhileStatement : ControlStatement, IInterruptibleStatementContext
+    internal abstract class WhileStatement : ControlStatement, IInterruptibleContext
     {
-        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
+        InterruptFlags IInterruptibleContext.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
 
         public string? InterruptingVariable { get; private set; }
 
@@ -2240,12 +2240,12 @@ namespace Sona.Compiler.States
             }
         }
 
-        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
+        void IInterruptibleContext.WriteAfterBreak(ParserRuleContext context)
         {
 
         }
 
-        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
+        void IInterruptibleContext.WriteAfterContinue(ParserRuleContext context)
         {
 
         }
@@ -2447,14 +2447,14 @@ namespace Sona.Compiler.States
 
     }
 
-    internal sealed class WhileStatementControl : WhileStatementTrailInterrupted, IReturnableStatementContext
+    internal sealed class WhileStatementControl : WhileStatementTrailInterrupted, IReturnableContext
     {
-        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
+        ReturnFlags IReturnableContext.Flags => ReturnFlags;
     }
 
-    internal abstract class RepeatStatement : ControlStatement, IInterruptibleStatementContext
+    internal abstract class RepeatStatement : ControlStatement, IInterruptibleContext
     {
-        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
+        InterruptFlags IInterruptibleContext.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
 
         public string? InterruptingVariable { get; private set; }
 
@@ -2546,12 +2546,12 @@ namespace Sona.Compiler.States
             }
         }
 
-        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
+        void IInterruptibleContext.WriteAfterBreak(ParserRuleContext context)
         {
 
         }
 
-        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
+        void IInterruptibleContext.WriteAfterContinue(ParserRuleContext context)
         {
 
         }
@@ -2642,14 +2642,14 @@ namespace Sona.Compiler.States
 
     }
 
-    internal sealed class RepeatStatementControl : RepeatStatementTrailInterrupted, IReturnableStatementContext
+    internal sealed class RepeatStatementControl : RepeatStatementTrailInterrupted, IReturnableContext
     {
-        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
+        ReturnFlags IReturnableContext.Flags => ReturnFlags;
     }
 
-    internal abstract class ForStatement : ControlStatement, IInterruptibleStatementContext
+    internal abstract class ForStatement : ControlStatement, IInterruptibleContext
     {
-        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
+        InterruptFlags IInterruptibleContext.Flags => InterruptFlags.CanBreak | InterruptFlags.CanContinue;
 
         public string? InterruptingVariable { get; private set; }
 
@@ -2757,12 +2757,12 @@ namespace Sona.Compiler.States
             }
         }
 
-        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
+        void IInterruptibleContext.WriteAfterBreak(ParserRuleContext context)
         {
 
         }
 
-        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
+        void IInterruptibleContext.WriteAfterContinue(ParserRuleContext context)
         {
 
         }
@@ -3275,9 +3275,9 @@ namespace Sona.Compiler.States
 
     }
 
-    internal sealed class ForStatementControl : ForStatementTrailInterrupted, IReturnableStatementContext
+    internal sealed class ForStatementControl : ForStatementTrailInterrupted, IReturnableContext
     {
-        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
+        ReturnFlags IReturnableContext.Flags => ReturnFlags;
     }
 
     internal abstract class SwitchStatementBase : ControlStatement
@@ -3386,13 +3386,13 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal abstract class SwitchStatementInterrupted : SwitchStatementBase, IInterruptibleStatementContext
+    internal abstract class SwitchStatementInterrupted : SwitchStatementBase, IInterruptibleContext
     {
-        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.CanContinue;
+        InterruptFlags IInterruptibleContext.Flags => InterruptFlags.CanContinue;
 
         string? matchingVariable, matchedVariable, interruptingVariable;
 
-        string? IInterruptibleStatementContext.InterruptingVariable => interruptingVariable;
+        string? IInterruptibleContext.InterruptingVariable => interruptingVariable;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -3451,17 +3451,17 @@ namespace Sona.Compiler.States
             Out.Write(" with");
         }
 
-        void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
+        void IInterruptibleContext.WriteBreak(bool hasExpression, ParserRuleContext context)
         {
             Error("COMPILER ERROR: `break` used in `switch`.", context);
         }
 
-        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
+        void IInterruptibleContext.WriteAfterBreak(ParserRuleContext context)
         {
 
         }
 
-        void IInterruptibleStatementContext.WriteContinue(bool hasExpression, ParserRuleContext context)
+        void IInterruptibleContext.WriteContinue(bool hasExpression, ParserRuleContext context)
         {
             if(!hasExpression)
             {
@@ -3471,7 +3471,7 @@ namespace Sona.Compiler.States
             Out.WriteOperator("<-");
         }
 
-        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
+        void IInterruptibleContext.WriteAfterContinue(ParserRuleContext context)
         {
             Out.WriteLine();
             Out.WriteIdentifier(matchingVariable ?? Error("COMPILER ERROR: `continue` used without a matching variable.", context));
@@ -3545,18 +3545,18 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal sealed class SwitchStatementControl : SwitchStatementInterrupted, IReturnableStatementContext
+    internal sealed class SwitchStatementControl : SwitchStatementInterrupted, IReturnableContext
     {
-        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
+        ReturnFlags IReturnableContext.Flags => ReturnFlags;
     }
 
-    internal abstract class TryStatementBase : ControlStatement, IInterruptibleStatementContext
+    internal abstract class TryStatementBase : ControlStatement, IInterruptibleContext
     {
         protected bool HasBranches { get; private set; }
 
-        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
+        InterruptFlags IInterruptibleContext.Flags => InterruptFlags.None;
 
-        string? IInterruptibleStatementContext.InterruptingVariable => null;
+        string? IInterruptibleContext.InterruptingVariable => null;
 
         bool first;
         bool hasPattern;
@@ -3682,22 +3682,22 @@ namespace Sona.Compiler.States
 
         }
         
-        void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
+        void IInterruptibleContext.WriteBreak(bool hasExpression, ParserRuleContext context)
         {
             Error("COMPILER ERROR: `break` is not supported in `try`.", context);
         }
 
-        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
+        void IInterruptibleContext.WriteAfterBreak(ParserRuleContext context)
         {
 
         }
 
-        void IInterruptibleStatementContext.WriteContinue(bool hasExpression, ParserRuleContext context)
+        void IInterruptibleContext.WriteContinue(bool hasExpression, ParserRuleContext context)
         {
             Error("COMPILER ERROR: `continue` is not supported in `try`.", context);
         }
 
-        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
+        void IInterruptibleContext.WriteAfterContinue(ParserRuleContext context)
         {
 
         }
@@ -3734,9 +3734,9 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal abstract class TryStatementControl : TryStatementBase, IReturnableStatementContext
+    internal abstract class TryStatementControl : TryStatementBase, IReturnableContext
     {
-        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags;
+        ReturnFlags IReturnableContext.Flags => ReturnFlags;
     }
 
     internal sealed class TryCatchStatementNoTrail : TryStatementNoTrail

@@ -26,7 +26,7 @@ namespace Sona.Compiler.States
         HasTrySemantics = 1
     }
 
-    internal interface IBlockStatementContext : IStatementContext
+    internal interface IBlockContext : IStatementContext
     {
         BlockFlags Flags { get; }
 
@@ -52,7 +52,7 @@ namespace Sona.Compiler.States
         Optional = 2
     }
 
-    internal interface IReturnableStatementContext : IBlockStatementContext
+    internal interface IReturnableContext : IBlockContext
     {
         new ReturnFlags Flags { get; }
 
@@ -106,7 +106,7 @@ namespace Sona.Compiler.States
         void WriteEmptyReturnValue(ParserRuleContext context);
     }
 
-    internal interface IFunctionContext : IReturnableStatementContext, IInterruptibleStatementContext, IStatementContext, IComputationContext, IExpressionContext
+    internal interface IFunctionContext : IReturnableContext, IInterruptibleContext, IStatementContext, IComputationContext, IExpressionContext
     {
 
     }
@@ -132,7 +132,7 @@ namespace Sona.Compiler.States
         IsComputation = 2
     }
 
-    internal interface IComputationContext : IInterruptibleStatementContext, IReturnableStatementContext
+    internal interface IComputationContext : IInterruptibleContext, IReturnableContext
     {
         new ComputationFlags Flags { get; }
         void WriteBeginBlockExpression(ParserRuleContext context);
@@ -183,7 +183,7 @@ namespace Sona.Compiler.States
         CanContinue = 2
     }
 
-    internal interface IInterruptibleStatementContext : IStatementContext
+    internal interface IInterruptibleContext : IStatementContext
     {
         InterruptFlags Flags { get; }
 
@@ -214,17 +214,17 @@ namespace Sona.Compiler.States
             return (scope.Flags & flags) == flags;
         }
 
-        public static bool HasFlag(this IBlockStatementContext scope, BlockFlags flags)
+        public static bool HasFlag(this IBlockContext scope, BlockFlags flags)
         {
             return (scope.Flags & flags) == flags;
         }
 
-        public static bool HasFlag(this IReturnableStatementContext scope, ReturnFlags flags)
+        public static bool HasFlag(this IReturnableContext scope, ReturnFlags flags)
         {
             return (scope.Flags & flags) == flags;
         }
 
-        public static bool HasFlag(this IInterruptibleStatementContext scope, InterruptFlags flags)
+        public static bool HasFlag(this IInterruptibleContext scope, InterruptFlags flags)
         {
             return (scope.Flags & flags) == flags;
         }
@@ -239,17 +239,17 @@ namespace Sona.Compiler.States
             return (scope.Flags & flags) != 0;
         }
 
-        public static bool HasAnyFlag(this IBlockStatementContext scope, BlockFlags flags)
+        public static bool HasAnyFlag(this IBlockContext scope, BlockFlags flags)
         {
             return (scope.Flags & flags) != 0;
         }
 
-        public static bool HasAnyFlag(this IReturnableStatementContext scope, ReturnFlags flags)
+        public static bool HasAnyFlag(this IReturnableContext scope, ReturnFlags flags)
         {
             return (scope.Flags & flags) != 0;
         }
 
-        public static bool HasAnyFlag(this IInterruptibleStatementContext scope, InterruptFlags flags)
+        public static bool HasAnyFlag(this IInterruptibleContext scope, InterruptFlags flags)
         {
             return (scope.Flags & flags) != 0;
         }
@@ -262,7 +262,7 @@ namespace Sona.Compiler.States
         /// <summary>
         /// Writes the beginning of a <c>return</c> statement with a new value.
         /// </summary>
-        public static void WriteDirectReturnStatement(this IReturnableStatementContext returnScope, bool isOption, ParserRuleContext context)
+        public static void WriteDirectReturnStatement(this IReturnableContext returnScope, bool isOption, ParserRuleContext context)
         {
             returnScope.WriteReturnStatement(context);
             returnScope.WriteReturnValue(isOption, context);
@@ -271,7 +271,7 @@ namespace Sona.Compiler.States
         /// <summary>
         /// Writes the ending of a <c>return</c> statement with a new value.
         /// </summary>
-        public static void WriteAfterDirectReturnStatement(this IReturnableStatementContext returnScope, ParserRuleContext context)
+        public static void WriteAfterDirectReturnStatement(this IReturnableContext returnScope, ParserRuleContext context)
         {
             returnScope.WriteAfterReturnValue(context);
             returnScope.WriteAfterReturnStatement(context);
@@ -280,7 +280,7 @@ namespace Sona.Compiler.States
         /// <summary>
         /// Writes a direct <c>return</c> statement with no value.
         /// </summary>
-        public static void WriteEmptyReturnStatement(this IReturnableStatementContext returnScope, ParserRuleContext context)
+        public static void WriteEmptyReturnStatement(this IReturnableContext returnScope, ParserRuleContext context)
         {
             returnScope.WriteReturnStatement(context);
             returnScope.WriteEmptyReturnValue(context);
@@ -290,7 +290,7 @@ namespace Sona.Compiler.States
         /// <summary>
         /// Writes a synthesized <c>return</c> statement using a pre-existing variable.
         /// </summary>
-        public static void WriteIndirectReturnStatement(this IReturnableStatementContext returnScope, string identifier, ParserRuleContext context)
+        public static void WriteIndirectReturnStatement(this IReturnableContext returnScope, string identifier, ParserRuleContext context)
         {
             returnScope.WriteReturnStatement(context);
             returnScope.LocalWriter.WriteIdentifier(identifier);
@@ -300,7 +300,7 @@ namespace Sona.Compiler.States
         /// <summary>
         /// Writes a synthesized <c>return</c> statement using the default value.
         /// </summary>
-        public static void WriteDefaultReturnStatement(this IReturnableStatementContext returnScope, ParserRuleContext context)
+        public static void WriteDefaultReturnStatement(this IReturnableContext returnScope, ParserRuleContext context)
         {
             returnScope.WriteReturnStatement(context);
             returnScope.LocalWriter.WriteDefaultValue();

@@ -72,16 +72,16 @@ namespace Sona.Compiler.States
 
     internal sealed class YieldBreakState : NodeState
     {
-        IReturnableStatementContext? returnScope;
+        IReturnableContext? returnScope;
         IComputationContext? computationScope;
 
-        IReturnableStatementContext ReturnScope => returnScope ?? Defaults;
+        IReturnableContext ReturnScope => returnScope ?? Defaults;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            returnScope = FindContext<IReturnableStatementContext>();
+            returnScope = FindContext<IReturnableContext>();
             computationScope = FindContext<IComputationContext>();
         }
 
@@ -120,7 +120,7 @@ namespace Sona.Compiler.States
                 Defaults.WriteEmptyReturnStatement(context);
             }
 
-            var interruptScope = FindContext<IInterruptibleStatementContext>();
+            var interruptScope = FindContext<IInterruptibleContext>();
             if(interruptScope?.HasFlag(InterruptFlags.CanBreak) != true)
             {
                 // No need for break
@@ -145,7 +145,7 @@ namespace Sona.Compiler.States
             {
                 Error("`yield return` is not allowed outside a computation.", context);
             }
-            if(FindContext<IReturnableStatementContext>()?.HasFlag(ReturnFlags.Optional) ?? false)
+            if(FindContext<IReturnableContext>()?.HasFlag(ReturnFlags.Optional) ?? false)
             {
                 Error("`yield return` cannot be used in an optional function.", context);
             }

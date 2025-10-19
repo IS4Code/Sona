@@ -38,15 +38,15 @@ namespace Sona.Compiler.States
 
     internal class ReturnState : ArgumentStatementState
     {
-        IReturnableStatementContext? returnScope;
+        IReturnableContext? returnScope;
 
-        IReturnableStatementContext ReturnScope => returnScope ?? Defaults;
+        IReturnableContext ReturnScope => returnScope ?? Defaults;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            returnScope = FindContext<IReturnableStatementContext>();
+            returnScope = FindContext<IReturnableContext>();
         }
 
         protected sealed override void OnEnterExpression(ParserRuleContext context)
@@ -78,7 +78,7 @@ namespace Sona.Compiler.States
                 ReturnScope.WriteAfterDirectReturnStatement(context);
             }
 
-            var interruptScope = FindContext<IInterruptibleStatementContext>();
+            var interruptScope = FindContext<IInterruptibleContext>();
             if(interruptScope?.HasFlag(InterruptFlags.CanBreak) != true)
             {
                 // No need for break
@@ -156,13 +156,13 @@ namespace Sona.Compiler.States
 
     internal sealed class BreakState : ArgumentStatementState
     {
-        IInterruptibleStatementContext? scope;
+        IInterruptibleContext? scope;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            scope = FindContext<IInterruptibleStatementContext>();
+            scope = FindContext<IInterruptibleContext>();
             if(scope?.HasFlag(InterruptFlags.CanBreak) != true)
             {
                 scope = null;
@@ -227,13 +227,13 @@ namespace Sona.Compiler.States
 
     internal sealed class ContinueState : ArgumentStatementState
     {
-        IInterruptibleStatementContext? scope;
+        IInterruptibleContext? scope;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            scope = FindContext<IInterruptibleStatementContext>();
+            scope = FindContext<IInterruptibleContext>();
             if(scope != null && (scope.Flags & InterruptFlags.CanContinue) == 0)
             {
                 scope = null;

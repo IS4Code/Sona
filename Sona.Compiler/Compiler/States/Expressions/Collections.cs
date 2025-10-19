@@ -18,13 +18,13 @@ namespace Sona.Compiler.States
 
         public virtual bool TrailAllowed => false;
 
-        BlockFlags IBlockStatementContext.Flags => BlockFlags.None;
+        BlockFlags IBlockContext.Flags => BlockFlags.None;
 
-        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags.None;
+        ReturnFlags IReturnableContext.Flags => ReturnFlags.None;
 
-        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
+        InterruptFlags IInterruptibleContext.Flags => InterruptFlags.None;
 
-        string? IInterruptibleStatementContext.InterruptingVariable => null;
+        string? IInterruptibleContext.InterruptingVariable => null;
 
         ExpressionFlags IExpressionContext.Flags => GetExpressionContext()?.Flags ?? ExpressionFlags.IsValue;
 
@@ -33,57 +33,57 @@ namespace Sona.Compiler.States
             return scope ??= FindContext<IExpressionContext>();
         }
 
-        void IReturnableStatementContext.WriteEarlyReturn(ParserRuleContext context)
+        void IReturnableContext.WriteEarlyReturn(ParserRuleContext context)
         {
             Defaults.WriteEarlyReturn(context);
         }
 
-        void IReturnableStatementContext.WriteReturnStatement(ParserRuleContext context)
+        void IReturnableContext.WriteReturnStatement(ParserRuleContext context)
         {
             Defaults.WriteReturnStatement(context);
         }
 
-        void IReturnableStatementContext.WriteAfterReturnStatement(ParserRuleContext context)
+        void IReturnableContext.WriteAfterReturnStatement(ParserRuleContext context)
         {
             Defaults.WriteAfterReturnStatement(context);
         }
 
-        void IReturnableStatementContext.WriteReturnValue(bool isOption, ParserRuleContext context)
+        void IReturnableContext.WriteReturnValue(bool isOption, ParserRuleContext context)
         {
             Defaults.WriteReturnValue(isOption, context);
         }
 
-        void IReturnableStatementContext.WriteAfterReturnValue(ParserRuleContext context)
+        void IReturnableContext.WriteAfterReturnValue(ParserRuleContext context)
         {
             Defaults.WriteAfterReturnValue(context);
         }
 
-        void IReturnableStatementContext.WriteEmptyReturnValue(ParserRuleContext context)
+        void IReturnableContext.WriteEmptyReturnValue(ParserRuleContext context)
         {
             Defaults.WriteEmptyReturnValue(context);
         }
 
-        void IBlockStatementContext.WriteImplicitReturnStatement(ParserRuleContext context)
+        void IBlockContext.WriteImplicitReturnStatement(ParserRuleContext context)
         {
             Defaults.WriteImplicitReturnStatement(context);
         }
 
-        void IInterruptibleStatementContext.WriteBreak(bool hasExpression, ParserRuleContext context)
+        void IInterruptibleContext.WriteBreak(bool hasExpression, ParserRuleContext context)
         {
             Defaults.WriteBreak(hasExpression, context);
         }
 
-        void IInterruptibleStatementContext.WriteContinue(bool hasExpression, ParserRuleContext context)
+        void IInterruptibleContext.WriteContinue(bool hasExpression, ParserRuleContext context)
         {
             Defaults.WriteContinue(hasExpression, context);
         }
 
-        void IInterruptibleStatementContext.WriteAfterBreak(ParserRuleContext context)
+        void IInterruptibleContext.WriteAfterBreak(ParserRuleContext context)
         {
             Defaults.WriteAfterBreak(context);
         }
 
-        void IInterruptibleStatementContext.WriteAfterContinue(ParserRuleContext context)
+        void IInterruptibleContext.WriteAfterContinue(ParserRuleContext context)
         {
             Defaults.WriteAfterContinue(context);
         }

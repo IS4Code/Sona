@@ -4,7 +4,7 @@ using Antlr4.Runtime.Tree;
 
 namespace Sona.Compiler.States
 {
-    internal sealed class Defaults : IComputationContext, IReturnableStatementContext, IInterruptibleStatementContext
+    internal sealed class Defaults : IComputationContext, IReturnableContext, IInterruptibleContext
     {
         readonly ScriptState state;
 
@@ -16,10 +16,10 @@ namespace Sona.Compiler.States
         ISourceWriter IScopeContext.LocalWriter => Out;
 
         bool IStatementContext.TrailAllowed => false;
-        BlockFlags IBlockStatementContext.Flags => BlockFlags.None;
-        ReturnFlags IReturnableStatementContext.Flags => ReturnFlags.None;
-        InterruptFlags IInterruptibleStatementContext.Flags => InterruptFlags.None;
-        string? IInterruptibleStatementContext.InterruptingVariable => null;
+        BlockFlags IBlockContext.Flags => BlockFlags.None;
+        ReturnFlags IReturnableContext.Flags => ReturnFlags.None;
+        InterruptFlags IInterruptibleContext.Flags => InterruptFlags.None;
+        string? IInterruptibleContext.InterruptingVariable => null;
         ComputationFlags IComputationContext.Flags => ComputationFlags.None;
 
         public Defaults(ScriptState state)
