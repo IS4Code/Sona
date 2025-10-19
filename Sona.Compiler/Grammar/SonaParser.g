@@ -301,6 +301,7 @@ statement:
   echoStatement |
   yieldStatement |
   yieldEachStatement |
+  yieldReturnStatement |
   followDiscardStatement |
   followStatement |
   inlineSourceFree |
@@ -347,6 +348,9 @@ yieldEachStatement:
 
 yieldBreakStatement:
   YIELD_BREAK expression?;
+
+yieldReturnStatement:
+  YIELD_RETURN (expression | errorMissingExpression);
 
 breakStatement:
   'break' expression?;

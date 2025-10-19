@@ -1,4 +1,5 @@
-﻿using static Sona.Grammar.SonaParser;
+﻿using Antlr4.Runtime;
+using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
 {
@@ -69,11 +70,20 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal sealed class YieldBreakState : ReturnState
+    internal sealed class YieldBreakState : ArgumentStatementState
     {
+        IComputationContext? computationScope;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            computationScope = FindContext<IComputationContext>();
+        }
+
         public override void EnterYieldBreakStatement(YieldBreakStatementContext context)
         {
-            if(FindContext<IComputationContext>()?.HasAnyFlag(ComputationFlags.IsCollection | ComputationFlags.IsComputation) != true)
+            if(computationScope?.HasAnyFlag(ComputationFlags.IsCollection | ComputationFlags.IsComputation) != true)
             {
                 Error("`yield break` is not allowed outside a collection or computation.", context);
             }
@@ -81,18 +91,90 @@ namespace Sona.Compiler.States
 
         public override void ExitYieldBreakStatement(YieldBreakStatementContext context)
         {
-            try
+            OnExit(context);
+
+            ExitState().ExitYieldBreakStatement(context);
+        }
+
+        protected sealed override void OnEnterExpression(ParserRuleContext context)
+        {
+            if(computationScope?.HasFlag(ComputationFlags.IsComputation) != true)
             {
-                if(HasExpression)
+                // Not a computation - there is no use to this
+                Error("`yield break` with an argument cannot be used outside of a computation.", context);
+            }
+            else
+            {
+                var returnScope = FindContext<IReturnableStatementContext>();
+                if(returnScope?.HasFlag(ReturnFlags.Indirect) ?? false)
                 {
-                    Error("`yield break` cannot be used with an expression outside of a computation.", context);
+                    // There is no mechanism to indicate whether computation ends in `return` or `yield break`.
+                    Error("`yield break` with an argument is not supported in other positions than the final returning statement of a function.", context);
                 }
-                OnExit(context);
+                if(returnScope?.HasFlag(ReturnFlags.Optional) ?? false)
+                {
+                    Error("`yield break` with an argument cannot be used in an optional function.", context);
+                }
             }
-            finally
+            // Bypass normal returning and just produce the value
+            Defaults.WriteDirectReturnStatement(false, context);
+            base.OnEnterExpression(context);
+        }
+
+        private void OnExit(ParserRuleContext context)
+        {
+            if(!HasExpression)
             {
-                ExitState().ExitYieldBreakStatement(context);
+                Defaults.WriteEmptyReturnStatement(context);
             }
+            else
+            {
+                Defaults.WriteAfterDirectReturnStatement(context);
+            }
+
+            var interruptScope = FindContext<IInterruptibleStatementContext>();
+            if(interruptScope?.HasFlag(InterruptFlags.CanBreak) != true)
+            {
+                // No need for break
+                interruptScope = null;
+            }
+
+            if(interruptScope != null)
+            {
+                Out.WriteLine();
+                interruptScope.WriteBreak(false, context);
+            }
+        }
+    }
+
+    internal sealed class YieldReturnState : NodeState
+    {
+        public override void EnterYieldReturnStatement(YieldReturnStatementContext context)
+        {
+            if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) != true)
+            {
+                Error("`yield return` is not allowed outside a computation.", context);
+            }
+            if(FindContext<IReturnableStatementContext>()?.HasFlag(ReturnFlags.Optional) ?? false)
+            {
+                Error("`yield return` cannot be used in an optional function.", context);
+            }
+            Out.Write("return ");
+        }
+
+        public override void ExitYieldReturnStatement(YieldReturnStatementContext context)
+        {
+            ExitState().ExitYieldReturnStatement(context);
+        }
+
+        public override void EnterExpression(ExpressionContext context)
+        {
+           EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public override void ExitExpression(ExpressionContext context)
+        {
+
         }
     }
 }

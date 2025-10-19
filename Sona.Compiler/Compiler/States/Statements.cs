@@ -133,6 +133,11 @@ namespace Sona.Compiler.States
             EnterState<YieldBreakState>().EnterYieldBreakStatement(context);
         }
 
+        public sealed override void EnterYieldReturnStatement(YieldReturnStatementContext context)
+        {
+            EnterState<YieldReturnState>().EnterYieldReturnStatement(context);
+        }
+
         public sealed override void EnterWithStatement(WithStatementContext context)
         {
             EnterState<WithStatementState>().EnterWithStatement(context);
