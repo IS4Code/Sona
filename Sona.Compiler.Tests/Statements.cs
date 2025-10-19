@@ -155,12 +155,7 @@ end
   (c){@throw}
  end
 end
-else begin
- {ignore_begin}
-  ()
- {ignore_end}
- <?do?>{@default}
-end")]
+else <?do?>{@default}")]
         [DataRow("if a then throw b else throw c end f()", $@"if true then begin
  if(a)then begin
   (b){@throw}
@@ -465,8 +460,17 @@ end")]
  end
  {@default}
 end
+else {@default}")]
+        [DataRow("while true do f(a) end g(b)", $@"if true then begin
+ while true do begin
+  f(a)
+  ()
+ end
+ {@default}
+end
 else begin
  {ignore_begin}
+  g(b)
   ()
  {ignore_end}
  {@default}
@@ -478,12 +482,7 @@ end")]
  end
  {@default}
 end
-else begin
- {ignore_begin}
-  ()
- {ignore_end}
- {@default}
-end")]
+else {@default}")]
         [DataRow("while true do f(a) break end", $@"let mutable <$continuing$> = true
 while <$continuing$> do begin
  let mutable <$interrupting$> = false
@@ -498,12 +497,7 @@ end
  end
  {@default}
 end
-else begin
- {ignore_begin}
-  ()
- {ignore_end}
- {@default}
-end")]
+else {@default}")]
         [TestMethod]
         public void WhileTrue(string source, string? expected)
         {
@@ -534,12 +528,7 @@ end
  end
  {@default}
 end
-else begin
- {ignore_begin}
-  ()
- {ignore_end}
- {@default}
-end")]
+else {@default}")]
         [DataRow("repeat f(a) return b until x g(a)", $@"let mutable <$returning$> = false
 let mutable <$result$> = {@default}
 let mutable <$continuing$> = true
