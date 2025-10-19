@@ -64,7 +64,18 @@ namespace Sona.Compiler.States
 
         protected virtual void OnEnter(ParserRuleContext context)
         {
-
+            var computationScope = FindContext<IComputationContext>();
+            if(computationScope?.HasFlag(ComputationFlags.IsCollection) ?? false)
+            {
+                if(computationScope?.HasFlag(ComputationFlags.IsComputation) ?? false)
+                {
+                    Error("`return` in a collection construction is not supported. Use `yield` or `yield return` instead.", context);
+                }
+                else
+                {
+                    Error("`return` in a collection construction is not supported. Use `yield` instead.", context);
+                }
+            }
         }
 
         protected virtual void OnExit(ParserRuleContext context)
