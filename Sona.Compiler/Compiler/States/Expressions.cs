@@ -396,6 +396,19 @@ namespace Sona.Compiler.States
         {
 
         }
+
+        public sealed class Spread : ExpressionState
+        {
+            public override void EnterSpreadExpression(SpreadExpressionContext context)
+            {
+
+            }
+
+            public override void ExitSpreadExpression(SpreadExpressionContext context)
+            {
+                ExitState().ExitSpreadExpression(context);
+            }
+        }
     }
 
     internal sealed class AtomicExpressionState : ExpressionState

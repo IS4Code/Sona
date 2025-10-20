@@ -361,8 +361,21 @@ continueStatement:
 throwStatement:
   'throw' expression?;
 
+withDefaultArgument:
+  '(' ')';
+
+withDefaultSequenceArgument:
+  '..' '(' ')';
+
+with_Argument:
+  withDefaultSequenceArgument |
+  withDefaultArgument |
+  spreadExpression |
+  expression |
+  errorMissingExpression;
+
 withStatement:
-  'with' (expression | errorMissingExpression) valueTrail;
+  'with' with_Argument valueTrail;
 
 followDiscardStatement:
   'follow' memberDiscard;
@@ -371,22 +384,22 @@ followStatement:
   'follow' (expression | errorMissingExpression);
 
 followWithTrailing:
-  FOLLOW_WITH (expression | errorMissingExpression) freeTrail;
+  FOLLOW_WITH with_Argument freeTrail;
 
 followWithTerminating:
-  FOLLOW_WITH (expression | errorMissingExpression) terminatingTrail;
+  FOLLOW_WITH with_Argument terminatingTrail;
 
 followWithInterrupting:
-  FOLLOW_WITH (expression | errorMissingExpression) interruptingTrail;
+  FOLLOW_WITH with_Argument interruptingTrail;
 
 followWithInterruptible:
-  FOLLOW_WITH (expression | errorMissingExpression) interruptibleTrail;
+  FOLLOW_WITH with_Argument interruptibleTrail;
 
 followWithReturning:
-  FOLLOW_WITH (expression | errorMissingExpression) returningTrail;
+  FOLLOW_WITH with_Argument returningTrail;
 
 followWithConditional:
-  FOLLOW_WITH (expression | errorMissingExpression) conditionalTrail;
+  FOLLOW_WITH with_Argument conditionalTrail;
 
 // A free statement that must be at the end of a block
 trailingStatement:

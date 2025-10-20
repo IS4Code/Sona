@@ -224,25 +224,12 @@ namespace Sona.Compiler.States
         public sealed override void EnterSpreadExpression(SpreadExpressionContext context)
         {
             Out.Write("yield! ");
-            EnterState<SpreadExpression>().EnterSpreadExpression(context);
+            EnterState<ExpressionState.Spread>().EnterSpreadExpression(context);
         }
 
         public sealed override void ExitSpreadExpression(SpreadExpressionContext context)
         {
 
-        }
-
-        sealed class SpreadExpression : ExpressionState
-        {
-            public override void EnterSpreadExpression(SpreadExpressionContext context)
-            {
-
-            }
-
-            public override void ExitSpreadExpression(SpreadExpressionContext context)
-            {
-                ExitState().ExitSpreadExpression(context);
-            }
         }
 
         public sealed override void EnterExpressionStatement(ExpressionStatementContext context)

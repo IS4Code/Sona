@@ -1,4 +1,5 @@
-﻿using Antlr4.Runtime;
+﻿using System.Diagnostics.CodeAnalysis;
+using Antlr4.Runtime;
 using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
@@ -6,6 +7,10 @@ namespace Sona.Compiler.States
     internal abstract class WithStatementBase : ControlStatement
     {
         public string? BuilderVariable { get; private set; }
+        bool isCollection;
+
+        [MemberNotNullWhen(true, nameof(BuilderVariable))]
+        protected bool IsComputation => BuilderVariable != null;
 
         protected override bool IgnoreContext => false;
 
@@ -14,25 +19,34 @@ namespace Sona.Compiler.States
         protected new IReturnableContext ReturnScope => base.ReturnScope ?? Defaults;
         protected new IInterruptibleContext InterruptScope => base.InterruptScope ?? Defaults;
 
+        public ComputationFlags Flags =>
+            (IsComputation ? ComputationFlags.IsComputation : 0) |
+            (isCollection ? ComputationFlags.IsCollection : 0);
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            BuilderVariable = null;
+            isCollection = false;
+        }
+
         protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
         {
             base.OnEnter(flags, context);
 
             OnComputationEnter(flags, context);
-
-            BuilderVariable = Out.CreateTemporaryIdentifier();
-
-            Out.EnterNestedScope();
-            Out.Write("(let ");
-            Out.WriteIdentifier(BuilderVariable);
-            Out.WriteOperator('=');
         }
 
         protected override void OnExit(StatementFlags flags, ParserRuleContext context)
         {
             Out.WriteLine();
             Out.ExitNestedScope();
-            Out.Write("})");
+            if(IsComputation || isCollection)
+            {
+                Out.Write('}');
+            }
+            Out.Write(')');
 
             OnComputationExit(flags, context);
 
@@ -70,33 +84,107 @@ namespace Sona.Compiler.States
 
         public sealed override void EnterExpression(ExpressionContext context)
         {
+            OnEnterExpression(context);
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
         public sealed override void ExitExpression(ExpressionContext context)
+        {
+            OnExitExpression(context);
+        }
+
+        public sealed override void EnterSpreadExpression(SpreadExpressionContext context)
+        {
+            isCollection = true;
+            OnEnterExpression(context);
+            EnterState<ExpressionState.Spread>().EnterSpreadExpression(context);
+        }
+
+        public sealed override void ExitSpreadExpression(SpreadExpressionContext context)
+        {
+            OnExitExpression(context);
+        }
+
+        private void OnEnterExpression(ParserRuleContext context)
+        {
+            BuilderVariable = Out.CreateTemporaryIdentifier();
+
+            Out.EnterNestedScope();
+            Out.Write("(let ");
+            Out.WriteIdentifier(BuilderVariable);
+            Out.WriteOperator('=');
+        }
+
+        private void OnExitExpression(ParserRuleContext context)
         {
             Out.Write(" in ");
             Out.WriteIdentifier(BuilderVariable!);
             Out.Write(" { ");
         }
 
-        public void WriteBeginBlockExpression(ParserRuleContext context)
+        public sealed override void EnterWithDefaultArgument(WithDefaultArgumentContext context)
         {
             Out.EnterNestedScope();
+            Out.Write("(");
+        }
+
+        public sealed override void ExitWithDefaultArgument(WithDefaultArgumentContext context)
+        {
+
+        }
+
+        public sealed override void EnterWithDefaultSequenceArgument(WithDefaultSequenceArgumentContext context)
+        {
+            isCollection = true;
+            Out.EnterNestedScope();
             Out.Write('(');
-            Out.WriteIdentifier(BuilderVariable ?? Error("COMPILER ERROR: Computation block is not properly initialized.", context));
-            Out.WriteLine('{');
+            Out.WriteCoreOperatorName("seq");
+            Out.Write('{');
+        }
+
+        public sealed override void ExitWithDefaultSequenceArgument(WithDefaultSequenceArgumentContext context)
+        {
+
+        }
+
+        public void WriteBeginBlockExpression(ParserRuleContext context)
+        {
+            if(IsComputation)
+            {
+                Out.EnterNestedScope();
+                Out.Write('(');
+                Out.WriteIdentifier(BuilderVariable);
+                Out.WriteLine('{');
+            }
+            else if(isCollection)
+            {
+                Out.EnterNestedScope();
+                Out.Write('(');
+                Out.WriteCoreOperatorName("seq");
+                Out.WriteLine('{');
+            }
+            else
+            {
+                Defaults.WriteBeginBlockExpression(context);
+            }
         }
 
         public void WriteEndBlockExpression(ParserRuleContext context)
         {
-            Out.ExitNestedScope();
-            Out.Write("})");
+            if(IsComputation || isCollection)
+            {
+                Out.ExitNestedScope();
+                Out.Write("})");
+            }
+            else
+            {
+                Defaults.WriteEndBlockExpression(context);
+            }
         }
 
         public override void WriteImplicitReturnStatement(ParserRuleContext context)
         {
-            if((ReturnFlags & ReturnFlags.Indirect) != 0)
+            if((ReturnFlags & ReturnFlags.Indirect) != 0 || !IsComputation)
             {
                 // Nothing
                 base.WriteImplicitReturnStatement(context);
@@ -117,8 +205,6 @@ namespace Sona.Compiler.States
         // Does not provide its own conditional return variables
         ReturnFlags IReturnableContext.Flags => ReturnFlags & ~ReturnFlags.Indirect;
 
-        ComputationFlags IComputationContext.Flags => ComputationFlags.IsComputation;
-        
         protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
         {
             ReturnScope.WriteReturnStatement(context);
@@ -163,12 +249,22 @@ namespace Sona.Compiler.States
 
         void IReturnableContext.WriteReturnStatement(ParserRuleContext context)
         {
-            Out.Write("return ");
+            if(IsComputation)
+            {
+                Out.Write("return ");
+            }
+            else
+            {
+                Defaults.WriteReturnStatement(context);
+            }
         }
 
         void IReturnableContext.WriteAfterReturnStatement(ParserRuleContext context)
         {
-
+            if(!IsComputation)
+            {
+                Defaults.WriteAfterReturnStatement(context);
+            }
         }
 
         void IReturnableContext.WriteReturnValue(bool isOption, ParserRuleContext context)
@@ -213,8 +309,6 @@ namespace Sona.Compiler.States
         string? IInterruptibleContext.InterruptingVariable => InterruptScope?.InterruptingVariable;
 
         ReturnFlags IReturnableContext.Flags => ReturnFlags;
-
-        ComputationFlags IComputationContext.Flags => ComputationFlags.IsComputation;
 
         bool closeReturnStatement;
 
@@ -268,7 +362,7 @@ namespace Sona.Compiler.States
 
         void IReturnableContext.WriteReturnStatement(ParserRuleContext context)
         {
-            if((ReturnFlags & ReturnFlags.Indirect) != 0)
+            if((ReturnFlags & ReturnFlags.Indirect) != 0 || !IsComputation)
             {
                 WriteReturnStatement(context);
             }
@@ -280,7 +374,7 @@ namespace Sona.Compiler.States
 
         void IReturnableContext.WriteAfterReturnStatement(ParserRuleContext context)
         {
-            if((ReturnFlags & ReturnFlags.Indirect) != 0)
+            if((ReturnFlags & ReturnFlags.Indirect) != 0 || !IsComputation)
             {
                 WriteAfterReturnStatement(context);
             }

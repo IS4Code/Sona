@@ -48,25 +48,12 @@ namespace Sona.Compiler.States
 
         public override void EnterSpreadExpression(SpreadExpressionContext context)
         {
-            EnterState<SpreadExpression>().EnterSpreadExpression(context);
+            EnterState<ExpressionState.Spread>().EnterSpreadExpression(context);
         }
 
         public override void ExitSpreadExpression(SpreadExpressionContext context)
         {
 
-        }
-
-        sealed class SpreadExpression : ExpressionState
-        {
-            public override void EnterSpreadExpression(SpreadExpressionContext context)
-            {
-
-            }
-
-            public override void ExitSpreadExpression(SpreadExpressionContext context)
-            {
-                ExitState().ExitSpreadExpression(context);
-            }
         }
     }
 
