@@ -66,7 +66,6 @@ type GlobalBuilder() =
   
   [<CompilerMessage(noSingleValueWarningMessage, warningNumber)>]
   member inline _.ReturnFrom(arg : _ seq) = System.Linq.Enumerable.Single(arg)
-  member inline _.ReturnFrom(arg : unit seq) = for _ in arg do ()
 
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
   member inline _.ReturnFrom(arg : Async<_>) = Async.RunSynchronously arg
@@ -87,8 +86,7 @@ type GlobalBuilder() =
   [<CompilerMessage(noValueWarningMessage, warningNumber)>]
   member inline this.Bind(arg : Result<_, _>, func) = func(this.ReturnFrom arg)
   [<CompilerMessage(noSingleValueWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : 'T seq, func) = func(this.ReturnFrom<'T> arg)
-  member inline this.Bind(arg : unit seq, func) = func(this.ReturnFrom arg)
+  member inline this.Bind(arg : 'T seq, func) = func(this.ReturnFrom arg)
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
   member inline this.Bind(arg : Async<_>, func) = func(this.ReturnFrom arg)
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
