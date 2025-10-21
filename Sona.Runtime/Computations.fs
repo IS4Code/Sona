@@ -31,6 +31,8 @@ let option = { new OptionBuilder() with member _.ToString() = "option" }
 [<Literal>]
 let private noValueWarningMessage = "This `follow` operator may result in an exception if the argument has no value."
 [<Literal>]
+let private noSingleValueWarningMessage = "This `follow` operator may result in an exception if the argument does not contain exactly one element."
+[<Literal>]
 let private blockingWarningMessage = "This `follow` operator may result in a blocking operation."
 [<Literal>]
 let private warningNumber = 99999
@@ -62,6 +64,10 @@ type GlobalBuilder() =
     | Ok value -> value
     | Error err -> raise (ArgumentException(sprintf "The object has an error value %A." err, "arg"))
   
+  [<CompilerMessage(noSingleValueWarningMessage, warningNumber)>]
+  member inline _.ReturnFrom(arg : _ seq) = System.Linq.Enumerable.Single(arg)
+  member inline _.ReturnFrom(arg : unit seq) = for _ in arg do ()
+
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
   member inline _.ReturnFrom(arg : Async<_>) = Async.RunSynchronously arg
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
@@ -80,6 +86,9 @@ type GlobalBuilder() =
   member inline this.Bind(arg : _ voption, func) = func(this.ReturnFrom arg)
   [<CompilerMessage(noValueWarningMessage, warningNumber)>]
   member inline this.Bind(arg : Result<_, _>, func) = func(this.ReturnFrom arg)
+  [<CompilerMessage(noSingleValueWarningMessage, warningNumber)>]
+  member inline this.Bind(arg : 'T seq, func) = func(this.ReturnFrom<'T> arg)
+  member inline this.Bind(arg : unit seq, func) = func(this.ReturnFrom arg)
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
   member inline this.Bind(arg : Async<_>, func) = func(this.ReturnFrom arg)
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
