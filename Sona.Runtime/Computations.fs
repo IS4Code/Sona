@@ -152,59 +152,59 @@ let private emptySequenceException = "The enumerator is not pointing at any elem
 [<Literal>]
 let private nonThreadSafeException = "The enumerator is not thread-safe."
 
-module GenericSequence =
+module UniversalSequence =
   open System.Threading
 
   let inline zero boolBuilder ([<InlineIfLambda>]boolWrap) unitBuilder ([<InlineIfLambda>]unitWrap) = {
-    new IGenericEnumerator<_, _, _> with
+    new IUniversalEnumerator<_, _, _> with
 
     member _.Current = raise(InvalidOperationException emptySequenceException)
 
-    member _.MoveNextGeneric() =
+    member _.MoveNextUniversal() =
       boolWrap(fun() -> (
         (^B : (member Return : _ -> _) boolBuilder, false)
       ))
 
-    member _.DisposeGeneric() =
+    member _.DisposeUniversal() =
       unitWrap(fun() -> (
         (^U : (member Return : _ -> _) unitBuilder, ())
       ))
   }
 
-  let inline delay (f : unit -> IGenericEnumerator<_, _, _>) = f
+  let inline delay (f : unit -> IUniversalEnumerator<_, _, _>) = f
 
   let inline ``yield`` boolBuilder ([<InlineIfLambda>]boolWrap) unitBuilder ([<InlineIfLambda>]unitWrap) x =
    let mutable state = -1 in {
-    new IGenericEnumerator<_, _, _> with
+    new IUniversalEnumerator<_, _, _> with
 
     member _.Current =
       match Volatile.Read(&state) with
       | 0 -> x
       | _ -> raise(InvalidOperationException emptySequenceException)
     
-    member _.MoveNextGeneric() =
+    member _.MoveNextUniversal() =
       boolWrap(fun() -> (
         (^B : (member Return : _ -> _) boolBuilder, Interlocked.Increment(&state) = 0)
       ))
     
-    member _.DisposeGeneric() =
+    member _.DisposeUniversal() =
       unitWrap(fun() -> (
         (^U : (member Return : _ -> _) unitBuilder, ())
       ))
    }
 
   let inline bind boolBuilder ([<InlineIfLambda>]boolWrap) ([<InlineIfLambda>]boolReturnFrom) unitBuilder ([<InlineIfLambda>]unitWrap) ([<InlineIfLambda>]unitReturnFrom) m ([<InlineIfLambda>]f) =
-   let mutable inner = Unchecked.defaultof<IGenericEnumerator<_, _, _>> in {
-    new IGenericEnumerator<_, _, _> with
+   let mutable inner = Unchecked.defaultof<IUniversalEnumerator<_, _, _>> in {
+    new IUniversalEnumerator<_, _, _> with
 
     member _.Current =
       if not(isNull(Volatile.Read(&inner) |> box)) then inner.Current
       else raise(InvalidOperationException emptySequenceException)
 
-    member _.MoveNextGeneric() =
+    member _.MoveNextUniversal() =
       if not(isNull(Volatile.Read(&inner) |> box)) then
         // Never changes once set
-        inner.MoveNextGeneric()
+        inner.MoveNextUniversal()
       else
         boolWrap(fun() -> (
           (^B : (member Bind : _ * _ -> _) boolBuilder, m, fun x -> (
@@ -217,14 +217,14 @@ module GenericSequence =
               then raise(InvalidOperationException nonThreadSafeException)
             
             // Return the inner result
-            boolReturnFrom(inner.MoveNextGeneric())
+            boolReturnFrom(inner.MoveNextUniversal())
           ))
         ))
 
-    member _.DisposeGeneric() =
+    member _.DisposeUniversal() =
       if not(isNull(Volatile.Read(&inner) |> box)) then
         // Never changes once set
-        inner.DisposeGeneric()
+        inner.DisposeUniversal()
       else
         unitWrap(fun() -> (
           // Initialize with an empty value
@@ -236,25 +236,25 @@ module GenericSequence =
             then raise(InvalidOperationException nonThreadSafeException)
           
           // Return the inner result
-          unitReturnFrom(inner.DisposeGeneric())
+          unitReturnFrom(inner.DisposeUniversal())
         ))
    }
 
-  let inline yieldFrom (x : IGenericEnumerable<_, _, _>) = x.GetGenericEnumerator()
+  let inline yieldFrom (x : IUniversalEnumerable<_, _, _>) = x.GetUniversalEnumerator()
 
-  let inline combine boolBuilder ([<InlineIfLambda>]boolWrap) ([<InlineIfLambda>]boolReturnFrom) unitBuilder ([<InlineIfLambda>]unitWrap) ([<InlineIfLambda>]unitReturnFrom) (first : IGenericEnumerator<_, _, _>) (second : unit -> IGenericEnumerator<_, _, _>) =
-   let mutable inner = Unchecked.defaultof<IGenericEnumerator<_, _, _>> in {
-    new IGenericEnumerator<_, _, _> with
+  let inline combine boolBuilder ([<InlineIfLambda>]boolWrap) ([<InlineIfLambda>]boolReturnFrom) unitBuilder ([<InlineIfLambda>]unitWrap) ([<InlineIfLambda>]unitReturnFrom) (first : IUniversalEnumerator<_, _, _>) (second : unit -> IUniversalEnumerator<_, _, _>) =
+   let mutable inner = Unchecked.defaultof<IUniversalEnumerator<_, _, _>> in {
+    new IUniversalEnumerator<_, _, _> with
 
     member _.Current =
       if not(isNull(Volatile.Read(&inner) |> box)) then inner.Current
       else raise(InvalidOperationException emptySequenceException)
     
-    member _.MoveNextGeneric() =
+    member _.MoveNextUniversal() =
       let enumerator = Volatile.Read(&inner)
       if not(isNull(enumerator |> box)) && not(Object.ReferenceEquals(first, enumerator |> box)) then
         // Delegate to the second enumerator (will never change)
-        enumerator.MoveNextGeneric()
+        enumerator.MoveNextUniversal()
       else
         boolWrap(fun() -> (
           // Attempt to read
@@ -272,17 +272,17 @@ module GenericSequence =
           // Enumerator is available
           if not(Object.ReferenceEquals(first, enumerator)) then
             // Is in the second enumerator, just delegate to it
-            boolReturnFrom(enumerator.MoveNextGeneric())
+            boolReturnFrom(enumerator.MoveNextUniversal())
           else
             // Decide based on the result
-            (^B : (member Bind : _ * _ -> _) boolBuilder, enumerator.MoveNextGeneric(), fun hasNext -> (
+            (^B : (member Bind : _ * _ -> _) boolBuilder, enumerator.MoveNextUniversal(), fun hasNext -> (
               // Initialize with the continuation
               if hasNext then
                 // Just return the information
                 (^B : (member Return : _ -> _) boolBuilder, true)
               else
                 // Cleanup and move to the next
-                (^U : (member Bind : _ * _ -> _) unitBuilder, enumerator.DisposeGeneric(), fun () -> (
+                (^U : (member Bind : _ * _ -> _) unitBuilder, enumerator.DisposeUniversal(), fun () -> (
                   if
                     // Still on the first enumerator
                     Object.ReferenceEquals(first, Volatile.Read(&inner)) &&
@@ -291,16 +291,16 @@ module GenericSequence =
                     then raise(InvalidOperationException nonThreadSafeException)
                   
                   // Return the inner result
-                  boolReturnFrom(inner.MoveNextGeneric())
+                  boolReturnFrom(inner.MoveNextUniversal())
                 ))
             ))
         ))
     
-    member _.DisposeGeneric() =
+    member _.DisposeUniversal() =
       let enumerator = Volatile.Read(&inner)
       if not(isNull(enumerator |> box)) && not(Object.ReferenceEquals(first, enumerator |> box)) then
         // Delegate to the second enumerator (will never change)
-        enumerator.DisposeGeneric()
+        enumerator.DisposeUniversal()
       else
         unitWrap(fun() -> (
           // Initialize with an empty value
@@ -312,38 +312,38 @@ module GenericSequence =
             then raise(InvalidOperationException nonThreadSafeException)
           
           // Return the inner result
-          unitReturnFrom(inner.DisposeGeneric())
+          unitReturnFrom(inner.DisposeUniversal())
         ))
    }
 
   let inline run ([<InlineIfLambda>]f) = {
-    new IGenericEnumerable<_, _, _> with
-    member _.GetGenericEnumerator() = f()
+    new IUniversalEnumerable<_, _, _> with
+    member _.GetUniversalEnumerator() = f()
   }
 
 [<NoEquality; NoComparison>]
-type GenericSequenceBuilder<'TBoolBuilder, 'TUnitBuilder> =
+type UniversalSequenceBuilder<'TBoolBuilder, 'TUnitBuilder> =
   {
     BoolBuilder : 'TBoolBuilder
     UnitBuilder : 'TUnitBuilder
   }
-  member inline _.YieldFrom x = GenericSequence.yieldFrom x
-  member inline _.Delay f = GenericSequence.delay f
-  member inline _.Run f = GenericSequence.run f
+  member inline _.YieldFrom x = UniversalSequence.yieldFrom x
+  member inline _.Delay f = UniversalSequence.delay f
+  member inline _.Run f = UniversalSequence.run f
 
 [<AbstractClass; Extension>]
-type GenericSequenceBuilderExtensions1 internal() =
+type UniversalSequenceBuilderExtensions1 internal() =
   [<Extension>]
-  static member inline Zero(self : GenericSequenceBuilder<_, _>) =
-    GenericSequence.zero
+  static member inline Zero(self : UniversalSequenceBuilder<_, _>) =
+    UniversalSequence.zero
       self.BoolBuilder
       (fun f -> f())
       self.UnitBuilder
       (fun f -> f())
   
   [<Extension>]
-  static member inline Yield(self : GenericSequenceBuilder<_, _>, x) =
-    GenericSequence.``yield``
+  static member inline Yield(self : UniversalSequenceBuilder<_, _>, x) =
+    UniversalSequence.``yield``
       self.BoolBuilder
       (fun f -> f())
       self.UnitBuilder
@@ -351,8 +351,8 @@ type GenericSequenceBuilderExtensions1 internal() =
       x
   
   [<Extension>]
-  static member inline Bind(self : GenericSequenceBuilder<_, _>, m, f) =
-    GenericSequence.bind
+  static member inline Bind(self : UniversalSequenceBuilder<_, _>, m, f) =
+    UniversalSequence.bind
       self.BoolBuilder
       (fun f -> f())
       (fun m -> (^B : (member ReturnFrom : _ -> _) self.BoolBuilder, m))
@@ -362,8 +362,8 @@ type GenericSequenceBuilderExtensions1 internal() =
       m f
   
   [<Extension>]
-  static member inline Combine(self : GenericSequenceBuilder<_, _>, first, second) =
-    GenericSequence.combine
+  static member inline Combine(self : UniversalSequenceBuilder<_, _>, first, second) =
+    UniversalSequence.combine
       self.BoolBuilder
       (fun f -> f())
       (fun m -> (^B : (member ReturnFrom : _ -> _) self.BoolBuilder, m))
@@ -373,20 +373,20 @@ type GenericSequenceBuilderExtensions1 internal() =
       first second
     
 [<AbstractClass; Extension>]
-type GenericSequenceBuilderExtensions2 internal() =
-  inherit GenericSequenceBuilderExtensions1()
+type UniversalSequenceBuilderExtensions2 internal() =
+  inherit UniversalSequenceBuilderExtensions1()
   
   [<Extension>]
-  static member inline Zero(self : GenericSequenceBuilder<_, _>) =
-    GenericSequence.zero
+  static member inline Zero(self : UniversalSequenceBuilder<_, _>) =
+    UniversalSequence.zero
       self.BoolBuilder
       (fun f -> (^B : (member Delay : _ -> _) self.BoolBuilder, f))
       self.UnitBuilder
       (fun f -> (^U : (member Delay : _ -> _) self.UnitBuilder, f))
   
   [<Extension>]
-  static member inline Yield(self : GenericSequenceBuilder<_, _>, x) =
-    GenericSequence.``yield``
+  static member inline Yield(self : UniversalSequenceBuilder<_, _>, x) =
+    UniversalSequence.``yield``
       self.BoolBuilder
       (fun f -> (^B : (member Delay : _ -> _) self.BoolBuilder, f))
       self.UnitBuilder
@@ -394,8 +394,8 @@ type GenericSequenceBuilderExtensions2 internal() =
       x
   
   [<Extension>]
-  static member inline Bind(self : GenericSequenceBuilder<_, _>, m, f) =
-    GenericSequence.bind
+  static member inline Bind(self : UniversalSequenceBuilder<_, _>, m, f) =
+    UniversalSequence.bind
       self.BoolBuilder
       (fun f -> (^B : (member Delay : _ -> _) self.BoolBuilder, f))
       (fun m -> (^B : (member ReturnFrom : _ -> _) self.BoolBuilder, m))
@@ -405,8 +405,8 @@ type GenericSequenceBuilderExtensions2 internal() =
       m f
   
   [<Extension>]
-  static member inline Combine(self : GenericSequenceBuilder<_, _>, first, second) =
-    GenericSequence.combine
+  static member inline Combine(self : UniversalSequenceBuilder<_, _>, first, second) =
+    UniversalSequence.combine
       self.BoolBuilder
       (fun f -> (^B : (member Delay : _ -> _) self.BoolBuilder, f))
       (fun m -> (^B : (member ReturnFrom : _ -> _) self.BoolBuilder, m))
@@ -416,20 +416,20 @@ type GenericSequenceBuilderExtensions2 internal() =
       first second
 
 [<Sealed; AbstractClass; Extension>]
-type GenericSequenceBuilderExtensions3 private() =
-  inherit GenericSequenceBuilderExtensions2()
+type UniversalSequenceBuilderExtensions3 private() =
+  inherit UniversalSequenceBuilderExtensions2()
   
   [<Extension>]
-  static member inline Zero(self : GenericSequenceBuilder<_, _>) =
-    GenericSequence.zero
+  static member inline Zero(self : UniversalSequenceBuilder<_, _>) =
+    UniversalSequence.zero
       self.BoolBuilder
       (fun f -> (^B : (member Run : _ -> _) self.BoolBuilder, (^B : (member Delay : _ -> _) self.BoolBuilder, f)))
       self.UnitBuilder
       (fun f -> (^U : (member Run : _ -> _) self.UnitBuilder, (^U : (member Delay : _ -> _) self.UnitBuilder, f)))
   
   [<Extension>]
-  static member inline Yield(self : GenericSequenceBuilder<_, _>, x) =
-    GenericSequence.``yield``
+  static member inline Yield(self : UniversalSequenceBuilder<_, _>, x) =
+    UniversalSequence.``yield``
       self.BoolBuilder
       (fun f -> (^B : (member Run : _ -> _) self.BoolBuilder, (^B : (member Delay : _ -> _) self.BoolBuilder, f)))
       self.UnitBuilder
@@ -437,8 +437,8 @@ type GenericSequenceBuilderExtensions3 private() =
       x
   
   [<Extension>]
-  static member inline Bind(self : GenericSequenceBuilder<_, _>, m, f) =
-    GenericSequence.bind
+  static member inline Bind(self : UniversalSequenceBuilder<_, _>, m, f) =
+    UniversalSequence.bind
       self.BoolBuilder
       (fun f -> (^B : (member Run : _ -> _) self.BoolBuilder, (^B : (member Delay : _ -> _) self.BoolBuilder, f)))
       (fun m -> (^B : (member ReturnFrom : _ -> _) self.BoolBuilder, m))
@@ -448,8 +448,8 @@ type GenericSequenceBuilderExtensions3 private() =
       m f
   
   [<Extension>]
-  static member inline Combine(self : GenericSequenceBuilder<_, _>, first, second) =
-    GenericSequence.combine
+  static member inline Combine(self : UniversalSequenceBuilder<_, _>, first, second) =
+    UniversalSequence.combine
       self.BoolBuilder
       (fun f -> (^B : (member Run : _ -> _) self.BoolBuilder, (^B : (member Delay : _ -> _) self.BoolBuilder, f)))
       (fun m -> (^B : (member ReturnFrom : _ -> _) self.BoolBuilder, m))
