@@ -2,6 +2,7 @@
 module Sona.Runtime.Computations
 
 open System
+open System.Runtime.CompilerServices
 open System.Threading.Tasks
 open Sona.Runtime.CompilerServices
 
@@ -100,3 +101,317 @@ type GlobalBuilder() =
   member inline this.Bind(arg : Lazy<_>, func) = func(this.ReturnFrom arg)
 
 let ``global`` = { new GlobalBuilder() with member _.ToString() = "global" }
+
+[<Literal>]
+let private emptySequenceException = "The enumerator is not pointing at any element."
+
+[<Literal>]
+let private nonThreadSafeException = "The enumerator is not thread-safe."
+
+module GenericSequence =
+  open System.Threading
+
+  let inline zero boolBuilder ([<InlineIfLambda>]boolWrap) unitBuilder ([<InlineIfLambda>]unitWrap) = {
+    new IGenericEnumerator<_, _, _> with
+
+    member _.Current = raise(InvalidOperationException emptySequenceException)
+
+    member _.MoveNextGeneric() =
+      boolWrap(fun() -> (
+        (^B : (member Return : _ -> _) boolBuilder, false)
+      ))
+
+    member _.DisposeGeneric() =
+      unitWrap(fun() -> (
+        (^U : (member Zero : unit -> _) unitBuilder)
+      ))
+  }
+
+  let inline delay (f : unit -> IGenericEnumerator<_, _, _>) = f
+
+  let inline ``yield`` boolBuilder ([<InlineIfLambda>]boolWrap) unitBuilder ([<InlineIfLambda>]unitWrap) x =
+   let mutable state = -1 in {
+    new IGenericEnumerator<_, _, _> with
+
+    member _.Current =
+      match Volatile.Read(&state) with
+      | 0 -> x
+      | _ -> raise(InvalidOperationException emptySequenceException)
+    
+    member _.MoveNextGeneric() =
+      boolWrap(fun() -> (
+        (^B : (member Return : _ -> _) boolBuilder, Interlocked.Increment(&state) = 0)
+      ))
+    
+    member _.DisposeGeneric() =
+      unitWrap(fun() -> (
+        (^U : (member Zero : unit -> _) unitBuilder)
+      ))
+   }
+
+  let inline bind boolBuilder ([<InlineIfLambda>]boolWrap) ([<InlineIfLambda>]boolReturnFrom) unitBuilder ([<InlineIfLambda>]unitWrap) ([<InlineIfLambda>]unitReturnFrom) m ([<InlineIfLambda>]f) =
+   let mutable inner = Unchecked.defaultof<IGenericEnumerator<_, _, _>> in {
+    new IGenericEnumerator<_, _, _> with
+
+    member _.Current =
+      if not(isNull(Volatile.Read(&inner) |> box)) then inner.Current
+      else raise(InvalidOperationException emptySequenceException)
+
+    member _.MoveNextGeneric() =
+      if not(isNull(Volatile.Read(&inner) |> box)) then
+        // Never changes once set
+        inner.MoveNextGeneric()
+      else
+        boolWrap(fun() -> (
+          (^B : (member Bind : _ * _ -> _) boolBuilder, m, fun x -> (
+            // Initialize with the continuation
+            if
+              // Still empty
+              isNull(Volatile.Read(&inner) |> box) &&
+              // But non-empty before the value could be moved inside
+              not(isNull(Interlocked.CompareExchange(&inner, f(x), Unchecked.defaultof<_>) |> box))
+              then raise(InvalidOperationException nonThreadSafeException)
+            
+            // Return the inner result
+            boolReturnFrom(inner.MoveNextGeneric())
+          ))
+        ))
+
+    member _.DisposeGeneric() =
+      if not(isNull(Volatile.Read(&inner) |> box)) then
+        // Never changes once set
+        inner.DisposeGeneric()
+      else
+        unitWrap(fun() -> (
+          // Initialize with an empty value
+          if
+            // Still empty
+            isNull(Volatile.Read(&inner) |> box) &&
+            // But non-empty before the value could be moved inside
+            not(isNull(Interlocked.CompareExchange(&inner, zero boolBuilder boolWrap unitBuilder unitWrap, Unchecked.defaultof<_>) |> box))
+            then raise(InvalidOperationException nonThreadSafeException)
+          
+          // Return the inner result
+          unitReturnFrom(inner.DisposeGeneric())
+        ))
+   }
+
+  let inline yieldFrom (x : IGenericEnumerable<_, _, _>) = x.GetGenericEnumerator()
+
+  let inline combine boolBuilder ([<InlineIfLambda>]boolWrap) ([<InlineIfLambda>]boolReturnFrom) unitBuilder ([<InlineIfLambda>]unitWrap) ([<InlineIfLambda>]unitReturnFrom) (first : IGenericEnumerator<_, _, _>) (second : unit -> IGenericEnumerator<_, _, _>) =
+   let mutable inner = Unchecked.defaultof<IGenericEnumerator<_, _, _>> in {
+    new IGenericEnumerator<_, _, _> with
+
+    member _.Current =
+      if not(isNull(Volatile.Read(&inner) |> box)) then inner.Current
+      else raise(InvalidOperationException emptySequenceException)
+    
+    member _.MoveNextGeneric() =
+      let enumerator = Volatile.Read(&inner)
+      if not(isNull(enumerator |> box)) && not(Object.ReferenceEquals(first, enumerator |> box)) then
+        // Delegate to the second enumerator (will never change)
+        enumerator.MoveNextGeneric()
+      else
+        boolWrap(fun() -> (
+          // Attempt to read
+          let enumerator =
+            let current = Volatile.Read(&inner)
+            if isNull(current |> box) then
+              // First read
+              if not(isNull(Interlocked.CompareExchange(&inner, first, Unchecked.defaultof<_>) |> box)) then
+                // Non-empty before the value could be moved inside
+                raise(InvalidOperationException nonThreadSafeException)
+              first
+            else
+              current
+          
+          // Enumerator is available
+          if not(Object.ReferenceEquals(first, enumerator)) then
+            // Is in the second enumerator, just delegate to it
+            boolReturnFrom(enumerator.MoveNextGeneric())
+          else
+            // Decide based on the result
+            (^B : (member Bind : _ * _ -> _) boolBuilder, enumerator.MoveNextGeneric(), fun hasNext -> (
+              // Initialize with the continuation
+              if hasNext then
+                // Just return the information
+                (^B : (member Return : _ -> _) boolBuilder, true)
+              else
+                // Cleanup and move to the next
+                (^U : (member Bind : _ * _ -> _) unitBuilder, enumerator.DisposeGeneric(), fun () -> (
+                  if
+                    // Still on the first enumerator
+                    Object.ReferenceEquals(first, Volatile.Read(&inner)) &&
+                    // But changed before the new value could be moved inside
+                    not(Object.ReferenceEquals(first, Interlocked.CompareExchange(&inner, second(), first)))
+                    then raise(InvalidOperationException nonThreadSafeException)
+                  
+                  // Return the inner result
+                  boolReturnFrom(inner.MoveNextGeneric())
+                ))
+            ))
+        ))
+    
+    member _.DisposeGeneric() =
+      let enumerator = Volatile.Read(&inner)
+      if not(isNull(enumerator |> box)) && not(Object.ReferenceEquals(first, enumerator |> box)) then
+        // Delegate to the second enumerator (will never change)
+        enumerator.DisposeGeneric()
+      else
+        unitWrap(fun() -> (
+          // Initialize with an empty value
+          if
+            // Is empty
+            isNull(Volatile.Read(&inner) |> box) &&
+            // But non-empty before the value could be moved inside
+            not(isNull(Interlocked.CompareExchange(&inner, zero boolBuilder boolWrap unitBuilder unitWrap, Unchecked.defaultof<_>) |> box))
+            then raise(InvalidOperationException nonThreadSafeException)
+          
+          // Return the inner result
+          unitReturnFrom(inner.DisposeGeneric())
+        ))
+   }
+
+  let inline run ([<InlineIfLambda>]f) = {
+    new IGenericEnumerable<_, _, _> with
+    member _.GetGenericEnumerator() = f()
+  }
+
+[<NoEquality; NoComparison>]
+type GenericSequenceBuilder<'TBoolBuilder, 'TUnitBuilder> =
+  {
+    BoolBuilder : 'TBoolBuilder
+    UnitBuilder : 'TUnitBuilder
+  }
+  member inline _.YieldFrom x = GenericSequence.yieldFrom x
+  member inline _.Delay f = GenericSequence.delay f
+  member inline _.Run f = GenericSequence.run f
+
+[<AbstractClass; Extension>]
+type GenericSequenceBuilderExtensions1 internal() =
+  [<Extension>]
+  static member inline Zero(self : GenericSequenceBuilder<_, _>) =
+    GenericSequence.zero
+      self.BoolBuilder
+      (fun f -> f())
+      self.UnitBuilder
+      (fun f -> f())
+  
+  [<Extension>]
+  static member inline Yield(self : GenericSequenceBuilder<_, _>, x) =
+    GenericSequence.``yield``
+      self.BoolBuilder
+      (fun f -> f())
+      self.UnitBuilder
+      (fun f -> f())
+      x
+  
+  [<Extension>]
+  static member inline Bind(self : GenericSequenceBuilder<_, _>, m, f) =
+    GenericSequence.bind
+      self.BoolBuilder
+      (fun f -> f())
+      (fun m -> (^B : (member ReturnFrom : _ -> _) self.BoolBuilder, m))
+      self.UnitBuilder
+      (fun f -> f())
+      (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
+      m f
+  
+  [<Extension>]
+  static member inline Combine(self : GenericSequenceBuilder<_, _>, first, second) =
+    GenericSequence.combine
+      self.BoolBuilder
+      (fun f -> f())
+      (fun m -> (^B : (member ReturnFrom : _ -> _) self.BoolBuilder, m))
+      self.UnitBuilder
+      (fun f -> f())
+      (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
+      first second
+    
+[<AbstractClass; Extension>]
+type GenericSequenceBuilderExtensions2 internal() =
+  inherit GenericSequenceBuilderExtensions1()
+  
+  [<Extension>]
+  static member inline Zero(self : GenericSequenceBuilder<_, _>) =
+    GenericSequence.zero
+      self.BoolBuilder
+      (fun f -> (^B : (member Delay : _ -> _) self.BoolBuilder, f))
+      self.UnitBuilder
+      (fun f -> (^U : (member Delay : _ -> _) self.UnitBuilder, f))
+  
+  [<Extension>]
+  static member inline Yield(self : GenericSequenceBuilder<_, _>, x) =
+    GenericSequence.``yield``
+      self.BoolBuilder
+      (fun f -> (^B : (member Delay : _ -> _) self.BoolBuilder, f))
+      self.UnitBuilder
+      (fun f -> (^U : (member Delay : _ -> _) self.UnitBuilder, f))
+      x
+  
+  [<Extension>]
+  static member inline Bind(self : GenericSequenceBuilder<_, _>, m, f) =
+    GenericSequence.bind
+      self.BoolBuilder
+      (fun f -> (^B : (member Delay : _ -> _) self.BoolBuilder, f))
+      (fun m -> (^B : (member ReturnFrom : _ -> _) self.BoolBuilder, m))
+      self.UnitBuilder
+      (fun f -> (^U : (member Delay : _ -> _) self.UnitBuilder, f))
+      (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
+      m f
+  
+  [<Extension>]
+  static member inline Combine(self : GenericSequenceBuilder<_, _>, first, second) =
+    GenericSequence.combine
+      self.BoolBuilder
+      (fun f -> (^B : (member Delay : _ -> _) self.BoolBuilder, f))
+      (fun m -> (^B : (member ReturnFrom : _ -> _) self.BoolBuilder, m))
+      self.UnitBuilder
+      (fun f -> (^U : (member Delay : _ -> _) self.UnitBuilder, f))
+      (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
+      first second
+
+[<Sealed; AbstractClass; Extension>]
+type GenericSequenceBuilderExtensions3 private() =
+  inherit GenericSequenceBuilderExtensions2()
+  
+  [<Extension>]
+  static member inline Zero(self : GenericSequenceBuilder<_, _>) =
+    GenericSequence.zero
+      self.BoolBuilder
+      (fun f -> (^B : (member Run : _ -> _) self.BoolBuilder, (^B : (member Delay : _ -> _) self.BoolBuilder, f)))
+      self.UnitBuilder
+      (fun f -> (^U : (member Run : _ -> _) self.UnitBuilder, (^U : (member Delay : _ -> _) self.UnitBuilder, f)))
+  
+  [<Extension>]
+  static member inline Yield(self : GenericSequenceBuilder<_, _>, x) =
+    GenericSequence.``yield``
+      self.BoolBuilder
+      (fun f -> (^B : (member Run : _ -> _) self.BoolBuilder, (^B : (member Delay : _ -> _) self.BoolBuilder, f)))
+      self.UnitBuilder
+      (fun f -> (^U : (member Run : _ -> _) self.UnitBuilder, (^U : (member Delay : _ -> _) self.UnitBuilder, f)))
+      x
+  
+  [<Extension>]
+  static member inline Bind(self : GenericSequenceBuilder<_, _>, m, f) =
+    GenericSequence.bind
+      self.BoolBuilder
+      (fun f -> (^B : (member Run : _ -> _) self.BoolBuilder, (^B : (member Delay : _ -> _) self.BoolBuilder, f)))
+      (fun m -> (^B : (member ReturnFrom : _ -> _) self.BoolBuilder, m))
+      self.UnitBuilder
+      (fun f -> (^U : (member Run : _ -> _) self.UnitBuilder, (^U : (member Delay : _ -> _) self.UnitBuilder, f)))
+      (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
+      m f
+  
+  [<Extension>]
+  static member inline Combine(self : GenericSequenceBuilder<_, _>, first, second) =
+    GenericSequence.combine
+      self.BoolBuilder
+      (fun f -> (^B : (member Run : _ -> _) self.BoolBuilder, (^B : (member Delay : _ -> _) self.BoolBuilder, f)))
+      (fun m -> (^B : (member ReturnFrom : _ -> _) self.BoolBuilder, m))
+      self.UnitBuilder
+      (fun f -> (^U : (member Run : _ -> _) self.UnitBuilder, (^U : (member Delay : _ -> _) self.UnitBuilder, f)))
+      (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
+      first second
+
+let inline sequenceOf builder = { BoolBuilder = builder; UnitBuilder = builder }
