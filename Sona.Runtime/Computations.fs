@@ -321,6 +321,35 @@ module GenericSequence =
     member _.GetGenericEnumerator() = f()
   }
 
+  let inline forExtension (builder : 'T when 'T : not struct) ([<InlineIfLambda>]delay) (collection : #IGenericEnumerable<_, _, _>) f =
+    let enumerator = collection.GetGenericEnumerator()
+    (^T : (member Combine : _ * _ -> _) builder,
+      (^T : (member TryWith : _ * _ -> _) builder,
+        delay(fun () -> (
+          let mutable ended = false
+          (^T : (member While : _ * _ -> _) builder,
+            (fun () -> ended),
+            delay(fun () -> (
+              // TODO
+            ))
+          )
+        )),
+        fun e -> (
+          let info = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(e)
+          (^T : (member Bind : _ * _ -> _) builder,
+            enumerator.DisposeGeneric(),
+            fun () -> info.Throw(); (^T : (member Zero : unit -> _) builder)
+          )
+        )
+      ),
+      delay(fun () -> (
+        (^T : (member Bind : _ * _ -> _) builder,
+          enumerator.DisposeGeneric(),
+          fun () -> (^T : (member Zero : unit -> _) builder)
+        )
+      ))
+    )
+
 [<NoEquality; NoComparison>]
 type GenericSequenceBuilder<'TBoolBuilder, 'TUnitBuilder> =
   {
@@ -457,5 +486,9 @@ type GenericSequenceBuilderExtensions3 private() =
       (fun f -> (^U : (member Run : _ -> _) self.UnitBuilder, (^U : (member Delay : _ -> _) self.UnitBuilder, f)))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
       first second
+  
+  [<Extension>]
+  static member inline For(self, collection, f) =
+    GenericSequence.forExtension self collection f
 
 let inline sequenceOf builder = { BoolBuilder = builder; UnitBuilder = builder }
