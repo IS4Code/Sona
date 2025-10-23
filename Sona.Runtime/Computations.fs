@@ -167,7 +167,7 @@ module GenericSequence =
 
     member _.DisposeGeneric() =
       unitWrap(fun() -> (
-        (^U : (member Zero : unit -> _) unitBuilder)
+        (^U : (member Return : _ -> _) unitBuilder, ())
       ))
   }
 
@@ -189,7 +189,7 @@ module GenericSequence =
     
     member _.DisposeGeneric() =
       unitWrap(fun() -> (
-        (^U : (member Zero : unit -> _) unitBuilder)
+        (^U : (member Return : _ -> _) unitBuilder, ())
       ))
    }
 
