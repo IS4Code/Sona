@@ -4,30 +4,74 @@ module Sona.Runtime.Computations
 open System
 open System.Runtime.CompilerServices
 open System.Threading.Tasks
-open Sona.Runtime.CompilerServices
 
 [<AbstractClass>]
 type OptionBuilder() =
-  member inline _.Zero() = Operators.LiftNothing()
-  member inline _.Return(value) = Operators.LiftResult value
+  member inline _.Zero() = None
+  member inline _.Return(value) = Some value
   
   member inline _.ReturnFrom(opt : _ option) = opt
-  member inline _.ReturnFrom(opt : _ voption) = opt
-  member inline _.ReturnFrom(opt : Result<_, _>) = opt
-  member inline this.ReturnFrom(opt) =
-    match Operators.BindToResult opt with
-    | struct(true, result) -> this.Return(result)
-    | _ -> this.Zero()
   
-  member inline _.Bind(opt, func) = Option.bind func opt
-  member inline _.Bind(opt, func) = ValueOption.bind func opt
-  member inline _.Bind(opt, func) = Result.bind func opt
-  member inline this.Bind(opt, func) =
-    match Operators.BindToResult opt with
-    | struct(true, result) -> this.Return(func(result))
-    | _ -> this.Zero()
+  member inline _.ReturnFrom(opt : _ voption) =
+    match opt with
+    | ValueSome value -> Some value
+    | _ -> None
+  
+  member inline _.ReturnFrom(opt : Result<_, _>) =
+    match opt with
+    | Ok value -> Some value
+    | _ -> None
+
+  member inline this.Bind(opt, func) = this.ReturnFrom(Option.bind func opt)
+  member inline this.Bind(opt, func) = this.ReturnFrom(ValueOption.bind func opt)
+  member inline this.Bind(opt, func) = this.ReturnFrom(Result.bind func opt)
 
 let option = { new OptionBuilder() with member _.ToString() = "option" }
+
+[<AbstractClass>]
+type ValueOptionBuilder() =
+  member inline _.Zero() = ValueNone
+  member inline _.Return(value) = ValueSome value
+  
+  member inline _.ReturnFrom(opt : _ option) =
+    match opt with
+    | Some value -> ValueSome value
+    | _ -> ValueNone
+  
+  member inline _.ReturnFrom(opt : _ voption) = opt
+  
+  member inline _.ReturnFrom(opt : Result<_, _>) =
+    match opt with
+    | Ok value -> Some value
+    | _ -> None
+
+  member inline this.Bind(opt, func) = this.ReturnFrom(Option.bind func opt)
+  member inline this.Bind(opt, func) = this.ReturnFrom(ValueOption.bind func opt)
+  member inline this.Bind(opt, func) = this.ReturnFrom(Result.bind func opt)
+
+let voption = { new OptionBuilder() with member _.ToString() = "voption" }
+
+[<AbstractClass>]
+type ResultBuilder() =
+  member inline _.Return(value) = Ok value
+  
+  member inline _.ReturnFrom(opt : _ option) =
+    match opt with
+    | Some value -> Ok value
+    | _ -> Error()
+  
+  member inline _.ReturnFrom(opt : _ voption) =
+    match opt with
+    | ValueSome value -> Ok value
+    | _ -> Error()
+  
+  member inline _.ReturnFrom(opt : Result<_, _>) = opt
+  
+  member inline this.Bind(opt, func) = this.ReturnFrom(Option.bind func opt)
+  member inline this.Bind(opt, func) = this.ReturnFrom(ValueOption.bind func opt)
+  member inline this.Bind(opt, func) = this.ReturnFrom(Result.bind func opt)
+
+let result = { new ResultBuilder() with member _.ToString() = "result" }
 
 [<Literal>]
 let private noValueWarningMessage = "This `follow` operator may result in an exception if the argument has no value."
