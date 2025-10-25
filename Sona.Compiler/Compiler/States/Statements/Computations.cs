@@ -7,7 +7,7 @@ namespace Sona.Compiler.States
     internal abstract class WithStatementBase : ControlStatement
     {
         public string? BuilderVariable { get; private set; }
-        bool isCollection;
+        protected bool IsCollection { get; private set; }
 
         [MemberNotNullWhen(true, nameof(BuilderVariable))]
         protected bool IsComputation => BuilderVariable != null;
@@ -21,14 +21,14 @@ namespace Sona.Compiler.States
 
         public ComputationFlags Flags =>
             (IsComputation ? ComputationFlags.IsComputation : 0) |
-            (isCollection ? ComputationFlags.IsCollection : 0);
+            (IsCollection ? ComputationFlags.IsCollection : 0);
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             BuilderVariable = null;
-            isCollection = false;
+            IsCollection = false;
         }
 
         protected override void OnEnter(StatementFlags flags, ParserRuleContext context)
@@ -42,7 +42,7 @@ namespace Sona.Compiler.States
         {
             Out.WriteLine();
             Out.ExitNestedScope();
-            if(IsComputation || isCollection)
+            if(IsComputation || IsCollection)
             {
                 Out.Write('}');
             }
@@ -95,7 +95,7 @@ namespace Sona.Compiler.States
 
         public sealed override void EnterSpreadExpression(SpreadExpressionContext context)
         {
-            isCollection = true;
+            IsCollection = true;
             OnEnterExpression(context);
             EnterState<ExpressionState.Spread>().EnterSpreadExpression(context);
         }
@@ -135,7 +135,7 @@ namespace Sona.Compiler.States
 
         public sealed override void EnterWithDefaultSequenceArgument(WithDefaultSequenceArgumentContext context)
         {
-            isCollection = true;
+            IsCollection = true;
             Out.EnterNestedScope();
             Out.Write('(');
             Out.WriteCoreOperatorName("seq");
@@ -156,7 +156,7 @@ namespace Sona.Compiler.States
                 Out.WriteIdentifier(BuilderVariable);
                 Out.WriteLine('{');
             }
-            else if(isCollection)
+            else if(IsCollection)
             {
                 Out.EnterNestedScope();
                 Out.Write('(');
@@ -171,7 +171,7 @@ namespace Sona.Compiler.States
 
         public void WriteEndBlockExpression(ParserRuleContext context)
         {
-            if(IsComputation || isCollection)
+            if(IsComputation || IsCollection)
             {
                 Out.ExitNestedScope();
                 Out.Write("})");
@@ -335,10 +335,15 @@ namespace Sona.Compiler.States
 
         protected override void OnComputationEnter(StatementFlags flags, ParserRuleContext context)
         {
+            var computationScope = FindContext<IComputationContext>();
+            if((computationScope?.HasFlag(ComputationFlags.IsCollection) ?? false) && !IsComputation)
+            {
+                Error("`follow with` statement used in a collection computation must use the collection form, i.e. `follow with..`.", context);
+            }
             if((ReturnFlags & ReturnFlags.Indirect) == 0)
             {
                 // No conditional variables
-                if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false)
+                if(computationScope?.HasFlag(ComputationFlags.IsComputation) ?? false)
                 {
                     // Can utilize `ReturnFrom`
                     Out.Write("return! ");
@@ -354,7 +359,7 @@ namespace Sona.Compiler.States
             else
             {
                 // Returns are handled indirectly
-                if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false)
+                if(computationScope?.HasFlag(ComputationFlags.IsComputation) ?? false)
                 {
                     Out.Write("let! () = ");
                 }
