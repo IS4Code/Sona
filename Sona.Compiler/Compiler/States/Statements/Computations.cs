@@ -225,6 +225,20 @@ namespace Sona.Compiler.States
             {
                 Error("The `with` statement cannot be used in `try` because it is not possible to transfer execution to outside code.", context);
             }
+            var computationScope = FindContext<IComputationContext>();
+            if(computationScope?.HasFlag(ComputationFlags.IsCollection) ?? false)
+            {
+                if(computationScope?.HasFlag(ComputationFlags.IsComputation) != true)
+                {
+                    // Can't return from a sequence
+                    Error("`with` cannot be used in a collection construction because returning is not supported. Use `yield with` instead.", context);
+                }
+                else if(ReturnScope.HasFlag(ReturnFlags.Indirect))
+                {
+                    // No mechanism to indicate returning only
+                    Error("`with` in a collection computation is not supported in other positions than the final returning statement. Use `follow with` or `yield with` instead.", context);
+                }
+            }
         }
 
         protected override void OnComputationExit(StatementFlags flags, ParserRuleContext context)
