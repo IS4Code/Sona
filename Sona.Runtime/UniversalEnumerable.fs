@@ -20,8 +20,49 @@ and IGenericDisposable<'TUnitMonad> =
 
 module UniversalEnumerable =
   open System
+  open System.Collections
+  open System.Collections.Generic
   open System.Threading
   open System.Threading.Tasks
+
+  let inline private fromSeqInner (enumerable : ^T) ([<InlineIfLambda>]dispose : ^E -> _) = {
+    // Can't use `unit` for some reason
+    new IUniversalEnumerable<^U, _, bool> with
+    member _.GetUniversalEnumerator() =
+      let enumerator = (^T : (member GetEnumerator : unit -> ^E when ^E :> IDisposable) enumerable) in {
+        new IUniversalEnumerator<^U, _, bool> with
+        member _.Current = (^E : (member Current : ^U) enumerator)
+        member _.MoveNextUniversal() = (^E : (member MoveNext : unit -> bool) enumerator)
+        member _.DisposeUniversal() = dispose enumerator
+      }
+  }
+
+  let inline fromSeq enumerable =
+    fromSeqInner enumerable (fun (enumerator : #IDisposable) -> enumerator.Dispose())
+
+  let inline toSeq(enumerable : #IUniversalEnumerable<_, unit, bool>) = {
+    new IEnumerable<'T> with
+    member _.GetEnumerator() =
+      let mutable enumerator = enumerable.GetUniversalEnumerator() in {
+        new IEnumerator<'T> with
+        member _.Current : 'T = enumerator.Current
+        member this.Current : obj = upcast(this.Current : 'T)
+        member _.Reset() = 
+          let mutable current = Volatile.Read(&enumerator)
+          try
+            let replacement = enumerable.GetUniversalEnumerator()
+            if not(Object.ReferenceEquals(current, Interlocked.CompareExchange(&enumerator, replacement, current))) then
+              // Already reset
+              current <- Unchecked.defaultof<_>
+              replacement.DisposeUniversal()
+          finally
+            if not(isNull(current |> box)) then
+              current.DisposeUniversal()
+        member _.MoveNext() = enumerator.MoveNextUniversal()
+        member _.Dispose() = enumerator.DisposeUniversal()
+      }
+    member this.GetEnumerator() : IEnumerator = upcast(this.GetEnumerator() : IEnumerator<'T>)
+  }
 
   let inline fromTaskSeq(enumerable : ^T, cancellationToken) = {
     new IUniversalEnumerable<^U, ValueTask, ValueTask<bool>> with
