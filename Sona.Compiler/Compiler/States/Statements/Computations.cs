@@ -327,19 +327,20 @@ namespace Sona.Compiler.States
 
         ReturnFlags IReturnableContext.Flags => ReturnFlags;
 
-        bool closeReturnStatement;
+        bool closeReturnStatement, closeVariableStatement;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             closeReturnStatement = false;
+            closeVariableStatement = false;
         }
 
         protected override void OnComputationEnter(StatementFlags flags, ParserRuleContext context)
         {
             var computationScope = FindContext<IComputationContext>();
-            if((ReturnFlags & ReturnFlags.Indirect) == 0)
+            if((flags & StatementFlags.ReturnPath) != 0 && (ReturnFlags & ReturnFlags.Indirect) == 0)
             {
                 // No conditional variables
                 if(computationScope?.HasFlag(ComputationFlags.IsComputation) ?? false)
@@ -361,6 +362,7 @@ namespace Sona.Compiler.States
                 if(computationScope?.HasFlag(ComputationFlags.IsComputation) ?? false)
                 {
                     Out.Write("let! () = ");
+                    closeVariableStatement = true;
                 }
                 else
                 {
@@ -375,6 +377,10 @@ namespace Sona.Compiler.States
             if(closeReturnStatement)
             {
                 ReturnScope.WriteAfterReturnStatement(context);
+            }
+            if(closeVariableStatement)
+            {
+                Out.Write(" in ()");
             }
         }
 
