@@ -164,6 +164,26 @@ namespace Sona.Compiler.States
             hasYielded = true;
         }
 
+        public sealed override void EnterFollowExpression(FollowExpressionContext context)
+        {
+            EnterState<YieldFollowOperand>().EnterFollowExpression(context);
+        }
+
+        public sealed override void ExitFollowExpression(FollowExpressionContext context)
+        {
+            hasYielded = true;
+        }
+
+        public sealed override void EnterSpreadFollowExpression(SpreadFollowExpressionContext context)
+        {
+            EnterState<YieldSpreadFollowOperand>().EnterSpreadFollowExpression(context);
+        }
+
+        public sealed override void ExitSpreadFollowExpression(SpreadFollowExpressionContext context)
+        {
+            hasYielded = true;
+        }
+
         public sealed override void EnterExpressionStatement(ExpressionStatementContext context)
         {
             if(!hasYielded)
@@ -180,6 +200,89 @@ namespace Sona.Compiler.States
         public sealed override void ExitExpressionStatement(ExpressionStatementContext context)
         {
 
+        }
+
+        abstract class FollowOperand : ExpressionState
+        {
+            string? variableName;
+
+            protected sealed override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+            {
+                base.Initialize(environment, parent);
+
+                variableName = null;
+            }
+
+            protected void OnEnter(ParserRuleContext context)
+            {
+                var computationScope = FindContext<IComputationContext>();
+                if(computationScope?.HasFlag(ComputationFlags.IsComputation) ?? false)
+                {
+                    variableName = Out.CreateTemporaryIdentifier();
+                    Out.Write("let! ");
+                    Out.WriteIdentifier(variableName);
+                    Out.WriteOperator('=');
+                }
+                else
+                {
+                    OnStatement(context);
+                    Out.WriteGlobalComputationOperator("ReturnFrom");
+                    Out.Write('(');
+                }
+            }
+
+            protected void OnExit(ParserRuleContext context)
+            {
+                if(variableName == null)
+                {
+                    // Non-computation form
+                    Out.Write(')');
+                    return;
+                }
+                Out.WriteLine();
+                OnStatement(context);
+                Out.WriteIdentifier(variableName);
+            }
+
+            protected abstract void OnStatement(ParserRuleContext context);
+        }
+
+        sealed class YieldFollowOperand : FollowOperand
+        {
+            public override void EnterFollowExpression(FollowExpressionContext context)
+            {
+                OnEnter(context);
+            }
+
+            public override void ExitFollowExpression(FollowExpressionContext context)
+            {
+                OnExit(context);
+                ExitState().ExitFollowExpression(context);
+            }
+
+            protected override void OnStatement(ParserRuleContext context)
+            {
+                Out.Write("yield ");
+            }
+        }
+
+        sealed class YieldSpreadFollowOperand : FollowOperand
+        {
+            public override void EnterSpreadFollowExpression(SpreadFollowExpressionContext context)
+            {
+                OnEnter(context);
+            }
+
+            public override void ExitSpreadFollowExpression(SpreadFollowExpressionContext context)
+            {
+                OnExit(context);
+                ExitState().ExitSpreadFollowExpression(context);
+            }
+
+            protected override void OnStatement(ParserRuleContext context)
+            {
+                Out.Write("yield! ");
+            }
         }
     }
 

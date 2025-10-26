@@ -3237,7 +3237,9 @@ computationSequenceConstructor:
 
 collectionElement:
   collectionFieldExpression |
+  spreadFollowExpression |
   spreadExpression |
+  followExpression |
   expressionStatement |
   expression;
 
@@ -3264,6 +3266,12 @@ complexTupleContents:
 
 spreadExpression:
   '..' concatExpr_Inner;
+
+followExpression:
+  'follow' unaryExpr;
+
+spreadFollowExpression:
+  '..' 'follow' unaryExpr;
 
 /* -------------------- */
 /* Interpolated strings */
