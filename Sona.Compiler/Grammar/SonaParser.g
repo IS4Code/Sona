@@ -3044,6 +3044,7 @@ basicConstructExpr:
   anonymousRecordConstructor |
   anonymousClassRecordConstructor |
   anonymousStructRecordConstructor |
+  computationSequenceConstructor |
   sequenceConstructor |
   explicitTupleConstructor |
   classTupleConstructor |
@@ -3230,6 +3231,9 @@ arrayConstructor:
 
 sequenceConstructor:
   '{' (collectionElement (',' collectionElement)*)? '}';
+
+computationSequenceConstructor:
+  '{' 'with' (expression | errorMissingExpression) ';'? (collectionElement (',' collectionElement)*)? '}';
 
 collectionElement:
   collectionFieldExpression |

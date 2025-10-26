@@ -289,6 +289,16 @@ namespace Sona.Compiler
 
         }
 
+        public override void EnterComputationSequenceConstructor(ComputationSequenceConstructorContext context)
+        {
+            EnterState<ComputationSequenceState>().EnterComputationSequenceConstructor(context);
+        }
+
+        public override void ExitComputationSequenceConstructor(ComputationSequenceConstructorContext context)
+        {
+
+        }
+
         public override void EnterType(TypeContext context)
         {
             EnterState<TypeState>().EnterType(context);

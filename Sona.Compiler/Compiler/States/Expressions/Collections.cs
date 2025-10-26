@@ -1,4 +1,5 @@
-﻿using Antlr4.Runtime;
+﻿using System.Diagnostics.CodeAnalysis;
+using Antlr4.Runtime;
 using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
@@ -118,13 +119,13 @@ namespace Sona.Compiler.States
 
         }
 
-        public sealed override void EnterExpression(ExpressionContext context)
+        public override void EnterExpression(ExpressionContext context)
         {
             Out.Write("yield ");
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
-        public sealed override void ExitExpression(ExpressionContext context)
+        public override void ExitExpression(ExpressionContext context)
         {
             hasYielded = true;
         }
@@ -210,6 +211,8 @@ namespace Sona.Compiler.States
             else
             {
                 Out.WriteLine();
+                Defaults.WriteImplicitReturnStatement(context);
+                Out.WriteLine();
             }
             Out.ExitNestedScope();
             Out.WriteCollectionClose(collectionType);
@@ -245,6 +248,8 @@ namespace Sona.Compiler.States
             else
             {
                 Out.WriteLine();
+                Defaults.WriteImplicitReturnStatement(context);
+                Out.WriteLine();
                 Out.ExitNestedScope();
                 Out.Write("})");
             }
@@ -276,6 +281,112 @@ namespace Sona.Compiler.States
         {
             Out.ExitNestedScope();
             Out.Write("})");
+        }
+    }
+
+    internal sealed class ComputationSequenceState : CollectionState, IComputationContext
+    {
+        public string? BuilderVariable { get; private set; }
+        bool initialized;
+
+        [MemberNotNullWhen(true, nameof(BuilderVariable))]
+        bool IsComputation => BuilderVariable != null;
+
+        public override ComputationFlags Flags => base.Flags | ComputationFlags.IsComputation;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            BuilderVariable = null;
+            initialized = false;
+        }
+
+        public override void EnterComputationSequenceConstructor(ComputationSequenceConstructorContext context)
+        {
+
+        }
+
+        public override void ExitComputationSequenceConstructor(ComputationSequenceConstructorContext context)
+        {
+            if(IsEmpty)
+            {
+                Out.WriteLine();
+                // Yield at least once to require computation support
+                Out.Write("if false then yield ");
+                Out.WriteDefaultValue();
+            }
+            Out.WriteLine();
+            Defaults.WriteImplicitReturnStatement(context);
+            Out.WriteLine();
+            Out.ExitNestedScope();
+            Out.Write("})");
+            ExitState().ExitComputationSequenceConstructor(context);
+        }
+
+        public sealed override void EnterExpression(ExpressionContext context)
+        {
+            if(initialized)
+            {
+                base.EnterExpression(context);
+                return;
+            }
+
+            BuilderVariable = Out.CreateTemporaryIdentifier();
+
+            Out.EnterNestedScope();
+            Out.Write("(let ");
+            Out.WriteIdentifier(BuilderVariable);
+            Out.WriteOperator('=');
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public sealed override void ExitExpression(ExpressionContext context)
+        {
+            if(initialized)
+            {
+                base.ExitExpression(context);
+                return;
+            }
+
+            initialized = true;
+            Out.Write(" in ");
+            Out.WriteIdentifier(BuilderVariable!);
+            Out.Write(" { ");
+        }
+
+        public override void WriteBeginBlockExpression(ParserRuleContext context)
+        {
+            if(IsComputation)
+            {
+                Out.EnterNestedScope();
+                Out.Write('(');
+                Out.WriteIdentifier(BuilderVariable);
+                Out.WriteLine('{');
+            }
+            else
+            {
+                Out.EnterNestedScope();
+                Out.Write('(');
+                Out.WriteCoreOperatorName("seq");
+                Out.WriteLine('{');
+            }
+        }
+
+        public override void WriteEndBlockExpression(ParserRuleContext context)
+        {
+            Out.ExitNestedScope();
+            Out.Write("})");
+        }
+
+        void IReturnableContext.WriteReturnStatement(ParserRuleContext context)
+        {
+            Out.Write("return ");
+        }
+
+        void IReturnableContext.WriteAfterReturnStatement(ParserRuleContext context)
+        {
+
         }
     }
 }
