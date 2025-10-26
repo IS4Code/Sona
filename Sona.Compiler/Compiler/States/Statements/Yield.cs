@@ -1,5 +1,4 @@
-﻿using Antlr4.Runtime;
-using static Sona.Grammar.SonaParser;
+﻿using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
 {

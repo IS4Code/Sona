@@ -401,9 +401,28 @@ followWithReturning:
 followWithConditional:
   FOLLOW_WITH with_Argument conditionalTrail;
 
+yieldWithTrailing:
+  YIELD_WITH with_Argument freeTrail;
+
+yieldWithTerminating:
+  YIELD_WITH with_Argument terminatingTrail;
+
+yieldWithInterrupting:
+  YIELD_WITH with_Argument interruptingTrail;
+
+yieldWithInterruptible:
+  YIELD_WITH with_Argument interruptibleTrail;
+
+yieldWithReturning:
+  YIELD_WITH with_Argument returningTrail;
+
+yieldWithConditional:
+  YIELD_WITH with_Argument conditionalTrail;
+
 // A free statement that must be at the end of a block
 trailingStatement:
   followWithTrailing ';'? |
+  yieldWithTrailing ';'? |
   implicitReturnStatement;
 
 // A statement that has a returning path and all other paths are closing
@@ -413,6 +432,7 @@ returningStatement:
   yieldBreakStatement |
   withStatement |
   followWithReturning |
+  yieldWithReturning |
   inlineSourceReturning |
   doStatementReturning |
   doStatementReturningTrail |
@@ -436,6 +456,7 @@ interruptingStatement:
   breakStatement |
   continueStatement |
   followWithInterrupting |
+  yieldWithInterrupting |
   doStatementInterrupting |
   doStatementInterruptingTrail |
   ifStatementInterrupting |
@@ -444,12 +465,14 @@ interruptingStatement:
 // A statement that has interrupting paths and all other paths are open or terminating
 interruptibleStatement:
   followWithInterruptible |
+  yieldWithInterruptible |
   doStatementInterruptible |
   ifStatementInterruptible;
 
 // A statement that has returning paths and open paths
 conditionalStatement:
   followWithConditional |
+  yieldWithConditional |
   doStatementConditional |
   ifStatementConditional |
   whileStatementConditional |
@@ -464,6 +487,7 @@ conditionalStatement:
 terminatingStatement:
   throwStatement |
   followWithTerminating |
+  yieldWithTerminating |
   inlineSourceTerminating |
   doStatementTerminating |
   ifStatementTerminating |

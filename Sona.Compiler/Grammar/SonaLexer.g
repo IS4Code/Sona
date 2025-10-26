@@ -219,6 +219,7 @@ WITH: 'with';
 YIELD: 'yield';
 YIELD_BREAK: 'yield' IGNORE 'break';
 YIELD_RETURN: 'yield' IGNORE 'return';
+YIELD_WITH: 'yield' IGNORE 'with';
 
 BOOL: 'bool';
 BYTE: 'byte' -> type(UINT8);
@@ -441,6 +442,7 @@ Directive_WITH: WITH -> type(WITH);
 Directive_YIELD: YIELD -> type(YIELD);
 Directive_YIELD_BREAK: YIELD_BREAK -> type(YIELD_BREAK);
 Directive_YIELD_RETURN: YIELD_RETURN -> type(YIELD_RETURN);
+Directive_YIELD_WITH: YIELD_WITH -> type(YIELD_WITH);
 
 Directive_BOOL: BOOL -> type(BOOL);
 Directive_BYTE: BYTE -> type(UINT8);
@@ -820,6 +822,7 @@ Interpolation_WITH: WITH -> type(WITH);
 Interpolation_YIELD: YIELD -> type(YIELD);
 Interpolation_YIELD_BREAK: YIELD_BREAK -> type(YIELD_BREAK);
 Interpolation_YIELD_RETURN: YIELD_RETURN -> type(YIELD_RETURN);
+Interpolation_YIELD_WITH: YIELD_WITH -> type(YIELD_WITH);
 
 Interpolation_BOOL: BOOL -> type(BOOL);
 Interpolation_BYTE: BYTE -> type(UINT8);

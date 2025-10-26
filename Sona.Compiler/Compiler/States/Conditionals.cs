@@ -1848,6 +1848,108 @@ namespace Sona.Compiler.States
                 ExitState().ExitFollowWithConditional(context);
             }
         }
+
+        public sealed override void EnterYieldWithTrailing(YieldWithTrailingContext context)
+        {
+            OnEnterInner(StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void ExitYieldWithTrailing(YieldWithTrailingContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitYieldWithTrailing(context);
+            }
+        }
+
+        public sealed override void EnterYieldWithTerminating(YieldWithTerminatingContext context)
+        {
+            OnEnterInner(StatementFlags.Terminating, context);
+        }
+
+        public sealed override void ExitYieldWithTerminating(YieldWithTerminatingContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.Terminating, context);
+            }
+            finally
+            {
+                ExitState().ExitYieldWithTerminating(context);
+            }
+        }
+
+        public sealed override void EnterYieldWithInterrupting(YieldWithInterruptingContext context)
+        {
+            OnEnterInner(StatementFlags.InterruptPath, context);
+        }
+
+        public sealed override void ExitYieldWithInterrupting(YieldWithInterruptingContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.InterruptPath, context);
+            }
+            finally
+            {
+                ExitState().ExitYieldWithInterrupting(context);
+            }
+        }
+
+        public sealed override void EnterYieldWithReturning(YieldWithReturningContext context)
+        {
+            OnEnterInner(StatementFlags.InterruptPath | StatementFlags.ReturnPath, context);
+        }
+
+        public sealed override void ExitYieldWithReturning(YieldWithReturningContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.InterruptPath | StatementFlags.ReturnPath, context);
+            }
+            finally
+            {
+                ExitState().ExitYieldWithReturning(context);
+            }
+        }
+
+        public sealed override void EnterYieldWithInterruptible(YieldWithInterruptibleContext context)
+        {
+            OnEnterInner(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void ExitYieldWithInterruptible(YieldWithInterruptibleContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.InterruptPath | StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitYieldWithInterruptible(context);
+            }
+        }
+
+        public sealed override void EnterYieldWithConditional(YieldWithConditionalContext context)
+        {
+            OnEnterInner(StatementFlags.InterruptPath | StatementFlags.ReturnPath | StatementFlags.OpenPath, context);
+        }
+
+        public sealed override void ExitYieldWithConditional(YieldWithConditionalContext context)
+        {
+            try
+            {
+                OnExitInner(StatementFlags.InterruptPath | StatementFlags.ReturnPath | StatementFlags.OpenPath, context);
+            }
+            finally
+            {
+                ExitState().ExitYieldWithConditional(context);
+            }
+        }
         #endregion
     }
 

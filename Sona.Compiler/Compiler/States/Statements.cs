@@ -158,6 +158,36 @@ namespace Sona.Compiler.States
             EnterState<FollowWithStatementState>().EnterFollowWithConditional(context);
         }
 
+        public sealed override void EnterYieldWithTrailing(YieldWithTrailingContext context)
+        {
+            EnterState<YieldWithStatementState>().EnterYieldWithTrailing(context);
+        }
+
+        public sealed override void EnterYieldWithTerminating(YieldWithTerminatingContext context)
+        {
+            EnterState<YieldWithStatementState>().EnterYieldWithTerminating(context);
+        }
+
+        public sealed override void EnterYieldWithInterrupting(YieldWithInterruptingContext context)
+        {
+            EnterState<YieldWithStatementState>().EnterYieldWithInterrupting(context);
+        }
+
+        public sealed override void EnterYieldWithReturning(YieldWithReturningContext context)
+        {
+            EnterState<YieldWithStatementState>().EnterYieldWithReturning(context);
+        }
+
+        public sealed override void EnterYieldWithInterruptible(YieldWithInterruptibleContext context)
+        {
+            EnterState<YieldWithStatementState>().EnterYieldWithInterruptible(context);
+        }
+
+        public sealed override void EnterYieldWithConditional(YieldWithConditionalContext context)
+        {
+            EnterState<YieldWithStatementState>().EnterYieldWithConditional(context);
+        }
+
         public sealed override void EnterFollowDiscardStatement(FollowDiscardStatementContext context)
         {
             EnterState<FollowDiscardState>().EnterFollowDiscardStatement(context);
