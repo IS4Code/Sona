@@ -3226,34 +3226,19 @@ recordConstructor_Contents:
   (emptyFieldAssignment ',')* (fieldAssignment expression) (',' (fieldAssignment expression | emptyFieldAssignment))*;
 
 arrayConstructor:
-  '[' (simpleCollectionContents | complexCollectionContents)? ']';
+  '[' (collectionElement (',' collectionElement)*)? ']';
 
 sequenceConstructor:
-  '{' (simpleCollectionContents | complexCollectionContents)? '}';
+  '{' (collectionElement (',' collectionElement)*)? '}';
 
-simpleCollectionContents:
-  // Each element is one value
-  simpleCollectionElement (',' simpleCollectionElement)*;
-
-complexCollectionContents:
-  // There is a complex element
-  (
-    // At the beginning
-    complexCollectionElement |
-    // In the middle
-    simpleCollectionElement (',' simpleCollectionElement)* ',' complexCollectionElement
-  ) (',' (simpleCollectionElement | complexCollectionElement))*;
-
-simpleCollectionElement:
+collectionElement:
   collectionFieldExpression |
+  spreadExpression |
+  expressionStatement |
   expression;
 
 collectionFieldExpression:
   '[' expression ']' assignment;
-
-complexCollectionElement:
-  spreadExpression |
-  expressionStatement;
 
 tupleConstructor:
   '(' (simpleTupleContents | complexTupleContents) ')';

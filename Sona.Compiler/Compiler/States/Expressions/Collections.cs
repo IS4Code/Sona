@@ -94,8 +94,8 @@ namespace Sona.Compiler.States
 
     internal abstract class CollectionState : IsolatedState
     {
-        protected bool IsSimple { get; private set; }
         protected bool IsEmpty { get; private set; }
+        bool hasYielded;
 
         public override ComputationFlags Flags => ComputationFlags.IsCollection;
 
@@ -106,92 +106,21 @@ namespace Sona.Compiler.States
             IsEmpty = true;
         }
 
-        public sealed override void EnterSimpleCollectionContents(SimpleCollectionContentsContext context)
+        public override void EnterCollectionElement(CollectionElementContext context)
         {
-            IsSimple = true;
+            IsEmpty = false;
+            Out.WriteLine();
         }
 
-        public sealed override void EnterComplexCollectionContents(ComplexCollectionContentsContext context)
-        {
-            IsSimple = false;
-        }
-
-        public sealed override void ExitSimpleCollectionContents(SimpleCollectionContentsContext context)
-        {
-            OnLeave();
-        }
-
-        public sealed override void ExitComplexCollectionContents(ComplexCollectionContentsContext context)
-        {
-            OnLeave();
-        }
-
-        protected virtual void OnOperand(bool simple)
-        {
-            if(IsEmpty)
-            {
-                IsEmpty = false;
-                if(IsSimple)
-                {
-                    Out.Write(' ');
-                }
-                else
-                {
-                    Out.WriteLine();
-                }
-            }
-            else
-            {
-                if(IsSimple)
-                {
-                    Out.Write(';');
-                }
-                else
-                {
-                    Out.WriteLine();
-                }
-            }
-            if(simple && !IsSimple)
-            {
-                // Yield explicitly (there are complex elements)
-                Out.Write("yield ");
-            }
-        }
-
-        void OnLeave()
-        {
-            if(IsSimple)
-            {
-                Out.Write(' ');
-            }
-            else
-            {
-                Out.WriteLine();
-            }
-        }
-
-        public sealed override void EnterSimpleCollectionElement(SimpleCollectionElementContext context)
-        {
-            OnOperand(true);
-        }
-
-        public sealed override void ExitSimpleCollectionElement(SimpleCollectionElementContext context)
-        {
-
-        }
-
-        public sealed override void EnterComplexCollectionElement(ComplexCollectionElementContext context)
-        {
-            OnOperand(false);
-        }
-
-        public sealed override void ExitComplexCollectionElement(ComplexCollectionElementContext context)
+        public override void ExitCollectionElement(CollectionElementContext context)
         {
 
         }
 
         public sealed override void EnterExpression(ExpressionContext context)
         {
+            Out.Write("yield ");
+            hasYielded = true;
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
@@ -202,6 +131,8 @@ namespace Sona.Compiler.States
 
         public sealed override void EnterCollectionFieldExpression(CollectionFieldExpressionContext context)
         {
+            Out.Write("yield ");
+            hasYielded = true;
             Out.WriteNamespacedName("System.Collections.Generic", "KeyValuePair");
             Out.Write("<_,_>(");
         }
@@ -224,6 +155,7 @@ namespace Sona.Compiler.States
         public sealed override void EnterSpreadExpression(SpreadExpressionContext context)
         {
             Out.Write("yield! ");
+            hasYielded = true;
             EnterState<ExpressionState.Spread>().EnterSpreadExpression(context);
         }
 
@@ -268,6 +200,10 @@ namespace Sona.Compiler.States
             {
                 Out.Write(' ');
             }
+            else
+            {
+                Out.WriteLine();
+            }
             Out.ExitNestedScope();
             Out.WriteCollectionClose(collectionType);
             ExitState().ExitArrayConstructor(context);
@@ -301,13 +237,14 @@ namespace Sona.Compiler.States
             }
             else
             {
+                Out.WriteLine();
                 Out.ExitNestedScope();
                 Out.Write("})");
             }
             ExitState().ExitSequenceConstructor(context);
         }
 
-        protected override void OnOperand(bool simple)
+        public override void EnterCollectionElement(CollectionElementContext context)
         {
             if(IsEmpty)
             {
@@ -317,7 +254,7 @@ namespace Sona.Compiler.States
                 Out.Write('{');
             }
 
-            base.OnOperand(simple);
+            base.EnterCollectionElement(context);
         }
 
         public override void WriteBeginBlockExpression(ParserRuleContext context)
