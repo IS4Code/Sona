@@ -380,9 +380,9 @@ namespace Sona.Compiler.States
 
         protected override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
         {
-            if((FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsCollection) ?? false) && !IsCollection)
+            if((FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsCollection) ?? false) && !IsCollection && (flags & StatementFlags.ReturnPath) != 0)
             {
-                Error("`follow with` statement used in a collection construction must use the collection form, i.e. `follow with..`.", context);
+                Error("`follow with` statement used in a collection construction must either not return or use the collection form, i.e. `follow with..`.", context);
             }
             base.OnEnterBlock(flags, context);
         }
@@ -453,9 +453,9 @@ namespace Sona.Compiler.States
 
         protected override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
         {
-            if((FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsCollection) ?? false) && !IsCollection)
+            if((FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsCollection) ?? false) && !IsCollection && (flags & StatementFlags.ReturnPath) != 0)
             {
-                Error("`yield with` statement used in a collection construction must use the collection form, i.e. `yield with..`.", context);
+                Error("`yield with` statement used in a collection construction must either not return or use the collection form, i.e. `yield with..`.", context);
             }
             base.OnEnterBlock(flags, context);
         }
