@@ -65,22 +65,7 @@ namespace Sona.Compiler.States
 
         public override void EnterImplicitReturnStatement(ImplicitReturnStatementContext context)
         {
-            var computationContext = FindContext<IComputationContext>();
-            if(computationContext?.HasFlag(ComputationFlags.IsCollection) ?? false)
-            {
-                // () in a collection has a different interpretation
-                Out.Write("if false then yield ");
-                Out.WriteDefaultValue();
-                Out.WriteLine();
-            }
-            else if(FindContext<IBlockContext>() is { } blockContext)
-            {
-                blockContext.WriteImplicitReturnStatement(context);
-            }
-            else
-            {
-                Defaults.WriteImplicitReturnStatement(context);
-            }
+            (FindContext<IBlockContext>() ?? Defaults).WriteImplicitReturnStatement(context);
         }
 
         public override void ExitImplicitReturnStatement(ImplicitReturnStatementContext context)

@@ -104,6 +104,7 @@ namespace Sona.Compiler.States
             base.Initialize(environment, parent);
 
             IsEmpty = true;
+            hasYielded = false;
         }
 
         public override void EnterCollectionElement(CollectionElementContext context)
@@ -120,19 +121,17 @@ namespace Sona.Compiler.States
         public sealed override void EnterExpression(ExpressionContext context)
         {
             Out.Write("yield ");
-            hasYielded = true;
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
         public sealed override void ExitExpression(ExpressionContext context)
         {
-
+            hasYielded = true;
         }
 
         public sealed override void EnterCollectionFieldExpression(CollectionFieldExpressionContext context)
         {
             Out.Write("yield ");
-            hasYielded = true;
             Out.WriteNamespacedName("System.Collections.Generic", "KeyValuePair");
             Out.Write("<_,_>(");
         }
@@ -150,22 +149,30 @@ namespace Sona.Compiler.States
         public sealed override void ExitCollectionFieldExpression(CollectionFieldExpressionContext context)
         {
             Out.Write(')');
+            hasYielded = true;
         }
 
         public sealed override void EnterSpreadExpression(SpreadExpressionContext context)
         {
             Out.Write("yield! ");
-            hasYielded = true;
             EnterState<ExpressionState.Spread>().EnterSpreadExpression(context);
         }
 
         public sealed override void ExitSpreadExpression(SpreadExpressionContext context)
         {
-
+            hasYielded = true;
         }
 
         public sealed override void EnterExpressionStatement(ExpressionStatementContext context)
         {
+            if(!hasYielded)
+            {
+                // Yield at least once to disambiguate from value construction
+                Out.Write("if false then yield ");
+                Out.WriteDefaultValue();
+                Out.WriteLine();
+                hasYielded = true;
+            }
             EnterState<ExpressionStatementState>().EnterExpressionStatement(context);
         }
 

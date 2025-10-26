@@ -67,6 +67,18 @@ namespace Sona.Compiler.States
             OnExitBlock(flags, context);
         }
 
+        protected override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
+        {
+            base.OnEnterBlock(flags, context);
+            if(IsCollection)
+            {
+                // Yield at least once to disambiguate from value construction
+                Out.Write("if false then yield ");
+                Out.WriteDefaultValue();
+                Out.WriteLine();
+            }
+        }
+
         /*protected sealed override void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
         {
 
