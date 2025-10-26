@@ -67,15 +67,16 @@ namespace Sona.Compiler.States
             var computationScope = FindContext<IComputationContext>();
             if(computationScope?.HasFlag(ComputationFlags.IsCollection) ?? false)
             {
+                const string msg = "`return` in a collection construction is not supported.";
                 if(computationScope?.HasFlag(ComputationFlags.IsComputation) != true)
                 {
                     // Can't return from a sequence
-                    Error("`return` in a collection construction is not supported. Use `yield` instead.", context);
+                    Error(msg + " Use `yield` instead.", context);
                 }
-                else if(ReturnScope.HasFlag(ReturnFlags.Indirect))
+                else
                 {
                     // No mechanism to indicate returning only
-                    Error("`return` in a collection computation is not supported in other positions than the final returning statement. Use `yield return` instead.", context);
+                    Error(msg + " Use `yield` or `yield return` instead.", context);
                 }
             }
         }

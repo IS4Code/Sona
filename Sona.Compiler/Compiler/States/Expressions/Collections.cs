@@ -387,7 +387,7 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal sealed class ComputationSequenceState : CollectionState, IComputationContext
+    internal sealed class ComputationSequenceState : CollectionState
     {
         public string? BuilderVariable { get; private set; }
         bool initialized;
@@ -480,16 +480,6 @@ namespace Sona.Compiler.States
         {
             Out.ExitNestedScope();
             Out.Write("})");
-        }
-
-        void IReturnableContext.WriteReturnStatement(ParserRuleContext context)
-        {
-            Out.Write("return ");
-        }
-
-        void IReturnableContext.WriteAfterReturnStatement(ParserRuleContext context)
-        {
-
         }
     }
 }

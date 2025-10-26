@@ -230,15 +230,16 @@ namespace Sona.Compiler.States
             var computationScope = FindContext<IComputationContext>();
             if(computationScope?.HasFlag(ComputationFlags.IsCollection) ?? false)
             {
+                const string msg = "`with` cannot be used in a collection construction because returning is not supported.";
                 if(computationScope?.HasFlag(ComputationFlags.IsComputation) != true)
                 {
                     // Can't return from a sequence
-                    Error("`with` cannot be used in a collection construction because returning is not supported. Use `yield with` instead.", context);
+                    Error(msg + " Use `yield with` instead.", context);
                 }
-                else if(ReturnScope.HasFlag(ReturnFlags.Indirect))
+                else
                 {
                     // No mechanism to indicate returning only
-                    Error("`with` in a collection computation is not supported in other positions than the final returning statement. Use `follow with` or `yield with` instead.", context);
+                    Error(msg + " Use `follow with` or `yield with` instead.", context);
                 }
             }
         }
@@ -265,13 +266,13 @@ namespace Sona.Compiler.States
 
         void IReturnableContext.WriteReturnStatement(ParserRuleContext context)
         {
-            if(IsComputation && !IsCollection)
+            if(!IsComputation || IsCollection)
             {
-                Out.Write("return ");
+                Defaults.WriteAfterReturnStatement(context);
             }
             else
             {
-                Defaults.WriteReturnStatement(context);
+                Out.Write("return ");
             }
         }
 
@@ -343,7 +344,7 @@ namespace Sona.Compiler.States
                 // No conditional variables
                 if(computationScope?.HasFlag(ComputationFlags.IsComputation) ?? false)
                 {
-                    // Can utilize `ReturnFrom`
+                    // Can utilize shorter syntax
                     Out.Write("return! ");
                 }
                 else
@@ -381,14 +382,14 @@ namespace Sona.Compiler.States
         {
             if((FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsCollection) ?? false) && !IsCollection)
             {
-                Error("`follow with` statement used in a collection computation must use the collection form, i.e. `follow with..`.", context);
+                Error("`follow with` statement used in a collection construction must use the collection form, i.e. `follow with..`.", context);
             }
             base.OnEnterBlock(flags, context);
         }
 
         void IReturnableContext.WriteReturnStatement(ParserRuleContext context)
         {
-            if((ReturnFlags & ReturnFlags.Indirect) != 0 || !IsComputation)
+            if((ReturnFlags & ReturnFlags.Indirect) != 0 || !IsComputation || IsCollection)
             {
                 WriteReturnStatement(context);
             }
@@ -400,7 +401,7 @@ namespace Sona.Compiler.States
 
         void IReturnableContext.WriteAfterReturnStatement(ParserRuleContext context)
         {
-            if((ReturnFlags & ReturnFlags.Indirect) != 0 || !IsComputation)
+            if((ReturnFlags & ReturnFlags.Indirect) != 0 || !IsComputation || IsCollection)
             {
                 WriteAfterReturnStatement(context);
             }
@@ -454,14 +455,14 @@ namespace Sona.Compiler.States
         {
             if((FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsCollection) ?? false) && !IsCollection)
             {
-                Error("`yield with` statement used in a collection computation must use the collection form, i.e. `yield with..`.", context);
+                Error("`yield with` statement used in a collection construction must use the collection form, i.e. `yield with..`.", context);
             }
             base.OnEnterBlock(flags, context);
         }
 
-        /*void IReturnableContext.WriteReturnStatement(ParserRuleContext context)
+        void IReturnableContext.WriteReturnStatement(ParserRuleContext context)
         {
-            if((ReturnFlags & ReturnFlags.Indirect) != 0 || !IsComputation)
+            if((ReturnFlags & ReturnFlags.Indirect) != 0 || !IsComputation || IsCollection)
             {
                 WriteReturnStatement(context);
             }
@@ -473,11 +474,11 @@ namespace Sona.Compiler.States
 
         void IReturnableContext.WriteAfterReturnStatement(ParserRuleContext context)
         {
-            if((ReturnFlags & ReturnFlags.Indirect) != 0 || !IsComputation)
+            if((ReturnFlags & ReturnFlags.Indirect) != 0 || !IsComputation || IsCollection)
             {
                 WriteAfterReturnStatement(context);
             }
-        }*/
+        }
 
         void IInterruptibleContext.WriteBreak(bool hasExpression, ParserRuleContext context)
         {
