@@ -105,7 +105,7 @@ type ValueOptionBuilder() =
     if continuing then ValueSome()
     else ValueNone
 
-let voption = { new OptionBuilder() with member _.ToString() = "voption" }
+let voption = { new ValueOptionBuilder() with member _.ToString() = "voption" }
 
 [<AbstractClass>]
 type ResultBuilder<'TError>() =
