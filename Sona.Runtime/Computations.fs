@@ -7,38 +7,32 @@ open System.Threading.Tasks
 
 [<AbstractClass>]
 type BaseBuilder<'TZero>() =
-  abstract member ZeroImpl : unit -> 'TZero
-  abstract member BindImpl : 'TZero * (unit -> 'TZero) -> 'TZero
+  abstract member While : (unit -> bool) * (unit -> 'TZero) -> 'TZero
 
-  member inline _.TryFinally(f : unit -> _, cleanup : unit -> unit) =
+  member inline _.TryFinally([<InlineIfLambda>]f : unit -> _, [<InlineIfLambda>]cleanup : unit -> unit) =
     try
       f()
     finally
       cleanup()
   
-  member inline _.TryWith(f : unit -> _, fail : _ -> _) =
+  member inline _.TryWith([<InlineIfLambda>]f : unit -> _, [<InlineIfLambda>]fail : _ -> _) =
     try
       f()
     with
     | e -> fail e
   
-  member inline this.Using(x : #IDisposable, f : _ -> _ option) =
-    this.TryFinally((fun() -> f(x)), (fun() -> x.Dispose()))
+  member inline _.Using(x : #IDisposable, [<InlineIfLambda>]f : _ -> _ option) =
+    try
+      f x
+    finally
+      x.Dispose()
   
-  member this.While(cond : unit -> bool, f : unit -> 'TZero) =
-    if cond() then
-      this.BindImpl(f(), fun() -> this.While(cond, f))
-    else
-      this.ZeroImpl()
-
   member inline this.For(s : _ seq, f : _ -> 'TZero) =
     let enumerator = s.GetEnumerator()
-    this.TryFinally(
-      (fun() -> this.While(enumerator.MoveNext, fun() -> (
-        this.BindImpl(f(enumerator.Current), fun() -> this.ZeroImpl())
-      ))),
-      (fun() -> enumerator.Dispose())
-    )
+    try
+      this.While(enumerator.MoveNext, (fun() -> f(enumerator.Current)))
+    finally
+      enumerator.Dispose()
 
 [<AbstractClass>]
 type OptionBuilder() =
@@ -61,14 +55,19 @@ type OptionBuilder() =
     match opt with
     | Ok value -> Some value
     | _ -> None
+  
+  member inline this.Bind(opt : _ option, func) = Option.bind func (this.ReturnFrom(opt))
+  member inline this.Bind(opt : _ voption, func) = Option.bind func (this.ReturnFrom(opt))
+  member inline this.Bind(opt : Result<_, _>, func) = Option.bind func (this.ReturnFrom(opt))
+  member inline this.Combine(opt : _ option, func) = this.Bind(opt, func)
 
-  member inline this.Bind(opt, func) = this.ReturnFrom(Option.bind func opt)
-  member inline this.Bind(opt, func) = this.ReturnFrom(ValueOption.bind func opt)
-  member inline this.Bind(opt, func) = this.ReturnFrom(Result.bind func opt)
-  member inline this.Combine(opt : _ option, func : _ -> _ option) = this.Bind(opt, func)
-
-  override this.ZeroImpl() = this.Zero()
-  override this.BindImpl(opt, func) = this.Bind(opt, func)
+  override _.While(cond, func) =
+    let mutable continuing = true
+    while continuing && cond() do
+      if func().IsNone then
+        continuing <- false
+    if continuing then Some()
+    else None
 
 let option = { new OptionBuilder() with member _.ToString() = "option" }
 
@@ -90,16 +89,21 @@ type ValueOptionBuilder() =
   
   member inline _.ReturnFrom(opt : Result<_, _>) =
     match opt with
-    | Ok value -> Some value
-    | _ -> None
-
-  member inline this.Bind(opt, func) = this.ReturnFrom(Option.bind func opt)
-  member inline this.Bind(opt, func) = this.ReturnFrom(ValueOption.bind func opt)
-  member inline this.Bind(opt, func) = this.ReturnFrom(Result.bind func opt)
-  member inline this.Combine(opt : _ voption, func : _ -> _ voption) = this.Bind(opt, func)
+    | Ok value -> ValueSome value
+    | _ -> ValueNone
+    
+  member inline this.Bind(opt : _ option, func) = ValueOption.bind func (this.ReturnFrom(opt))
+  member inline this.Bind(opt : _ voption, func) = ValueOption.bind func (this.ReturnFrom(opt))
+  member inline this.Bind(opt : Result<_, _>, func) = ValueOption.bind func (this.ReturnFrom(opt))
+  member inline this.Combine(opt : _ voption, func) = this.Bind(opt, func)
   
-  override this.ZeroImpl() = this.Zero()
-  override this.BindImpl(opt, func) = this.Bind(opt, func)
+  override _.While(cond, func) =
+    let mutable continuing = true
+    while continuing && cond() do
+      if func().IsValueNone then
+        continuing <- false
+    if continuing then ValueSome()
+    else ValueNone
 
 let voption = { new OptionBuilder() with member _.ToString() = "voption" }
 
@@ -124,13 +128,20 @@ type ResultBuilder<'TError>() =
   
   member inline _.ReturnFrom(opt : Result<_, 'TError>) = opt
   
-  member inline this.Bind(opt, func) = this.ReturnFrom(Option.bind func opt)
-  member inline this.Bind(opt, func) = this.ReturnFrom(ValueOption.bind func opt)
-  member inline this.Bind(opt, func) = this.ReturnFrom(Result.bind func opt)
-  member inline this.Combine(opt : Result<_, 'TError>, func : _ -> Result<_, 'TError>) = this.Bind(opt, func)
+  member inline this.Bind(opt : _ option, func) = Result.bind func (this.ReturnFrom(opt))
+  member inline this.Bind(opt : _ voption, func) = Result.bind func (this.ReturnFrom(opt))
+  member inline this.Bind(opt : Result<_, 'TError>, func) = Result.bind func (this.ReturnFrom(opt))
+  member inline this.Combine(opt : Result<_, 'TError>, func) = this.Bind(opt, func)
   
-  override this.ZeroImpl() = this.Zero()
-  override this.BindImpl(opt, func) = this.Bind(opt, func)
+  override _.While(cond, func) =
+    let mutable continuing = true
+    let mutable errorResult = Unchecked.defaultof<_>
+    while continuing && cond() do
+      errorResult <- func()
+      if errorResult.IsError then
+        continuing <- false
+    if continuing then Ok()
+    else errorResult
 
 [<Sealed>]
 type private ResultBuilderImpl<'TError>() =
@@ -155,8 +166,11 @@ let private warningNumber = 99999
 [<AbstractClass>]
 type GlobalBuilderBase<'TZero when 'TZero : not struct>() =
   inherit BaseBuilder<'TZero>()
-  override _.ZeroImpl() = Unchecked.defaultof<_>
-  override _.BindImpl(_, func) = func()
+
+  override _.While(cond, func) =
+    while cond() do
+      let _ = func() in ()
+    Unchecked.defaultof<_>
 
 [<AbstractClass>]
 type GlobalBuilder() =
