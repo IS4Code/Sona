@@ -83,25 +83,12 @@ namespace Sona.Compiler.States
         public override void EnterUnaryExpr(UnaryExprContext context)
         {
             OnOperand(context);
-            EnterState<Operand>().EnterUnaryExpr(context);
+            EnterState<ExpressionState.Unary>().EnterUnaryExpr(context);
         }
 
         public override void ExitUnaryExpr(UnaryExprContext context)
         {
 
-        }
-
-        class Operand : ExpressionState
-        {
-            public override void EnterUnaryExpr(UnaryExprContext context)
-            {
-
-            }
-
-            public override void ExitUnaryExpr(UnaryExprContext context)
-            {
-                ExitState().ExitUnaryExpr(context);
-            }
         }
 
         public override void EnterGenericArgument(GenericArgumentContext context)

@@ -409,6 +409,19 @@ namespace Sona.Compiler.States
                 ExitState().ExitSpreadExpression(context);
             }
         }
+
+        public sealed class Unary : ExpressionState
+        {
+            public override void EnterUnaryExpr(UnaryExprContext context)
+            {
+
+            }
+
+            public override void ExitUnaryExpr(UnaryExprContext context)
+            {
+                ExitState().ExitUnaryExpr(context);
+            }
+        }
     }
 
     internal sealed class AtomicExpressionState : ExpressionState

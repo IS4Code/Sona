@@ -292,7 +292,9 @@ attrNamedArg:
 
 // Plain statement, allowed anywhere
 statement:
+  followVariableDecl |
   variableDecl |
+  lazyVariableDecl |
   multiFuncDecl |
   inlineFuncDecl |
   inlineCaseFuncDecl |
@@ -2680,26 +2682,23 @@ packageStatement:
 /* ---------------------------- */
 
 variableDecl:
-  localAttrList (letDecl | varDecl | constDecl | useDecl | useVarDecl) |
-  // Attributes are captured inside
-  lazyDecl;
+  localAttrList (
+    let | var | useVar | use | const
+  ) (multiDeclAssignment | declaration '=' expression);
 
-letDecl:
-  'let' (multiDeclAssignment | declaration '=' expression);
+followVariableDecl:
+  localAttrList (
+    let | var | useVar | use
+  )
+  declaration '=' followExpression (',' declaration '=' followExpression)*;
 
-varDecl:
-  'var' (multiDeclAssignment | declaration '=' expression);
+let: 'let';
+var: 'var';
+const: 'const';
+use: 'use';
+useVar: 'use' 'var';
 
-constDecl:
-  'const' (multiDeclAssignment | declaration '=' expression);
-
-useDecl:
-  'use' (multiDeclAssignment | declaration '=' expression);
-
-useVarDecl:
-  'use' 'var' (multiDeclAssignment | declaration '=' expression);
-
-lazyDecl:
+lazyVariableDecl:
   localAttrList 'lazy' declaration '=' expression (',' declaration '=' expression)*;
 
 multiDeclAssignment:
@@ -3292,10 +3291,14 @@ spreadExpression:
   '..' concatExpr_Inner;
 
 followExpression:
-  'follow' unaryExpr;
+  followExpression_Contents;
+
+followExpression_Contents:
+  'follow' unaryExpr |
+  '(' followExpression_Contents ')';
 
 spreadFollowExpression:
-  '..' 'follow' unaryExpr;
+  '..' followExpression_Contents;
 
 /* -------------------- */
 /* Interpolated strings */

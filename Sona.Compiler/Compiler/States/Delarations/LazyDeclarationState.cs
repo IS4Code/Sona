@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using static FSharp.Compiler.EditorServices.CompletionContext;
+﻿using System.Collections.Generic;
 using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
@@ -29,7 +26,7 @@ namespace Sona.Compiler.States
 
         const string forceMethodIdentifier = "<Force>";
 
-        public override void EnterLazyDecl(LazyDeclContext context)
+        public override void EnterLazyVariableDecl(LazyVariableDeclContext context)
         {
             if(LexerContext.GetState<RecursivePragma>()?.Value == true)
             {
@@ -37,7 +34,7 @@ namespace Sona.Compiler.States
             }
         }
 
-        public override void ExitLazyDecl(LazyDeclContext context)
+        public override void ExitLazyVariableDecl(LazyVariableDeclContext context)
         {
             // Each value is exposed as a singleton generic static type
 
@@ -141,7 +138,7 @@ namespace Sona.Compiler.States
                 }
             }
 
-            ExitState().ExitLazyDecl(context);
+            ExitState().ExitLazyVariableDecl(context);
         }
 
         static string TypeIdentifier(string identifier)

@@ -389,30 +389,32 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal sealed class NewVariableState : NodeState, IExpressionContext
+    internal class NewVariableState : NodeState, IExpressionContext
     {
-        bool isConst;
+        protected bool IsConst { get; private set; }
+        protected bool IsUse { get; private set; }
 
-        ExpressionFlags IExpressionContext.Flags => (FindContext<IExpressionContext>()?.Flags ?? 0) | ExpressionFlags.IsValue | (isConst ? ExpressionFlags.IsConstant : 0);
+        ExpressionFlags IExpressionContext.Flags => (FindContext<IExpressionContext>()?.Flags ?? 0) | ExpressionFlags.IsValue | (IsConst ? ExpressionFlags.IsConstant : 0);
         
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            isConst = false;
+            IsConst = false;
+            IsUse = false;
         }
 
-        public override void EnterVariableDecl(VariableDeclContext context)
+        public sealed override void EnterVariableDecl(VariableDeclContext context)
         {
 
         }
 
-        public override void ExitVariableDecl(VariableDeclContext context)
+        public sealed override void ExitVariableDecl(VariableDeclContext context)
         {
             ExitState().ExitVariableDecl(context);
         }
 
-        private void WriteRec()
+        protected virtual void WriteRec(ParserRuleContext context)
         {
             if(LexerContext.GetState<RecursivePragma>()?.Value ?? false)
             {
@@ -430,9 +432,11 @@ namespace Sona.Compiler.States
 
         }
 
-        public override void EnterMultiDeclAssignment(MultiDeclAssignmentContext context)
+        public sealed override void EnterMultiDeclAssignment(MultiDeclAssignmentContext context)
         {
-            if(isConst || (LexerContext.GetState<RecursivePragma>()?.Value ?? false))
+            // Constants cannot actually use variables declared further.
+            // `use rec` is invalid and will be exposed this way.
+            if(IsConst || IsUse || (LexerContext.GetState<RecursivePragma>()?.Value ?? false))
             {
                 EnterState<RecursiveMultiDeclarationState>().EnterMultiDeclAssignment(context);
             }
@@ -442,94 +446,83 @@ namespace Sona.Compiler.States
             }
         }
 
-        public override void ExitMultiDeclAssignment(MultiDeclAssignmentContext context)
+        public sealed override void ExitMultiDeclAssignment(MultiDeclAssignmentContext context)
         {
 
         }
 
-        public override void EnterLetDecl(LetDeclContext context)
+        public override void EnterLet(LetContext context)
         {
             Out.Write("let ");
-            WriteRec();
+            WriteRec(context);
         }
 
-        public override void ExitLetDecl(LetDeclContext context)
+        public override void ExitLet(LetContext context)
         {
 
         }
 
-        public override void EnterVarDecl(VarDeclContext context)
+        public override void EnterVar(VarContext context)
         {
             Out.Write("let ");
-            WriteRec();
+            WriteRec(context);
             Out.Write("mutable ");
         }
 
-        public override void ExitVarDecl(VarDeclContext context)
+        public sealed override void ExitVar(VarContext context)
         {
 
         }
 
-        public override void EnterConstDecl(ConstDeclContext context)
+        public override void EnterConst(ConstContext context)
         {
             Out.Write("[<");
             Out.WriteCoreName("LiteralAttribute");
             Out.WriteLine(">]");
             Out.Write("let ");
-            WriteRec();
-            isConst = true;
+            WriteRec(context);
         }
 
-        public override void ExitConstDecl(ConstDeclContext context)
+        public sealed override void ExitConst(ConstContext context)
         {
-
+            IsConst = true;
         }
 
-        public override void EnterUseDecl(UseDeclContext context)
-        {
-            Out.Write("use ");
-            WriteRec();
-        }
-
-        public override void ExitUseDecl(UseDeclContext context)
-        {
-
-        }
-
-        public override void EnterUseVarDecl(UseVarDeclContext context)
+        public override void EnterUse(UseContext context)
         {
             Out.Write("use ");
-            WriteRec();
+            WriteRec(context);
+        }
+
+        public sealed override void ExitUse(UseContext context)
+        {
+            IsUse = true;
+        }
+
+        public override void EnterUseVar(UseVarContext context)
+        {
+            Out.Write("use ");
+            WriteRec(context);
             Out.Write("mutable ");
         }
 
-        public override void ExitUseVarDecl(UseVarDeclContext context)
+        public sealed override void ExitUseVar(UseVarContext context)
         {
-
+            IsUse = true;
         }
 
-        public override void EnterLazyDecl(LazyDeclContext context)
-        {
-            EnterState<LazyDeclarationState>().EnterLazyDecl(context);
-        }
-
-        public override void ExitLazyDecl(LazyDeclContext context)
-        {
-
-        }
-
-        public override void EnterExpression(ExpressionContext context)
+        public sealed override void EnterExpression(ExpressionContext context)
         {
             Out.WriteOperator('=');
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
-        public override void ExitExpression(ExpressionContext context)
+        public sealed override void ExitExpression(ExpressionContext context)
         {
 
         }
 
-        public override void ExitLocalAttribute(LocalAttributeContext context)
+        public sealed override void ExitLocalAttribute(LocalAttributeContext context)
         {
             Out.WriteLine();
             base.ExitLocalAttribute(context);
