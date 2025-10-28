@@ -276,14 +276,7 @@ namespace Sona.Compiler.States
 
             private void OnEnterArgument(ParserRuleContext context)
             {
-                if(first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    Out.Write(',');
-                }
+                Out.WriteNext(',', ref first);
             }
 
             private void OnEnterExpression(ParserRuleContext context)

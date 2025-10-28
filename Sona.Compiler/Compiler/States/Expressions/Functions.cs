@@ -289,14 +289,7 @@ namespace Sona.Compiler.States
 
         public override void EnterName(NameContext context)
         {
-            if(firstName)
-            {
-                firstName = false;
-            }
-            else
-            {
-                Out.Write('|');
-            }
+            Out.WriteNext('|', ref firstName);
 
             base.EnterName(context);
         }

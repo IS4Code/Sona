@@ -490,14 +490,7 @@ namespace Sona.Compiler.States
 
         public override void EnterGenericArgument(GenericArgumentContext context)
         {
-            if(first)
-            {
-                first = false;
-            }
-            else
-            {
-                Out.Write(',');
-            }
+            Out.WriteNext(',', ref first);
         }
 
         public override void ExitGenericArgument(GenericArgumentContext context)
@@ -867,14 +860,7 @@ namespace Sona.Compiler.States
 
         public override void EnterAnonymousRecordMemberDeclaration(AnonymousRecordMemberDeclarationContext context)
         {
-            if(first)
-            {
-                first = false;
-            }
-            else
-            {
-                Out.Write(';');
-            }
+            Out.WriteNext(';', ref first);
             hasType = false;
         }
 

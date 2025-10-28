@@ -63,14 +63,7 @@ namespace Sona.Compiler.States
 
         public override void EnterName(NameContext context)
         {
-            if(first)
-            {
-                first = false;
-            }
-            else
-            {
-                Out.Write(';');
-            }
+            Out.WriteNext(';', ref first);
             base.EnterName(context);
         }
 
@@ -183,14 +176,7 @@ namespace Sona.Compiler.States
 
         public override void EnterExpression(ExpressionContext context)
         {
-            if(first)
-            {
-                first = false;
-            }
-            else
-            {
-                Out.Write(',');
-            }
+            Out.WriteNext(',', ref first);
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
@@ -348,14 +334,7 @@ namespace Sona.Compiler.States
 
         private void OnEnterArgument(ParserRuleContext context)
         {
-            if(first)
-            {
-                first = false;
-            }
-            else
-            {
-                Out.Write(',');
-            }
+            Out.WriteNext(',', ref first);
         }
 
         private void OnEnterExpression(ParserRuleContext context)

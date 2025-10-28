@@ -389,6 +389,66 @@ namespace Sona.Compiler
                 writer.Write(str);
             }
         }
+
+        public static void WriteNext(this ISourceWriter writer, string text, ref bool isFirst)
+        {
+            if(isFirst)
+            {
+                isFirst = false;
+            }
+            else
+            {
+                writer.Write(text);
+            }
+        }
+
+        public static void WriteNext(this ISourceWriter writer, char value, ref bool isFirst)
+        {
+            if(isFirst)
+            {
+                isFirst = false;
+            }
+            else
+            {
+                writer.Write(value);
+            }
+        }
+
+        public static void WriteLineNext(this ISourceWriter writer, ref bool isFirst)
+        {
+            if(isFirst)
+            {
+                isFirst = false;
+            }
+            else
+            {
+                writer.WriteLine();
+            }
+        }
+
+        public static void WriteLineNext(this ISourceWriter writer, string text, ref bool isFirst)
+        {
+            if(isFirst)
+            {
+                isFirst = false;
+            }
+            else
+            {
+                writer.WriteLine(text);
+            }
+        }
+
+        public static void WriteLineNext(this ISourceWriter writer, char value, ref bool isFirst)
+        {
+            if(isFirst)
+            {
+                isFirst = false;
+            }
+            else
+            {
+                writer.WriteLine(value);
+            }
+        }
     }
 
     internal sealed class SourceWriter : IndentedTextWriter, ISourceWriter

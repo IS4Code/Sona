@@ -118,14 +118,7 @@ namespace Sona.Compiler.States
             bool first = true;
             foreach(var capture in captures)
             {
-                if(first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    Out.Write(';');
-                }
+                Out.WriteNext(';', ref first);
 
                 // Target-type to result
                 Out.WriteCustomPattern("UnpackRegexGroup");

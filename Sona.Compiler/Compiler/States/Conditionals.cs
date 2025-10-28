@@ -193,14 +193,7 @@ namespace Sona.Compiler.States
             {
                 isImplicitReturn = false;
 
-                if(first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    Out.WriteLine();
-                }
+                Out.WriteLineNext(ref first);
             }
 
             protected override void OnExitStatement(StatementFlags flags, ParserRuleContext context)

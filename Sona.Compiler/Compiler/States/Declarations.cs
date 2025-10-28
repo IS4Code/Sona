@@ -315,14 +315,7 @@ namespace Sona.Compiler.States
 
         public override void EnterName(NameContext context)
         {
-            if(firstName)
-            {
-                firstName = false;
-            }
-            else
-            {
-                Out.Write('|');
-            }
+            Out.WriteNext('|', ref firstName);
 
             base.EnterName(context);
         }
@@ -366,14 +359,7 @@ namespace Sona.Compiler.States
 
         public override void EnterDeclaration(DeclarationContext context)
         {
-            if(first)
-            {
-                first = false;
-            }
-            else
-            {
-                Out.Write(',');
-            }
+            Out.WriteNext(',', ref first);
 
             EnterState<DeclarationState>().EnterDeclaration(context);
         }
@@ -615,14 +601,7 @@ namespace Sona.Compiler.States
             var first = true;
             foreach(var capture in valueCaptures)
             {
-                if(first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    Out.Write(',');
-                }
+                Out.WriteNext(',', ref first);
                 capture.Play(Out);
             }
             Out.ExitNestedScope();
@@ -632,14 +611,7 @@ namespace Sona.Compiler.States
 
         public override void EnterDeclaration(DeclarationContext context)
         {
-            if(first)
-            {
-                first = false;
-            }
-            else
-            {
-                Out.Write(',');
-            }
+            Out.WriteNext(',', ref first);
         }
 
         public override void ExitDeclaration(DeclarationContext context)

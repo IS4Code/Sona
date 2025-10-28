@@ -551,14 +551,7 @@ namespace Sona.Compiler
 
             void OnName()
             {
-                if(first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    Out.Write('.');
-                }
+                Out.WriteNext('.', ref first);
             }
 
             public override void EnterName(NameContext context)

@@ -91,14 +91,7 @@ namespace Sona.Compiler.States
 
         public override void EnterAttrGroup(AttrGroupContext context)
         {
-            if(firstGroup)
-            {
-                firstGroup = false;
-            }
-            else
-            {
-                Out.Write(';');
-            }
+            Out.WriteNext(';', ref firstGroup);
             firstArgument = true;
         }
 
@@ -126,14 +119,7 @@ namespace Sona.Compiler.States
 
         private void EnterAttrArgument()
         {
-            if(firstArgument)
-            {
-                firstArgument = false;
-            }
-            else
-            {
-                Out.Write(',');
-            }
+            Out.WriteNext(',', ref firstArgument);
         }
 
         public override void EnterAttrPosArg(AttrPosArgContext context)

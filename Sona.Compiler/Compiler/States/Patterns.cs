@@ -682,14 +682,7 @@ namespace Sona.Compiler.States
 
             public override void EnterPatternArgument(PatternArgumentContext context)
             {
-                if(first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    Out.Write(';');
-                }
+                Out.WriteNext(';', ref first);
                 base.EnterPatternArgument(context);
             }
 
@@ -873,14 +866,7 @@ namespace Sona.Compiler.States
 
             public override void EnterPatternArgument(PatternArgumentContext context)
             {
-                if(first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    Out.Write(',');
-                }
+                Out.WriteNext(',', ref first);
                 base.EnterPatternArgument(context);
             }
 

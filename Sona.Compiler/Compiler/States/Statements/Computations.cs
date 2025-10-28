@@ -622,14 +622,7 @@ namespace Sona.Compiler.States
                     bool first = true;
                     foreach(var capture in captures.Skip(1))
                     {
-                        if(first)
-                        {
-                            first = false;
-                        }
-                        else
-                        {
-                            Out.Write(',');
-                        }
+                        Out.WriteNext(',', ref first);
                         capture.Play(Out);
                     }
                     Out.Write(')');
@@ -638,14 +631,7 @@ namespace Sona.Compiler.States
                     first = true;
                     foreach(var variable in variables)
                     {
-                        if(first)
-                        {
-                            first = false;
-                        }
-                        else
-                        {
-                            Out.Write(',');
-                        }
+                        Out.WriteNext(',', ref first);
                         Out.WriteIdentifier(variable);
                     }
                     Out.Write(')');
