@@ -115,8 +115,17 @@ namespace Sona.Compiler
             // Compiler-generated unused variables are reported even when they start on _.
             { 1182, "chkUnusedValue", m => Syntax.GetIdentifierValue(m.Groups[1].Value).StartsWith("_", StringComparison.Ordinal) ? null : m.Value }, // The value '%s' is unused
 
-            // Nullnewss warning
-            { 3261, "ConstraintSolverNullnessWarning", "$1." },
+            // Different syntax
+            { 1228, "tcInvalidUseBangBinding", "A `use` variable initialized with `follow` cannot be declared using a complex pattern." }, // 'use!' bindings must be of the form 'use! <var> = <expr>'
+
+            // Strip prefix
+            { 3261, "ConstraintSolverNullnessWarning", "$1." }, // Nullness warning: %s
+            
+            // Different syntax
+            { 3343, "tcRequireMergeSourcesOrBindN", "A variable declaration initializing multiple variables with `follow` may only be used if the computation builder defines either a `$1` method or appropriate `MergeSources` and `Bind` methods." }, // The 'let! ... and! ...' construct may only be used if the computation expression builder defines either a '%s' method or appropriate 'MergeSources' and 'Bind' methods
+
+            // Different syntax
+            { 3345, "tcInvalidUseBangBindingNoAndBangs", "A `use` declaration initializing multiple variables with `follow` is not supported." }, // use! may not be combined with and!
 
             // Not a warning anymore
             { 3517, "optFailedToInlineSuggestedValue", "The function parameter is declared as `inline` but the provided argument cannot be inlined. Consider passing an inlineable anonymous function." }, // The value '%s' was marked 'InlineIfLambda' but was not determined to have a lambda value.
