@@ -78,9 +78,6 @@ namespace Sona.Compiler
              // Nullness warning
             3261,
             3264,
-            
-            // Ineffective inline lambda
-            3517, // The value '%s' was marked 'InlineIfLambda' but was not determined to have a lambda value.
         };
 
         public static IReadOnlyCollection<int> ErrorWarnings => errorWarnings;
@@ -128,7 +125,14 @@ namespace Sona.Compiler
             { 3345, "tcInvalidUseBangBindingNoAndBangs", "A `use` declaration initializing multiple variables with `follow` is not supported." }, // use! may not be combined with and!
 
             // Not a warning anymore
-            { 3517, "optFailedToInlineSuggestedValue", "The function parameter is declared as `inline` but the provided argument cannot be inlined. Consider passing an inlineable anonymous function." }, // The value '%s' was marked 'InlineIfLambda' but was not determined to have a lambda value.
+            { 3517, "optFailedToInlineSuggestedValue",  m => { // The value '%s' was marked 'InlineIfLambda' but was not determined to have a lambda value.
+                if(Syntax.GetIdentifierValue(m.Groups[1].Value).StartsWith("_", StringComparison.Ordinal))
+                {
+                    // Ignore
+                    return null;
+                }
+                return "The function parameter `$1` is declared as `inline` but the provided argument cannot be inlined. Consider passing an inlineable anonymous function.";
+            } },
 
             // Syntactically valid
             { 3521, "tcInvalidMemberDeclNameMissingOrHasParen", "A complex pattern is not permitted in this declaration." }, // Invalid member declaration. The name of the member is missing or has parentheses.

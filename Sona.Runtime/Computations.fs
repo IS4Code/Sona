@@ -5,32 +5,34 @@ open System
 open System.Runtime.CompilerServices
 open System.Threading.Tasks
 
+type internal IIL = InlineIfLambdaAttribute
+
 [<AbstractClass>]
 type BaseBuilder<'TZero>() =
   abstract member While : (unit -> bool) * (unit -> 'TZero) -> 'TZero
 
-  member inline _.TryFinally([<InlineIfLambda>]f : unit -> _, [<InlineIfLambda>]cleanup : unit -> unit) =
+  member inline _.TryFinally([<IIL>]_f : unit -> _, [<IIL>]_cleanup : unit -> unit) =
     try
-      f()
+      _f()
     finally
-      cleanup()
+      _cleanup()
   
-  member inline _.TryWith([<InlineIfLambda>]f : unit -> _, [<InlineIfLambda>]fail : _ -> _) =
+  member inline _.TryWith([<IIL>]_f : unit -> _, [<IIL>]_fail : _ -> _) =
     try
-      f()
+      _f()
     with
-    | e -> fail e
+    | e -> _fail e
   
-  member inline _.Using(x : #IDisposable, [<InlineIfLambda>]f : _ -> _ option) =
+  member inline _.Using(x : #IDisposable, [<IIL>]_f : _ -> _ option) =
     try
-      f x
+      _f x
     finally
       x.Dispose()
   
-  member inline this.For(s : _ seq, f : _ -> 'TZero) =
+  member inline this.For(s : _ seq, [<IIL>]_f : _ -> 'TZero) =
     let enumerator = s.GetEnumerator()
     try
-      this.While(enumerator.MoveNext, (fun() -> f(enumerator.Current)))
+      this.While(enumerator.MoveNext, (fun() -> _f enumerator.Current))
     finally
       enumerator.Dispose()
 
@@ -41,8 +43,8 @@ type OptionBuilder() =
   member inline _.Zero() = Some()
 
   member inline _.Return(value) = Some value
-  member inline _.Delay(f : _ -> _ option) = f
-  member inline _.Run(f : _ -> _ option) = f()
+  member inline _.Delay([<IIL>]_f : _ -> _ option) = _f
+  member inline _.Run([<IIL>]_f : _ -> _ option) = _f()
 
   member inline _.ReturnFrom(opt : _ option) = opt
   
@@ -56,10 +58,10 @@ type OptionBuilder() =
     | Ok value -> Some value
     | _ -> None
   
-  member inline this.Bind(opt : _ option, func) = Option.bind func (this.ReturnFrom(opt))
-  member inline this.Bind(opt : _ voption, func) = Option.bind func (this.ReturnFrom(opt))
-  member inline this.Bind(opt : Result<_, _>, func) = Option.bind func (this.ReturnFrom(opt))
-  member inline this.Combine(opt : _ option, func) = this.Bind(opt, func)
+  member inline this.Bind(opt : _ option, [<IIL>]_func) = Option.bind _func (this.ReturnFrom(opt))
+  member inline this.Bind(opt : _ voption, [<IIL>]_func) = Option.bind _func (this.ReturnFrom(opt))
+  member inline this.Bind(opt : Result<_, _>, [<IIL>]_func) = Option.bind _func (this.ReturnFrom(opt))
+  member inline this.Combine(opt : _ option, [<IIL>]_func) = this.Bind(opt, _func)
 
   override _.While(cond, func) =
     let mutable continuing = true
@@ -77,8 +79,8 @@ type ValueOptionBuilder() =
 
   member inline _.Zero() = ValueSome()
   member inline _.Return(value) = ValueSome value
-  member inline _.Delay(f : _ -> _ voption) = f
-  member inline _.Run(f : _ -> _ voption) = f()
+  member inline _.Delay([<IIL>]_f : _ -> _ voption) = _f
+  member inline _.Run([<IIL>]_f : _ -> _ voption) = _f()
   
   member inline _.ReturnFrom(opt : _ option) =
     match opt with
@@ -92,10 +94,10 @@ type ValueOptionBuilder() =
     | Ok value -> ValueSome value
     | _ -> ValueNone
     
-  member inline this.Bind(opt : _ option, func) = ValueOption.bind func (this.ReturnFrom(opt))
-  member inline this.Bind(opt : _ voption, func) = ValueOption.bind func (this.ReturnFrom(opt))
-  member inline this.Bind(opt : Result<_, _>, func) = ValueOption.bind func (this.ReturnFrom(opt))
-  member inline this.Combine(opt : _ voption, func) = this.Bind(opt, func)
+  member inline this.Bind(opt : _ option, [<IIL>]_func) = ValueOption.bind _func (this.ReturnFrom(opt))
+  member inline this.Bind(opt : _ voption, [<IIL>]_func) = ValueOption.bind _func (this.ReturnFrom(opt))
+  member inline this.Bind(opt : Result<_, _>, [<IIL>]_func) = ValueOption.bind _func (this.ReturnFrom(opt))
+  member inline this.Combine(opt : _ voption, [<IIL>]_func) = this.Bind(opt, _func)
   
   override _.While(cond, func) =
     let mutable continuing = true
@@ -113,8 +115,8 @@ type ResultBuilder<'TError>() =
 
   member inline _.Zero() = Ok()
   member inline _.Return(value) = Ok value
-  member inline _.Delay(f : _ -> Result<_, 'TError>) = f
-  member inline _.Run(f : _ -> Result<_, 'TError>) = f()
+  member inline _.Delay([<IIL>]_f : _ -> Result<_, 'TError>) = _f
+  member inline _.Run([<IIL>]_f : _ -> Result<_, 'TError>) = _f()
   
   member inline _.ReturnFrom(opt : _ option) =
     match opt with
@@ -128,10 +130,10 @@ type ResultBuilder<'TError>() =
   
   member inline _.ReturnFrom(opt : Result<_, 'TError>) = opt
   
-  member inline this.Bind(opt : _ option, func) = Result.bind func (this.ReturnFrom(opt))
-  member inline this.Bind(opt : _ voption, func) = Result.bind func (this.ReturnFrom(opt))
-  member inline this.Bind(opt : Result<_, 'TError>, func) = Result.bind func (this.ReturnFrom(opt))
-  member inline this.Combine(opt : Result<_, 'TError>, func) = this.Bind(opt, func)
+  member inline this.Bind(opt : _ option, [<IIL>]_func) = Result.bind _func (this.ReturnFrom(opt))
+  member inline this.Bind(opt : _ voption, [<IIL>]_func) = Result.bind _func (this.ReturnFrom(opt))
+  member inline this.Bind(opt : Result<_, 'TError>, [<IIL>]_func) = Result.bind _func (this.ReturnFrom(opt))
+  member inline this.Combine(opt : Result<_, 'TError>, [<IIL>]_func) = this.Bind(opt, _func)
   
   override _.While(cond, func) =
     let mutable continuing = true
@@ -168,9 +170,9 @@ type DelayedBuilder() =
 
   member inline _.Zero() = ()
   member inline _.Return(value) = value
-  member inline _.Delay(f : _ -> _) = f
-  member inline _.Run(f : _ -> _) = f
-  member inline _.Combine(x, f) = f(x)
+  member inline _.Delay([<IIL>]_f : _ -> _) = _f
+  member inline _.Run([<IIL>]_f : _ -> _) = _f
+  member inline _.Combine(x, [<IIL>]_f) = _f x
 
 let delayed = { new DelayedBuilder() with member _.ToString() = "delayed" }
 
@@ -190,8 +192,8 @@ type GlobalBuilder() =
 
   member inline _.Zero() = ()
   member inline _.Return(value) = value
-  member inline _.Delay(f : _ -> _) = f
-  member inline _.Run(f : _ -> _) = f()
+  member inline _.Delay([<IIL>]_f : _ -> _) = _f
+  member inline _.Run([<IIL>]_f : _ -> _) = _f()
 
   static member inline private ErrorNoValue() =
     raise (ArgumentException("The object has no value.", "arg"))
@@ -230,24 +232,24 @@ type GlobalBuilder() =
   member inline _.ReturnFrom(arg : Lazy<_>) = arg.Force()
 
   [<CompilerMessage(noValueWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : _ option, func) = func(this.ReturnFrom arg)
+  member inline this.Bind(arg : _ option, [<IIL>]_func) = _func(this.ReturnFrom arg)
   [<CompilerMessage(noValueWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : _ voption, func) = func(this.ReturnFrom arg)
+  member inline this.Bind(arg : _ voption, [<IIL>]_func) = _func(this.ReturnFrom arg)
   [<CompilerMessage(noValueWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : Result<_, _>, func) = func(this.ReturnFrom arg)
+  member inline this.Bind(arg : Result<_, _>, [<IIL>]_func) = _func(this.ReturnFrom arg)
   [<CompilerMessage(noSingleValueWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : 'T seq, func) = func(this.ReturnFrom arg)
+  member inline this.Bind(arg : 'T seq, [<IIL>]_func) = _func(this.ReturnFrom arg)
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : Async<_>, func) = func(this.ReturnFrom arg)
+  member inline this.Bind(arg : Async<_>, [<IIL>]_func) = _func(this.ReturnFrom arg)
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : Task, func) = func(this.ReturnFrom arg)
+  member inline this.Bind(arg : Task, [<IIL>]_func) = _func(this.ReturnFrom arg)
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : Task<_>, func) = func(this.ReturnFrom arg)
+  member inline this.Bind(arg : Task<_>, [<IIL>]_func) = _func(this.ReturnFrom arg)
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : ValueTask, func) = func(this.ReturnFrom arg)
+  member inline this.Bind(arg : ValueTask, [<IIL>]_func) = _func(this.ReturnFrom arg)
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : ValueTask<_>, func) = func(this.ReturnFrom arg)
-  member inline this.Bind(arg : Lazy<_>, func) = func(this.ReturnFrom arg)
+  member inline this.Bind(arg : ValueTask<_>, [<IIL>]_func) = _func(this.ReturnFrom arg)
+  member inline this.Bind(arg : Lazy<_>, [<IIL>]_func) = _func(this.ReturnFrom arg)
 
 let ``global`` = { new GlobalBuilder() with member _.ToString() = "global" }
 
@@ -260,7 +262,7 @@ let private nonThreadSafeException = "The enumerator is not thread-safe."
 module UniversalSequence =
   open System.Threading
 
-  let inline zero boolBuilder ([<InlineIfLambda>]boolWrap) unitBuilder ([<InlineIfLambda>]unitWrap) = {
+  let inline zero boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) = {
     new IUniversalEnumerator<_, _, _> with
 
     member _.Current = raise(InvalidOperationException emptySequenceException)
@@ -276,14 +278,14 @@ module UniversalSequence =
       ))
   }
 
-  let inline delay (f : unit -> IUniversalEnumerator<_, _, _>) = f
+  let inline delay ([<IIL>]_f : unit -> IUniversalEnumerator<_, _, _>) = _f
 
-  let inline run ([<InlineIfLambda>]f) = {
+  let inline run ([<IIL>]_f) = {
     new IUniversalEnumerable<_, _, _> with
-    member _.GetUniversalEnumerator() = f()
+    member _.GetUniversalEnumerator() = _f()
   }
 
-  let inline ``yield`` boolBuilder ([<InlineIfLambda>]boolWrap) unitBuilder ([<InlineIfLambda>]unitWrap) x =
+  let inline ``yield`` boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) x =
    let mutable state = -1 in {
     new IUniversalEnumerator<_, _, _> with
 
@@ -303,7 +305,7 @@ module UniversalSequence =
       ))
    }
 
-  let inline bind boolBuilder ([<InlineIfLambda>]boolWrap) ([<InlineIfLambda>]boolReturnFrom) unitBuilder ([<InlineIfLambda>]unitWrap) ([<InlineIfLambda>]unitReturnFrom) m ([<InlineIfLambda>]f) =
+  let inline bind boolBuilder ([<IIL>]boolWrap) ([<IIL>]boolReturnFrom) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) m ([<IIL>]_f) =
    let mutable inner = Unchecked.defaultof<IUniversalEnumerator<_, _, _>> in {
     new IUniversalEnumerator<_, _, _> with
 
@@ -323,7 +325,7 @@ module UniversalSequence =
               // Still empty
               isNull(Volatile.Read(&inner) |> box) &&
               // But non-empty before the value could be moved inside
-              not(isNull(Interlocked.CompareExchange(&inner, f(x), Unchecked.defaultof<_>) |> box))
+              not(isNull(Interlocked.CompareExchange(&inner, _f x, Unchecked.defaultof<_>) |> box))
               then raise(InvalidOperationException nonThreadSafeException)
             
             // Return the inner result
@@ -352,7 +354,7 @@ module UniversalSequence =
 
   let inline yieldFrom (x : IUniversalEnumerable<_, _, _>) = x.GetUniversalEnumerator()
 
-  let inline combine boolBuilder ([<InlineIfLambda>]boolWrap) ([<InlineIfLambda>]boolReturnFrom) unitBuilder ([<InlineIfLambda>]unitWrap) ([<InlineIfLambda>]unitReturnFrom) (first : IUniversalEnumerator<_, _, _>) ([<InlineIfLambda>]second : unit -> IUniversalEnumerator<_, _, _>) =
+  let inline combine boolBuilder ([<IIL>]boolWrap) ([<IIL>]boolReturnFrom) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) (first : IUniversalEnumerator<_, _, _>) ([<IIL>]_second : unit -> IUniversalEnumerator<_, _, _>) =
    let mutable inner = Unchecked.defaultof<IUniversalEnumerator<_, _, _>> in {
     new IUniversalEnumerator<_, _, _> with
 
@@ -397,7 +399,7 @@ module UniversalSequence =
                     // Still on the first enumerator
                     Object.ReferenceEquals(first, Volatile.Read(&inner)) &&
                     // But changed before the new value could be moved inside
-                    not(Object.ReferenceEquals(first, Interlocked.CompareExchange(&inner, second(), first)))
+                    not(Object.ReferenceEquals(first, Interlocked.CompareExchange(&inner, _second(), first)))
                     then raise(InvalidOperationException nonThreadSafeException)
                   
                   // Return the inner result
@@ -426,16 +428,16 @@ module UniversalSequence =
         ))
    }
   
-  let inline tryFinally boolBuilder ([<InlineIfLambda>]boolWrap) unitBuilder ([<InlineIfLambda>]unitWrap) ([<InlineIfLambda>]unitReturnFrom) ([<InlineIfLambda>]f) ([<InlineIfLambda>]cleanup : unit -> unit) =
+  let inline tryFinally boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) ([<IIL>]_f) ([<IIL>]_cleanup : unit -> unit) =
     let mutable enumeratorReceived = false
     try
-     let enumerator : IUniversalEnumerator<_, _, _> = f()
+     let enumerator : IUniversalEnumerator<_, _, _> = _f()
      enumeratorReceived <- true
 
      let mutable finished = 0
      let inline isFinished() = 0 <> Volatile.Read(&finished)
      let inline doCleanup() = 
-       if 0 = Interlocked.CompareExchange(&finished, 1, 0) then cleanup()
+       if 0 = Interlocked.CompareExchange(&finished, 1, 0) then _cleanup()
      {
       new IUniversalEnumerator<_, _, _> with
         
@@ -474,11 +476,11 @@ module UniversalSequence =
      }
     finally
      if not enumeratorReceived then
-       cleanup()
+       _cleanup()
   
-  let inline tryWith boolBuilder ([<InlineIfLambda>]boolWrap) ([<InlineIfLambda>]boolReturnFrom) unitBuilder ([<InlineIfLambda>]unitWrap) ([<InlineIfLambda>]unitReturnFrom) ([<InlineIfLambda>]f : unit -> IUniversalEnumerator<_, _, _>) ([<InlineIfLambda>]fail : exn -> IUniversalEnumerator<_, _, _>) =
+  let inline tryWith boolBuilder ([<IIL>]boolWrap) ([<IIL>]boolReturnFrom) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) ([<IIL>]_f : unit -> IUniversalEnumerator<_, _, _>) ([<IIL>]_fail : exn -> IUniversalEnumerator<_, _, _>) =
     try
-     let mutable enumerator : IUniversalEnumerator<_, _, _> = f()
+     let mutable enumerator : IUniversalEnumerator<_, _, _> = _f()
 
      let mutable failed = 0
      let inline isFailed() = 0 <> Volatile.Read(&failed)
@@ -510,7 +512,7 @@ module UniversalSequence =
                 disposed <- true
 
                 // Replace enumerator and start enumerating
-                enumerator <- fail e
+                enumerator <- _fail e
                 boolReturnFrom(enumerator.MoveNextUniversal())
               ))
             ))
@@ -521,7 +523,7 @@ module UniversalSequence =
                 System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(e).Throw()
               
               // Disposing caused another exception, use this one
-              enumerator <- fail e
+              enumerator <- _fail e
               boolReturnFrom(enumerator.MoveNextUniversal())
             ))
           ))
@@ -538,7 +540,7 @@ module UniversalSequence =
             doFail e
 
             // Cleanup is requested but handler must be given a chance to run
-            enumerator <- fail e
+            enumerator <- _fail e
             
             let delayed = (^U : (member Delay : _ -> _) unitBuilder, fun() -> (
               (^B : (member Bind : _ * _ -> _) boolBuilder, enumerator.MoveNextUniversal(), fun (_ : bool) -> (
@@ -555,12 +557,12 @@ module UniversalSequence =
         ))
      }
     with
-    | e -> fail e
+    | e -> _fail e
   
-  let inline using boolBuilder ([<InlineIfLambda>]boolWrap) unitBuilder ([<InlineIfLambda>]unitWrap) ([<InlineIfLambda>]unitReturnFrom) (x : #IDisposable) ([<InlineIfLambda>]f) =
-    tryFinally boolBuilder boolWrap unitBuilder unitWrap unitReturnFrom (fun() -> f(x)) (fun() -> x.Dispose())
+  let inline using boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) (x : #IDisposable) ([<IIL>]_f) =
+    tryFinally boolBuilder boolWrap unitBuilder unitWrap unitReturnFrom (fun() -> _f(x)) (fun() -> x.Dispose())
   
-  let inline ``while`` boolBuilder ([<InlineIfLambda>]boolWrap) unitBuilder ([<InlineIfLambda>]unitWrap) ([<InlineIfLambda>]unitReturnFrom) ([<InlineIfLambda>]cond : unit -> bool) ([<InlineIfLambda>]f : unit -> IUniversalEnumerator<_, _, _>) =
+  let inline ``while`` boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) ([<IIL>]_cond : unit -> bool) ([<IIL>]_f : unit -> IUniversalEnumerator<_, _, _>) =
    let mutable inner = Unchecked.defaultof<IUniversalEnumerator<_, _, _>> in {
     new IUniversalEnumerator<_, _, _> with
 
@@ -582,12 +584,12 @@ module UniversalSequence =
                 let current = Volatile.Read(&inner)
                 if Object.ReferenceEquals(enumerator, current) then
                   // Still on the enumerator
-                  if not(cond()) then
+                  if not(_cond()) then
                     // Terminate
                     (^B : (member Return : _ -> _) boolBuilder, false)
                   else
                     // Start next iteration
-                    let next = f()
+                    let next = _f()
                     if not(Object.ReferenceEquals(enumerator, Interlocked.CompareExchange(&inner, next, enumerator))) then
                       // But changed before the new value could be moved inside
                       raise(InvalidOperationException nonThreadSafeException)
@@ -602,11 +604,11 @@ module UniversalSequence =
         let current = Volatile.Read(&inner)
         if isNull(current |> box) then
           // First read
-          if not(cond()) then
+          if not(_cond()) then
             // Terminate
             (^B : (member Return : _ -> _) boolBuilder, false)
           else
-            let next = f()
+            let next = _f()
             if not(isNull(Interlocked.CompareExchange(&inner, next, Unchecked.defaultof<_>) |> box)) then
               // Non-empty before the value could be moved inside
               raise(InvalidOperationException nonThreadSafeException)
@@ -631,13 +633,13 @@ module UniversalSequence =
       ))
    }
 
-  let inline ``for`` boolBuilder ([<InlineIfLambda>]boolWrap) unitBuilder ([<InlineIfLambda>]unitWrap) ([<InlineIfLambda>]unitReturnFrom) (s : _ seq) ([<InlineIfLambda>]f) =
+  let inline ``for`` boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) (s : _ seq) ([<IIL>]_f) =
     let enumerator = s.GetEnumerator()
     tryFinally boolBuilder boolWrap unitBuilder unitWrap unitReturnFrom
       (fun() -> (
         ``while`` boolBuilder boolWrap unitBuilder unitWrap unitReturnFrom
           (fun() -> enumerator.MoveNext())
-          (fun() -> f(enumerator.Current))
+          (fun() -> _f enumerator.Current)
       ))
       (fun() -> enumerator.Dispose())
 
@@ -648,8 +650,8 @@ type UniversalSequenceBuilder<'TBoolBuilder, 'TUnitBuilder> =
     UnitBuilder : 'TUnitBuilder
   }
   member inline _.YieldFrom x = UniversalSequence.yieldFrom x
-  member inline _.Delay f = UniversalSequence.delay f
-  member inline _.Run f = UniversalSequence.run f
+  member inline _.Delay([<IIL>]_f) = UniversalSequence.delay _f
+  member inline _.Run([<IIL>]_f) = UniversalSequence.run _f
 
 [<AbstractClass; Extension>]
 type UniversalSequenceBuilderExtensions1 internal() =
@@ -671,7 +673,7 @@ type UniversalSequenceBuilderExtensions1 internal() =
       x
   
   [<Extension>]
-  static member inline Bind(self : UniversalSequenceBuilder<_, _>, m, f) =
+  static member inline Bind(self : UniversalSequenceBuilder<_, _>, m, [<IIL>]_f) =
     UniversalSequence.bind
       self.BoolBuilder
       (fun f -> f())
@@ -679,10 +681,10 @@ type UniversalSequenceBuilderExtensions1 internal() =
       self.UnitBuilder
       (fun f -> f())
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      m f
+      m _f
   
   [<Extension>]
-  static member inline Combine(self : UniversalSequenceBuilder<_, _>, first, second) =
+  static member inline Combine(self : UniversalSequenceBuilder<_, _>, first, [<IIL>]_second) =
     UniversalSequence.combine
       self.BoolBuilder
       (fun f -> f())
@@ -690,57 +692,57 @@ type UniversalSequenceBuilderExtensions1 internal() =
       self.UnitBuilder
       (fun f -> f())
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      first second
+      first _second
   
   [<Extension>]
-  static member inline TryFinally(self : UniversalSequenceBuilder<_, _>, f, cleanup) =
+  static member inline TryFinally(self : UniversalSequenceBuilder<_, _>, [<IIL>]_f, [<IIL>]_cleanup) =
     UniversalSequence.tryFinally
       self.BoolBuilder
       (fun f -> f())
       self.UnitBuilder
       (fun f -> f())
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      f cleanup
+      _f _cleanup
   
   [<Extension>]
-  static member inline TryWith(self : UniversalSequenceBuilder<_, _>, f, fail) =
+  static member inline TryWith(self : UniversalSequenceBuilder<_, _>, [<IIL>]_f, [<IIL>]_fail) =
     UniversalSequence.tryFinally
       self.BoolBuilder
       (fun f -> f())
       self.UnitBuilder
       (fun f -> f())
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      f fail
+      _f _fail
   
   [<Extension>]
-  static member inline Using(self : UniversalSequenceBuilder<_, _>, obj, f) =
+  static member inline Using(self : UniversalSequenceBuilder<_, _>, obj, [<IIL>]_f) =
     UniversalSequence.using
       self.BoolBuilder
       (fun f -> f())
       self.UnitBuilder
       (fun f -> f())
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      obj f
+      obj _f
   
   [<Extension>]
-  static member inline While(self : UniversalSequenceBuilder<_, _>, cond, f) =
+  static member inline While(self : UniversalSequenceBuilder<_, _>, [<IIL>]_cond, [<IIL>]_f) =
     UniversalSequence.``while``
       self.BoolBuilder
       (fun f -> f())
       self.UnitBuilder
       (fun f -> f())
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      cond f
+      _cond _f
   
   [<Extension>]
-  static member inline For(self : UniversalSequenceBuilder<_, _>, s, f) =
+  static member inline For(self : UniversalSequenceBuilder<_, _>, s, [<IIL>]_f) =
     UniversalSequence.``for``
       self.BoolBuilder
       (fun f -> f())
       self.UnitBuilder
       (fun f -> f())
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      s f
+      s _f
     
 [<AbstractClass; Extension>]
 type UniversalSequenceBuilderExtensions2 internal() =
@@ -764,7 +766,7 @@ type UniversalSequenceBuilderExtensions2 internal() =
       x
   
   [<Extension>]
-  static member inline Bind(self : UniversalSequenceBuilder<_, _>, m, f) =
+  static member inline Bind(self : UniversalSequenceBuilder<_, _>, m, [<IIL>]_f) =
     UniversalSequence.bind
       self.BoolBuilder
       (fun f -> (^B : (member Delay : _ -> _) self.BoolBuilder, f))
@@ -772,10 +774,10 @@ type UniversalSequenceBuilderExtensions2 internal() =
       self.UnitBuilder
       (fun f -> (^U : (member Delay : _ -> _) self.UnitBuilder, f))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      m f
+      m _f
   
   [<Extension>]
-  static member inline Combine(self : UniversalSequenceBuilder<_, _>, first, second) =
+  static member inline Combine(self : UniversalSequenceBuilder<_, _>, first, [<IIL>]_second) =
     UniversalSequence.combine
       self.BoolBuilder
       (fun f -> (^B : (member Delay : _ -> _) self.BoolBuilder, f))
@@ -783,57 +785,57 @@ type UniversalSequenceBuilderExtensions2 internal() =
       self.UnitBuilder
       (fun f -> (^U : (member Delay : _ -> _) self.UnitBuilder, f))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      first second
+      first _second
   
   [<Extension>]
-  static member inline TryFinally(self : UniversalSequenceBuilder<_, _>, f, cleanup) =
+  static member inline TryFinally(self : UniversalSequenceBuilder<_, _>, [<IIL>]_f, [<IIL>]_cleanup) =
     UniversalSequence.tryFinally
       self.BoolBuilder
       (fun f -> (^B : (member Delay : _ -> _) self.BoolBuilder, f))
       self.UnitBuilder
       (fun f -> (^U : (member Delay : _ -> _) self.UnitBuilder, f))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      f cleanup
+      _f _cleanup
   
   [<Extension>]
-  static member inline TryWith(self : UniversalSequenceBuilder<_, _>, f, fail) =
+  static member inline TryWith(self : UniversalSequenceBuilder<_, _>, [<IIL>]_f, [<IIL>]_fail) =
     UniversalSequence.tryFinally
       self.BoolBuilder
       (fun f -> (^B : (member Delay : _ -> _) self.BoolBuilder, f))
       self.UnitBuilder
       (fun f -> (^U : (member Delay : _ -> _) self.UnitBuilder, f))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      f fail
+      _f _fail
   
   [<Extension>]
-  static member inline Using(self : UniversalSequenceBuilder<_, _>, obj, f) =
+  static member inline Using(self : UniversalSequenceBuilder<_, _>, obj, [<IIL>]_f) =
     UniversalSequence.using
       self.BoolBuilder
       (fun f -> (^B : (member Delay : _ -> _) self.BoolBuilder, f))
       self.UnitBuilder
       (fun f -> (^U : (member Delay : _ -> _) self.UnitBuilder, f))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      obj f
+      obj _f
   
   [<Extension>]
-  static member inline While(self : UniversalSequenceBuilder<_, _>, cond, f) =
+  static member inline While(self : UniversalSequenceBuilder<_, _>, [<IIL>]_cond, [<IIL>]_f) =
     UniversalSequence.``while``
       self.BoolBuilder
       (fun f -> (^B : (member Delay : _ -> _) self.BoolBuilder, f))
       self.UnitBuilder
       (fun f -> (^U : (member Delay : _ -> _) self.UnitBuilder, f))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      cond f
+      _cond _f
   
   [<Extension>]
-  static member inline For(self : UniversalSequenceBuilder<_, _>, s, f) =
+  static member inline For(self : UniversalSequenceBuilder<_, _>, s, [<IIL>]_f) =
     UniversalSequence.``for``
       self.BoolBuilder
       (fun f -> (^B : (member Delay : _ -> _) self.BoolBuilder, f))
       self.UnitBuilder
       (fun f -> (^U : (member Delay : _ -> _) self.UnitBuilder, f))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      s f
+      s _f
 
 [<Sealed; AbstractClass; Extension>]
 type UniversalSequenceBuilderExtensions3 private() =
@@ -857,7 +859,7 @@ type UniversalSequenceBuilderExtensions3 private() =
       x
   
   [<Extension>]
-  static member inline Bind(self : UniversalSequenceBuilder<_, _>, m, f) =
+  static member inline Bind(self : UniversalSequenceBuilder<_, _>, m, [<IIL>]_f) =
     UniversalSequence.bind
       self.BoolBuilder
       (fun f -> (^B : (member Run : _ -> _) self.BoolBuilder, (^B : (member Delay : _ -> _) self.BoolBuilder, f)))
@@ -865,10 +867,10 @@ type UniversalSequenceBuilderExtensions3 private() =
       self.UnitBuilder
       (fun f -> (^U : (member Run : _ -> _) self.UnitBuilder, (^U : (member Delay : _ -> _) self.UnitBuilder, f)))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      m f
+      m _f
   
   [<Extension>]
-  static member inline Combine(self : UniversalSequenceBuilder<_, _>, first, second) =
+  static member inline Combine(self : UniversalSequenceBuilder<_, _>, first, [<IIL>]_second) =
     UniversalSequence.combine
       self.BoolBuilder
       (fun f -> (^B : (member Run : _ -> _) self.BoolBuilder, (^B : (member Delay : _ -> _) self.BoolBuilder, f)))
@@ -876,56 +878,56 @@ type UniversalSequenceBuilderExtensions3 private() =
       self.UnitBuilder
       (fun f -> (^U : (member Run : _ -> _) self.UnitBuilder, (^U : (member Delay : _ -> _) self.UnitBuilder, f)))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      first second
+      first _second
   
   [<Extension>]
-  static member inline TryFinally(self : UniversalSequenceBuilder<_, _>, f, cleanup) =
+  static member inline TryFinally(self : UniversalSequenceBuilder<_, _>, [<IIL>]_f, [<IIL>]_cleanup) =
     UniversalSequence.tryFinally
       self.BoolBuilder
       (fun f -> (^B : (member Run : _ -> _) self.BoolBuilder, (^B : (member Delay : _ -> _) self.BoolBuilder, f)))
       self.UnitBuilder
       (fun f -> (^U : (member Run : _ -> _) self.UnitBuilder, (^U : (member Delay : _ -> _) self.UnitBuilder, f)))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      f cleanup
+      _f _cleanup
   
   [<Extension>]
-  static member inline TryWith(self : UniversalSequenceBuilder<_, _>, f, fail) =
+  static member inline TryWith(self : UniversalSequenceBuilder<_, _>, [<IIL>]_f, [<IIL>]_fail) =
     UniversalSequence.tryFinally
       self.BoolBuilder
       (fun f -> (^B : (member Run : _ -> _) self.BoolBuilder, (^B : (member Delay : _ -> _) self.BoolBuilder, f)))
       self.UnitBuilder
       (fun f -> (^U : (member Run : _ -> _) self.UnitBuilder, (^U : (member Delay : _ -> _) self.UnitBuilder, f)))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      f fail
+      _f _fail
   
   [<Extension>]
-  static member inline Using(self : UniversalSequenceBuilder<_, _>, obj, f) =
+  static member inline Using(self : UniversalSequenceBuilder<_, _>, obj, [<IIL>]_f) =
     UniversalSequence.using
       self.BoolBuilder
       (fun f -> (^B : (member Run : _ -> _) self.BoolBuilder, (^B : (member Delay : _ -> _) self.BoolBuilder, f)))
       self.UnitBuilder
       (fun f -> (^U : (member Run : _ -> _) self.UnitBuilder, (^U : (member Delay : _ -> _) self.UnitBuilder, f)))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      obj f
+      obj _f
   
   [<Extension>]
-  static member inline While(self : UniversalSequenceBuilder<_, _>, cond, f) =
+  static member inline While(self : UniversalSequenceBuilder<_, _>, [<IIL>]_cond, [<IIL>]_f) =
     UniversalSequence.``while``
       self.BoolBuilder
       (fun f -> (^B : (member Run : _ -> _) self.BoolBuilder, (^B : (member Delay : _ -> _) self.BoolBuilder, f)))
       self.UnitBuilder
       (fun f -> (^U : (member Run : _ -> _) self.UnitBuilder, (^U : (member Delay : _ -> _) self.UnitBuilder, f)))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      cond f
+      _cond _f
   
   [<Extension>]
-  static member inline For(self : UniversalSequenceBuilder<_, _>, s, f) =
+  static member inline For(self : UniversalSequenceBuilder<_, _>, s, [<IIL>]_f) =
     UniversalSequence.``for``
       self.BoolBuilder
       (fun f -> (^B : (member Run : _ -> _) self.BoolBuilder, (^B : (member Delay : _ -> _) self.BoolBuilder, f)))
       self.UnitBuilder
       (fun f -> (^U : (member Run : _ -> _) self.UnitBuilder, (^U : (member Delay : _ -> _) self.UnitBuilder, f)))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
-      s f
+      s _f
 
 let inline sequenceOf builder = { BoolBuilder = builder; UnitBuilder = builder }
