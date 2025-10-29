@@ -153,6 +153,27 @@ type private ResultBuilderImpl<'TError>() =
 
 let result<'TError> = ResultBuilderImpl<'TError>.Instance
 
+[<AbstractClass>]
+type ImmediateBuilderBase<'TZero when 'TZero : not struct>() =
+  inherit BaseBuilder<'TZero>()
+
+  override _.While(cond, func) =
+    while cond() do
+      let _ = func() in ()
+    Unchecked.defaultof<_>
+
+[<AbstractClass>]
+type DelayedBuilder() =
+  inherit ImmediateBuilderBase<unit>()
+
+  member inline _.Zero() = ()
+  member inline _.Return(value) = value
+  member inline _.Delay(f : _ -> _) = f
+  member inline _.Run(f : _ -> _) = f
+  member inline _.Combine(x, f) = f(x)
+
+let delayed = { new DelayedBuilder() with member _.ToString() = "delayed" }
+
 [<Literal>]
 let private noValueWarningMessage = "This `follow` operator may result in an exception if the argument has no value."
 [<Literal>]
@@ -164,17 +185,8 @@ let private warningNumber = 99999
 #nowarn "99999"
 
 [<AbstractClass>]
-type GlobalBuilderBase<'TZero when 'TZero : not struct>() =
-  inherit BaseBuilder<'TZero>()
-
-  override _.While(cond, func) =
-    while cond() do
-      let _ = func() in ()
-    Unchecked.defaultof<_>
-
-[<AbstractClass>]
 type GlobalBuilder() =
-  inherit GlobalBuilderBase<unit>()
+  inherit ImmediateBuilderBase<unit>()
 
   member inline _.Zero() = ()
   member inline _.Return(value) = value
