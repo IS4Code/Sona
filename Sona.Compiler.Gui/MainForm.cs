@@ -1429,21 +1429,21 @@ ReadKey(true)!");
                 {
 
                 }
-                catch(FsiCompilationException fsiE)
+                catch(CompilationException ce)
                 {
-                    var errors = fsiE.ErrorInfos?.Value ?? Array.Empty<FSharpDiagnostic>();
-                    if(errors.Length == 0)
+                    var errors = ce.Errors;
+                    if(errors.Count == 0)
                     {
                         Console.BackgroundColor = ConsoleColor.Black;
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine(fsiE);
+                        Console.WriteLine(ce);
                         Console.ReadKey(true);
                     }
                     else
                     {
-                        foreach(var diagnostic in errors)
+                        foreach(var error in errors)
                         {
-                            Console.WriteLine(new CompilerDiagnostic(diagnostic));
+                            Console.WriteLine(error);
                         }
                     }
                 }

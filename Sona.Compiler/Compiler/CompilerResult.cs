@@ -69,6 +69,16 @@ namespace Sona.Compiler
         }
     }
 
+    public class CompilationException : Exception
+    {
+        public IReadOnlyCollection<CompilerDiagnostic> Errors { get; }
+
+        public CompilationException(string message, IReadOnlyCollection<CompilerDiagnostic> errors, Exception innerException) : base(message, innerException)
+        {
+            Errors = errors;
+        }
+    }
+
     public record CompilerDiagnostic(DiagnosticLevel Level, string Code, string Message, int Line, int? Column, object? Data) : IComparable<CompilerDiagnostic>
     {
         public CompilerDiagnostic(string message, FSharpDiagnostic diagnostic) : this(

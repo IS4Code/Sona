@@ -369,6 +369,23 @@ namespace Sona.Compiler
                 if(evalResult is FSharpChoice<FSharpOption<FsiValue>, Exception>.Choice2Of2 { Item: { } exception })
                 {
                     // Unwrap exception
+                    if(exception is FsiCompilationException fsiException)
+                    {
+                        if(fsiException.ErrorInfos is { Value: { Length: > 0 } errors })
+                        {
+                            // Process errors normally
+                            var phantomResult = new CompilerResult(result.Options);
+                            foreach(var error in errors)
+                            {
+                                AddDiagnostic(phantomResult, error);
+                            }
+                            exception = new CompilationException(fsiException.Message, phantomResult.Diagnostics, fsiException);
+                        }
+                        else
+                        {
+                            exception = new CompilationException(fsiException.Message, Array.Empty<CompilerDiagnostic>(), fsiException);
+                        }
+                    }
                     return Task.FromException(exception);
                 }
                 return Task.CompletedTask;
