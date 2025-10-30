@@ -221,7 +221,10 @@ namespace Sona.Tests
         [DataRow(@"f""x""", @"f(""x"")")]
         [DataRow(@"f""x"" ""y""", null)]
         [DataRow("f{a=1}", "f({ a = 1 })")]
-        [DataRow("f{a}", $"f(({seq}{{ a }}))")]
+        [DataRow("f{a}", $@"f(({seq}{{
+ yield a
+ ()
+   }}))")]
         [DataRow("f{}", $"f({Seq}.empty)")]
         [DataRow("f{}{}", null)]
         [DataRow("0()", "(0)()")]
@@ -246,22 +249,51 @@ namespace Sona.Tests
 
         [DataRow("[]", "[| |]")]
         [DataRow("[,a]", null)]
-        [DataRow("[a]", "[| a |]")]
-        [DataRow("[a, b]", "[| a;b |]")]
+        [DataRow("[a]", @"[|
+ yield a
+ ()
+ |]")]
+        [DataRow("[a, b]", @"[|
+ yield a
+ yield b
+ ()
+ |]")]
         [DataRow("[a, b,]", null)]
-        [DataRow("[a][0]", "[| a |].[0]")]
-        [DataRow("[a].b", "[| a |].b")]
-        [DataRow("[a](b)", "[| a |](b)")]
-        [DataRow("[[a]=b]", $"[| {KeyValuePair}(a,b) |]")]
-        [DataRow("[[a]=b,[c]=d]", $"[| {KeyValuePair}(a,b);{KeyValuePair}(c,d) |]")]
+        [DataRow("[a][0]", @"[|
+ yield a
+ ()
+ |].[0]")]
+        [DataRow("[a].b", @"[|
+ yield a
+ ()
+ |].b")]
+        [DataRow("[a](b)", @"[|
+ yield a
+ ()
+ |](b)")]
+        [DataRow("[[a]=b]", $@"[|
+ yield {KeyValuePair}(a,b)
+ ()
+ |]")]
+        [DataRow("[[a]=b,[c]=d]", $@"[|
+ yield {KeyValuePair}(a,b)
+ yield {KeyValuePair}(c,d)
+ ()
+ |]")]
         [DataRow("[[a,b]=c]", null)]
-        [DataRow("[[a]=b,c]", $"[| {KeyValuePair}(a,b);c |]")]
+        [DataRow("[[a]=b,c]", $@"[|
+ yield {KeyValuePair}(a,b)
+ yield c
+ ()
+ |]")]
         [DataRow("[..a]", @"[|
  yield! a
+ ()
  |]")]
         [DataRow("[a, ..b]", @"[|
  yield a
  yield! b
+ ()
  |]")]
         [DataRow("[a, ..b,]", null)]
         [DataRow("[a, ..b..c]", null)]
@@ -273,22 +305,51 @@ namespace Sona.Tests
 
         [DataRow("{}", $"{Seq}.empty")]
         [DataRow("{,a}", null)]
-        [DataRow("{a}", $"({seq}{{ a }})")]
-        [DataRow("{a, b}", $"({seq}{{ a;b }})")]
+        [DataRow("{a}", $@"({seq}{{
+ yield a
+ ()
+ }})")]
+        [DataRow("{a, b}", $@"({seq}{{
+ yield a
+ yield b
+ ()
+ }})")]
         [DataRow("{a, b,}", null)]
-        [DataRow("{a}[0]", $"({seq}{{ a }}).[0]")]
-        [DataRow("{a}.b", $"({seq}{{ a }}).b")]
-        [DataRow("{a}(b)", $"({seq}{{ a }})(b)")]
-        [DataRow("{[a]=b}", $"({seq}{{ {KeyValuePair}(a,b) }})")]
-        [DataRow("{[a]=b,[c]=d}", $"({seq}{{ {KeyValuePair}(a,b);{KeyValuePair}(c,d) }})")]
+        [DataRow("{a}[0]", $@"({seq}{{
+ yield a
+ ()
+ }}).[0]")]
+        [DataRow("{a}.b", $@"({seq}{{
+ yield a
+ ()
+ }}).b")]
+        [DataRow("{a}(b)", $@"({seq}{{
+ yield a
+ ()
+ }})(b)")]
+        [DataRow("{[a]=b}", $@"({seq}{{
+ yield {KeyValuePair}(a,b)
+ ()
+ }})")]
+        [DataRow("{[a]=b,[c]=d}", $@"({seq}{{
+ yield {KeyValuePair}(a,b)
+ yield {KeyValuePair}(c,d)
+ ()
+ }})")]
         [DataRow("{[a,b]=c}", null)]
-        [DataRow("{[a]=b,c}", $"({seq}{{ {KeyValuePair}(a,b);c }})")]
+        [DataRow("{[a]=b,c}", $@"({seq}{{
+ yield {KeyValuePair}(a,b)
+ yield c
+ ()
+ }})")]
         [DataRow("{..a}", $@"({seq}{{
  yield! a
+ ()
  }})")]
         [DataRow("{a, ..b}", $@"({seq}{{
  yield a
  yield! b
+ ()
  }})")]
         [DataRow("{a, ..b,}", null)]
         [DataRow("{a, ..b..c}", null)]
