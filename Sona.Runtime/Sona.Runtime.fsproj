@@ -24,7 +24,7 @@
     <DisableAutoSetFscCompilerPath>true</DisableAutoSetFscCompilerPath>
     <FSharp_Shim_Present>false</FSharp_Shim_Present>
     <FscToolExe>$(ProgramFiles)\dotnet\dotnet.exe</FscToolExe>
-    <DotnetFscCompilerPath>"$(ProgramFiles)\dotnet\sdk\9.0.201\FSharp\fsc.dll"</DotnetFscCompilerPath>
+    <DotnetFscCompilerPath>"$(ProgramFiles)\dotnet\sdk\9.0.303\FSharp\fsc.dll"</DotnetFscCompilerPath>
     <FSharpPreferNetFrameworkTools>false</FSharpPreferNetFrameworkTools>
     <FSharpPrefer64BitTools>true</FSharpPrefer64BitTools>
   </PropertyGroup>
@@ -58,7 +58,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="9.0.201" />
+    <PackageReference Update="FSharp.Core" Version="9.0.303" />
   </ItemGroup>
 
 </Project>

@@ -515,6 +515,7 @@ namespace Sona.Compiler
             var (flags, _) = await FSharpAsync.StartAsTask(checker.GetProjectOptionsFromScript(
                 sourceName,
                 sourceText,
+                caret: null,
                 previewEnabled: null,
                 loadedTimeStamp: null,
                 otherFlags: allFlags.ToArray(),

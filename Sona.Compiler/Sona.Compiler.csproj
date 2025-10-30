@@ -45,8 +45,8 @@
 
   <ItemGroup>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.9.2" />
-    <PackageReference Include="FSharp.Compiler.Service" Version="43.9.201" />
-    <PackageReference Include="FSharp.Core" Version="9.0.201" GeneratePathProperty="true" />
+    <PackageReference Include="FSharp.Compiler.Service" Version="43.9.303" />
+    <PackageReference Include="FSharp.Core" Version="9.0.303" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.5" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="9.0.5" />
     <PackageReference Include="System.Buffers" Version="4.6.0" GeneratePathProperty="true" />
