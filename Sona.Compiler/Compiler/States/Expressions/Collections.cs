@@ -133,23 +133,11 @@ namespace Sona.Compiler.States
         public sealed override void EnterCollectionFieldExpression(CollectionFieldExpressionContext context)
         {
             Out.Write("yield ");
-            Out.WriteNamespacedName("System.Collections.Generic", "KeyValuePair");
-            Out.Write("<_,_>(");
-        }
-
-        public sealed override void EnterAssignment(AssignmentContext context)
-        {
-            Out.Write(',');
-        }
-
-        public sealed override void ExitAssignment(AssignmentContext context)
-        {
-
+            EnterState<Field>().EnterCollectionFieldExpression(context);
         }
 
         public sealed override void ExitCollectionFieldExpression(CollectionFieldExpressionContext context)
         {
-            Out.Write(')');
             hasYielded = true;
         }
 
@@ -200,6 +188,41 @@ namespace Sona.Compiler.States
         public sealed override void ExitExpressionStatement(ExpressionStatementContext context)
         {
 
+        }
+
+        sealed class Field : NodeState
+        {
+            public sealed override void EnterCollectionFieldExpression(CollectionFieldExpressionContext context)
+            {
+                Out.WriteNamespacedName("System.Collections.Generic", "KeyValuePair");
+                Out.Write("<_,_>(");
+            }
+
+            public sealed override void ExitCollectionFieldExpression(CollectionFieldExpressionContext context)
+            {
+                Out.Write(')');
+                ExitState().ExitCollectionFieldExpression(context);
+            }
+
+            public sealed override void EnterAssignment(AssignmentContext context)
+            {
+                Out.Write(',');
+            }
+
+            public sealed override void ExitAssignment(AssignmentContext context)
+            {
+
+            }
+
+            public override void EnterExpression(ExpressionContext context)
+            {
+                EnterState<ExpressionState>().EnterExpression(context);
+            }
+
+            public override void ExitExpression(ExpressionContext context)
+            {
+
+            }
         }
 
         abstract class FollowOperand : ExpressionState
