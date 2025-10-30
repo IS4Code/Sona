@@ -112,7 +112,7 @@ namespace Sona.Compiler
             { 3390, Enable }, // This XML comment is invalid: '%s'
 
             // f() should not work for function(object)
-            { 3397, Enable },
+            { 3397, Enable | Error }, //"tcUnitToObjSubsumption", "An argumentless function call results in a single `unit` argument, however it is being treated as `null` here because the sole parameter has type `object`. Use `null` explicitly when calling this function." }, // This expression uses 'unit' for an 'obj'-typed argument. This will lead to passing 'null' at runtime.
             
             // Ineffective inline lambda; different syntax
             { 3517, Enable, "optFailedToInlineSuggestedValue", m => { // The value '%s' was marked 'InlineIfLambda' but was not determined to have a lambda value.
