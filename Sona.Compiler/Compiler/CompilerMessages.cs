@@ -103,6 +103,15 @@ namespace Sona.Compiler
             // Ignore for anonymous types
             { 64, "NonRigidTypar1", m => null }, // This construct causes code to be less generic than indicated by its type annotations. The type variable implied by the use of a '#', '_' or other type annotation at or near '%s' has been constrained to be type '%s'.
 
+            // Different syntax
+            { 795, "tcUseForInSequenceExpression", "`follow` cannot be used in a collection construction." }, // The use of 'let! x = coll' in sequence expressions is not permitted.
+            
+            // Different syntax
+            { 796, "tcTryIllegalInSequenceExpression", "`try`/`catch` cannot be used in a collection construction." }, // 'try'/'with' cannot be used within sequence expressions
+            
+            // Different syntax
+            { 797, "tcUseYieldBangForMultipleResults", "In a collection construction, `yield..` is used to generate multiple results." }, // In sequence expressions, multiple results are generated using 'yield!'
+
             // Different mechanism
             { 821, "tcBindingCannotBeUseAndRec", "A `use` declaration is not permitted together with `#pragma recursive`." }, // A binding cannot be marked both 'use' and 'rec'
             
@@ -124,7 +133,7 @@ namespace Sona.Compiler
             // Different syntax
             { 3345, "tcInvalidUseBangBindingNoAndBangs", "A `use` declaration initializing multiple variables with `follow` is not supported." }, // use! may not be combined with and!
 
-            // Not a warning anymore
+            // Different syntax
             { 3517, "optFailedToInlineSuggestedValue",  m => { // The value '%s' was marked 'InlineIfLambda' but was not determined to have a lambda value.
                 if(Syntax.GetIdentifierValue(m.Groups[1].Value).StartsWith("_", StringComparison.Ordinal))
                 {
@@ -133,6 +142,9 @@ namespace Sona.Compiler
                 }
                 return "The function parameter `$1` is declared as `inline` but the provided argument cannot be inlined. Consider passing an inlineable anonymous function.";
             } },
+            
+            // Different syntax
+            { 3519, "tcInlineIfLambdaUsedOnNonInlineFunctionOrMethod", "An `inline` parameter is allowed only in `inline` functions or methods, and must have a function or delegate type." }, // The 'InlineIfLambda' attribute may only be used on parameters of inlined functions of methods whose type is a function or F# delegate type.
 
             // Syntactically valid
             { 3521, "tcInvalidMemberDeclNameMissingOrHasParen", "A complex pattern is not permitted in this declaration." }, // Invalid member declaration. The name of the member is missing or has parentheses.
