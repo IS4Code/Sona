@@ -1161,6 +1161,12 @@ fragment JS_SOFT_KEYWORD:
   'interface' | 'package' | 'private' | 'protected' |
   'public' | 'of';
 
+/*
+// These are followed by a type in TS so irrelevant because a type expression cannot begin with `/`
+fragment TS_SOFT_KEYWORD:
+  'as' | 'is' | 'keyof' | 'satisfies';
+*/
+
 fragment JS_BEGIN_REGEXP:
   // Must appear in combination with constructs that do not end an expression
   JS_WHITESPACE* (('++' | '--') JS_WHITESPACE*)* '/';
@@ -1203,7 +1209,7 @@ JS_END_INLINE_SOURCE:
 
 JS_AMBIGUOUS:
   // Interpretation depends on the parser, better leave as error token (if what follows is not a comment)
-  ('++' | '--' | JS_SOFT_KEYWORD) JS_WHITESPACE '/' ~[/*];
+  ('++' | '--' | '>' | JS_SOFT_KEYWORD) JS_WHITESPACE '/' ~[/*];
 
 JS_PART:
   // Optimistically any non-whitespace/EOL Unicode character is either an identifier part or is illegal

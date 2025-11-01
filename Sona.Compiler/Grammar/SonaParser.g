@@ -3334,9 +3334,9 @@ interpStrComponentFormat:
 interpStrExpression:
   '{' expression ((interpStrAlignment? (interpStrStandardFormat | interpStrCustomFormat | interpStrNumberFormat | interpStrComponentFormat)?) | interpStrGeneralFormat) '}';
 
-/* ---------------- */
-/* Inline F# source */
-/* ---------------- */
+/* ------------- */
+/* Inline source */
+/* ------------- */
 
 inlineSourceFree:
   BEGIN_INLINE_SOURCE WHITESPACE* inlineSourceLanguage
