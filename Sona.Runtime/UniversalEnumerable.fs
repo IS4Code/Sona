@@ -6,12 +6,12 @@ type IUniversalEnumerable<'TValue, 'TUnitMonad, 'TBooleanMonad> =
   end
 and IUniversalEnumerator<'TValue, 'TUnitMonad, 'TBooleanMonad> =
   interface
-    inherit IGenericDisposable<'TUnitMonad>
+    inherit IUniversalDisposable<'TUnitMonad>
 
     abstract MoveNextUniversal : unit -> 'TBooleanMonad
     abstract Current : 'TValue
   end
-and IGenericDisposable<'TUnitMonad> =
+and IUniversalDisposable<'TUnitMonad> =
   interface
     abstract DisposeUniversal : unit -> 'TUnitMonad
   end
