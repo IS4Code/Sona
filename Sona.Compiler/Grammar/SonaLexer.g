@@ -1043,7 +1043,7 @@ FSComment_EOL:
   FS_EOL -> type(FS_EOL);
 
 FSComment_BEGIN_BLOCK_COMMENT:
-  FS_BEGIN_BLOCK_COMMENT -> pushMode(FSComment);
+  FS_BEGIN_BLOCK_COMMENT -> type(FS_BEGIN_BLOCK_COMMENT), pushMode(FSComment);
 
 mode FSInterpolatedString;
 
@@ -1135,7 +1135,7 @@ FSInterpolation_DIRECTIVE: FS_DIRECTIVE -> type(FS_DIRECTIVE);
 FSInterpolation_EOL: FS_EOL -> type(FS_EOL);
 
 FSInterpolation_BEGIN_BLOCK_COMMENT:
-  FS_BEGIN_BLOCK_COMMENT -> type(FS_PART), pushMode(FSComment);
+  FS_BEGIN_BLOCK_COMMENT -> type(FS_BEGIN_BLOCK_COMMENT), pushMode(FSComment);
 
 mode JS;
 
