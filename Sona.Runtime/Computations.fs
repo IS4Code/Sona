@@ -261,7 +261,8 @@ let private nonThreadSafeException = "The enumerator is not thread-safe."
 
 module UniversalSequence =
   open System.Threading
-
+  
+  [<CompiledName("Zero")>]
   let inline zero boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) = {
     new IUniversalEnumerator<_, _, _> with
 
@@ -277,14 +278,17 @@ module UniversalSequence =
         (^U : (member Return : _ -> _) unitBuilder, ())
       ))
   }
-
+  
+  [<CompiledName("Delay")>]
   let inline delay ([<IIL>]_f : unit -> IUniversalEnumerator<_, _, _>) = _f
-
+  
+  [<CompiledName("Run")>]
   let inline run ([<IIL>]_f) = {
     new IUniversalEnumerable<_, _, _> with
     member _.GetUniversalEnumerator() = _f()
   }
-
+  
+  [<CompiledName("Yield")>]
   let inline ``yield`` boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) x =
    let mutable state = -1 in {
     new IUniversalEnumerator<_, _, _> with
@@ -304,7 +308,8 @@ module UniversalSequence =
         (^U : (member Return : _ -> _) unitBuilder, ())
       ))
    }
-
+   
+  [<CompiledName("Bind")>]
   let inline bind boolBuilder ([<IIL>]boolWrap) ([<IIL>]boolReturnFrom) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) m ([<IIL>]_f) =
    let mutable inner = Unchecked.defaultof<IUniversalEnumerator<_, _, _>> in {
     new IUniversalEnumerator<_, _, _> with
@@ -351,9 +356,11 @@ module UniversalSequence =
           unitReturnFrom(inner.DisposeUniversal())
         ))
    }
-
+   
+  [<CompiledName("YieldFrom")>]
   let inline yieldFrom (x : IUniversalEnumerable<_, _, _>) = x.GetUniversalEnumerator()
-
+  
+  [<CompiledName("Combine")>]
   let inline combine boolBuilder ([<IIL>]boolWrap) ([<IIL>]boolReturnFrom) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) (first : IUniversalEnumerator<_, _, _>) ([<IIL>]_second : unit -> IUniversalEnumerator<_, _, _>) =
    let mutable inner = Unchecked.defaultof<IUniversalEnumerator<_, _, _>> in {
     new IUniversalEnumerator<_, _, _> with
@@ -428,6 +435,7 @@ module UniversalSequence =
         ))
    }
   
+  [<CompiledName("TryFinally")>]
   let inline tryFinally boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) ([<IIL>]_f) ([<IIL>]_cleanup : unit -> unit) =
     let mutable enumeratorReceived = false
     try
@@ -478,6 +486,7 @@ module UniversalSequence =
      if not enumeratorReceived then
        _cleanup()
   
+  [<CompiledName("TryWith")>]
   let inline tryWith boolBuilder ([<IIL>]boolWrap) ([<IIL>]boolReturnFrom) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) ([<IIL>]_f : unit -> IUniversalEnumerator<_, _, _>) ([<IIL>]_fail : exn -> IUniversalEnumerator<_, _, _>) =
     try
      let mutable enumerator : IUniversalEnumerator<_, _, _> = _f()
@@ -559,9 +568,11 @@ module UniversalSequence =
     with
     | e -> _fail e
   
+  [<CompiledName("Using")>]
   let inline using boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) (x : #IDisposable) ([<IIL>]_f) =
     tryFinally boolBuilder boolWrap unitBuilder unitWrap unitReturnFrom (fun() -> _f(x)) (fun() -> x.Dispose())
   
+  [<CompiledName("While")>]
   let inline ``while`` boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) ([<IIL>]_cond : unit -> bool) ([<IIL>]_f : unit -> IUniversalEnumerator<_, _, _>) =
    let mutable inner = Unchecked.defaultof<IUniversalEnumerator<_, _, _>> in {
     new IUniversalEnumerator<_, _, _> with
@@ -632,7 +643,8 @@ module UniversalSequence =
           unitReturnFrom(current.DisposeUniversal())
       ))
    }
-
+   
+  [<CompiledName("For")>]
   let inline ``for`` boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) (s : _ seq) ([<IIL>]_f) =
     let enumerator = s.GetEnumerator()
     tryFinally boolBuilder boolWrap unitBuilder unitWrap unitReturnFrom
@@ -643,7 +655,7 @@ module UniversalSequence =
       ))
       (fun() -> enumerator.Dispose())
 
-[<NoEquality; NoComparison>]
+[<NoEquality; NoComparison; Struct>]
 type UniversalSequenceBuilder<'TBoolBuilder, 'TUnitBuilder> =
   {
     BoolBuilder : 'TBoolBuilder
@@ -929,5 +941,6 @@ type UniversalSequenceBuilderExtensions3 private() =
       (fun f -> (^U : (member Run : _ -> _) self.UnitBuilder, (^U : (member Delay : _ -> _) self.UnitBuilder, f)))
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
       s _f
-
-let inline sequenceOf builder = { BoolBuilder = builder; UnitBuilder = builder }
+      
+[<CompiledName("SequenceVia")>]
+let inline sequenceVia builder = { BoolBuilder = builder; UnitBuilder = builder }
