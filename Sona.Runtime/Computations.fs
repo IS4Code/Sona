@@ -110,14 +110,12 @@ type ValueOptionBuilder() =
 let voption = { new ValueOptionBuilder() with member _.ToString() = "voption" }
 
 [<AbstractClass>]
-type ResultBuilder<'TError>() =
-  inherit BaseBuilder<Result<unit, 'TError>>()
-
-  member inline _.Zero() = Ok()
-  member inline _.Return(value) = Ok value
-  member inline _.Delay([<IIL>]_f : _ -> Result<_, 'TError>) = _f
-  member inline _.Run([<IIL>]_f : _ -> Result<_, 'TError>) = _f()
+type ResultBaseBuilder<'TZeroOk, 'TZeroError>() =
+  inherit BaseBuilder<Result<'TZeroOk, 'TZeroError>>()
   
+  member inline _.Delay([<IIL>]_f : _ -> Result<_, _>) = _f
+  member inline _.Run([<IIL>]_f : _ -> Result<_, _>) = _f()
+
   member inline _.ReturnFrom(opt : _ option) =
     match opt with
     | Some value -> Ok value
@@ -128,12 +126,19 @@ type ResultBuilder<'TError>() =
     | ValueSome value -> Ok value
     | _ -> Error()
   
-  member inline _.ReturnFrom(opt : Result<_, 'TError>) = opt
+  member inline _.ReturnFrom(opt : Result<_, _>) = opt
+
+[<AbstractClass>]
+type ResultBuilder<'TError>() =
+  inherit ResultBaseBuilder<unit, 'TError>()
+
+  member inline _.Zero() = Ok()
+  member inline _.Return(value) = Ok value
   
-  member inline this.Bind(opt : _ option, [<IIL>]_func) = Result.bind _func (this.ReturnFrom(opt))
-  member inline this.Bind(opt : _ voption, [<IIL>]_func) = Result.bind _func (this.ReturnFrom(opt))
-  member inline this.Bind(opt : Result<_, 'TError>, [<IIL>]_func) = Result.bind _func (this.ReturnFrom(opt))
-  member inline this.Combine(opt : Result<_, 'TError>, [<IIL>]_func) = this.Bind(opt, _func)
+  member inline this.Bind(opt : Result<_, _>, [<IIL>]_func) = Result.bind _func (this.ReturnFrom(opt))
+  member inline this.Bind(opt : _ option, [<IIL>]_func) = this.Bind(this.ReturnFrom(opt), _func)
+  member inline this.Bind(opt : _ voption, [<IIL>]_func) = this.Bind(this.ReturnFrom(opt), _func)
+  member inline this.Combine(opt : Result<_, _>, [<IIL>]_func) = this.Bind(opt, _func)
   
   override _.While(cond, func) =
     let mutable continuing = true
@@ -154,6 +159,42 @@ type private ResultBuilderImpl<'TError>() =
   override _.ToString() = "result"
 
 let result<'TError> = ResultBuilderImpl<'TError>.Instance
+
+[<AbstractClass>]
+type ErrorResultBuilder<'TSuccess>() =
+  inherit ResultBaseBuilder<'TSuccess, unit>()
+
+  member inline _.Zero() = Error()
+  member inline _.Return(value) = Error value
+  
+  member inline _.Bind(opt : Result<_, _>, [<IIL>]_func) =
+    match opt with
+    | Ok _ -> opt
+    | Error err -> _func err
+  
+  member inline this.Bind(opt : _ option, [<IIL>]_func) = this.Bind(this.ReturnFrom(opt), _func)
+  member inline this.Bind(opt : _ voption, [<IIL>]_func) = this.Bind(this.ReturnFrom(opt), _func)
+  member inline this.Combine(opt : Result<_, _>, [<IIL>]_func) = this.Bind(opt, _func)
+  
+  override _.While(cond, func) =
+    let mutable continuing = true
+    let mutable okResult = Unchecked.defaultof<_>
+    while continuing && cond() do
+      okResult <- func()
+      if okResult.IsOk then
+        continuing <- false
+    if continuing then Error()
+    else okResult
+
+[<Sealed>]
+type private ErrorResultBuilderImpl<'TSuccess>() =
+  inherit ErrorResultBuilder<'TSuccess>()
+
+  static member val Instance : ErrorResultBuilder<'TSuccess> = ErrorResultBuilderImpl<'TSuccess>()
+
+  override _.ToString() = "errorResult"
+
+let errorResult<'TSuccess> = ErrorResultBuilderImpl<'TSuccess>.Instance
 
 [<AbstractClass>]
 type ImmediateBuilderBase<'TZero when 'TZero : not struct>() =
