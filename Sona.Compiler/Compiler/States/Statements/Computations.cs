@@ -663,7 +663,8 @@ namespace Sona.Compiler.States
         public override void EnterLet(LetContext context)
         {
             FlushCapture();
-            Out.Write("let! ");
+            // ( needed for syntax
+            Out.Write("let! (");
             WriteRec(context);
         }
 
@@ -690,6 +691,11 @@ namespace Sona.Compiler.States
                 {
                     // This one was already stopped before the expression
                     capture = Out.StartCapture();
+                }
+                else
+                {
+                    // Direct pattern
+                    Out.Write('(');
                 }
             }
             base.EnterDeclaration(context);
@@ -718,6 +724,11 @@ namespace Sona.Compiler.States
                 var name = Out.CreateTemporaryIdentifier();
                 Out.WriteIdentifier(name);
                 variables.Add(name);
+            }
+            else
+            {
+                // End ( from let! or and!
+                Out.Write(')');
             }
             Out.WriteOperator('=');
             EnterState<ExpressionState.Unary>().EnterUnaryExpr(context);
