@@ -7,6 +7,8 @@ open System.Threading.Tasks
 
 type internal IIL = InlineIfLambdaAttribute
 
+let coroutine = { new Coroutines.CoroutineBuilder() with member _.ToString() = "coroutine" }
+
 [<AbstractClass>]
 type BaseBuilder<'TZero>() =
   abstract member While : (unit -> bool) * (unit -> 'TZero) -> 'TZero
