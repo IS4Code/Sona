@@ -67,6 +67,10 @@ open Sona.Runtime.Core
 open Sona.Runtime.Traits
 open Sona.Runtime.CompilerServices.Internal
 
+#nowarn "42" // This construct is deprecated: it is only for use in the F# library
+#nowarn "64" // This construct causes code to be less generic than indicated by the type annotations.
+#nowarn "77" // Member constraints with the name 'op_Explicit' are given special status by the F# compiler as certain .NET types are implicitly augmented with this member.
+
 [<Sealed; AbstractClass>]
 type SequenceHelpers private() =
   static member inline DisposeEnumerator(_:Priority1, o : byref<^T>

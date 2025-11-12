@@ -617,7 +617,6 @@ namespace Sona.Compiler.States
 
         ISourceCapture? capture;
         bool first;
-        bool isUse;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
