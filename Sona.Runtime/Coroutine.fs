@@ -1,12 +1,13 @@
 ﻿namespace Sona.Runtime.Coroutines
 
 open System
+open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 open System.Threading
 open Sona.Runtime
 open Sona.Runtime.Reflection
 
-[<Struct>]
+[<Struct; IsReadOnly>]
 type CoroutineState<'TElement, 'TResult> =
 | Paused
 | Yielded of element : 'TElement
@@ -27,7 +28,7 @@ type IUniversalCoroutine =
   abstract member Current : objnull with get
   abstract member Result : objnull with get
 
-[<Struct>]
+[<Struct; NoEquality; NoComparison>]
 type CoroutineContext internal =
   val mutable internal Coroutine : objnull
 

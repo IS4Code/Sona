@@ -198,7 +198,7 @@ type private ErrorResultBuilderImpl<'TSuccess>() =
 
 let errorResult<'TSuccess> = ErrorResultBuilderImpl<'TSuccess>.Instance
 
-[<Struct>]
+[<Struct; IsReadOnly; NoEquality; NoComparison>]
 type Immediate<'T> = { Value : 'T }
 
 [<AbstractClass>]
@@ -711,7 +711,7 @@ module UniversalSequence =
       ))
       (fun() -> enumerator.Dispose())
 
-[<NoEquality; NoComparison; Struct>]
+[<Struct; IsReadOnly; NoEquality; NoComparison>]
 type UniversalSequenceBuilder<'TBoolBuilder, 'TUnitBuilder> =
   {
     BoolBuilder : 'TBoolBuilder
