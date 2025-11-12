@@ -51,9 +51,11 @@
     <Compile Include="UniversalCoroutineBuilder.fs" />
     <Compile Include="CoroutineBuilder.fs" />
     <Compile Include="Computations.fs" />
+    <Compile Include="Dynamic.fs" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="System.Buffers" Version="4.6.0" />
     <PackageReference Include="System.Memory" Version="4.6.0" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.6.0" />
