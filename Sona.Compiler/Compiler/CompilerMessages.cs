@@ -83,6 +83,12 @@ namespace Sona.Compiler
 
             // Different syntax
             { 1228, None, "tcInvalidUseBangBinding", "A `use` variable initialized with `follow` cannot be declared using a complex pattern." }, // 'use!' bindings must be of the form 'use! <var> = <expr>'
+            
+            // Suggest solution
+            { 3085, None, "tcCustomOperationMayNotBeUsedInConjunctionWithNonSimpleLetBindings", "Using a custom operation together with mutable or recursive variables is not supported. Use a record or another reference type to hold their values." }, // A custom operation may not be used in conjunction with a non-value or recursive 'let' binding in another part of this computation expression
+
+            // Accurate cause, suggest solution
+            { 3086, None, "tcCustomOperationMayNotBeUsedHere", "Using a custom operation together with constructs that affect control flow is not supported. Use `follow with` to execute it in a sub-computation." }, // A custom operation may not be used in conjunction with 'use', 'try/with', 'try/finally', 'if/then/else' or 'match' operators within this computation expression
 
             // Code style
             { 3220, Ignore }, // This method or property is not normally used from F# code, use an explicit tuple pattern for deconstruction instead.
