@@ -198,26 +198,42 @@ type private ErrorResultBuilderImpl<'TSuccess>() =
 
 let errorResult<'TSuccess> = ErrorResultBuilderImpl<'TSuccess>.Instance
 
-[<AbstractClass>]
-type ImmediateBuilderBase<'TZero when 'TZero : not struct>() =
-  inherit BaseBuilder<'TZero>()
+[<Struct>]
+type Immediate<'T> = { Value : 'T }
 
-  override _.While(cond, func) =
+[<AbstractClass>]
+type ImmediateBuilderBase() =
+  inherit BaseBuilder<Immediate<unit>>()
+  
+  member inline _.Delay([<IIL>]_f : unit -> Immediate<_>) = _f
+  
+  member inline _.ReturnFrom(x : Immediate<_>) : Immediate<_> = x
+  member inline _.Return value : Immediate<_> = { Value = value }
+  member inline this.Zero() = this.Return(())
+
+  member inline _.Bind(x : Immediate<_>, [<IIL>]_f : _ -> Immediate<_>) = _f x.Value
+  member inline this.Combine(x : Immediate<unit>, [<IIL>]_f) = this.Bind(x, _f)
+
+  override this.While(cond, func) =
     while cond() do
       let _ = func() in ()
-    Unchecked.defaultof<_>
+    this.Zero()
 
 [<AbstractClass>]
 type DelayedBuilder() =
-  inherit ImmediateBuilderBase<unit>()
+  inherit ImmediateBuilderBase()
 
-  member inline _.Zero() = ()
-  member inline _.Return(value) = value
-  member inline _.Delay([<IIL>]_f : _ -> _) = _f
-  member inline _.Run([<IIL>]_f : _ -> _) = _f
-  member inline _.Combine(x, [<IIL>]_f) = _f x
+  member inline _.Run([<IIL>]_f : _ -> Immediate<_>) = fun() -> _f().Value
 
 let delayed = { new DelayedBuilder() with member _.ToString() = "delayed" }
+
+[<AbstractClass>]
+type ImmediateBuilder() =
+  inherit ImmediateBuilderBase()
+  
+  member inline _.Run([<IIL>]_f : _ -> Immediate<_>) = _f().Value
+
+let immediate = { new ImmediateBuilder() with member _.ToString() = "immediate" }
 
 [<Literal>]
 let private noValueWarningMessage = "This `follow` operator may result in an exception if the argument has no value."
@@ -231,68 +247,65 @@ let private warningNumber = 99999
 
 [<AbstractClass>]
 type GlobalBuilder() =
-  inherit ImmediateBuilderBase<unit>()
+  inherit ImmediateBuilder()
 
-  member inline _.Zero() = ()
-  member inline _.Return(value) = value
-  member inline _.Delay([<IIL>]_f : _ -> _) = _f
-  member inline _.Run([<IIL>]_f : _ -> _) = _f()
+  member inline _.Run([<IIL>]_f : _ -> Immediate<_>) = _f().Value
 
   static member inline private ErrorNoValue() =
     raise (ArgumentException("The object has no value.", "arg"))
 
   [<CompilerMessage(noValueWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : _ option) =
+  member inline this.ReturnFrom(arg : _ option) =
     match arg with
-    | Some value -> value
+    | Some value -> this.Return(value)
     | _ -> GlobalBuilder.ErrorNoValue()
   
   [<CompilerMessage(noValueWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : _ voption) =
+  member inline this.ReturnFrom(arg : _ voption) =
     match arg with
-    | ValueSome value -> value
+    | ValueSome value -> this.Return(value)
     | _ -> GlobalBuilder.ErrorNoValue()
   
   [<CompilerMessage(noValueWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : Result<_, _>) =
+  member inline this.ReturnFrom(arg : Result<_, _>) =
     match arg with
-    | Ok value -> value
+    | Ok value -> this.Return(value)
     | Error err -> raise (ArgumentException(sprintf "The object has an error value %A." err, "arg"))
   
   [<CompilerMessage(noSingleValueWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : _ seq) = System.Linq.Enumerable.Single(arg)
+  member inline this.ReturnFrom(arg : _ seq) = this.Return(System.Linq.Enumerable.Single(arg))
 
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : Async<_>) = Async.RunSynchronously arg
+  member inline this.ReturnFrom(arg : Async<_>) = this.Return(Async.RunSynchronously arg)
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : Task) = arg.GetAwaiter().GetResult()
+  member inline this.ReturnFrom(arg : Task) = this.Return(arg.GetAwaiter().GetResult())
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : Task<_>) = arg.GetAwaiter().GetResult()
+  member inline this.ReturnFrom(arg : Task<_>) = this.Return(arg.GetAwaiter().GetResult())
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : ValueTask) = arg.Preserve().GetAwaiter().GetResult()
+  member inline this.ReturnFrom(arg : ValueTask) = this.Return(arg.Preserve().GetAwaiter().GetResult())
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : ValueTask<_>) = arg.Preserve().GetAwaiter().GetResult()
-  member inline _.ReturnFrom(arg : Lazy<_>) = arg.Force()
+  member inline this.ReturnFrom(arg : ValueTask<_>) = this.Return(arg.Preserve().GetAwaiter().GetResult())
+  member inline this.ReturnFrom(arg : Lazy<_>) = this.Return(arg.Force())
 
   [<CompilerMessage(noValueWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : _ option, [<IIL>]_func) = _func(this.ReturnFrom arg)
+  member inline this.Bind(arg : _ option, [<IIL>]_func) = this.Bind(this.ReturnFrom arg, _func)
   [<CompilerMessage(noValueWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : _ voption, [<IIL>]_func) = _func(this.ReturnFrom arg)
+  member inline this.Bind(arg : _ voption, [<IIL>]_func) = this.Bind(this.ReturnFrom arg, _func)
   [<CompilerMessage(noValueWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : Result<_, _>, [<IIL>]_func) = _func(this.ReturnFrom arg)
+  member inline this.Bind(arg : Result<_, _>, [<IIL>]_func) = this.Bind(this.ReturnFrom arg, _func)
   [<CompilerMessage(noSingleValueWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : 'T seq, [<IIL>]_func) = _func(this.ReturnFrom arg)
+  member inline this.Bind(arg : 'T seq, [<IIL>]_func) = this.Bind(this.ReturnFrom arg, _func)
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : Async<_>, [<IIL>]_func) = _func(this.ReturnFrom arg)
+  member inline this.Bind(arg : Async<_>, [<IIL>]_func) = this.Bind(this.ReturnFrom arg, _func)
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : Task, [<IIL>]_func) = _func(this.ReturnFrom arg)
+  member inline this.Bind(arg : Task, [<IIL>]_func) = this.Bind(this.ReturnFrom arg, _func)
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : Task<_>, [<IIL>]_func) = _func(this.ReturnFrom arg)
+  member inline this.Bind(arg : Task<_>, [<IIL>]_func) = this.Bind(this.ReturnFrom arg, _func)
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : ValueTask, [<IIL>]_func) = _func(this.ReturnFrom arg)
+  member inline this.Bind(arg : ValueTask, [<IIL>]_func) = this.Bind(this.ReturnFrom arg, _func)
   [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : ValueTask<_>, [<IIL>]_func) = _func(this.ReturnFrom arg)
-  member inline this.Bind(arg : Lazy<_>, [<IIL>]_func) = _func(this.ReturnFrom arg)
+  member inline this.Bind(arg : ValueTask<_>, [<IIL>]_func) = this.Bind(this.ReturnFrom arg, _func)
+  member inline this.Bind(arg : Lazy<_>, [<IIL>]_func) = this.Bind(this.ReturnFrom arg, _func)
 
 let ``global`` = { new GlobalBuilder() with member _.ToString() = "global" }
 

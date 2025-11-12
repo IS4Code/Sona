@@ -329,7 +329,7 @@ namespace Sona.Compiler.States
 
         ReturnFlags IReturnableContext.Flags => ReturnFlags;
 
-        bool closeReturnStatement, closeVariableStatement;
+        bool closeReturnStatement, closeVariableStatement, closeGlobalFollowOperator;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -337,6 +337,7 @@ namespace Sona.Compiler.States
 
             closeReturnStatement = false;
             closeVariableStatement = false;
+            closeGlobalFollowOperator = false;
         }
 
         protected override void OnComputationEnter(StatementFlags flags, ParserRuleContext context)
@@ -354,8 +355,9 @@ namespace Sona.Compiler.States
                 {
                     // Unwrap directly
                     ReturnScope.WriteReturnStatement(context);
-                    Out.WriteGlobalComputationOperator("ReturnFrom");
                     closeReturnStatement = true;
+                    Out.WriteGlobalComputationOperator("ReturnFrom");
+                    closeGlobalFollowOperator = true;
                 }
             }
             else
@@ -370,12 +372,17 @@ namespace Sona.Compiler.States
                 {
                     Out.Write("do ");
                     Out.WriteGlobalComputationOperator("ReturnFrom");
+                    closeGlobalFollowOperator = true;
                 }
             }
         }
 
         protected override void OnComputationExit(StatementFlags flags, ParserRuleContext context)
         {
+            if(closeGlobalFollowOperator)
+            {
+                Out.WriteAfterGlobalComputationOperator();
+            }
             if(closeReturnStatement)
             {
                 ReturnScope.WriteAfterReturnStatement(context);
@@ -511,6 +518,15 @@ namespace Sona.Compiler.States
 
     internal sealed class FollowState : NodeState
     {
+        bool closeGlobalFollowExpression;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            closeGlobalFollowExpression = false;
+        }
+
         public override void EnterFollowStatement(FollowStatementContext context)
         {
             if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false)
@@ -518,18 +534,26 @@ namespace Sona.Compiler.States
                 // Not `do!` because that sometimes abuses `Return`.
                 Out.Write("let! ()");
                 Out.WriteOperator('=');
+                Out.Write('(');
             }
             else
             {
                 Out.Write("do ");
                 Out.WriteGlobalComputationOperator("ReturnFrom");
+                closeGlobalFollowExpression = true;
             }
-            Out.Write('(');
         }
 
         public override void ExitFollowStatement(FollowStatementContext context)
         {
-            Out.Write(')');
+            if(closeGlobalFollowExpression)
+            {
+                Out.WriteAfterGlobalComputationOperator();
+            }
+            else
+            {
+                Out.Write(')');
+            }
             ExitState().ExitFollowStatement(context);
         }
 
@@ -546,25 +570,42 @@ namespace Sona.Compiler.States
 
     internal sealed class FollowDiscardState : ExpressionState
     {
+        bool closeGlobalFollowExpression;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            closeGlobalFollowExpression = false;
+        }
+
         public override void EnterFollowDiscardStatement(FollowDiscardStatementContext context)
         {
             if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false)
             {
                 Out.Write("let! _");
                 Out.WriteOperator('=');
+                Out.Write('(');
             }
             else
             {
                 Out.Write("let _");
                 Out.WriteOperator('=');
                 Out.WriteGlobalComputationOperator("ReturnFrom");
+                closeGlobalFollowExpression = true;
             }
-            Out.Write('(');
         }
 
         public override void ExitFollowDiscardStatement(FollowDiscardStatementContext context)
         {
-            Out.Write(')');
+            if(closeGlobalFollowExpression)
+            {
+                Out.WriteAfterGlobalComputationOperator();
+            }
+            else
+            {
+                Out.Write(')');
+            }
             ExitState().ExitFollowDiscardStatement(context);
         }
     }

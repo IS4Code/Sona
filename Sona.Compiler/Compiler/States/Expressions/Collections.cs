@@ -250,7 +250,6 @@ namespace Sona.Compiler.States
                 {
                     OnStatement(context);
                     Out.WriteGlobalComputationOperator("ReturnFrom");
-                    Out.Write('(');
                 }
             }
 
@@ -259,7 +258,7 @@ namespace Sona.Compiler.States
                 if(variableName == null)
                 {
                     // Non-computation form
-                    Out.Write(')');
+                    Out.WriteAfterGlobalComputationOperator();
                     return;
                 }
                 Out.WriteLine();
