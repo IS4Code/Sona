@@ -50,7 +50,7 @@ type ErrorResultBuilder<'TSuccess>() =
   
   member inline _.Bind(opt : Result<_, _>, [<IIL>]_func) =
     match opt with
-    | Ok _ -> opt
+    | Ok res -> Ok res
     | Error err -> _func err
   
   member inline this.Bind(opt : _ option, [<IIL>]_func) = this.Bind(this.ReturnFrom(opt), _func)
