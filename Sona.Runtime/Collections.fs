@@ -1,14 +1,18 @@
-﻿module Sona.Runtime.Collections
+﻿namespace Sona.Runtime.Collections
 
 open System
+open Sona.Runtime
 
-type internal IIL = InlineIfLambdaAttribute
+module private CollectionHelpers =
+  [<Literal>]
+  let emptySequenceException = "The enumerator is not pointing at any element."
 
-[<Literal>]
-let private emptySequenceException = "The enumerator is not pointing at any element."
+  [<Literal>]
+  let nonThreadSafeException = "The enumerator is not thread-safe."
+  
+  type internal IIL = InlineIfLambdaAttribute
 
-[<Literal>]
-let private nonThreadSafeException = "The enumerator is not thread-safe."
+open CollectionHelpers
 
 module UniversalSequence =
   open System.Threading
