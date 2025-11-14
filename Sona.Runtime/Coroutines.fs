@@ -130,41 +130,6 @@ module Coroutine =
     with
     | e -> fault e
   
-  [<CompiledName("Create")>]
-  let inline create([<IIL>]_f : 'TInput -> ICoroutine<'TInput, 'TElement, 'TResult>) : ICoroutine<'TInput, 'TElement, 'TResult> =
-   let mutable inner = Unchecked.defaultof<ICoroutine<'TInput, 'TElement, 'TResult>> in {
-    new CoroutineBase<'TInput, 'TElement, 'TResult>() with
-    
-    member _.State =
-      match &inner with
-      | NonNullRef result -> result.State
-      | _ -> Paused
-    
-    member this.TryResume(context : CoroutineContext) =
-      let context = CoroutineContext.derive context this
-      match &inner with
-      | NonNullRef result -> result.TryResume(context)
-      | _ ->
-        if Type<'TInput>.HasEmptyDefaultValue then
-          initOnce &inner (_f Unchecked.defaultof<'TInput>)
-          || inner.TryResume(Unchecked.defaultof<'TInput>, context)
-        else
-          false
-    
-    member this.TryResume(input : 'TInput, context : CoroutineContext) =
-      let context = CoroutineContext.derive context this
-      match &inner with
-      | NonNullRef result -> result.TryResume(input, context)
-      | _ ->
-        initOnce &inner (_f input)
-        || inner.TryResume(input, context)
-    
-    member _.Dispose() =
-      match &inner with
-      | NonNullRef result -> result.Dispose()
-      | _ -> ()
-   }
-  
   [<CompiledName("Start")>]
   let inline start([<IIL>]_f : unit -> ICoroutine<'TInput, 'TElement, 'TResult>) : ICoroutine<'TInput, 'TElement, 'TResult> =
     try
@@ -470,3 +435,11 @@ module Coroutine =
           (fun() -> _f enumerator.Current)
       ))
       (fun() -> enumerator.Dispose())
+  
+  [<CompiledName("Create")>]
+  let inline create([<IIL>]_f : 'TInput -> ICoroutine<'TInput, 'TElement, 'TResult>) : ICoroutine<'TInput, 'TElement, 'TResult> =
+    start (fun() ->
+      bind
+        (pause())
+        (fun input -> _f input)
+    )
