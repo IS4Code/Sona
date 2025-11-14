@@ -4,7 +4,6 @@ module Sona.Runtime.Computations
 open System.Runtime.CompilerServices
 open Sona.Runtime.ComputationBuilders
 open Sona.Runtime.Collections
-open Sona.Runtime.Coroutines
 
 [<Sealed>]
 type private ResultBuilderImpl<'TError>() =

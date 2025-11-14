@@ -49,14 +49,15 @@
     <Compile Include="Reflection.fs" />
     <Compile Include="Coroutine.fs" />
     <Compile Include="Collections.fs" />
+    <Compile Include="UniversalCoroutines.fs" />
+    <Compile Include="Coroutines.fs" />
     <Compile Include="ComputationBuilders\Base.fs" />
     <Compile Include="ComputationBuilders\Option.fs" />
     <Compile Include="ComputationBuilders\Result.fs" />
     <Compile Include="ComputationBuilders\Immediate.fs" />
     <Compile Include="ComputationBuilders\UniversalSequence.fs" />
     <Compile Include="ComputationBuilders\Sequence.fs" />
-    <Compile Include="UniversalCoroutineBuilder.fs" />
-    <Compile Include="CoroutineBuilder.fs" />
+    <Compile Include="ComputationBuilders\Coroutine.fs" />
     <Compile Include="Computations.fs" />
   </ItemGroup>
 
