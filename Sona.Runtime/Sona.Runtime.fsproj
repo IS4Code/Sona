@@ -54,6 +54,7 @@
     <Compile Include="ComputationBuilders\Result.fs" />
     <Compile Include="ComputationBuilders\Immediate.fs" />
     <Compile Include="ComputationBuilders\UniversalSequence.fs" />
+    <Compile Include="ComputationBuilders\Sequence.fs" />
     <Compile Include="UniversalCoroutineBuilder.fs" />
     <Compile Include="CoroutineBuilder.fs" />
     <Compile Include="Computations.fs" />

@@ -23,6 +23,7 @@ type private ErrorResultBuilderImpl<'TSuccess>() =
   override _.ToString() = "errorResult"
   
 let coroutine = { new CoroutineBuilder() with member _.ToString() = "coroutine" }
+let sequence = { new SequenceBuilder() with member _.ToString() = "sequence" }
 let option = { new OptionBuilder() with member _.ToString() = "option" }
 let voption = { new ValueOptionBuilder() with member _.ToString() = "voption" }
 let result<'TError> = ResultBuilderImpl<'TError>.Instance
