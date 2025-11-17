@@ -39,7 +39,7 @@ module CoroutineContext =
     | :? 'T as result -> ValueSome result
     | _ -> ValueNone
 
-  let derive (ctx : CoroutineContext) (coroutine : 'T when 'T :> IUniversalCoroutine) =
+  let derive (coroutine : 'T when 'T :> IUniversalCoroutine) (ctx : CoroutineContext) =
     match ctx with
     | Running(_ : 'T) -> ctx
     | _ -> CoroutineContext(Coroutine = coroutine)
@@ -62,6 +62,7 @@ type IUniversalResumableCoroutine<'TInput, 'TUnitMonad> =
 type IUniversalYieldableCoroutine<'TElement> =
   inherit IUniversalCoroutine
   abstract member Current : 'TElement with get
+  abstract member State : CoroutineState<'TElement, objnull> with get
 
 [<Interface>]
 type IUniversalYieldableCoroutine<'TElement, 'TUnitMonad> =
@@ -72,6 +73,7 @@ type IUniversalYieldableCoroutine<'TElement, 'TUnitMonad> =
 type IUniversalFinishableCoroutine<'TResult> =
   inherit IUniversalCoroutine
   abstract member Result : 'TResult with get
+  abstract member State : CoroutineState<objnull, 'TResult> with get
 
 [<Interface>]
 type IUniversalFinishableCoroutine<'TResult, 'TUnitMonad> =
@@ -192,8 +194,22 @@ type UniversalReadOnlyCoroutineBase<'TElement, 'TResult, 'TUnitMonad>() =
       | Finished result -> Finished (box result)
       | Faulted reason -> Faulted reason
     
-    member this.Status : CoroutineStatus =
+    member this.State : CoroutineState<'TElement, objnull> =
       match this.State with
+      | Paused -> Paused
+      | Yielded element -> Yielded element
+      | Finished result -> Finished (box result)
+      | Faulted reason -> Faulted reason
+    
+    member this.State : CoroutineState<objnull, 'TResult> =
+      match this.State with
+      | Paused -> Paused
+      | Yielded element -> Yielded (box element)
+      | Finished result -> Finished result
+      | Faulted reason -> Faulted reason
+    
+    member this.Status : CoroutineStatus =
+      match this.State : CoroutineState<'TElement,'TResult> with
       | Paused -> CoroutineStatus.Paused
       | Yielded _ -> CoroutineStatus.Yielded
       | Finished _ -> CoroutineStatus.Finished
@@ -306,3 +322,45 @@ type CoroutineBase<'TInput, 'TElement, 'TResult>() =
       match this.TryResume(input, context) with
       | ValueSome _ -> true
       | ValueNone -> false
+      
+type internal CoroutineResumeResult = {
+  Success : bool
+  Updated : bool
+}
+
+[<Struct>]
+type internal CoroutineChain<'TInput, 'TElement> = {
+  Active : IIterableCoroutine<'TInput, 'TElement> voption
+  Dependent : IDelegatingCoroutine<'TInput, 'TElement> seq
+  WakeWhenResumed : bool
+}
+and [<Interface>]internal IDelegatingCoroutine<'TInput, 'TElement> =
+  inherit IIterableCoroutine<'TInput, 'TElement>
+
+  abstract member Chain : CoroutineChain<'TInput, 'TElement>
+  abstract member OnResumed : input : 'TInput voption * innerSuccess : bool * context : CoroutineContext -> CoroutineResumeResult
+
+[<AbstractClass>]
+type internal DelegatingCoroutineBase<'TInput, 'TElement, 'TResult>() =
+  inherit CoroutineBase<'TInput, 'TElement, 'TResult>()
+
+  abstract member Chain : CoroutineChain<'TInput, 'TElement>
+  abstract member OnResumed : input : 'TInput voption * innerSuccess : bool * context : CoroutineContext -> CoroutineResumeResult
+
+  override this.TryResume(context : CoroutineContext) : bool =
+    match this.Chain.Active with
+    | ValueSome inner ->
+      this.OnResumed(ValueNone, inner.TryResume(context), context).Success
+    | ValueNone ->
+      this.OnResumed(ValueNone, false, context).Success
+
+  override this.TryResume(input : 'TInput, context : CoroutineContext) : bool =
+    match this.Chain.Active with
+    | ValueSome inner ->
+      this.OnResumed(ValueSome input, inner.TryResume(input, context), context).Success
+    | ValueNone ->
+      this.OnResumed(ValueSome input, false, context).Success
+
+  interface IDelegatingCoroutine<'TInput, 'TElement> with
+    member this.Chain = this.Chain
+    member this.OnResumed(input, innerSuccess, context) = this.OnResumed(input, innerSuccess, context)
