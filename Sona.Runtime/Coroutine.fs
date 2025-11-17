@@ -338,29 +338,29 @@ and [<Interface>]internal IDelegatingCoroutine<'TInput, 'TElement> =
   inherit IIterableCoroutine<'TInput, 'TElement>
 
   abstract member Chain : CoroutineChain<'TInput, 'TElement>
-  abstract member OnResumed : input : 'TInput voption * innerSuccess : bool * context : CoroutineContext -> CoroutineResumeResult
+  abstract member OnResumed : input : 'TInput voption * innerSuccess : bool -> CoroutineResumeResult
 
 [<AbstractClass>]
 type internal DelegatingCoroutineBase<'TInput, 'TElement, 'TResult>() =
   inherit CoroutineBase<'TInput, 'TElement, 'TResult>()
 
   abstract member Chain : CoroutineChain<'TInput, 'TElement>
-  abstract member OnResumed : input : 'TInput voption * innerSuccess : bool * context : CoroutineContext -> CoroutineResumeResult
+  abstract member OnResumed : input : 'TInput voption * innerSuccess : bool -> CoroutineResumeResult
 
   override this.TryResume(context : CoroutineContext) : bool =
     match this.Chain.Active with
     | ValueSome inner ->
-      this.OnResumed(ValueNone, inner.TryResume(context), context).Success
+      this.OnResumed(ValueNone, inner.TryResume(context)).Success
     | ValueNone ->
-      this.OnResumed(ValueNone, false, context).Success
+      this.OnResumed(ValueNone, false).Success
 
   override this.TryResume(input : 'TInput, context : CoroutineContext) : bool =
     match this.Chain.Active with
     | ValueSome inner ->
-      this.OnResumed(ValueSome input, inner.TryResume(input, context), context).Success
+      this.OnResumed(ValueSome input, inner.TryResume(input, context)).Success
     | ValueNone ->
-      this.OnResumed(ValueSome input, false, context).Success
+      this.OnResumed(ValueSome input, false).Success
 
   interface IDelegatingCoroutine<'TInput, 'TElement> with
     member this.Chain = this.Chain
-    member this.OnResumed(input, innerSuccess, context) = this.OnResumed(input, innerSuccess, context)
+    member this.OnResumed(input, innerSuccess) = this.OnResumed(input, innerSuccess)

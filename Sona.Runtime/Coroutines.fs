@@ -8,7 +8,7 @@ open CoroutineHelpers
 
 module Coroutine =
   [<CompiledName("Running")>]
-  let inline running<'TInput, 'TElement>() : ICoroutine<'TInput, 'TElement, IIterableCoroutine<'TInput, 'TElement>> =
+  let running<'TInput, 'TElement>() : ICoroutine<'TInput, 'TElement, IIterableCoroutine<'TInput, 'TElement>> =
    let mutable result = Unchecked.defaultof<IIterableCoroutine<'TInput, 'TElement>> in {
     new CoroutineBase<'TInput, 'TElement, IIterableCoroutine<'TInput, 'TElement>>() with
 
@@ -47,7 +47,7 @@ module Coroutine =
   let zero() : ICoroutine<'TResumed, 'TElement, unit> = ZeroCoroutine<_, _>.Instance
   
   [<CompiledName("Pause")>]
-  let inline ``pause``() : ICoroutine<'TResumed, 'TElement, 'TResumed> =
+  let ``pause``() : ICoroutine<'TResumed, 'TElement, 'TResumed> =
    let none = None : 'TResumed option
    let mutable result = none in {
     new CoroutineBase<'TResumed, 'TElement, 'TResumed>() with
@@ -72,7 +72,7 @@ module Coroutine =
    }
   
   [<CompiledName("Yield")>]
-  let inline ``yield``(element : 'TElement) : ICoroutine<'TResumed, 'TElement, 'TResumed> =
+  let ``yield``(element : 'TElement) : ICoroutine<'TResumed, 'TElement, 'TResumed> =
    let none = None : 'TResumed option
    let mutable result = none in {
     new CoroutineBase<'TResumed, 'TElement, 'TResumed>() with
@@ -100,7 +100,7 @@ module Coroutine =
   let inline yieldFrom(coroutine : ICoroutine<_, _, unit>) = coroutine
   
   [<CompiledName("Return")>]
-  let inline ``return``(result : 'TResult) : ICoroutine<'TInput, _, 'TResult> = {
+  let ``return``(result : 'TResult) : ICoroutine<'TInput, _, 'TResult> = {
     new CoroutineBase<'TInput, _, 'TResult>() with
 
     member _.State = Finished result
@@ -113,7 +113,7 @@ module Coroutine =
   let inline returnFrom(coroutine : ICoroutine<_, _, _>) = coroutine
   
   [<CompiledName("Fault")>]
-  let inline fault(reason : Exception) : ICoroutine<'TInput, _, _> = {
+  let fault(reason : Exception) : ICoroutine<'TInput, _, _> = {
     new CoroutineBase<'TInput, _, _>() with
 
     member _.State = Faulted reason
@@ -180,7 +180,7 @@ module Coroutine =
         // Start from the argument
         update top
 
-        let inline tryResume (context : CoroutineContext) (resume : IResumableCoroutine<'TInput> -> CoroutineContext -> bool) (onResumed : IDelegatingCoroutine<'TInput, 'TElement> -> bool -> CoroutineContext -> CoroutineResumeResult) : bool =
+        let inline tryResume (context : CoroutineContext) (resume : IResumableCoroutine<'TInput> -> CoroutineContext -> bool) (onResumed : IDelegatingCoroutine<'TInput, 'TElement> -> bool -> CoroutineResumeResult) : bool =
           match active.Status with
           // Waiting for external input
           | CoroutineStatus.Paused | CoroutineStatus.Yielded ->
@@ -194,7 +194,7 @@ module Coroutine =
               else
                 // Inform the top coroutine about the result
                 let top = pop()
-                let { Success = ok; Updated = updated } = onResumed top result context
+                let { Success = ok; Updated = updated } = onResumed top result
                 result <- ok
                 
                 if not result then
@@ -233,14 +233,14 @@ module Coroutine =
             tryResume
               context
               (fun cor ctx -> cor.TryResume(ctx))
-              (fun cor ok ctx -> cor.OnResumed(ValueNone, ok, ctx))
+              (fun cor ok -> cor.OnResumed(ValueNone, ok))
 
           member this.TryResume(input : 'TInput, context : CoroutineContext) =
             let context = CoroutineContext.derive this context
             tryResume
               context
               (fun cor ctx -> cor.TryResume(input, ctx))
-              (fun cor ok ctx -> cor.OnResumed(ValueSome input, ok, ctx))
+              (fun cor ok -> cor.OnResumed(ValueSome input, ok))
 
           member _.Dispose() =
             inner.Dispose()
@@ -252,7 +252,7 @@ module Coroutine =
             WakeWhenResumed = false
           }
 
-          member _.OnResumed(_ : 'TInput voption, result : bool, _ : CoroutineContext) = {
+          member _.OnResumed(_ : 'TInput voption, result : bool) = {
             Success = result
             Updated = false
           }
@@ -280,7 +280,7 @@ module Coroutine =
           WakeWhenResumed = false
         }
 
-        member _.OnResumed(_ : 'TInput voption, result : bool, _ : CoroutineContext) = {
+        member _.OnResumed(_ : 'TInput voption, result : bool) = {
           Success = result
           Updated = false
         }
@@ -345,7 +345,7 @@ module Coroutine =
                 WakeWhenResumed = true
               }
 
-          member _.OnResumed(input : 'TInput voption, result : bool, _ : CoroutineContext) =
+          member _.OnResumed(input : 'TInput voption, result : bool) =
             match &next with
             | NonNullRef _ -> {
                 Success = result
@@ -444,7 +444,7 @@ module Coroutine =
         WakeWhenResumed = true
       }
         
-      member _.OnResumed(_ : 'TInput voption, result : bool, _ : CoroutineContext) =
+      member _.OnResumed(_ : 'TInput voption, result : bool) =
         {
           Success = result
           Updated =
@@ -569,7 +569,7 @@ module Coroutine =
           WakeWhenResumed = true
         }
 
-        member _.OnResumed(_ : 'TInput voption, result : bool, _ : CoroutineContext) =
+        member _.OnResumed(_ : 'TInput voption, result : bool) =
           {
             Success = result
             Updated = result && tryContinue()
