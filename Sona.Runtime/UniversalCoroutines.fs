@@ -5,9 +5,15 @@ open Sona.Runtime.Reflection
 open CoroutineHelpers
 
 module UniversalCoroutine =
+  [<AbstractClass>]
+  type RunningUniversalCoroutineBase<'TInput, 'TElement, 'TUnitMonad> internal() =
+    inherit AtomicUniversalCoroutineBase<'TInput, 'TElement, IUniversalIterableCoroutine<'TInput, 'TElement, 'TUnitMonad>, 'TUnitMonad>(Paused)
+
+    interface IAutoResumeUniversalCoroutine
+
   [<CompiledName("Running")>]
   let inline running([<IIL>]unitFactory : unit -> 'TUnitMonad) : IUniversalCoroutine<'TInput, 'TElement, IUniversalIterableCoroutine<'TInput, 'TElement, 'TUnitMonad>, 'TUnitMonad> = {
-    new AtomicUniversalCoroutineBase<'TInput, 'TElement, IUniversalIterableCoroutine<'TInput, 'TElement, 'TUnitMonad>, 'TUnitMonad>(Paused) with
+    new RunningUniversalCoroutineBase<'TInput, 'TElement, 'TUnitMonad>() with
 
     member this.TryResume(context : CoroutineContext) =
       match context with

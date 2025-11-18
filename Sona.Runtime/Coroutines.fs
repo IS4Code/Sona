@@ -7,23 +7,28 @@ open Sona.Runtime.Reflection
 open CoroutineHelpers
 
 module Coroutine =
-  [<CompiledName("Running")>]
-  let running<'TInput, 'TElement>() : ICoroutine<'TInput, 'TElement, IIterableCoroutine<'TInput, 'TElement>> = {
-    new AtomicCoroutineBase<'TInput, 'TElement, IIterableCoroutine<'TInput, 'TElement>>(Paused) with
-
-    member this.TryResume(context : CoroutineContext) =
+  [<Sealed>]
+  type private RunningCoroutine<'TInput, 'TElement>() =
+    inherit AtomicCoroutineBase<'TInput, 'TElement, IIterableCoroutine<'TInput, 'TElement>>(Paused)
+    
+    override this.TryResume(context : CoroutineContext) =
       match context with
       | CoroutineContext.Running value ->
         this.TryFinish(Finished value)
       | _ -> false
 
-    member this.TryResume(input : 'TInput, context : CoroutineContext) =
+    override this.TryResume(input : 'TInput, context : CoroutineContext) =
       Type<'TInput>.IsEmptyDefaultValue input
       && this.TryResume(context)
-  }
+
+    interface IAutoResumeUniversalCoroutine
+
+  [<CompiledName("Running")>]
+  let running<'TInput, 'TElement>() : ICoroutine<'TInput, 'TElement, IIterableCoroutine<'TInput, 'TElement>> =
+    new RunningCoroutine<'TInput, 'TElement>()
 
   [<Sealed>]
-  type internal ZeroCoroutine<'TInput, 'TElement> private() =
+  type private ZeroCoroutine<'TInput, 'TElement> private() =
     inherit CompletedCoroutine<'TInput, 'TElement, unit>(Finished())
 
     static member val Instance = new ZeroCoroutine<'TInput, 'TElement>()
@@ -90,144 +95,113 @@ module Coroutine =
       | _ -> ValueNone
     | _ -> ValueNone
   
-  [<CompiledName("Start")>]
-  let start(f : unit -> ICoroutine<'TInput, 'TElement, 'TResult>) : ICoroutine<'TInput, 'TElement, 'TResult> =
-    try
-      let inner = f()
+  [<CompiledName("Wrap")>]
+  let wrap(inner : ICoroutine<'TInput, 'TElement, 'TResult>) : ICoroutine<'TInput, 'TElement, 'TResult> =
+    match inner with
+    | :? IDelegatingCoroutine<'TInput, 'TElement> as top ->
+      // Operations can be propagated inside
+      let mutable active = Unchecked.defaultof<IIterableCoroutine<'TInput, 'TElement>>
+      let stack = ResizeArray<IDelegatingCoroutine<'TInput, 'TElement>>()
 
-      match inner with
-      | :? IDelegatingCoroutine<'TInput, 'TElement> as top ->
-        // Operations can be propagated inside
-        let mutable active = Unchecked.defaultof<IIterableCoroutine<'TInput, 'TElement>>
-        let stack = ResizeArray<IDelegatingCoroutine<'TInput, 'TElement>>()
+      let inline pop() =
+        let index = stack.Count - 1
+        let last = stack[index]
+        stack.RemoveAt(index)
+        last
+      
+      let update top =
+        // Initialize
+        active <- top
 
-        let inline pop() =
-          let index = stack.Count - 1
-          let last = stack[index]
-          stack.RemoveAt(index)
-          last
-        
-        let update top =
-          // Initialize
-          active <- top
+        // Continue to the innermost coroutine
+        let mutable continuing = true
+        while continuing do
+          match active with
+          | DelegatedCoroutine(bottom, middle, top, wake) ->
+            if wake then
+              // The coroutine needs to be informed of resumed events
+              stack.Add(bottom)
+            stack.AddRange(middle)
+            active <- top
+          | _ ->
+            continuing <- false
+      
+      // Start from the argument
+      update top
 
-          // Continue to the innermost coroutine
+      let inline tryResume (context : CoroutineContext) (anyInput : bool) (resume : IResumableCoroutine<'TInput> -> CoroutineContext -> bool) : bool =
+        match active.Status with
+        // Waiting for external input
+        | CoroutineStatus.Paused | CoroutineStatus.Yielded ->
+          let mutable result = resume active context
+
           let mutable continuing = true
           while continuing do
-            match active with
-            | DelegatedCoroutine(bottom, middle, top, wake) ->
-              if wake then
-                // The coroutine needs to be informed of resumed events
-                stack.Add(bottom)
-              stack.AddRange(middle)
-              active <- top
-            | _ ->
+            if stack.Count = 0 then
+              // Nothing to inform the result of
               continuing <- false
-        
-        // Start from the argument
-        update top
-
-        let inline tryResume (context : CoroutineContext) (anyInput : bool) (resume : IResumableCoroutine<'TInput> -> CoroutineContext -> bool) : bool =
-          match active.Status with
-          // Waiting for external input
-          | CoroutineStatus.Paused | CoroutineStatus.Yielded ->
-            let mutable result = resume active context
-
-            let mutable continuing = true
-            while continuing do
-              if stack.Count = 0 then
-                // Nothing to inform the result of
-                continuing <- false
-              else
-                // Inform the top coroutine about the result
-                let top = pop()
-                let { Success = ok; Updated = updated } = top.OnUpdated(anyInput, result)
-                result <- ok
-                
-                if not result then
-                  // No progress; stop here
-                  continuing <- false
-                  update top
-                elif not updated then
-                  // No change in outer; keep active
-                  continuing <- false
-                  stack.Add(top)
-                else
-                  // Top is updated, propagate downwards
-                  active <- top
-            result
-          | _ ->
-            try
-              // Unexpected final state; recurse normally
-              resume inner context
-            finally
-              // Rebuild
-              stack.Clear()
-              update top
-        {
-          new DelegatingCoroutineBase<'TInput, 'TElement, 'TResult>() with
-
-          member _.State =
-            match active.State with
-            // Waiting for external input
-            | Paused -> Paused
-            | Yielded element -> Yielded element
-            // Unexpected final state; recurse normally
-            | _ -> inner.State
-
-          member this.TryResume(context : CoroutineContext) =
-            tryResume
-              (CoroutineContext.derive this context)
-              false
-              (fun cor ctx -> cor.TryResume(ctx))
-
-          member this.TryResume(input : 'TInput, context : CoroutineContext) =
-            tryResume
-              (CoroutineContext.derive this context)
-              (Type<'TInput>.IsEmptyDefaultValue input)
-              (fun cor ctx -> cor.TryResume(input, ctx))
+            else
+              // Inform the top coroutine about the result
+              let top = pop()
+              let { Success = ok; Updated = updated } = top.OnUpdated(anyInput, result)
+              result <- ok
               
-          member this.TryResumeThrow(``exception`` : exn, context : CoroutineContext) =
-            tryResume
-              (CoroutineContext.derive this context)
-              true
-              (fun cor ctx -> cor.TryResumeThrow(``exception``, ctx))
-
-          member _.Dispose() =
-            inner.Dispose()
-            
-          // If chained, reuse existing information
-          member _.Chain : CoroutineChain<'TInput, 'TElement> = {
-            Active = ValueSome active
-            Dependent = stack
-            WakeWhenResumed = false
-          }
-
-          member _.OnUpdated(_ : bool, result : bool) = {
-            Success = result
-            Updated = false
-          }
-        }
-      | _ -> {
+              if not result then
+                // No progress; stop here
+                continuing <- false
+                update top
+              elif not updated then
+                // No change in outer; keep active
+                continuing <- false
+                stack.Add(top)
+              else
+                // Top is updated, propagate downwards
+                active <- top
+          result
+        | _ ->
+          try
+            // Unexpected final state; recurse normally
+            resume inner context
+          finally
+            // Rebuild
+            stack.Clear()
+            update top
+      {
         new DelegatingCoroutineBase<'TInput, 'TElement, 'TResult>() with
-    
-        member _.State = inner.State
-    
+
+        member _.State =
+          match active.State with
+          // Waiting for external input
+          | Paused -> Paused
+          | Yielded element -> Yielded element
+          // Unexpected final state; recurse normally
+          | _ -> inner.State
+
         member this.TryResume(context : CoroutineContext) =
-          let context = CoroutineContext.derive this context
-          inner.TryResume(context)
-    
+          tryResume
+            (CoroutineContext.derive this context)
+            false
+            (fun cor ctx -> cor.TryResume(ctx))
+
         member this.TryResume(input : 'TInput, context : CoroutineContext) =
-          let context = CoroutineContext.derive this context
-          inner.TryResume(input, context)
-    
+          tryResume
+            (CoroutineContext.derive this context)
+            (Type<'TInput>.IsEmptyDefaultValue input)
+            (fun cor ctx -> cor.TryResume(input, ctx))
+            
+        member this.TryResumeThrow(``exception`` : exn, context : CoroutineContext) =
+          tryResume
+            (CoroutineContext.derive this context)
+            true
+            (fun cor ctx -> cor.TryResumeThrow(``exception``, ctx))
+
         member _.Dispose() =
           inner.Dispose()
-        
-        // If chained, the context is already prepared
+          
+        // If chained, reuse existing information
         member _.Chain : CoroutineChain<'TInput, 'TElement> = {
-          Active = ValueSome inner
-          Dependent = Array.Empty<_>()
+          Active = ValueSome active
+          Dependent = stack
           WakeWhenResumed = false
         }
 
@@ -235,9 +209,45 @@ module Coroutine =
           Success = result
           Updated = false
         }
-       }
-    with
-    | e -> fault e
+      }
+    | :? CompletedCoroutine<'TInput, 'TElement, 'TResult> -> inner
+    | _ -> {
+      new DelegatingCoroutineBase<'TInput, 'TElement, 'TResult>() with
+  
+      member _.State = inner.State
+  
+      member this.TryResume(context : CoroutineContext) =
+        let context = CoroutineContext.derive this context
+        inner.TryResume(context)
+  
+      member this.TryResume(input : 'TInput, context : CoroutineContext) =
+        let context = CoroutineContext.derive this context
+        inner.TryResume(input, context)
+  
+      member _.Dispose() =
+        inner.Dispose()
+      
+      // If chained, the context is already prepared
+      member _.Chain : CoroutineChain<'TInput, 'TElement> = {
+        Active = ValueSome inner
+        Dependent = Array.Empty<_>()
+        WakeWhenResumed = false
+      }
+
+      member _.OnUpdated(_ : bool, result : bool) = {
+        Success = result
+        Updated = false
+      }
+    }
+  
+  [<CompiledName("Run")>]
+  let inline run([<IIL>]_f : unit -> ICoroutine<'TInput, 'TElement, 'TResult>) : ICoroutine<'TInput, 'TElement, 'TResult> =
+    wrap(
+      try
+        _f()
+      with
+      | e -> fault e
+    )
     
   let bindState (c : ICoroutine<'TInput, 'TElement, 'TIntermediate>) (finishSelector : _ -> 'TArgument voption) (stateSelector : CoroutineState<'TElement, 'TIntermediate> -> CoroutineState<'TElement, 'TResult>) (finishHandler : 'TArgument -> ICoroutine<'TInput, 'TElement, 'TResult>) (disposeHandler : unit -> unit) : ICoroutine<'TInput, 'TElement, 'TResult> =
     let inline doFinish result =
@@ -536,9 +546,53 @@ module Coroutine =
       ))
       (fun() -> enumerator.Dispose())
   
+  [<CompiledName("FromStarted")>]
+  let fromStarted(inner : ICoroutine<'TInput, 'TElement, 'TResult>) : ICoroutine<'TInput, 'TElement, 'TResult> =
+    let mutable context = CoroutineContext()
+
+    match inner with
+    | :? IDelegatingCoroutine<'TInput, 'TElement> as delegating ->
+      let inline update() =
+        let mutable continuing = true
+        while continuing do
+          match inner.State, delegating.Chain.Active with
+          | Paused, ValueSome(:? IAutoResumeUniversalCoroutine) when
+            // Paused on an auto-resumable coroutine - resume
+            inner.TryResume(context) -> ()
+          | _ -> continuing <- false
+
+      let result = {
+        new CoroutineBase<'TInput, 'TElement, 'TResult>() with
+        
+        override _.State = inner.State
+        override _.TryResume(_ : CoroutineContext) = inner.TryResume(context)
+        override _.TryResume(input : 'TInput, _ : CoroutineContext) = inner.TryResume(input, context)
+        override _.TryResumeThrow(``exception`` : exn, _ : CoroutineContext) = inner.TryResume(``exception``, context)
+        override _.Dispose() = ()
+      }
+      context.Coroutine <- result
+      update()
+      result
+    | _ ->
+      let result = {
+        new CoroutineBase<'TInput, 'TElement, 'TResult>() with
+        
+        override _.State = inner.State
+        override _.TryResume(_ : CoroutineContext) = inner.TryResume(context)
+        override _.TryResume(input : 'TInput, _ : CoroutineContext) = inner.TryResume(input, context)
+        override _.TryResumeThrow(``exception`` : exn, _ : CoroutineContext) = inner.TryResume(``exception``, context)
+        override _.Dispose() = ()
+      }
+      context.Coroutine <- result
+      result
+  
+  [<CompiledName("Start")>]
+  let inline start([<IIL>]_f : unit -> ICoroutine<'TInput, 'TElement, 'TResult>) : ICoroutine<'TInput, 'TElement, 'TResult> =
+    fromStarted(run _f)
+  
   [<CompiledName("Create")>]
   let inline create([<IIL>]_f : 'TInput -> ICoroutine<'TInput, 'TElement, 'TResult>) : ICoroutine<'TInput, 'TElement, 'TResult> =
-    start (fun() ->
+    start(fun() ->
       bind
         (pause())
         (fun input -> _f input)

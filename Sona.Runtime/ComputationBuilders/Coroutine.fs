@@ -5,7 +5,7 @@ open Sona.Runtime.Coroutines
 [<AbstractClass>]
 type CoroutineBuilder() =
   member inline _.Delay([<IIL>]_f : unit -> ICoroutine<_, _, _>) = _f
-  member inline _.Run([<IIL>]_f) = Coroutine.start _f
+  member inline _.Run([<IIL>]_f) = Coroutine.run _f
   member inline _.Yield x : ICoroutine<unit, _, unit> = Coroutine.``yield`` x
   member inline _.YieldFrom x = Coroutine.yieldFrom x
   member inline _.Return x = Coroutine.``return`` x

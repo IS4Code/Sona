@@ -400,7 +400,11 @@ type internal DelegatingCoroutineBase<'TInput, 'TElement, 'TResult>() =
     member this.Chain = this.Chain
     member this.OnUpdated(input, innerSuccess) = this.OnUpdated(input, innerSuccess)
     
-type internal CompletedCoroutine<'TInput, 'TElement, 'TResult>(state : CoroutineState<'TElement, 'TResult>) =
+[<Interface>]
+type internal IAutoResumeUniversalCoroutine =
+  inherit IUniversalCoroutine
+
+type CompletedCoroutine<'TInput, 'TElement, 'TResult>(state : CoroutineState<'TElement, 'TResult>) =
   inherit CoroutineBase<'TInput, 'TElement, 'TResult>()
   
   override _.State = state
