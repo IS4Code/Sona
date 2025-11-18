@@ -5,7 +5,7 @@ namespace Sona.Tests
     [TestClass]
     public class Statements : CompilationTests
     {
-        const string not = "global.Microsoft.FSharp.Core.Operators.``not``";
+        new const string not = "global.Microsoft.FSharp.Core.Operators.``not``";
 
         [DataRow("import a", "open a")]
         [DataRow("import a.n", "open a.n")]
