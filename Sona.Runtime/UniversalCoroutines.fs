@@ -6,7 +6,7 @@ open CoroutineHelpers
 
 module UniversalCoroutine =
   [<AbstractClass>]
-  type RunningUniversalCoroutineBase<'TInput, 'TElement, 'TUnitMonad> internal() =
+  type RunningUniversalCoroutineBase<'TInput, 'TElement, 'TUnitMonad>() =
     inherit AtomicUniversalCoroutineBase<'TInput, 'TElement, IUniversalIterableCoroutine<'TInput, 'TElement, 'TUnitMonad>, 'TUnitMonad>(Paused)
 
     interface IAutoResumeUniversalCoroutine

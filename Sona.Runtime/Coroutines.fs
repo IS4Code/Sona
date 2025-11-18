@@ -33,8 +33,8 @@ module Coroutine =
 
     static member val Instance = new ZeroCoroutine<'TInput, 'TElement>()
     
-  [<CompiledName("Zero")>]
-  let zero() : ICoroutine<'TResumed, 'TElement, unit> = ZeroCoroutine<_, _>.Instance
+  [<CompiledName("Empty")>]
+  let empty() : ICoroutine<'TResumed, 'TElement, unit> = ZeroCoroutine<_, _>.Instance
   
   [<CompiledName("Pause")>]
   let ``pause``() : ICoroutine<'TResumed, 'TElement, 'TResumed> = {
@@ -60,30 +60,23 @@ module Coroutine =
       this.TryFinish(Finished input)
   }
 
-  [<CompiledName("YieldFrom")>]
-  let inline yieldFrom(coroutine : ICoroutine<_, _, unit>) = coroutine
-  
-  [<CompiledName("Return")>]
-  let ``return``(result : 'TResult) : ICoroutine<'TInput, 'TElement, 'TResult> = 
+  [<CompiledName("FromResult")>]
+  let fromResult(result : 'TResult) : ICoroutine<'TInput, 'TElement, 'TResult> = 
     new CompletedCoroutine<'TInput, 'TElement, 'TResult>(Finished result)
 
-  [<CompiledName("ReturnFrom")>]
-  let inline returnFrom(coroutine : ICoroutine<_, _, _>) = coroutine
-  
-  [<CompiledName("Fault")>]
-  let fault(reason : Exception) : ICoroutine<'TInput, 'TElement, 'TResult> =
+  [<CompiledName("FromException")>]
+  let fromException(reason : Exception) : ICoroutine<'TInput, 'TElement, 'TResult> =
     new CompletedCoroutine<'TInput, 'TElement, 'TResult>(Faulted reason)
   
-  [<CompiledName("FromFaulted")>]
-  let inline fromFaulted (coroutine : ICoroutine<_, _, _>) (reason : Exception) =
+  let inline private fromFaulted (coroutine : ICoroutine<_, _, _>) (reason : Exception) =
     try
       coroutine.Dispose()
-      fault reason
+      fromException reason
     with
-    | e -> fault e
+    | e -> fromException e
   
   [<return: Struct>]
-  let private (|DelegatedCoroutine|_|) (c : IIterableCoroutine<'TInput, 'TElement>) =
+  let inline private (|DelegatedCoroutine|_|) (c : IIterableCoroutine<'TInput, 'TElement>) =
     match c with
     | :? IDelegatingCoroutine<'TInput, 'TElement> as c ->
       match c.Chain with
@@ -246,7 +239,7 @@ module Coroutine =
       try
         _f()
       with
-      | e -> fault e
+      | e -> fromException e
     )
     
   let bindState (c : ICoroutine<'TInput, 'TElement, 'TIntermediate>) (finishSelector : _ -> 'TArgument voption) (stateSelector : CoroutineState<'TElement, 'TIntermediate> -> CoroutineState<'TElement, 'TResult>) (finishHandler : 'TArgument -> ICoroutine<'TInput, 'TElement, 'TResult>) (disposeHandler : unit -> unit) : ICoroutine<'TInput, 'TElement, 'TResult> =
@@ -255,7 +248,7 @@ module Coroutine =
         finishHandler result
       with
       // If follow-up code ends with an exception
-      | e -> fault e
+      | e -> fromException e
 
     match finishSelector c.State with
     | ValueSome result ->
@@ -357,16 +350,12 @@ module Coroutine =
         fun() -> c.Dispose()
       )
 
-  [<CompiledName("Combine")>]
-  let inline combine (first : ICoroutine<'TInput, 'TElement, unit>) ([<IIL>]_second : unit -> ICoroutine<'TInput, 'TElement, 'TResult>) : ICoroutine<'TInput, 'TElement, 'TResult> =
-    bind first _second
-  
-  [<CompiledName("TryFinally")>]
-  let tryFinally (f : unit -> ICoroutine<'TInput, 'TElement, 'TResult>) (cleanup : unit -> unit) : ICoroutine<'TInput, 'TElement, 'TResult> =
+  [<CompiledName("WithCleanup")>]
+  let withCleanup (main : unit -> ICoroutine<'TInput, 'TElement, 'TResult>) (cleanup : unit -> unit) : ICoroutine<'TInput, 'TElement, 'TResult> =
     let mutable c =
       let mutable received = false
       try
-        let c = f()
+        let c = main()
         received <- true
         c
       finally
@@ -422,10 +411,10 @@ module Coroutine =
         | _ -> ()
     }
   
-  [<CompiledName("TryWith")>]
-  let inline tryWith ([<IIL>]_f : unit -> ICoroutine<'TInput, 'TElement, 'TResult>) ([<IIL>]_fail : exn -> ICoroutine<'TInput, 'TElement, 'TResult>) : ICoroutine<'TInput, 'TElement, 'TResult> =
+  [<CompiledName("WithCatch")>]
+  let inline withCatch ([<IIL>]_body : unit -> ICoroutine<'TInput, 'TElement, 'TResult>) ([<IIL>]_fail : exn -> ICoroutine<'TInput, 'TElement, 'TResult>) : ICoroutine<'TInput, 'TElement, 'TResult> =
     try
-      let c = _f()
+      let c = _body()
       bindState
         c
         (
@@ -466,16 +455,12 @@ module Coroutine =
     with
     | e -> _fail e
 
-  [<CompiledName("Using")>]
-  let inline using (x : #IDisposable) ([<IIL>]_f) =
-    tryFinally (fun() -> _f(x)) (fun() -> x.Dispose())
-  
-  [<CompiledName("While")>]
-  let ``while`` (cond : unit -> bool) (f : unit -> ICoroutine<'TInput, 'TElement, unit>) : ICoroutine<'TInput, 'TElement, unit> =
-    if not(cond()) then
-      zero()
+  [<CompiledName("Loop")>]
+  let loop (condition : unit -> bool) (body : unit -> ICoroutine<'TInput, 'TElement, unit>) : ICoroutine<'TInput, 'TElement, unit> =
+    if not(condition()) then
+      empty()
     else
-      let mutable c = f()
+      let mutable c = body()
 
       let inline tryContinue() =
         let mutable continuing = true
@@ -491,15 +476,15 @@ module Coroutine =
               try
                 // Move to next one
                 current.Dispose()
-                if cond() then
-                  f()
+                if condition() then
+                  body()
                 else
                   abort()
-                  zero()
+                  empty()
               with
               | e ->
                 abort()
-                fault e
+                fromException e
             Interlocked.CompareExchange(&c, next, current) |> ignore
           | Faulted reason ->
             Interlocked.CompareExchange(&c, fromFaulted current reason, current) |> ignore
@@ -535,17 +520,6 @@ module Coroutine =
           Volatile.Read(&c).Dispose()
       }
 
-  [<CompiledName("For")>]
-  let inline ``for`` (s : _ seq) ([<IIL>]_f) =
-    let enumerator = s.GetEnumerator()
-    tryFinally
-      (fun() -> (
-        ``while``
-          (fun() -> enumerator.MoveNext())
-          (fun() -> _f enumerator.Current)
-      ))
-      (fun() -> enumerator.Dispose())
-  
   [<CompiledName("FromStarted")>]
   let fromStarted(inner : ICoroutine<'TInput, 'TElement, 'TResult>) : ICoroutine<'TInput, 'TElement, 'TResult> =
     let mutable context = CoroutineContext()
