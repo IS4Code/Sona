@@ -8,119 +8,66 @@ open CoroutineHelpers
 
 module Coroutine =
   [<CompiledName("Running")>]
-  let running<'TInput, 'TElement>() : ICoroutine<'TInput, 'TElement, IIterableCoroutine<'TInput, 'TElement>> =
-   let mutable result = Unchecked.defaultof<IIterableCoroutine<'TInput, 'TElement>> in {
-    new CoroutineBase<'TInput, 'TElement, IIterableCoroutine<'TInput, 'TElement>>() with
+  let running<'TInput, 'TElement>() : ICoroutine<'TInput, 'TElement, IIterableCoroutine<'TInput, 'TElement>> = {
+    new AtomicCoroutineBase<'TInput, 'TElement, IIterableCoroutine<'TInput, 'TElement>>(Paused) with
 
-    member _.State =
-      match &result with
-      | NonNullRef result -> Finished result
-      | _ -> Paused
-    
-    member _.TryResume(context : CoroutineContext) =
+    member this.TryResume(context : CoroutineContext) =
       match context with
       | CoroutineContext.Running value ->
-        initOnce &result value
+        this.TryFinish(Finished value)
       | _ -> false
 
-    member this.TryResume(value : 'TInput, context : CoroutineContext) =
-      if Type<'TInput>.IsEmptyDefaultValue value then
-        this.TryResume(context)
-      else
-        false
-    
-    member _.Dispose() = ()
-   }
+    member this.TryResume(input : 'TInput, context : CoroutineContext) =
+      Type<'TInput>.IsEmptyDefaultValue input
+      && this.TryResume(context)
+  }
 
-  [<AbstractClass; Sealed>]
+  [<Sealed>]
   type internal ZeroCoroutine<'TInput, 'TElement> private() =
-    static member val Instance = {
-      new CoroutineBase<'TInput, 'TElement, unit>() with
-    
-      member _.State = Finished()
-      member _.TryResume(_ : CoroutineContext) = false
-      member _.TryResume(_ : 'TInput, _ : CoroutineContext) = false
-      member _.Dispose() = ()
-    }
+    inherit CompletedCoroutine<'TInput, 'TElement, unit>(Finished())
+
+    static member val Instance = new ZeroCoroutine<'TInput, 'TElement>()
     
   [<CompiledName("Zero")>]
   let zero() : ICoroutine<'TResumed, 'TElement, unit> = ZeroCoroutine<_, _>.Instance
   
   [<CompiledName("Pause")>]
-  let ``pause``() : ICoroutine<'TResumed, 'TElement, 'TResumed> =
-   let none = None : 'TResumed option
-   let mutable result = none in {
-    new CoroutineBase<'TResumed, 'TElement, 'TResumed>() with
+  let ``pause``() : ICoroutine<'TResumed, 'TElement, 'TResumed> = {
+    new AtomicCoroutineBase<'TResumed, 'TElement, 'TResumed>(Paused) with
 
-    member _.State =
-      match Volatile.Read(&result) with
-      | Some value -> Finished value
-      | None -> Paused
-    
     member this.TryResume(context : CoroutineContext) =
-      if Type<'TResumed>.HasEmptyDefaultValue then
-        this.TryResume(Unchecked.defaultof<'TResumed>, context)
-      else
-        false
+      Type<'TResumed>.HasEmptyDefaultValue
+      && this.TryResume(Unchecked.defaultof<'TResumed>, context)
 
-    member _.TryResume(input : 'TResumed, _ : CoroutineContext) =
-      match Interlocked.CompareExchange(&result, Some input, none) with
-      | Some _ -> false
-      | None -> true
-    
-    member _.Dispose() = ()
-   }
+    member this.TryResume(input : 'TResumed, _ : CoroutineContext) =
+      this.TryFinish(Finished input)
+  }
   
   [<CompiledName("Yield")>]
-  let ``yield``(element : 'TElement) : ICoroutine<'TResumed, 'TElement, 'TResumed> =
-   let none = None : 'TResumed option
-   let mutable result = none in {
-    new CoroutineBase<'TResumed, 'TElement, 'TResumed>() with
+  let ``yield``(element : 'TElement) : ICoroutine<'TResumed, 'TElement, 'TResumed> = {
+    new AtomicCoroutineBase<'TResumed, 'TElement, 'TResumed>(Yielded element) with
 
-    member _.State =
-      match Volatile.Read(&result) with
-      | Some value -> Finished value
-      | None -> Yielded element
-    
     member this.TryResume(context : CoroutineContext) =
-      if Type<'TResumed>.HasEmptyDefaultValue then
-        this.TryResume(Unchecked.defaultof<'TResumed>, context)
-      else
-        false
+      Type<'TResumed>.HasEmptyDefaultValue
+      && this.TryResume(Unchecked.defaultof<'TResumed>, context)
 
-    member _.TryResume(input : 'TResumed, _ : CoroutineContext) =
-      match Interlocked.CompareExchange(&result, Some input, none) with
-      | Some _ -> false
-      | None -> true
-    
-    member _.Dispose() = ()
-   }
+    member this.TryResume(input : 'TResumed, _ : CoroutineContext) =
+      this.TryFinish(Finished input)
+  }
 
   [<CompiledName("YieldFrom")>]
   let inline yieldFrom(coroutine : ICoroutine<_, _, unit>) = coroutine
   
   [<CompiledName("Return")>]
-  let ``return``(result : 'TResult) : ICoroutine<'TInput, _, 'TResult> = {
-    new CoroutineBase<'TInput, _, 'TResult>() with
-
-    member _.State = Finished result
-    member _.TryResume(_ : CoroutineContext) = false
-    member _.TryResume(_ : 'TInput, _ : CoroutineContext) = false
-    member _.Dispose() = ()
-  }
+  let ``return``(result : 'TResult) : ICoroutine<'TInput, 'TElement, 'TResult> = 
+    new CompletedCoroutine<'TInput, 'TElement, 'TResult>(Finished result)
 
   [<CompiledName("ReturnFrom")>]
   let inline returnFrom(coroutine : ICoroutine<_, _, _>) = coroutine
   
   [<CompiledName("Fault")>]
-  let fault(reason : Exception) : ICoroutine<'TInput, _, _> = {
-    new CoroutineBase<'TInput, _, _>() with
-
-    member _.State = Faulted reason
-    member _.TryResume(_ : CoroutineContext) = false
-    member _.TryResume(_ : 'TInput, _ : CoroutineContext) = false
-    member _.Dispose() = ()
-  }
+  let fault(reason : Exception) : ICoroutine<'TInput, 'TElement, 'TResult> =
+    new CompletedCoroutine<'TInput, 'TElement, 'TResult>(Faulted reason)
   
   [<CompiledName("FromFaulted")>]
   let inline fromFaulted (coroutine : ICoroutine<_, _, _>) (reason : Exception) =
@@ -180,7 +127,7 @@ module Coroutine =
         // Start from the argument
         update top
 
-        let inline tryResume (context : CoroutineContext) (resume : IResumableCoroutine<'TInput> -> CoroutineContext -> bool) (onResumed : IDelegatingCoroutine<'TInput, 'TElement> -> bool -> CoroutineResumeResult) : bool =
+        let inline tryResume (context : CoroutineContext) (anyInput : bool) (resume : IResumableCoroutine<'TInput> -> CoroutineContext -> bool) : bool =
           match active.Status with
           // Waiting for external input
           | CoroutineStatus.Paused | CoroutineStatus.Yielded ->
@@ -194,7 +141,7 @@ module Coroutine =
               else
                 // Inform the top coroutine about the result
                 let top = pop()
-                let { Success = ok; Updated = updated } = onResumed top result
+                let { Success = ok; Updated = updated } = top.OnUpdated(anyInput, result)
                 result <- ok
                 
                 if not result then
@@ -229,18 +176,22 @@ module Coroutine =
             | _ -> inner.State
 
           member this.TryResume(context : CoroutineContext) =
-            let context = CoroutineContext.derive this context
             tryResume
-              context
+              (CoroutineContext.derive this context)
+              false
               (fun cor ctx -> cor.TryResume(ctx))
-              (fun cor ok -> cor.OnResumed(ValueNone, ok))
 
           member this.TryResume(input : 'TInput, context : CoroutineContext) =
-            let context = CoroutineContext.derive this context
             tryResume
-              context
+              (CoroutineContext.derive this context)
+              (Type<'TInput>.IsEmptyDefaultValue input)
               (fun cor ctx -> cor.TryResume(input, ctx))
-              (fun cor ok -> cor.OnResumed(ValueSome input, ok))
+              
+          member this.TryResumeThrow(``exception`` : exn, context : CoroutineContext) =
+            tryResume
+              (CoroutineContext.derive this context)
+              true
+              (fun cor ctx -> cor.TryResumeThrow(``exception``, ctx))
 
           member _.Dispose() =
             inner.Dispose()
@@ -252,7 +203,7 @@ module Coroutine =
             WakeWhenResumed = false
           }
 
-          member _.OnResumed(_ : 'TInput voption, result : bool) = {
+          member _.OnUpdated(_ : bool, result : bool) = {
             Success = result
             Updated = false
           }
@@ -280,7 +231,7 @@ module Coroutine =
           WakeWhenResumed = false
         }
 
-        member _.OnResumed(_ : 'TInput voption, result : bool) = {
+        member _.OnUpdated(_ : bool, result : bool) = {
           Success = result
           Updated = false
         }
@@ -295,11 +246,6 @@ module Coroutine =
       with
       // If follow-up code ends with an exception
       | e -> fault e
-
-    let inline isEmptyInput input =
-      match input with
-      | ValueSome input -> Type<'TInput>.IsEmptyDefaultValue input
-      | ValueNone -> true
 
     match finishSelector c.State with
     | ValueSome result ->
@@ -345,7 +291,7 @@ module Coroutine =
                 WakeWhenResumed = true
               }
 
-          member _.OnResumed(input : 'TInput voption, result : bool) =
+          member _.OnUpdated(anyInput : bool, result : bool) =
             match &next with
             | NonNullRef _ -> {
                 Success = result
@@ -360,7 +306,7 @@ module Coroutine =
                 }
               else
                 // Inner did not move, but maybe it was exposed as paused
-                let ok = isEmptyInput input && tryFinish()
+                let ok = not(anyInput) && tryFinish()
                 {
                   Success = ok
                   Updated = ok
@@ -444,7 +390,7 @@ module Coroutine =
         WakeWhenResumed = true
       }
         
-      member _.OnResumed(_ : 'TInput voption, result : bool) =
+      member _.OnUpdated(_ : bool, result : bool) =
         {
           Success = result
           Updated =
@@ -569,7 +515,7 @@ module Coroutine =
           WakeWhenResumed = true
         }
 
-        member _.OnResumed(_ : 'TInput voption, result : bool) =
+        member _.OnUpdated(_ : bool, result : bool) =
           {
             Success = result
             Updated = result && tryContinue()

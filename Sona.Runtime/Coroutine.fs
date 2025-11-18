@@ -51,6 +51,8 @@ type IUniversalCoroutine<'TUnitMonad> =
   abstract member Resume : [<Optional; DefaultParameterValue(CoroutineContext())>]context : CoroutineContext -> 'TUnitMonad
   abstract member TryResume : [<Optional; DefaultParameterValue(CoroutineContext())>]context : CoroutineContext -> 'TUnitMonad voption
   abstract member TryResume : input : objnull * [<Optional; DefaultParameterValue(CoroutineContext())>]context : CoroutineContext -> 'TUnitMonad voption
+  abstract member ResumeThrow : ``exception`` : exn * [<Optional; DefaultParameterValue(CoroutineContext())>]context : CoroutineContext -> 'TUnitMonad
+  abstract member TryResumeThrow : ``exception`` : exn * [<Optional; DefaultParameterValue(CoroutineContext())>]context : CoroutineContext -> 'TUnitMonad voption
   
 [<Interface>]
 type IUniversalResumableCoroutine<'TInput, 'TUnitMonad> =
@@ -109,6 +111,8 @@ type ICoroutine =
   abstract member Resume : [<Optional; DefaultParameterValue(CoroutineContext())>]context : CoroutineContext -> unit
   abstract member TryResume : [<Optional; DefaultParameterValue(CoroutineContext())>]context : CoroutineContext -> bool
   abstract member TryResume : input : objnull * [<Optional; DefaultParameterValue(CoroutineContext())>]context : CoroutineContext -> bool
+  abstract member ResumeThrow : ``exception`` : exn * [<Optional; DefaultParameterValue(CoroutineContext())>]context : CoroutineContext -> unit
+  abstract member TryResumeThrow : ``exception`` : exn * [<Optional; DefaultParameterValue(CoroutineContext())>]context : CoroutineContext -> bool
   
 [<Interface>]
 type IResumableCoroutine<'TInput> =
@@ -162,6 +166,9 @@ module internal CoroutineHelpers =
   let notStartableException = "The coroutine cannot be resumed without an argument."
   
   [<Literal>]
+  let notFaultableException = "The coroutine cannot be resumed with an exception."
+  
+  [<Literal>]
   let invalidException = "The coroutine transitioned into an invalid state."
   
   [<return: Struct>]
@@ -182,6 +189,7 @@ type UniversalReadOnlyCoroutineBase<'TElement, 'TResult, 'TUnitMonad>() =
   abstract member State : CoroutineState<'TElement, 'TResult> with get
   abstract member TryResume : context : CoroutineContext -> 'TUnitMonad voption
   abstract member TryResume : input : objnull * context : CoroutineContext -> 'TUnitMonad voption
+  abstract member TryResumeThrow : ``exception`` : exn * context : CoroutineContext -> 'TUnitMonad voption
   abstract member DisposeUniversal: unit -> 'TUnitMonad
 
   interface IUniversalReadOnlyCoroutine<'TElement, 'TResult, 'TUnitMonad> with
@@ -252,6 +260,14 @@ type UniversalReadOnlyCoroutineBase<'TElement, 'TResult, 'TUnitMonad>() =
     
     member this.TryResume(input : objnull, context : CoroutineContext) : 'TUnitMonad voption =
       this.TryResume(input, context)
+      
+    member this.TryResumeThrow(``exception`` : exn, context : CoroutineContext) : 'TUnitMonad voption =
+      this.TryResumeThrow(``exception``, context)
+      
+    member this.ResumeThrow(``exception`` : exn, context : CoroutineContext) : 'TUnitMonad =
+      match this.TryResumeThrow(``exception``, context) with
+      | ValueSome result -> result
+      | ValueNone -> raise(InvalidOperationException notFaultableException)
     
     member this.DisposeUniversal() : 'TUnitMonad = this.DisposeUniversal()
 
@@ -292,6 +308,7 @@ type CoroutineBase<'TInput, 'TElement, 'TResult>() =
   
   abstract member TryResume : context : CoroutineContext -> bool
   abstract member TryResume : input : 'TInput * context : CoroutineContext -> bool
+  abstract member TryResumeThrow : ``exception`` : exn * context : CoroutineContext -> bool
 
   override this.TryResume(context : CoroutineContext) : unit voption =
     if this.TryResume(context) then ValueSome()
@@ -299,6 +316,10 @@ type CoroutineBase<'TInput, 'TElement, 'TResult>() =
 
   override this.TryResume(input : 'TInput, context : CoroutineContext) : unit voption =
     if this.TryResume(input, context) then ValueSome()
+    else ValueNone
+
+  override this.TryResumeThrow(``exception`` : exn, context : CoroutineContext) : unit voption =
+    if this.TryResumeThrow(``exception``, context) then ValueSome()
     else ValueNone
   
   interface ICoroutine<'TInput, 'TElement, 'TResult> with
@@ -322,6 +343,13 @@ type CoroutineBase<'TInput, 'TElement, 'TResult>() =
       match this.TryResume(input, context) with
       | ValueSome _ -> true
       | ValueNone -> false
+
+    member this.ResumeThrow(``exception`` : exn, context : CoroutineContext) : unit =
+      if this.TryResumeThrow(``exception``, context) then ()
+      else raise(InvalidOperationException notFaultableException)
+
+    member this.TryResumeThrow(``exception`` : exn, context : CoroutineContext) : bool =
+      this.TryResumeThrow(``exception``, context)
       
 type internal CoroutineResumeResult = {
   Success : bool
@@ -338,29 +366,84 @@ and [<Interface>]internal IDelegatingCoroutine<'TInput, 'TElement> =
   inherit IIterableCoroutine<'TInput, 'TElement>
 
   abstract member Chain : CoroutineChain<'TInput, 'TElement>
-  abstract member OnResumed : input : 'TInput voption * innerSuccess : bool -> CoroutineResumeResult
+  abstract member OnUpdated : anyInput : bool * innerSuccess : bool -> CoroutineResumeResult
 
 [<AbstractClass>]
 type internal DelegatingCoroutineBase<'TInput, 'TElement, 'TResult>() =
   inherit CoroutineBase<'TInput, 'TElement, 'TResult>()
 
   abstract member Chain : CoroutineChain<'TInput, 'TElement>
-  abstract member OnResumed : input : 'TInput voption * innerSuccess : bool -> CoroutineResumeResult
+  abstract member OnUpdated : anyInput : bool * innerSuccess : bool -> CoroutineResumeResult
 
   override this.TryResume(context : CoroutineContext) : bool =
     match this.Chain.Active with
     | ValueSome inner ->
-      this.OnResumed(ValueNone, inner.TryResume(context)).Success
+      this.OnUpdated(false, inner.TryResume(context)).Success
     | ValueNone ->
-      this.OnResumed(ValueNone, false).Success
+      this.OnUpdated(false, false).Success
 
   override this.TryResume(input : 'TInput, context : CoroutineContext) : bool =
     match this.Chain.Active with
     | ValueSome inner ->
-      this.OnResumed(ValueSome input, inner.TryResume(input, context)).Success
+      this.OnUpdated(Type<'TInput>.IsEmptyDefaultValue input, inner.TryResume(input, context)).Success
     | ValueNone ->
-      this.OnResumed(ValueSome input, false).Success
+      this.OnUpdated(Type<'TInput>.IsEmptyDefaultValue input, false).Success
+
+  override this.TryResumeThrow(``exception`` : exn, context : CoroutineContext) : bool =
+    match this.Chain.Active with
+    | ValueSome inner ->
+      this.OnUpdated(true, inner.TryResumeThrow(``exception``, context)).Success
+    | ValueNone ->
+      this.OnUpdated(true, false).Success
 
   interface IDelegatingCoroutine<'TInput, 'TElement> with
     member this.Chain = this.Chain
-    member this.OnResumed(input, innerSuccess) = this.OnResumed(input, innerSuccess)
+    member this.OnUpdated(input, innerSuccess) = this.OnUpdated(input, innerSuccess)
+    
+type internal CompletedCoroutine<'TInput, 'TElement, 'TResult>(state : CoroutineState<'TElement, 'TResult>) =
+  inherit CoroutineBase<'TInput, 'TElement, 'TResult>()
+  
+  override _.State = state
+  override _.TryResume(_ : CoroutineContext) = false
+  override _.TryResume(_ : 'TInput, _ : CoroutineContext) = false
+  override _.TryResumeThrow(_ : exn, _ : CoroutineContext) = false
+  override _.Dispose() = ()
+
+[<AbstractClass>]
+type AtomicUniversalCoroutineBase<'TInput, 'TElement, 'TResult, 'TUnitMonad>(initialState : CoroutineState<'TElement, 'TResult>) =
+  inherit UniversalCoroutineBase<'TInput, 'TElement, 'TResult, 'TUnitMonad>()
+
+  static let none = None : CoroutineState<'TElement, 'TResult> option
+  let mutable finalState = none
+
+  override _.State =
+    match Volatile.Read(&finalState) with
+    | Some state -> state
+    | None -> initialState
+
+  member _.TryFinish(newState : CoroutineState<'TElement, 'TResult>) =
+    match Interlocked.CompareExchange(&finalState, Some newState, none) with
+    | Some _ -> false
+    | None -> true
+
+[<AbstractClass>]
+type AtomicCoroutineBase<'TInput, 'TElement, 'TResult>(initialState : CoroutineState<'TElement, 'TResult>) =
+  inherit CoroutineBase<'TInput, 'TElement, 'TResult>()
+
+  static let none = None : CoroutineState<'TElement, 'TResult> option
+  let mutable finalState = none
+  
+  override _.State =
+    match Volatile.Read(&finalState) with
+    | Some state -> state
+    | None -> initialState
+
+  member _.TryFinish(newState : CoroutineState<'TElement, 'TResult>) =
+    match Interlocked.CompareExchange(&finalState, Some newState, none) with
+    | Some _ -> false
+    | None -> true
+
+  override this.TryResumeThrow(``exception`` : exn, _ : CoroutineContext) =
+    this.TryFinish(Faulted ``exception``)
+
+  override _.Dispose() = ()
