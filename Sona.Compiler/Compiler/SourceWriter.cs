@@ -302,7 +302,7 @@ namespace Sona.Compiler
         {
             writer.Write(')');
             writer.WriteOperator(':');
-            writer.WriteNamespacedName("Sona.Runtime", "Computations");
+            writer.WriteNamespacedName("Sona.Runtime", "ComputationBuilders");
             writer.Write('.');
             writer.WriteIdentifier("Immediate");
             writer.Write("<_>");
