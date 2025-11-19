@@ -13,9 +13,30 @@ namespace Sona.Compiler.Tools
 {
     internal static class Syntax
     {
+        static readonly HashSet<string> reserved = new(StringComparer.Ordinal)
+        {
+            "break",
+            "checked",
+            "component",
+            "constraint",
+            "continue",
+            "fori",
+            "include",
+            "mixin",
+            "parallel",
+            "params",
+            "process",
+            "protected",
+            "pure",
+            "sealed",
+            "trait",
+            "tailcall",
+            "virtual"
+        };
+
         public static bool IsValidIdentifierName(string name)
         {
-            return name != "_" && PrettyNaming.IsIdentifierName(name);
+            return name != "_" && PrettyNaming.IsIdentifierName(name) && !reserved.Contains(name);
         }
 
         static readonly Regex invalidEnclosedIdentifier = new(@"[\r\n\t]|``", RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -79,31 +100,38 @@ namespace Sona.Compiler.Tools
             );
         }
 
-        public static string GetStringLiteralValue(string str)
+        private static FSharpToken? TokenizeSingle(string str)
         {
             FSharpToken? token = null;
+            bool invalid = false;
             Tokenize(str, tok => {
-                if(token != null || (!tok.IsStringLiteral && !tok.Kind.IsChar))
+                if(token != null)
                 {
-                    throw new ArgumentException("Argument does not contain a single string or character literal.", nameof(str));
+                    invalid = true;
                 }
                 token = tok;
                 return null!;
             });
+            return invalid ? null : token;
+        }
+
+        public static string GetStringLiteralValue(string str)
+        {
+            var token = TokenizeSingle(str);
+            if(token is not { } tok || (!tok.IsStringLiteral && !tok.Kind.IsChar))
+            {
+                throw new ArgumentException("Argument does not contain a single string or character literal.", nameof(str));
+            }
             return GetTokenValue(token);
         }
 
         public static string GetIdentifierValue(string str)
         {
-            FSharpToken? token = null;
-            Tokenize(str, tok => {
-                if(token != null || (!tok.IsIdentifier))
-                {
-                    throw new ArgumentException("Argument does not contain a single identifier.", nameof(str));
-                }
-                token = tok;
-                return null!;
-            });
+            var token = TokenizeSingle(str);
+            if(token is not { } tok || (!tok.IsIdentifier))
+            {
+                throw new ArgumentException("Argument does not contain a single identifier.", nameof(str));
+            }
             return GetTokenValue(token);
         }
 
