@@ -290,6 +290,8 @@ type UniversalCoroutineBase<'TInput, 'TElement, 'TResult, 'TUnitMonad>() =
       | ValueSome result -> result
       | ValueNone -> raise(InvalidOperationException notResumableException)
 
+  override this.ToString() = sprintf "Coroutine<%s, %s, %s>(%A)" typeof<'TInput>.Name typeof<'TElement>.Name typeof<'TResult>.Name this.State
+
 [<AbstractClass>]
 type CoroutineBase<'TInput, 'TElement, 'TResult, 'TUnit>() =
   inherit UniversalCoroutineBase<'TInput, 'TElement, 'TResult, 'TUnit>()
