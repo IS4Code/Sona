@@ -21,17 +21,31 @@ type private ErrorResultBuilderImpl<'TSuccess>() =
 
   override _.ToString() = "errorResult"
   
+[<CompiledName("CoroutineBuilder")>]
 let coroutine = { new CoroutineBuilder() with member _.ToString() = "coroutine" }
+[<CompiledName("SequenceBuilder")>]
 let sequence = { new SequenceBuilder() with member _.ToString() = "sequence" }
+[<CompiledName("OptionBuilder")>]
 let option = { new OptionBuilder() with member _.ToString() = "option" }
+[<CompiledName("ValueOptionBuilder")>]
 let voption = { new ValueOptionBuilder() with member _.ToString() = "voption" }
+[<CompiledName("ResultBuilder")>]
 let result<'TError> = ResultBuilderImpl<'TError>.Instance
+[<CompiledName("ErrorResultBuilder")>]
 let errorResult<'TSuccess> = ErrorResultBuilderImpl<'TSuccess>.Instance
+[<CompiledName("DelayedBuilder")>]
 let delayed = { new DelayedBuilder() with member _.ToString() = "delayed" }
+[<CompiledName("ImmediateBuilder")>]
 let immediate = { new ImmediateBuilder() with member _.ToString() = "immediate" }
+[<CompiledName("ParallelBuilder")>]
+let ``parallel`` = { new ParallelBuilder() with member _.ToString() = "parallel" }
+[<CompiledName("GlobalBuilder")>]
 let ``global`` = { new GlobalBuilder() with member _.ToString() = "global" }
 
-[<CompiledName("SequenceVia")>]
+[<CompiledName("ParallelOptionsBuilder")>]
+let inline parallelOptions options : ParallelOptionsBuilder = { Options = options }
+
+[<CompiledName("UniversalSequenceBuilder")>]
 let inline sequenceVia builder : UniversalSequenceBuilder<_, _> = { BoolBuilder = builder; UnitBuilder = builder }
 
 [<AbstractClass; Extension>]

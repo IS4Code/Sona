@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -58,6 +58,7 @@
     <Compile Include="ComputationBuilders\UniversalSequence.fs" />
     <Compile Include="ComputationBuilders\Sequence.fs" />
     <Compile Include="ComputationBuilders\Coroutine.fs" />
+    <Compile Include="ComputationBuilders\Parallel.fs" />
     <Compile Include="Computations.fs" />
   </ItemGroup>
 
