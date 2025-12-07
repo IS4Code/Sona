@@ -23,6 +23,11 @@ namespace Sona.Compiler
         const string typeMismatch = "Type mismatch: The type returned by this branch is `$2` but was expected to be `$1`.";
         const string tupleTypeMismatch = "Type mismatch: The type returned by this branch is `$4` (a tuple of $3 elements) but was expected to be `$2` (a tuple of $1 elements).";
 
+        static bool IsIgnoredName(string name)
+        {
+            return name.StartsWith("_", StringComparison.Ordinal) || name.StartsWith("``_", StringComparison.Ordinal);
+        }
+
         static readonly DiagnosticDictionary messageReplacement = new(ignoredWarnings, enabledWarnings, errorWarnings)
         {
             // All control statements may result in these errors
@@ -54,6 +59,28 @@ namespace Sona.Compiler
             // Ignore for anonymous types
             { 64, None, "NonRigidTypar1", m => null }, // This construct causes code to be less generic than indicated by its type annotations. The type variable implied by the use of a '#', '_' or other type annotation at or near '%s' has been constrained to be type '%s'.
 
+            // Ignore for some names
+            { 64, None, "NonRigidTypar2", m => { // This construct causes code to be less generic than indicated by the type annotations. The unit-of-measure variable '%s has been constrained to be measure '%s'.
+                var name = m.Groups[1].Value;
+                if(IsIgnoredName(name))
+                {
+                    // Ignore
+                    return null;
+                }
+                return $"This construct makes the unit-of-measure variable `{name}` be deduced to be always `{m.Groups[2].Value}`.";
+            } },
+
+            // Ignore for some names
+            { 64, None, "NonRigidTypar3", m => { // This construct causes code to be less generic than indicated by the type annotations. The type variable '%s has been constrained to be type '%s'.
+                var name = m.Groups[1].Value;
+                if(IsIgnoredName(name))
+                {
+                    // Ignore
+                    return null;
+                }
+                return $"This construct makes the type variable `{name}` be deduced to be always `{m.Groups[2].Value}`.";
+            } },
+
             // Explicit discard required
             { 193, Error, "FunctionValueUnexpected", "This expression results in a function of type `$1`. Call it or discard it explicitly via `!`." }, // This expression is a function value, i.e. is missing arguments. Its type is %s.
 
@@ -79,7 +106,7 @@ namespace Sona.Compiler
             { 1178, Enable },
 
             // Compiler-generated unused variables are reported even when they start on _.
-            { 1182, Enable, "chkUnusedValue", m => Syntax.GetIdentifierValue(m.Groups[1].Value).StartsWith("_", StringComparison.Ordinal) ? null : m.Value }, // The value '%s' is unused
+            { 1182, Enable, "chkUnusedValue", m => IsIgnoredName(m.Groups[1].Value) ? null : m.Value }, // The value '%s' is unused
 
             // Different syntax
             { 1228, None, "tcInvalidUseBangBinding", "A `use` variable initialized with `follow` cannot be declared using a complex pattern." }, // 'use!' bindings must be of the form 'use! <var> = <expr>'
@@ -122,12 +149,13 @@ namespace Sona.Compiler
             
             // Ineffective inline lambda; different syntax
             { 3517, Enable, "optFailedToInlineSuggestedValue", m => { // The value '%s' was marked 'InlineIfLambda' but was not determined to have a lambda value.
-                if(Syntax.GetIdentifierValue(m.Groups[1].Value).StartsWith("_", StringComparison.Ordinal))
+                var name = m.Groups[1].Value;
+                if(IsIgnoredName(name))
                 {
                     // Ignore
                     return null;
                 }
-                return "The function parameter `$1` is declared as `inline` but the provided argument cannot be inlined. Consider passing an inlineable anonymous function.";
+                return $"The function parameter `{name}` is declared as `inline` but the provided argument cannot be inlined. Consider passing an inlineable anonymous function.";
             } },
             
             // Different syntax
