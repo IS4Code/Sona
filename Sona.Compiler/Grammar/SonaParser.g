@@ -301,8 +301,10 @@ statement:
   memberDiscard |
   memberOrAssignment |
   echoStatement |
+  yieldFollowStatement |
   yieldStatement |
   yieldEachStatement |
+  yieldReturnFollowStatement |
   yieldReturnStatement |
   followDiscardStatement |
   followStatement |
@@ -342,8 +344,14 @@ returnStatement:
 returnOptionStatement:
   'return' atomicExpr '?';
 
+returnFollowStatement:
+  'return' followExpression;
+
 yieldStatement:
   'yield' (expression | errorMissingExpression);
+
+yieldFollowStatement:
+  'yield' followExpression;
 
 yieldEachStatement:
   'yield' spreadExpression;
@@ -353,6 +361,9 @@ yieldBreakStatement:
 
 yieldReturnStatement:
   YIELD_RETURN (expression | errorMissingExpression);
+
+yieldReturnFollowStatement:
+  YIELD_RETURN followExpression;
 
 breakStatement:
   'break' expression?;
@@ -430,6 +441,7 @@ trailingStatement:
 // A statement that has a returning path and all other paths are closing
 returningStatement:
   returnOptionStatement |
+  returnFollowStatement |
   returnStatement |
   yieldBreakStatement |
   withStatement |

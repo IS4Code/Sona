@@ -610,6 +610,91 @@ namespace Sona.Compiler.States
         }
     }
 
+    internal abstract class FollowStatementState : NodeState
+    {
+        string? variableName;
+
+        protected bool UsesComputationForm { get; private set; }
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            variableName = null;
+            UsesComputationForm = false;
+        }
+
+        protected void OnEnter(ParserRuleContext context)
+        {
+            var computationScope = FindContext<IComputationContext>();
+            if(computationScope?.HasFlag(ComputationFlags.IsComputation) ?? false)
+            {
+                if(OnComputationStatement(context))
+                {
+                    // Computation form was used
+                    UsesComputationForm = true;
+                    return;
+                }
+                variableName = Out.CreateTemporaryIdentifier();
+                Out.Write("let! ");
+                Out.WriteIdentifier(variableName);
+                Out.WriteOperator('=');
+            }
+            else
+            {
+                OnStatement(context);
+                Out.WriteGlobalComputationOperator("ReturnFrom");
+            }
+        }
+
+        protected void OnExit(ParserRuleContext context)
+        {
+            if(UsesComputationForm)
+            {
+                return;
+            }
+            if(variableName == null)
+            {
+                // Non-computation form
+                Out.WriteAfterGlobalComputationOperator();
+                return;
+            }
+            Out.WriteLine();
+            OnStatement(context);
+            Out.WriteIdentifier(variableName);
+        }
+
+        protected abstract void OnStatement(ParserRuleContext context);
+
+        protected virtual bool OnComputationStatement(ParserRuleContext context)
+        {
+            return false;
+        }
+
+        public override void EnterFollowExpression(FollowExpressionContext context)
+        {
+            EnterState<Operand>().EnterFollowExpression(context);
+        }
+
+        public override void ExitFollowExpression(FollowExpressionContext context)
+        {
+
+        }
+
+        public sealed class Operand : ExpressionState
+        {
+            public override void EnterFollowExpression(FollowExpressionContext context)
+            {
+
+            }
+
+            public override void ExitFollowExpression(FollowExpressionContext context)
+            {
+                ExitState().ExitFollowExpression(context);
+            }
+        }
+    }
+
     internal sealed class NewFollowVariableState : NewVariableState
     {
         readonly List<ISourceCapture> captures = new();

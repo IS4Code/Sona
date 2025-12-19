@@ -83,6 +83,11 @@ namespace Sona.Compiler.States
             EnterState<ReturnOptionState>().EnterReturnOptionStatement(context);
         }
 
+        public sealed override void EnterReturnFollowStatement(ReturnFollowStatementContext context)
+        {
+            EnterState<ReturnFollowState>().EnterReturnFollowStatement(context);
+        }
+
         public sealed override void EnterThrowStatement(ThrowStatementContext context)
         {
             EnterState<ThrowState>().EnterThrowStatement(context);
@@ -108,6 +113,11 @@ namespace Sona.Compiler.States
             EnterState<YieldState>().EnterYieldStatement(context);
         }
 
+        public sealed override void EnterYieldFollowStatement(YieldFollowStatementContext context)
+        {
+            EnterState<YieldFollowState>().EnterYieldFollowStatement(context);
+        }
+
         public sealed override void EnterYieldEachStatement(YieldEachStatementContext context)
         {
             EnterState<YieldEachState>().EnterYieldEachStatement(context);
@@ -121,6 +131,11 @@ namespace Sona.Compiler.States
         public sealed override void EnterYieldReturnStatement(YieldReturnStatementContext context)
         {
             EnterState<YieldReturnState>().EnterYieldReturnStatement(context);
+        }
+
+        public sealed override void EnterYieldReturnFollowStatement(YieldReturnFollowStatementContext context)
+        {
+            EnterState<YieldReturnFollowState>().EnterYieldReturnFollowStatement(context);
         }
 
         public sealed override void EnterWithStatement(WithStatementContext context)

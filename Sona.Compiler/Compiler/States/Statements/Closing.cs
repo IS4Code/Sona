@@ -137,6 +137,84 @@ namespace Sona.Compiler.States
             OnExitExpression(context);
         }
     }
+    
+
+    internal sealed class ReturnFollowState : FollowStatementState
+    {
+        IReturnableContext? returnScope;
+        IComputationContext? computationScope;
+
+        IReturnableContext ReturnScope => returnScope ?? Defaults;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            returnScope = FindContext<IReturnableContext>();
+        }
+
+        public override void EnterReturnFollowStatement(ReturnFollowStatementContext context)
+        {
+            var computationScope = FindContext<IComputationContext>();
+            if(computationScope?.HasFlag(ComputationFlags.IsCollection) ?? false)
+            {
+                const string msg = "`return` in a collection construction is not supported.";
+                if(computationScope?.HasFlag(ComputationFlags.IsComputation) != true)
+                {
+                    // Can't return from a sequence
+                    Error(msg + " Use `yield` instead.", context);
+                }
+                else
+                {
+                    // No mechanism to indicate returning only
+                    Error(msg + " Use `yield` or `yield return` instead.", context);
+                }
+            }
+
+            OnEnter(context);
+        }
+
+        public override void ExitReturnFollowStatement(ReturnFollowStatementContext context)
+        {
+            OnExit(context);
+
+            if(!UsesComputationForm)
+            {
+                ReturnScope.WriteAfterDirectReturnStatement(context);
+            }
+
+            var interruptScope = FindContext<IInterruptibleContext>();
+            if(interruptScope?.HasFlag(InterruptFlags.CanBreak) != true)
+            {
+                // No need for break
+                interruptScope = null;
+            }
+
+            if(interruptScope != null)
+            {
+                Out.WriteLine();
+                interruptScope.WriteBreak(false, context);
+            }
+
+            ExitState().ExitReturnFollowStatement(context);
+        }
+
+        protected override void OnStatement(ParserRuleContext context)
+        {
+            ReturnScope.WriteDirectReturnStatement(false, context);
+        }
+
+        protected override bool OnComputationStatement(ParserRuleContext context)
+        {
+            if(ReturnScope.Flags != ReturnFlags.None)
+            {
+                // Special return semantics
+                return false;
+            }
+            Out.Write("return! ");
+            return true;
+        }
+    }
 
     internal sealed class ThrowState : ArgumentStatementState
     {
