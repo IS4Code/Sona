@@ -103,6 +103,11 @@ namespace Sona.Compiler.States
             EnterState<ContinueState>().EnterContinueStatement(context);
         }
 
+        public sealed override void EnterContinueFollowStatement(ContinueFollowStatementContext context)
+        {
+            EnterState<ContinueFollowState>().EnterContinueFollowStatement(context);
+        }
+
         public sealed override void EnterEchoStatement(EchoStatementContext context)
         {
             EnterState<EchoState>().EnterEchoStatement(context);

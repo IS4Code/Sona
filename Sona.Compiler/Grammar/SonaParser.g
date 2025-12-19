@@ -371,6 +371,9 @@ breakStatement:
 continueStatement:
   'continue' expression?;
 
+continueFollowStatement:
+  'continue' followExpression;
+
 throwStatement:
   'throw' expression?;
 
@@ -468,6 +471,7 @@ returningStatement:
 // A statement that has interrupting paths and all other paths are terminating
 interruptingStatement:
   breakStatement |
+  continueFollowStatement |
   continueStatement |
   followWithInterrupting |
   yieldWithInterrupting |

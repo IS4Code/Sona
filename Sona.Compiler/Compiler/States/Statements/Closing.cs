@@ -358,4 +358,49 @@ namespace Sona.Compiler.States
             }
         }
     }
+
+    internal sealed class ContinueFollowState : FollowStatementState
+    {
+        IInterruptibleContext? scope;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            scope = FindContext<IInterruptibleContext>();
+            if(scope != null && (scope.Flags & InterruptFlags.CanContinue) == 0)
+            {
+                scope = null;
+            }
+        }
+
+        public override void EnterContinueFollowStatement(ContinueFollowStatementContext context)
+        {
+            OnEnter(context);
+        }
+
+        public override void ExitContinueFollowStatement(ContinueFollowStatementContext context)
+        {
+            OnExit(context);
+            Out.Write(")");
+            if(scope != null)
+            {
+                scope.WriteAfterContinue(context);
+            }
+            ExitState().ExitContinueFollowStatement(context);
+        }
+
+        protected override void OnStatement(ParserRuleContext context)
+        {
+            if(scope == null)
+            {
+                Error("`continue` must be used in a statement that supports it.", context);
+            }
+            else
+            {
+                scope.WriteContinue(true, context);
+            }
+            Out.Write('(');
+        }
+    }
 }
