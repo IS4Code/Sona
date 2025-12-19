@@ -7,10 +7,7 @@ namespace Sona.Compiler.States
     {
         public override void EnterYieldStatement(YieldStatementContext context)
         {
-            if(FindContext<IComputationContext>()?.HasAnyFlag(ComputationFlags.IsCollection | ComputationFlags.IsComputation) != true)
-            {
-                Error("`yield` is not allowed outside a collection or computation.", context);
-            }
+            Validate.YieldPlacement(context);
             Out.Write("yield ");
         }
 
@@ -34,10 +31,7 @@ namespace Sona.Compiler.States
     {
         public override void EnterYieldFollowStatement(YieldFollowStatementContext context)
         {
-            if(FindContext<IComputationContext>()?.HasAnyFlag(ComputationFlags.IsCollection | ComputationFlags.IsComputation) != true)
-            {
-                Error("`yield` is not allowed outside a collection or computation.", context);
-            }
+            Validate.YieldPlacement(context);
             OnEnter(context);
         }
 
@@ -57,10 +51,7 @@ namespace Sona.Compiler.States
     {
         public override void EnterYieldEachStatement(YieldEachStatementContext context)
         {
-            if(FindContext<IComputationContext>()?.HasAnyFlag(ComputationFlags.IsCollection | ComputationFlags.IsComputation) != true)
-            {
-                Error("`yield` is not allowed outside a collection or computation.", context);
-            }
+            Validate.YieldPlacement(context);
             Out.Write("yield! ");
         }
 
@@ -151,14 +142,7 @@ namespace Sona.Compiler.States
     {
         public override void EnterYieldReturnStatement(YieldReturnStatementContext context)
         {
-            if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) != true)
-            {
-                Error("`yield return` is not allowed outside a computation.", context);
-            }
-            if(FindContext<IReturnableContext>()?.HasFlag(ReturnFlags.Optional) ?? false)
-            {
-                Error("`yield return` cannot be used in an optional function.", context);
-            }
+            Validate.YieldReturnPlacement(context);
             Out.Write("return ");
         }
 
@@ -182,14 +166,7 @@ namespace Sona.Compiler.States
     {
         public override void EnterYieldReturnFollowStatement(YieldReturnFollowStatementContext context)
         {
-            if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) != true)
-            {
-                Error("`yield return` is not allowed outside a computation.", context);
-            }
-            if(FindContext<IReturnableContext>()?.HasFlag(ReturnFlags.Optional) ?? false)
-            {
-                Error("`yield return` cannot be used in an optional function.", context);
-            }
+            Validate.YieldReturnPlacement(context);
             OnEnter(context);
         }
 

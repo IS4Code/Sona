@@ -64,21 +64,7 @@ namespace Sona.Compiler.States
 
         protected virtual void OnEnter(ParserRuleContext context)
         {
-            var computationScope = FindContext<IComputationContext>();
-            if(computationScope?.HasFlag(ComputationFlags.IsCollection) ?? false)
-            {
-                const string msg = "`return` in a collection construction is not supported.";
-                if(computationScope?.HasFlag(ComputationFlags.IsComputation) != true)
-                {
-                    // Can't return from a sequence
-                    Error(msg + " Use `yield` instead.", context);
-                }
-                else
-                {
-                    // No mechanism to indicate returning only
-                    Error(msg + " Use `yield` or `yield return` instead.", context);
-                }
-            }
+            Validate.ReturnPlacement(context);
         }
 
         protected virtual void OnExit(ParserRuleContext context)
@@ -155,22 +141,7 @@ namespace Sona.Compiler.States
 
         public override void EnterReturnFollowStatement(ReturnFollowStatementContext context)
         {
-            var computationScope = FindContext<IComputationContext>();
-            if(computationScope?.HasFlag(ComputationFlags.IsCollection) ?? false)
-            {
-                const string msg = "`return` in a collection construction is not supported.";
-                if(computationScope?.HasFlag(ComputationFlags.IsComputation) != true)
-                {
-                    // Can't return from a sequence
-                    Error(msg + " Use `yield` instead.", context);
-                }
-                else
-                {
-                    // No mechanism to indicate returning only
-                    Error(msg + " Use `yield` or `yield return` instead.", context);
-                }
-            }
-
+            Validate.ReturnPlacement(context);
             OnEnter(context);
         }
 
