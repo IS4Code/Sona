@@ -299,6 +299,7 @@ statement:
   inlineFuncDecl |
   inlineCaseFuncDecl |
   memberDiscard |
+  followAssignmentStatement |
   memberOrAssignment |
   echoStatement |
   yieldFollowStatement |
@@ -2761,6 +2762,9 @@ assignment:
 
 memberDiscard:
   (altMemberExpr | memberExpr) '!';
+
+followAssignmentStatement:
+  name '=' followExpression;
 
 /* -------- */
 /* Patterns */

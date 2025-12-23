@@ -47,6 +47,14 @@ namespace Sona.Compiler
                     source.Error("`yield return` cannot be used in an optional function.", context);
                 }
             }
+
+            public void BindingIsVariable(string name, ParserRuleContext context)
+            {
+                if(source.FindContext<IBindingContext>()?.Get(name) is not BindingKind.Variable)
+                {
+                    source.Error($"This construct is allowed only when `{name}` is a variable.", context);
+                }
+            }
         }
     }
 }

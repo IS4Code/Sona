@@ -238,6 +238,11 @@ namespace Sona.Compiler.States
             EnterState<MemberOrAssignmentState>().EnterMemberOrAssignment(context);
         }
 
+        public sealed override void EnterFollowAssignmentStatement(FollowAssignmentStatementContext context)
+        {
+            EnterState<FollowAssignmentState>().EnterFollowAssignmentStatement(context);
+        }
+
         public sealed override void EnterMemberDiscard(MemberDiscardContext context)
         {
             EnterState<MemberDiscardState>().EnterMemberDiscard(context);
@@ -872,6 +877,56 @@ namespace Sona.Compiler.States
         public override void ExitAltMemberExpr(AltMemberExprContext context)
         {
 
+        }
+    }
+
+    internal sealed class FollowAssignmentState : FollowStatementState
+    {
+        string? variable;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            variable = null;
+        }
+
+        public override void EnterFollowAssignmentStatement(FollowAssignmentStatementContext context)
+        {
+
+        }
+
+        public override void ExitFollowAssignmentStatement(FollowAssignmentStatementContext context)
+        {
+            OnExit(context);
+            ExitState().ExitFollowAssignmentStatement(context);
+        }
+
+        public override void EnterName(NameContext context)
+        {
+            Environment.EnableParseTree();
+        }
+
+        public override void ExitName(NameContext context)
+        {
+            try
+            {
+                variable = Tools.Syntax.GetIdentifierFromName(context.GetText());
+            }
+            finally
+            {
+                Environment.DisableParseTree();
+            }
+
+            Validate.BindingIsVariable(variable, context);
+
+            OnEnter(context);
+        }
+
+        protected override void OnStatement(ParserRuleContext context)
+        {
+            Out.WriteIdentifier(variable ?? Error("COMPILER ERROR: Variable name missing.", context));
+            Out.WriteOperator("<-");
         }
     }
 }
