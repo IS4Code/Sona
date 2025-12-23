@@ -128,7 +128,6 @@ namespace Sona.Compiler.States
     internal sealed class ReturnFollowState : FollowStatementState
     {
         IReturnableContext? returnScope;
-        IComputationContext? computationScope;
 
         IReturnableContext ReturnScope => returnScope ?? Defaults;
 

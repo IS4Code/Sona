@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using Sona.Compiler.Tools;
 using Sona.Grammar;
 using static Sona.Grammar.SonaParser;
 
@@ -83,6 +84,7 @@ namespace Sona.Compiler.States
         bool IStatementContext.TrailAllowed => true;
 
         bool hasType;
+        BindingSet bindings;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -90,6 +92,7 @@ namespace Sona.Compiler.States
 
             hasType = false;
             returnOptionType = default;
+            bindings = new(FindContext<IBindingContext>());
         }
 
         public override void EnterOptionSuffix(OptionSuffixContext context)
@@ -161,6 +164,16 @@ namespace Sona.Compiler.States
         public override void ExitFuncBody(FuncBodyContext context)
         {
 
+        }
+
+        void IBindingContext.Set(string name, BindingKind kind)
+        {
+            bindings.Set(name, kind);
+        }
+
+        BindingKind IBindingContext.Get(string name)
+        {
+            return bindings.Get(name);
         }
 
         void IComputationContext.WriteBeginBlockExpression(ParserRuleContext context)
@@ -546,6 +559,33 @@ namespace Sona.Compiler.States
         public sealed override void ExitOptionalName(OptionalNameContext context)
         {
 
+        }
+
+        public override void EnterName(NameContext context)
+        {
+            Environment.EnableParseTree();
+
+            base.EnterName(context);
+        }
+
+        public override void ExitName(NameContext context)
+        {
+            base.ExitName(context);
+
+            string name;
+            try
+            {
+                name = Syntax.GetIdentifierFromName(context.GetText());
+            }
+            finally
+            {
+                Environment.DisableParseTree();
+            }
+
+            if(FindContext<IBindingContext>() is { } binding)
+            {
+                binding.Set(name, BindingKind.Variable);
+            }
         }
 
         public sealed override void EnterType(TypeContext context)

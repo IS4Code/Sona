@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using Sona.Compiler.Tools;
 using Sona.Grammar;
 using static Sona.Grammar.SonaParser;
 
@@ -236,6 +237,7 @@ namespace Sona.Compiler.States
 
         StatementFlags enterFlags;
         bool exited;
+        BindingSet bindings;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -243,6 +245,7 @@ namespace Sona.Compiler.States
 
             enterFlags = StatementFlags.None;
             exited = false;
+            bindings = new(FindContext<IBindingContext>());
 
             ReturnScope = FindContext<IReturnableContext>();
             InterruptScope = FindContext<IInterruptibleContext>();
@@ -332,6 +335,16 @@ namespace Sona.Compiler.States
 
             // Return the value properly
             (ReturnScope ?? Defaults).WriteIndirectReturnStatement(ReturnVariable, context);
+        }
+
+        void IBindingContext.Set(string name, BindingKind kind)
+        {
+            bindings.Set(name, kind);
+        }
+
+        BindingKind IBindingContext.Get(string name)
+        {
+            return bindings.Get(name);
         }
 
         #region IReturnableStatementContext implementation

@@ -1,5 +1,6 @@
 ﻿using System;
 using Antlr4.Runtime;
+using Sona.Compiler.Tools;
 using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
@@ -14,12 +15,31 @@ namespace Sona.Compiler.States
         InterruptPath = 8
     }
 
-    internal class BlockState : ScriptState, IStatementContext
+    internal class BlockState : ScriptState, IStatementContext, IBindingContext
     {
         bool IStatementContext.TrailAllowed => true;
 
         ISourceWriter IScopeContext.GlobalWriter => GlobalOut;
         ISourceWriter IScopeContext.LocalWriter => Out;
+
+        BindingSet bindings;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            bindings = new(FindContext<IBindingContext>());
+        }
+
+        void IBindingContext.Set(string name, BindingKind kind)
+        {
+            bindings.Set(name, kind);
+        }
+
+        BindingKind IBindingContext.Get(string name)
+        {
+            return bindings.Get(name);
+        }
 
         public sealed override void EnterMultiFuncDecl(MultiFuncDeclContext context)
         {

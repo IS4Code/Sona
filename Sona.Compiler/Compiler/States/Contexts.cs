@@ -26,7 +26,7 @@ namespace Sona.Compiler.States
         HasTrySemantics = 1
     }
 
-    internal interface IBlockContext : IStatementContext
+    internal interface IBlockContext : IStatementContext, IBindingContext
     {
         BlockFlags Flags { get; }
 
@@ -106,7 +106,7 @@ namespace Sona.Compiler.States
         void WriteEmptyReturnValue(ParserRuleContext context);
     }
 
-    internal interface IFunctionContext : IReturnableContext, IInterruptibleContext, IStatementContext, IComputationContext, IExpressionContext
+    internal interface IFunctionContext : IReturnableContext, IInterruptibleContext, IStatementContext, IComputationContext, IExpressionContext, IBindingContext
     {
 
     }

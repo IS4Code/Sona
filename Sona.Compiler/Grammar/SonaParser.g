@@ -2863,6 +2863,7 @@ atomicPattern:
   regexPattern |
   fullConstructPattern |
   memberTestPattern |
+  simpleNamedPattern |
   namedPattern |
   memberPattern |
   nestedPattern;
@@ -2875,6 +2876,9 @@ somePattern:
     '(' patternArgument ')' |
     unaryPattern
   );
+
+simpleNamedPattern:
+  name;
 
 namedPattern:
   compoundName;
@@ -2897,7 +2901,8 @@ regexGroupStart:
 // Calls
 
 patternArguments:
-  ('(' (emptyPatternArgTuple | patternArgTuple) (';' (emptyPatternArgTuple | patternArgTuple))* ')')+;
+  ('(' (emptyPatternArgTuple | patternArgTuple) (';' (emptyPatternArgTuple | patternArgTuple))* ')')*
+  ('(' ((emptyPatternArgTuple | patternArgTuple) ';')* (emptyPatternArgTuple | lastPatternArgTuple) ')');
 
 simplePatternArgument:
   basicConstructPattern |
@@ -2905,6 +2910,9 @@ simplePatternArgument:
   string;
 
 emptyPatternArgTuple:;
+
+lastPatternArgTuple:
+  patternArgTuple;
 
 patternArgTuple:
   (fieldAssignment pattern | fieldRelation | patternArgument) (',' (fieldAssignment pattern | fieldRelation | patternArgument))*;

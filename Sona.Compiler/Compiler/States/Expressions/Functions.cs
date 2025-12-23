@@ -1,4 +1,5 @@
 ﻿using Antlr4.Runtime;
+using Sona.Compiler.Tools;
 using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
@@ -24,6 +25,7 @@ namespace Sona.Compiler.States
         string? name;
 
         bool hasType;
+        BindingSet bindings;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -32,6 +34,7 @@ namespace Sona.Compiler.States
             name = null;
 
             hasType = false;
+            bindings = new(FindContext<IBindingContext>());
         }
 
         public override void EnterName(NameContext context)
@@ -143,6 +146,16 @@ namespace Sona.Compiler.States
                 Out.Write(')');
             }
             Out.Write(')');
+        }
+
+        void IBindingContext.Set(string name, BindingKind kind)
+        {
+            bindings.Set(name, kind);
+        }
+
+        BindingKind IBindingContext.Get(string name)
+        {
+            return bindings.Get(name);
         }
 
         void IComputationContext.WriteBeginBlockExpression(ParserRuleContext context)

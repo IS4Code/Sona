@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Antlr4.Runtime;
+using Sona.Compiler.Tools;
 using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
@@ -7,12 +8,14 @@ namespace Sona.Compiler.States
     internal abstract class IsolatedState : NodeState, IFunctionContext
     {
         IExpressionContext? scope;
+        BindingSet bindings;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
             scope = null;
+            bindings = new(FindContext<IBindingContext>());
         }
 
         public abstract ComputationFlags Flags { get; }
@@ -32,6 +35,16 @@ namespace Sona.Compiler.States
         protected sealed override IExpressionContext? GetExpressionContext()
         {
             return scope ??= FindContext<IExpressionContext>();
+        }
+
+        void IBindingContext.Set(string name, BindingKind kind)
+        {
+            bindings.Set(name, kind);
+        }
+
+        BindingKind IBindingContext.Get(string name)
+        {
+            return bindings.Get(name);
         }
 
         void IReturnableContext.WriteEarlyReturn(ParserRuleContext context)

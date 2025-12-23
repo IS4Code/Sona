@@ -128,5 +128,15 @@ namespace Sona.Compiler.States
             Out.ExitNestedScope();
             Out.Write(')');
         }
+
+        void IBindingContext.Set(string name, BindingKind kind)
+        {
+
+        }
+
+        BindingKind IBindingContext.Get(string name)
+        {
+            return BindingKind.Undefined;
+        }
     }
 }
