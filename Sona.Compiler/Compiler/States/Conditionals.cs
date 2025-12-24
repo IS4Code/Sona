@@ -417,6 +417,7 @@ namespace Sona.Compiler.States
 
         protected virtual void OnEnterBlock(StatementFlags flags, ParserRuleContext context)
         {
+            bindings.Clear();
             Out.WriteLine(_begin_);
             Out.EnterScope();
         }

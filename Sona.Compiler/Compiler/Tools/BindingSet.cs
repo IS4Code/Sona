@@ -31,5 +31,10 @@ namespace Sona.Compiler.Tools
 
             dictionary![name] = kind;
         }
+
+        public void Clear()
+        {
+            dictionary?.Clear();
+        }
     }
 }
