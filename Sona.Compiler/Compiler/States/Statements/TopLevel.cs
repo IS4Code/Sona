@@ -71,7 +71,7 @@ namespace Sona.Compiler.States
             Out.WriteLine();
             Out.Write("open ");
 
-            var path = Syntax.GetStringLiteralValue(argument!);
+            var path = argument!;
             var name = Path.GetFileNameWithoutExtension(path);
             if(name.Length > 0)
             {
@@ -108,7 +108,8 @@ namespace Sona.Compiler.States
 
         public override void ExitString(StringContext context)
         {
-            Out.Write(argument = StopCaptureInput(context));
+            argument = StopCaptureInputStringLiteral(context);
+            Out.WriteString(argument);
         }
     }
 }

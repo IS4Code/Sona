@@ -405,6 +405,13 @@ namespace Sona.Compiler
             }
         }
 
+        public static void WriteString(this ISourceWriter writer, string str)
+        {
+            writer.Write('"');
+            writer.WriteStringPart(str);
+            writer.Write('"');
+        }
+
         public static void WriteNext(this ISourceWriter writer, string text, ref bool isFirst)
         {
             if(isFirst)
