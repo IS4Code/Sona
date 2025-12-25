@@ -563,7 +563,7 @@ namespace Sona.Compiler.States
 
         public override void EnterName(NameContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
 
             base.EnterName(context);
         }
@@ -572,15 +572,7 @@ namespace Sona.Compiler.States
         {
             base.ExitName(context);
 
-            string name;
-            try
-            {
-                name = Syntax.GetIdentifierFromName(context.GetText());
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            var name = StopCaptureInputIdentifier(context);
 
             if(FindContext<IBindingContext>() is { } binding)
             {

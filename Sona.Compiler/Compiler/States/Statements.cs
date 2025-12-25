@@ -947,7 +947,7 @@ namespace Sona.Compiler.States
         private void OnEnterMember(ParserRuleContext context)
         {
             capture = Out.StartCapture();
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         private void OnExitMember(ParserRuleContext context)
@@ -956,15 +956,7 @@ namespace Sona.Compiler.States
             {
                 Out.StopCapture(capture);
             }
-            string variable;
-            try
-            {
-                variable = Syntax.GetIdentifierFromName(context.GetText());
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            var variable = StopCaptureInputIdentifier(context);
 
             Validate.BindingIsVariable(variable, context);
 

@@ -14,53 +14,32 @@ namespace Sona.Compiler
     {
         public override void EnterName(NameContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public override void ExitName(NameContext context)
         {
-            try
-            {
-                Out.WriteIdentifier(Tools.Syntax.GetIdentifierFromName(context.GetText()));
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            Out.WriteIdentifier(StopCaptureInputIdentifier(context));
         }
 
         public override void EnterMemberName(MemberNameContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public override void ExitMemberName(MemberNameContext context)
         {
-            try
-            {
-                Out.WriteIdentifier(context.GetText().Substring(1));
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            Out.WriteIdentifier(StopCaptureInputIdentifier(context));
         }
 
         public override void EnterDynamicMemberName(DynamicMemberNameContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public override void ExitDynamicMemberName(DynamicMemberNameContext context)
         {
-            try
-            {
-                Out.WriteIdentifier(context.GetText().Substring(1));
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            Out.WriteIdentifier(StopCaptureInputIdentifier(context));
         }
 
         public override void EnterCompoundName(CompoundNameContext context)
@@ -154,19 +133,12 @@ namespace Sona.Compiler
 
         public override void EnterNumber(NumberContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public override void ExitNumber(NumberContext context)
         {
-            try
-            {
-                Out.Write(context.GetText());
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            Out.Write(StopCaptureInput(context));
         }
 
         public override void EnterChar(CharContext context)
@@ -359,26 +331,19 @@ namespace Sona.Compiler
 
         public override void EnterUnaryOperator(UnaryOperatorContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public override void ExitUnaryOperator(UnaryOperatorContext context)
         {
-            try
+            var text = StopCaptureInput(context);
+            switch(text)
             {
-                string text = context.GetText();
-                switch(text)
-                {
-                    case "~":
-                        text = "~~~";
-                        break;
-                }
-                Out.WriteOperator(text);
+                case "~":
+                    text = "~~~";
+                    break;
             }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            Out.WriteOperator(text);
         }
 
         public override void EnterLocalAttribute(LocalAttributeContext context)

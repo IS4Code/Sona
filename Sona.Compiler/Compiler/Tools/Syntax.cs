@@ -72,7 +72,7 @@ namespace Sona.Compiler.Tools
             yield return part.Substring(start);
         }
 
-        static readonly char[] nameTrimChars = { '@' };
+        static readonly char[] nameTrimChars = { '@', ':', '.' };
         public static string GetIdentifierFromName(string name)
         {
             return name.TrimStart(nameTrimChars);

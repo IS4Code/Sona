@@ -49,7 +49,7 @@ namespace Sona.Compiler.States
         {
             base.ExitName(context);
 
-            name = Tools.Syntax.GetIdentifierFromName(context.GetText());
+            name = Syntax.GetIdentifierFromName(context.GetText());
             Out.WriteOperator('=');
         }
 

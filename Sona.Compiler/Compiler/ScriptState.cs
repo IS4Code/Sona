@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using Sona.Compiler.States;
+using Sona.Compiler.Tools;
 using Sona.Grammar;
 
 namespace Sona.Compiler
@@ -210,6 +211,38 @@ namespace Sona.Compiler
             }
             errorChar = default;
             return true;
+        }
+
+        protected void StartCaptureInput(ParserRuleContext context)
+        {
+            Environment.EnableParseTree();
+        }
+
+        protected string StopCaptureInput(ParserRuleContext context)
+        {
+            try
+            {
+                return context.GetText();
+            }
+            finally
+            {
+                Environment.DisableParseTree();
+            }
+        }
+
+        protected string StopCaptureInputIdentifier(ParserRuleContext context)
+        {
+            return Syntax.GetIdentifierFromName(StopCaptureInput(context));
+        }
+
+        protected string StopCaptureInputStringLiteral(ParserRuleContext context)
+        {
+            return Syntax.GetStringLiteralValue(StopCaptureInput(context));
+        }
+
+        protected string StopCaptureInputAttributeTarget(ParserRuleContext context)
+        {
+            return Syntax.GetAttributeTargetFromToken(StopCaptureInput(context));
         }
 
         protected string Error(string message, ParserRuleContext context)

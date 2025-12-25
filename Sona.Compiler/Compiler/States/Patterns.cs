@@ -168,20 +168,12 @@ namespace Sona.Compiler.States
 
         public sealed override void EnterSimpleNamedPattern(SimpleNamedPatternContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public sealed override void ExitSimpleNamedPattern(SimpleNamedPatternContext context)
         {
-            string name;
-            try
-            {
-                name = Tools.Syntax.GetIdentifierFromName(context.GetText());
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            var name = StopCaptureInputIdentifier(context);
 
             if((Flags & ExpressionFlags.IsValue) == 0 && FindContext<IBindingContext>() is { } binding)
             {
@@ -798,20 +790,12 @@ namespace Sona.Compiler.States
             public override void EnterEmptyFieldAssignment(EmptyFieldAssignmentContext context)
             {
                 OnEnterField();
-                Environment.EnableParseTree();
+                StartCaptureInput(context);
             }
 
             public override void ExitEmptyFieldAssignment(EmptyFieldAssignmentContext context)
             {
-                string name;
-                try
-                {
-                    name = Tools.Syntax.GetIdentifierFromName(context.GetText());
-                }
-                finally
-                {
-                    Environment.DisableParseTree();
-                }
+                var name = StopCaptureInputIdentifier(context);
                 Out.WriteOperator('=');
                 Out.WriteIdentifier(name);
             }
@@ -986,20 +970,12 @@ namespace Sona.Compiler.States
             public override void EnterEmptyFieldAssignment(EmptyFieldAssignmentContext context)
             {
                 OnEnterField();
-                Environment.EnableParseTree();
+                StartCaptureInput(context);
             }
 
             public override void ExitEmptyFieldAssignment(EmptyFieldAssignmentContext context)
             {
-                string name;
-                try
-                {
-                    name = Tools.Syntax.GetIdentifierFromName(context.GetText());
-                }
-                finally
-                {
-                    Environment.DisableParseTree();
-                }
+                var name = StopCaptureInputIdentifier(context);
                 Out.Write('(');
                 Out.WriteIdentifier(name);
                 Out.Write(')');
@@ -1017,20 +993,12 @@ namespace Sona.Compiler.States
 
             public override void EnterName(NameContext context)
             {
-                Environment.EnableParseTree();
+                StartCaptureInput(context);
             }
 
             public override void ExitName(NameContext context)
             {
-                string identifier;
-                try
-                {
-                    identifier = Tools.Syntax.GetIdentifierFromName(context.GetText());
-                }
-                finally
-                {
-                    Environment.DisableParseTree();
-                }
+                var identifier = StopCaptureInputIdentifier(context);
 
                 var patternIdentifier = "Get " + identifier;
 

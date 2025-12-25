@@ -36,53 +36,32 @@ namespace Sona.Compiler
 
         public sealed override void EnterErrorUnsupportedNumberSuffix(ErrorUnsupportedNumberSuffixContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public sealed override void ExitErrorUnsupportedNumberSuffix(ErrorUnsupportedNumberSuffixContext context)
         {
-            try
-            {
-                Error($"The literal '{context.GetText()}' has an unsupported suffix.", context);
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            Error($"The literal '{StopCaptureInput(context)}' has an unsupported suffix.", context);
         }
 
         public sealed override void EnterErrorUnsupportedEndCharSuffix(ErrorUnsupportedEndCharSuffixContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public sealed override void ExitErrorUnsupportedEndCharSuffix(ErrorUnsupportedEndCharSuffixContext context)
         {
-            try
-            {
-                Error($"Unsupported character suffix '{context.GetText()}'.", context);
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            Error($"Unsupported character suffix '{StopCaptureInput(context)}'.", context);
         }
 
         public sealed override void EnterErrorUnsupportedEndStringSuffix(ErrorUnsupportedEndStringSuffixContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public sealed override void ExitErrorUnsupportedEndStringSuffix(ErrorUnsupportedEndStringSuffixContext context)
         {
-            try
-            {
-                Error($"Unsupported string suffix '{context.GetText()}'.", context);
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            Error($"Unsupported string suffix '{StopCaptureInput(context)}'.", context);
         }
     }
 }

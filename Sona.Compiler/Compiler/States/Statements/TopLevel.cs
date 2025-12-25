@@ -103,19 +103,12 @@ namespace Sona.Compiler.States
 
         public override void EnterString(StringContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public override void ExitString(StringContext context)
         {
-            try
-            {
-                Out.Write(argument = context.GetText());
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            Out.Write(argument = StopCaptureInput(context));
         }
     }
 }
