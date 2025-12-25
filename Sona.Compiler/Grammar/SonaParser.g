@@ -2764,7 +2764,7 @@ memberDiscard:
   (altMemberExpr | memberExpr) '!';
 
 followAssignmentStatement:
-  name '=' followExpression;
+  (altMemberExpr | memberExpr) '=' followExpression;
 
 /* -------- */
 /* Patterns */

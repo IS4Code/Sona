@@ -902,13 +902,13 @@ namespace Sona.Compiler.States
 
     internal sealed class FollowAssignmentState : FollowStatementState
     {
-        string? variable;
+        ISourceCapture? capture;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            variable = null;
+            capture = null;
         }
 
         public override void EnterFollowAssignmentStatement(FollowAssignmentStatementContext context)
@@ -922,16 +922,44 @@ namespace Sona.Compiler.States
             ExitState().ExitFollowAssignmentStatement(context);
         }
 
-        public override void EnterName(NameContext context)
+        public override void EnterMemberExpr(MemberExprContext context)
         {
+            OnEnterMember(context);
+            EnterState<MemberExprState>().EnterMemberExpr(context);
+        }
+
+        public override void ExitMemberExpr(MemberExprContext context)
+        {
+            OnExitMember(context);
+        }
+
+        public override void EnterAltMemberExpr(AltMemberExprContext context)
+        {
+            OnEnterMember(context);
+            EnterState<AltMemberExprState>().EnterAltMemberExpr(context);
+        }
+
+        public override void ExitAltMemberExpr(AltMemberExprContext context)
+        {
+            OnExitMember(context);
+        }
+
+        private void OnEnterMember(ParserRuleContext context)
+        {
+            capture = Out.StartCapture();
             Environment.EnableParseTree();
         }
 
-        public override void ExitName(NameContext context)
+        private void OnExitMember(ParserRuleContext context)
         {
+            if(capture != null)
+            {
+                Out.StopCapture(capture);
+            }
+            string variable;
             try
             {
-                variable = Tools.Syntax.GetIdentifierFromName(context.GetText());
+                variable = Syntax.GetIdentifierFromName(context.GetText());
             }
             finally
             {
@@ -945,7 +973,7 @@ namespace Sona.Compiler.States
 
         protected override void OnStatement(ParserRuleContext context)
         {
-            Out.WriteIdentifier(variable ?? Error("COMPILER ERROR: Variable name missing.", context));
+            (capture ?? ErrorCapture("COMPILER ERROR: Variable missing.", context)).Play(Out);
             Out.WriteOperator("<-");
         }
     }
