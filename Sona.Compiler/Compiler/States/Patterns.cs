@@ -405,6 +405,19 @@ namespace Sona.Compiler.States
             }
         }
 
+        public sealed class Annotation : PatternState
+        {
+            public override void EnterAnnotationPattern(AnnotationPatternContext context)
+            {
+
+            }
+
+            public override void ExitAnnotationPattern(AnnotationPatternContext context)
+            {
+                ExitState().ExitAnnotationPattern(context);
+            }
+        }
+
         abstract class OperatorPattern : PatternState
         {
             public sealed override void EnterUnaryPattern(UnaryPatternContext context)

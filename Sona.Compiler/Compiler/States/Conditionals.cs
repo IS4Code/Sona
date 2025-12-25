@@ -3664,6 +3664,7 @@ namespace Sona.Compiler.States
         bool hasPattern;
         bool inCatch;
         bool inTry;
+        ISourceCapture? pattern;
 
         protected override BlockFlags BlockFlags => base.BlockFlags | (inTry ? BlockFlags.HasTrySemantics : 0);
 
@@ -3676,6 +3677,7 @@ namespace Sona.Compiler.States
             inCatch = false;
             first = true;
             inTry = true;
+            pattern = null;
         }
 
         private void OnCase(ParserRuleContext context)
@@ -3720,6 +3722,22 @@ namespace Sona.Compiler.States
             HasBranches = true;
         }
 
+        public sealed override void EnterCatchAsCase(CatchAsCaseContext context)
+        {
+            OnCase(context);
+            Out.WriteLine();
+            Out.Write("| ");
+            hasPattern = false;
+            inCatch = true;
+            inTry = false;
+        }
+
+        public sealed override void ExitCatchAsCase(CatchAsCaseContext context)
+        {
+            Out.WriteOperator("->");
+            HasBranches = true;
+        }
+
         public override void EnterTry(TryContext context)
         {
             Out.Write("try ");
@@ -3746,7 +3764,7 @@ namespace Sona.Compiler.States
         {
             if(inCatch)
             {
-                Out.Write(":? _ as");
+                Out.Write("(:? _ as");
             }
             hasPattern = true;
             Out.Write('(');
@@ -3757,13 +3775,57 @@ namespace Sona.Compiler.States
         {
             base.ExitPattern(context);
             Out.Write(')');
+            if(inCatch)
+            {
+                Out.WriteOperator(':');
+                Out.WriteSystemName("Exception");
+                Out.Write(')');
+            }
+        }
+
+        public override void EnterAnnotationPattern(AnnotationPatternContext context)
+        {
+            Out.Write("(:? ");
+            pattern = Out.StartCapture();
+            EnterState<PatternState.Annotation>().EnterAnnotationPattern(context);
+        }
+
+        public override void ExitAnnotationPattern(AnnotationPatternContext context)
+        {
+            if(pattern != null)
+            {
+                Out.StopCapture(pattern);
+            }
+        }
+
+        public override void ExitType(TypeContext context)
+        {
+            base.ExitType(context);
+
+            Out.Write(" as(");
+            (pattern ?? ErrorCapture("COMPILER ERROR: Missing pattern.", context)).Play(Out);
+            pattern = null;
+            Out.Write(')');
+            Out.WriteOperator(':');
+            Out.WriteSystemName("Exception");
+            Out.Write(')');
         }
 
         public sealed override void EnterWhenClause(WhenClauseContext context)
         {
             if(!hasPattern)
             {
-                Out.Write('_');
+                if(inCatch)
+                {
+                    Out.Write("(_");
+                    Out.WriteOperator(':');
+                    Out.WriteSystemName("Exception");
+                    Out.Write(')');
+                }
+                else
+                {
+                    Out.Write('_');
+                }
                 hasPattern = true;
             }
             Out.Write(" when(");

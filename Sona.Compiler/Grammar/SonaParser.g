@@ -1473,7 +1473,10 @@ finallyBranch:
   'finally';
 
 catch_Group:
-  case | catchCase;
+  case | catchAsCase | catchCase;
+
+catchAsCase:
+  'catch' annotationPattern 'as' type whenClause? 'do';
 
 catchCase:
   'catch' (pattern whenClause? | whenClause) 'do';
