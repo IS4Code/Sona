@@ -1,5 +1,4 @@
-﻿[<AutoOpen>]
-module Sona.Runtime.Computations
+﻿module Sona.Runtime.Computations
 
 open System.Runtime.CompilerServices
 open Sona.Runtime.ComputationBuilders

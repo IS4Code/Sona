@@ -1,5 +1,4 @@
 ﻿namespace Sona.Runtime.Traits
-[<AutoOpen(path = "Sona.Runtime.Traits")>]do()
 
 type ``trait number``<^T
   when ^T : comparison

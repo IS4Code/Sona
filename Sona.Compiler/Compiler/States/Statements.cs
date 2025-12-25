@@ -748,6 +748,14 @@ namespace Sona.Compiler.States
             Initialize(environment, null);
         }
 
+        public override void EnterMainBlock(MainBlockContext context)
+        {
+            Out.WriteLine("open global.System");
+            Out.WriteLine("open global.Sona.Runtime");
+            Out.WriteLine("open global.Sona.Runtime.Computations");
+            Out.WriteLine("open global.Sona.Runtime.Traits");
+        }
+
         public override void ExitMainBlock(MainBlockContext context)
         {
 
