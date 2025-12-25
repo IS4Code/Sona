@@ -9,7 +9,20 @@ options {
 
 // The whole program
 chunk:
-  mainBlock EOF;
+  (
+    namespaceSection+ |
+    packageSection |
+    mainBlock
+  ) EOF;
+
+namespaceSection:
+  (
+    BEGIN_NAMESPACE_SECTION WHITESPACE* (compoundName WHITESPACE*)? END_DIRECTIVE |
+    UNNAMED_NAMESPACE_SECITON
+  ) mainBlock;
+
+packageSection:
+  BEGIN_PACKAGE_SECTION WHITESPACE* (compoundName WHITESPACE*)? END_DIRECTIVE mainBlock;
 
 /*
 The sequence of statements is intentionally lazy, to make the

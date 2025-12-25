@@ -3,22 +3,8 @@ using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
 {
-    internal class PackageState : BlockState, IDeclarationsBlockContext
+    internal class PackageState : DeclarationsBlockState
     {
-        ExpressionFlags IExpressionContext.Flags => ExpressionFlags.IsValue;
-
-        BlockFlags IBlockContext.Flags => BlockFlags.None;
-
-        ReturnFlags IReturnableContext.Flags => ReturnFlags.None;
-
-        InterruptFlags IInterruptibleContext.Flags => InterruptFlags.None;
-
-        string? IInterruptibleContext.InterruptingVariable => null;
-
-        ComputationFlags IComputationContext.Flags => ComputationFlags.None;
-
-        public bool Recursive { get; private set; }
-
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
@@ -60,70 +46,30 @@ namespace Sona.Compiler.States
             Out.ExitScope();
             Out.Write(_end_);
         }
+    }
 
-        void IComputationContext.WriteBeginBlockExpression(ParserRuleContext context)
+    internal sealed class PackageSection : SectionState
+    {
+        public override void EnterPackageSection(PackageSectionContext context)
         {
-            Defaults.WriteBeginBlockExpression(context);
+            Recursive = LexerContext.GetState<ForwardRefPragma>() is { };
+            Out.Write("module ");
+            if(Recursive)
+            {
+                Out.Write("rec ");
+            }
         }
 
-        void IComputationContext.WriteEndBlockExpression(ParserRuleContext context)
+        public override void ExitPackageSection(PackageSectionContext context)
         {
-            Defaults.WriteEndBlockExpression(context);
+            ExitState()!.ExitPackageSection(context);
         }
 
-        void IReturnableContext.WriteEarlyReturn(ParserRuleContext context)
+        public override void EnterMainBlock(MainBlockContext context)
         {
-            Defaults.WriteEarlyReturn(context);
-        }
+            Out.WriteLine();
 
-        void IReturnableContext.WriteReturnStatement(ParserRuleContext context)
-        {
-            Out.Write("do ");
-        }
-
-        void IReturnableContext.WriteAfterReturnStatement(ParserRuleContext context)
-        {
-
-        }
-
-        void IBlockContext.WriteImplicitReturnStatement(ParserRuleContext context)
-        {
-            Defaults.WriteImplicitReturnStatement(context);
-        }
-
-        void IReturnableContext.WriteReturnValue(bool isOption, ParserRuleContext context)
-        {
-            Defaults.WriteReturnValue(isOption, context);
-        }
-
-        void IReturnableContext.WriteAfterReturnValue(ParserRuleContext context)
-        {
-            Defaults.WriteAfterReturnValue(context);
-        }
-
-        void IReturnableContext.WriteEmptyReturnValue(ParserRuleContext context)
-        {
-            Defaults.WriteEmptyReturnValue(context);
-        }
-
-        void IInterruptibleContext.WriteBreak(bool hasExpression, ParserRuleContext context)
-        {
-            Defaults.WriteBreak(hasExpression, context);
-        }
-
-        void IInterruptibleContext.WriteContinue(bool hasExpression, ParserRuleContext context)
-        {
-            Defaults.WriteContinue(hasExpression, context);
-        }
-
-        void IInterruptibleContext.WriteAfterBreak(ParserRuleContext context)
-        {
-            Defaults.WriteAfterBreak(context);
-        }
-
-        void IInterruptibleContext.WriteAfterContinue(ParserRuleContext context)
-        {
-            Defaults.WriteAfterContinue(context);
+            base.EnterMainBlock(context);
         }
     }
 }
