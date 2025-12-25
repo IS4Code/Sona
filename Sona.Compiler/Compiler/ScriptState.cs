@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using Sona.Compiler.States;
 using Sona.Compiler.Tools;
 using Sona.Grammar;
+using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler
 {
@@ -213,20 +215,83 @@ namespace Sona.Compiler
             return true;
         }
 
+        private static bool IsSingleTokenRule(ParserRuleContext context)
+        {
+            return context.RuleIndex
+                is RULE_name or RULE_memberName or RULE_dynamicMemberName
+                or RULE_number or RULE_inlineSourceLanguage
+                or RULE_interpStrAlignment or RULE_interpStrStandardFormat
+                or RULE_interpStrCustomFormat or RULE_interpStrNumberFormat;
+        }
+
         protected void StartCaptureInput(ParserRuleContext context)
         {
+            if(IsSingleTokenRule(context))
+            {
+                // Has single token, its value will be used
+                return;
+            }
             Environment.EnableParseTree();
         }
 
         protected string StopCaptureInput(ParserRuleContext context)
         {
+            if(IsSingleTokenRule(context))
+            {
+                var start = context.Start;
+                if(start != context.Stop)
+                {
+                    throw new ArgumentException("The rule does not span a single token.", nameof(context));
+                }
+                return start.Text;
+            }
             try
             {
-                return context.GetText();
+                var childCount = context.ChildCount;
+                if(childCount == 0)
+                {
+                    return "";
+                }
+
+                var sb = new StringBuilder();
+                int offset = context.Start.StartIndex;
+                AppendTokens(sb, ref offset, context);
+                return sb.ToString();
             }
             finally
             {
                 Environment.DisableParseTree();
+            }
+        }
+
+        private void AppendTokens(StringBuilder sb, ref int end, IParseTree tree)
+        {
+            switch(tree)
+            {
+                case ParserRuleContext context:
+                    // Append all children in sequence
+                    var children = context.children;
+                    if(children != null)
+                    {
+                        foreach(var child in children)
+                        {
+                            AppendTokens(sb, ref end, child);
+                        }
+                    }
+                    break;
+                case ITerminalNode terminal:
+                    var symbol = terminal.Symbol;
+                    if(symbol.StartIndex > end)
+                    {
+                        // There is some whitespace before the token, add a space
+                        sb.Append(' ');
+                    }
+                    sb.Append(symbol.Text);
+                    end = symbol.StopIndex + 1;
+                    break;
+                case not null:
+                    sb.Append(tree.GetText());
+                    break;
             }
         }
 
