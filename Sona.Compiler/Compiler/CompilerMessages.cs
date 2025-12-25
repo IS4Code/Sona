@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
-using Sona.Compiler.Tools;
+using Antlr4.Runtime;
+using Sona.Grammar;
 
 namespace Sona.Compiler
 {
@@ -28,6 +30,15 @@ namespace Sona.Compiler
             return name.StartsWith("_", StringComparison.Ordinal) || name.StartsWith("``_", StringComparison.Ordinal);
         }
 
+        static readonly char[] namespaceSplitChars = { '.' };
+
+        static bool IsKeyword(string name)
+        {
+            var lexer = new SonaLexer(CharStreams.fromString(name));
+            var tokens = lexer.GetAllTokens();
+            return tokens.Count != 1 || tokens[0] is not { Type: SonaLexer.NAME };
+        }
+
         static readonly DiagnosticDictionary messageReplacement = new(ignoredWarnings, enabledWarnings, errorWarnings)
         {
             // All control statements may result in these errors
@@ -46,7 +57,10 @@ namespace Sona.Compiler
 
             // No hidden exceptions
             { 25, Error }, // Incomplete pattern matches on this expression.
-
+            
+            // Different syntax
+            { 39, None, "undefinedNameNamespaceOrModule", "The namespace or package `$1` is not defined." }, // The namespace or module '%s' is not defined.
+            
             // No hidden exceptions; simplify wording and remove F#-specific parts
             { 40, Error, "LetRecCheckedAtRuntime", "This value depends on variables declared later in the code whose value may not yet be available. Consider using functions instead of variables." }, // This and other recursive references to the object(s) being defined will be checked for initialization-soundness at runtime through the use of a delayed reference. This is because you are defining one or more recursive objects, rather than recursive functions. This warning may be suppressed by using '#nowarn "40"' or '--nowarn:40'.
 
@@ -101,6 +115,34 @@ namespace Sona.Compiler
             
             // Different mechanism
             { 874, None, "tcOnlyRecordFieldsAndSimpleLetCanBeMutable", "A `var` declaration is not permitted together with `#pragma recursive` or `#pragma forwardref`." }, // Mutable 'let' bindings can't be recursive or defined in recursive modules or namespaces
+
+            // Different syntax
+            { 893, None, "tcOpenUsedWithPartiallyQualifiedPath", m => { // This declaration opens the namespace or module '%s' through a partially qualified path.
+                var name = m.Groups[1].Value;
+
+                var sb = new StringBuilder("This `import` statement does not use a fully qualified name, and would run into conflicts when external dependencies are updated. Use `import ");
+
+                bool first = true;
+                foreach(var subname in name.Split(namespaceSplitChars))
+                {
+                    if(first)
+                    {
+                        first = false;
+                        if(IsKeyword(subname))
+                        {
+                            sb.Append('@');
+                        }
+                    }
+                    else
+                    {
+                        sb.Append('.');
+                    }
+                    sb.Append(subname);
+                }
+
+                sb.Append("` instead.");
+                return sb.ToString();
+            } },
 
             // Implicit equality/comparison
             { 1178, Enable },
