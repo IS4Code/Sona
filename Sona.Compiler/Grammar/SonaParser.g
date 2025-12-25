@@ -3010,7 +3010,7 @@ bitAndExpr:
   bitShiftExpr ('&' bitShiftExpr)*;
 
 bitShiftExpr:
-  innerExpr (('<<' | tokenRSHIFT) innerExpr)*;
+  innerExpr ((tokenLSHIFT | tokenRSHIFT) innerExpr)*;
 
 innerExpr:
   annotationExpr (('+' | '-' | '*' | '/' | '%') annotationExpr)*;
@@ -3440,6 +3440,9 @@ relationalOperator:
 
 tokenGTE:
   '>' {combinedOperator}? '=';
+
+tokenLSHIFT:
+  '<' {combinedOperator}? '<';
 
 tokenRSHIFT:
   '>' {combinedOperator}? '>';

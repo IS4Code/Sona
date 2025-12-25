@@ -82,6 +82,16 @@ namespace Sona.Compiler
 
         }
 
+        public override void EnterTokenLSHIFT(TokenLSHIFTContext context)
+        {
+            EnterState<CompoundTerminal>().EnterTokenLSHIFT(context);
+        }
+
+        public override void ExitTokenLSHIFT(TokenLSHIFTContext context)
+        {
+
+        }
+
         public override void EnterTokenRSHIFT(TokenRSHIFTContext context)
         {
             EnterState<CompoundTerminal>().EnterTokenRSHIFT(context);
@@ -396,6 +406,16 @@ namespace Sona.Compiler
             public override void ExitTokenGTE(TokenGTEContext context)
             {
                 ExitState(SonaLexer.GTE, context).ExitTokenGTE(context);
+            }
+
+            public override void EnterTokenLSHIFT(TokenLSHIFTContext context)
+            {
+
+            }
+
+            public override void ExitTokenLSHIFT(TokenLSHIFTContext context)
+            {
+                ExitState(SonaLexer.LSHIFT, context).ExitTokenLSHIFT(context);
             }
 
             public override void EnterTokenRSHIFT(TokenRSHIFTContext context)

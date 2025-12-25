@@ -287,7 +287,6 @@ DOUBLE_OR: '||';
 SINGLE_AND: '&';
 SINGLE_OR: '|';
 SINGLE_XOR: '^';
-LSHIFT: '<<';
 EXCLAMATION: '!';
 TILDE: '~';
 AT: '@';
@@ -510,7 +509,6 @@ Directive_DOUBLE_OR: DOUBLE_OR -> type(DOUBLE_OR);
 Directive_SINGLE_AND: SINGLE_AND -> type(SINGLE_AND);
 Directive_SINGLE_OR: SINGLE_OR -> type(SINGLE_OR);
 Directive_SINGLE_XOR: SINGLE_XOR -> type(SINGLE_XOR);
-Directive_LSHIFT: LSHIFT -> type(LSHIFT);
 Directive_EXCLAMATION: EXCLAMATION -> type(EXCLAMATION);
 Directive_TILDE: TILDE -> type(TILDE);
 Directive_AT: AT -> type(AT);
@@ -890,7 +888,6 @@ Interpolation_DOUBLE_OR: DOUBLE_OR -> type(DOUBLE_OR);
 Interpolation_SINGLE_AND: SINGLE_AND -> type(SINGLE_AND);
 Interpolation_SINGLE_OR: SINGLE_OR -> type(SINGLE_OR);
 Interpolation_SINGLE_XOR: SINGLE_XOR -> type(SINGLE_XOR);
-Interpolation_LSHIFT: LSHIFT -> type(LSHIFT);
 Interpolation_EXCLAMATION: EXCLAMATION -> type(EXCLAMATION);
 Interpolation_TILDE: TILDE -> type(TILDE);
 Interpolation_AT: AT -> type(AT);
@@ -945,6 +942,7 @@ CHAR_LITERAL:
   BEGIN_CHAR CHAR_PART END_CHAR;
 
 GTE: '>=';
+LSHIFT: '<<';
 RSHIFT: '>>';
 DOUBLE_QUESTION: '??';
 
