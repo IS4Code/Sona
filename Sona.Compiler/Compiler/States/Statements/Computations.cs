@@ -718,6 +718,7 @@ namespace Sona.Compiler.States
 
         ISourceCapture? capture;
         bool first;
+        bool inComputation;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -727,12 +728,14 @@ namespace Sona.Compiler.States
             variables.Clear();
             capture = null;
             first = true;
+            inComputation = false;
         }
 
         public override void EnterFollowVariableDecl(FollowVariableDeclContext context)
         {
             // Capture any attributes
             capture = Out.StartCapture();
+            inComputation = FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false;
         }
 
         public override void ExitFollowVariableDecl(FollowVariableDeclContext context)
@@ -805,7 +808,14 @@ namespace Sona.Compiler.States
         {
             FlushCapture();
             // ( needed for syntax
-            Out.Write("let! (");
+            if(inComputation)
+            {
+                Out.Write("let! (");
+            }
+            else
+            {
+                Out.Write("let (");
+            }
             WriteRec(context);
         }
 
@@ -826,7 +836,15 @@ namespace Sona.Compiler.States
             else
             {
                 Out.WriteLine();
-                Out.Write("and! ");
+                if(inComputation)
+                {
+                    Out.Write("and! ");
+                }
+                else
+                {
+                    Error("Multiple `follow`-initialized variables are supported only in a computation.", context);
+                    Out.Write("let ");
+                }
 
                 if(capture != null)
                 {
@@ -854,7 +872,14 @@ namespace Sona.Compiler.States
                 if(first)
                 {
                     // Real destination
-                    Out.Write("let! ");
+                    if(inComputation)
+                    {
+                        Out.Write("let! ");
+                    }
+                    else
+                    {
+                        Out.Write("let ");
+                    }
                 }
                 else
                 {
@@ -872,11 +897,19 @@ namespace Sona.Compiler.States
                 Out.Write(')');
             }
             Out.WriteOperator('=');
+            if(!inComputation)
+            {
+                Out.WriteGlobalComputationOperator("ReturnFrom");
+            }
             EnterState<ExpressionState.Unary>().EnterUnaryExpr(context);
         }
 
         public sealed override void ExitUnaryExpr(UnaryExprContext context)
         {
+            if(!inComputation)
+            {
+                Out.WriteAfterGlobalComputationOperator();
+            }
             first = false;
         }
     }
