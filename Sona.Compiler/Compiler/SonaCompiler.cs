@@ -168,6 +168,7 @@ namespace Sona.Compiler
         {
             "System",
             "Sona.Runtime",
+            "Sona.Runtime.Core",
             "Sona.Runtime.Computations",
             "Sona.Runtime.Traits"
         };
