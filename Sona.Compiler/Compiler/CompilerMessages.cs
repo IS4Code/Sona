@@ -97,10 +97,22 @@ namespace Sona.Compiler
 
             // Explicit discard required
             { 193, Error, "FunctionValueUnexpected", "This expression results in a function of type `$1`. Call it or discard it explicitly via `!`." }, // This expression is a function value, i.e. is missing arguments. Its type is %s.
+            
+            // Different syntax
+            { 201, None, "tcNamespaceCannotContainValues", "A variable cannot be declared directly in a namespace. Define a package or type to hold it." }, // Namespaces cannot contain values. Consider using a module to hold your value declarations.
 
             // Wildcards are not generics
             { 464, Ignore }, // This code is less generic than indicated by its annotations. A unit-of-measure specified using '_' has been determined to be '1', i.e. dimensionless.
+            
+            // Different syntax
+            { 523, Error, "parsUseBindingsIllegalInImplicitClassConstructors", "Variables in types cannot be declared via `use`." }, // 'use' bindings are not permitted in primary constructors
 
+            // Different syntax
+            { 524, Error, "parsUseBindingsIllegalInModules", "Variables in packages cannot be declared via `use`." }, // 'use' bindings are not permitted in modules and are treated as 'let' bindings
+            
+            // Different syntax
+            { 760, None, "tcIDisposableTypeShouldUseNew", "For types implementing the `IDisposable` interface, construction should be done via `new`, e.g. `new<Type>(args)`." }, // It is recommended that objects supporting the IDisposable interface are created using the syntax 'new Type(args)'
+            
             // Different syntax
             { 795, None, "tcUseForInSequenceExpression", "`follow` cannot be used in a collection construction." }, // The use of 'let! x = coll' in sequence expressions is not permitted.
             
