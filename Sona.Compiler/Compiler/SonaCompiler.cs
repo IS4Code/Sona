@@ -56,6 +56,7 @@ namespace Sona.Compiler
 
             bool debugBeginEnd = (options.Flags & CompilerFlags.DebuggingBlockComments) != 0;
             bool debugReturn = (options.Flags & CompilerFlags.DebuggingStatementComments) != 0;
+            bool noNamespaces = (options.Flags & CompilerFlags.SkipDefaultNamespaces) != 0;
 
             using var writer = new SourceWriter(output);
             writer.AdjustLines = (options.Flags & CompilerFlags.IgnoreLineNumbers) == 0;
@@ -69,7 +70,7 @@ namespace Sona.Compiler
                 parser.BuildParseTree = false;
             }
 
-            var context = new ScriptEnvironment(parser, writer, globalWriter, lexerContext, debugBeginEnd ? "(*begin*)" : "", debugBeginEnd ? "(*end*)" : "", debugReturn ? "(*return*)" : "");
+            var context = new ScriptEnvironment(parser, writer, globalWriter, lexerContext, debugBeginEnd ? "(*begin*)" : "", debugBeginEnd ? "(*end*)" : "", debugReturn ? "(*return*)" : "", noNamespaces ? Array.Empty<string>() : defaultNamespaces);
             lexerContext.Environment = context;
 
             // Lexer context is fully set up
@@ -158,9 +159,17 @@ namespace Sona.Compiler
             "System.Runtime.CompilerServices.Unsafe"
         }.ToDictionary(n => n, n => n + ".dll", StringComparer.OrdinalIgnoreCase);
 
-        static readonly string[] referencedLibraries = new[]
+        static readonly string[] referencedLibraries =
         {
             "Sona.Runtime"
+        };
+
+        static readonly string[] defaultNamespaces =
+        {
+            "System",
+            "Sona.Runtime",
+            "Sona.Runtime.Computations",
+            "Sona.Runtime.Traits"
         };
 
         static readonly Assembly currentAssembly = typeof(SonaCompiler).Assembly;

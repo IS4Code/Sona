@@ -89,10 +89,10 @@ namespace Sona.Compiler.States
     {
         public override void EnterMainBlock(MainBlockContext context)
         {
-            Out.WriteLine("open global.System");
-            Out.WriteLine("open global.Sona.Runtime");
-            Out.WriteLine("open global.Sona.Runtime.Computations");
-            Out.WriteLine("open global.Sona.Runtime.Traits");
+            foreach(var ns in Environment.DefaultNamespaces)
+            {
+                Out.WriteLine($"open global.{ns}");
+            }
         }
 
         public override void ExitMainBlock(MainBlockContext context)
