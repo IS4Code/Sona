@@ -228,11 +228,6 @@ namespace Sona.Compiler.States
             EnterState<YieldWithStatementState>().EnterYieldWithConditional(context);
         }
 
-        public sealed override void EnterFollowDiscardStatement(FollowDiscardStatementContext context)
-        {
-            EnterState<FollowDiscardState>().EnterFollowDiscardStatement(context);
-        }
-
         public sealed override void EnterFollowStatement(FollowStatementContext context)
         {
             EnterState<FollowState>().EnterFollowStatement(context);

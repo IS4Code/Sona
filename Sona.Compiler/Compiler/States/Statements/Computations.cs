@@ -516,23 +516,77 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal sealed class FollowState : NodeState
+    internal sealed class FollowState : ExpressionState
     {
-        bool closeGlobalFollowExpression;
+        bool first;
+        bool inComputation;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            closeGlobalFollowExpression = false;
+            first = true;
+            inComputation = false;
         }
 
         public override void EnterFollowStatement(FollowStatementContext context)
         {
-            if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false)
+            inComputation = FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false;
+        }
+
+        public override void ExitFollowStatement(FollowStatementContext context)
+        {
+            ExitState().ExitFollowStatement(context);
+        }
+
+        private void OnEnterExpression(ParserRuleContext context)
+        {
+            if(inComputation)
+            {
+                if(first)
+                {
+                    Out.Write("let! ");
+                    first = false;
+                }
+                else
+                {
+                    Out.WriteLine();
+                    Out.Write("and! ");
+                }
+            }
+            else
+            {
+                if(first)
+                {
+                    first = false;
+                }
+                else
+                {
+                    Out.WriteLine();
+                    Error("Multiple operands for the `follow` statement are supported only in a computation.", context);
+                }
+            }
+        }
+
+        private void OnExitExpression(ParserRuleContext context)
+        {
+            if(inComputation)
+            {
+                Out.Write(')');
+            }
+            else
+            {
+                Out.WriteAfterGlobalComputationOperator();
+            }
+        }
+
+        public override void EnterExpression(ExpressionContext context)
+        {
+            OnEnterExpression(context);
+            if(inComputation)
             {
                 // Not `do!` because that sometimes abuses `Return`.
-                Out.Write("let! ()");
+                Out.Write("()");
                 Out.WriteOperator('=');
                 Out.Write('(');
             }
@@ -540,50 +594,21 @@ namespace Sona.Compiler.States
             {
                 Out.Write("do ");
                 Out.WriteGlobalComputationOperator("ReturnFrom");
-                closeGlobalFollowExpression = true;
             }
-        }
-
-        public override void ExitFollowStatement(FollowStatementContext context)
-        {
-            if(closeGlobalFollowExpression)
-            {
-                Out.WriteAfterGlobalComputationOperator();
-            }
-            else
-            {
-                Out.Write(')');
-            }
-            ExitState().ExitFollowStatement(context);
-        }
-
-        public override void EnterExpression(ExpressionContext context)
-        {
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
         public override void ExitExpression(ExpressionContext context)
         {
-
-        }
-    }
-
-    internal sealed class FollowDiscardState : ExpressionState
-    {
-        bool closeGlobalFollowExpression;
-
-        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
-        {
-            base.Initialize(environment, parent);
-
-            closeGlobalFollowExpression = false;
+            OnExitExpression(context);
         }
 
-        public override void EnterFollowDiscardStatement(FollowDiscardStatementContext context)
+        public override void EnterMemberDiscard(MemberDiscardContext context)
         {
-            if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false)
+            OnEnterExpression(context);
+            if(inComputation)
             {
-                Out.Write("let! _");
+                Out.Write("_");
                 Out.WriteOperator('=');
                 Out.Write('(');
             }
@@ -592,21 +617,12 @@ namespace Sona.Compiler.States
                 Out.Write("let _");
                 Out.WriteOperator('=');
                 Out.WriteGlobalComputationOperator("ReturnFrom");
-                closeGlobalFollowExpression = true;
             }
         }
 
-        public override void ExitFollowDiscardStatement(FollowDiscardStatementContext context)
+        public override void ExitMemberDiscard(MemberDiscardContext context)
         {
-            if(closeGlobalFollowExpression)
-            {
-                Out.WriteAfterGlobalComputationOperator();
-            }
-            else
-            {
-                Out.Write(')');
-            }
-            ExitState().ExitFollowDiscardStatement(context);
+            OnExitExpression(context);
         }
     }
 

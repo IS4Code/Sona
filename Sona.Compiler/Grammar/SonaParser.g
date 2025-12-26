@@ -320,7 +320,6 @@ statement:
   yieldEachStatement |
   yieldReturnFollowStatement |
   yieldReturnStatement |
-  followDiscardStatement |
   followStatement |
   inlineSourceFree |
   ifStatementFree |
@@ -407,11 +406,10 @@ with_Argument:
 withStatement:
   'with' with_Argument valueTrail;
 
-followDiscardStatement:
-  'follow' memberDiscard;
-
 followStatement:
-  'follow' (expression | errorMissingExpression);
+  'follow'
+    (memberDiscard | expression | errorMissingExpression)
+    (',' (memberDiscard | expression | errorMissingExpression))*;
 
 followWithTrailing:
   FOLLOW_WITH with_Argument freeTrail;
