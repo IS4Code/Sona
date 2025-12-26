@@ -47,6 +47,23 @@ let inline parallelOptions options : ParallelOptionsBuilder = { Options = option
 [<CompiledName("UniversalSequenceBuilder")>]
 let inline sequenceVia builder : UniversalSequenceBuilder<_, _> = { BoolBuilder = builder; UnitBuilder = builder }
 
+open System.Threading.Tasks
+
+type AsyncBuilder with
+  member inline _.BindReturn(x : Async<_>, [<IIL>]_f) =
+    async.Bind(x, _f >> async.Return)
+
+  member _.MergeSources(x : Async<_>, y : Async<_>) =
+    async {
+      let! cancelToken = Async.CancellationToken
+      let t1 = Async.StartImmediateAsTask(x, cancellationToken = cancelToken)
+      let t2 = Async.StartImmediateAsTask(y, cancellationToken = cancelToken)
+
+      do! Task.WhenAll(t1 :> Task, t2 :> Task) |> Async.AwaitTask
+
+      return (t1.Result, t2.Result)
+    }
+
 [<AbstractClass; Extension>]
 type UniversalSequenceBuilderExtensions1 internal() =
   [<Extension>]
