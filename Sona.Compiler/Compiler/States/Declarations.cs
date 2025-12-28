@@ -695,7 +695,6 @@ namespace Sona.Compiler.States
             if(first)
             {
                 first = false;
-                Out.Write("rec ");
             }
             else
             {
