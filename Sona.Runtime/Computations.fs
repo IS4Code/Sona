@@ -47,6 +47,66 @@ let inline parallelOptions options : ParallelOptionsBuilder = { Options = option
 [<CompiledName("UniversalSequenceBuilder")>]
 let inline sequenceVia builder : UniversalSequenceBuilder<_, _> = { BoolBuilder = builder; UnitBuilder = builder }
 
+open System.Threading.Tasks
+
+let inline private startTask a ct =
+  Async.StartImmediateAsTask(a, cancellationToken = ct)
+
+let inline private task (t : Task<_>) =
+  t :> Task
+
+type AsyncBuilder with
+  member _.MergeSources(x : Async<_>, y : Async<_>) =
+    async {
+      let! ct = Async.CancellationToken
+      let inline start t = startTask t ct
+      let t1 = start x
+      let t2 = start y
+
+      do! Task.WhenAll(task t1, task t2) |> Async.AwaitTask
+
+      return (t1.Result, t2.Result)
+    }
+
+  member _.Bind2(a1 : Async<_>, a2 : Async<_>, _func) =
+    async {
+      let! ct = Async.CancellationToken
+      let inline start t = startTask t ct
+      let t1 = start a1
+      let t2 = start a2
+
+      do! Task.WhenAll(task t1, task t2) |> Async.AwaitTask
+
+      return! _func(t1.Result, t2.Result)
+    }
+
+  member _.Bind3(a1 : Async<_>, a2 : Async<_>, a3 : Async<_>, _func) =
+    async {
+      let! ct = Async.CancellationToken
+      let inline start t = startTask t ct
+      let t1 = start a1
+      let t2 = start a2
+      let t3 = start a3
+
+      do! Task.WhenAll(task t1, task t2, task t3) |> Async.AwaitTask
+
+      return! _func(t1.Result, t2.Result, t3.Result)
+    }
+
+  member _.Bind4(a1 : Async<_>, a2 : Async<_>, a3 : Async<_>, a4 : Async<_>, _func) =
+    async {
+      let! ct = Async.CancellationToken
+      let inline start t = startTask t ct
+      let t1 = start a1
+      let t2 = start a2
+      let t3 = start a3
+      let t4 = start a4
+
+      do! Task.WhenAll(task t1, task t2, task t3, task t4) |> Async.AwaitTask
+
+      return! _func(t1.Result, t2.Result, t3.Result, t4.Result)
+    }
+
 [<AbstractClass; Extension>]
 type UniversalSequenceBuilderExtensions1 internal() =
   [<Extension>]

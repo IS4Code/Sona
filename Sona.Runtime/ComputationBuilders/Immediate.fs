@@ -19,6 +19,8 @@ type ImmediateBuilderBase() =
 
   member inline _.Bind(x : Immediate<_>, [<IIL>]_f : _ -> Immediate<_>) = _f x.Value
   member inline this.Combine(x : Immediate<unit>, [<IIL>]_f) = this.Bind(x, _f)
+  
+  member inline _.MergeSources(x : Immediate<_>, y : Immediate<_>) : Immediate<_> = { Value = (x.Value, y.Value) }
 
   override this.While(cond, func) =
     while cond() do

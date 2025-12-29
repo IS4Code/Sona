@@ -26,7 +26,14 @@ type OptionBuilder() =
   member inline this.Bind(opt : _ voption, [<IIL>]_func) = Option.bind _func (this.ReturnFrom(opt))
   member inline this.Bind(opt : Result<_, _>, [<IIL>]_func) = Option.bind _func (this.ReturnFrom(opt))
   member inline this.Combine(opt : _ option, [<IIL>]_func) = this.Bind(opt, _func)
-
+  
+  member inline this.MergeSources(x : _ option, y : _ option) : _ option =
+    this.Bind(x, fun xValue -> (
+      this.Bind(y, fun yValue -> (
+        this.Return(xValue, yValue)
+      ))
+    ))
+  
   override _.While(cond, func) =
     let mutable continuing = true
     while continuing && cond() do
@@ -60,6 +67,13 @@ type ValueOptionBuilder() =
   member inline this.Bind(opt : _ voption, [<IIL>]_func) = ValueOption.bind _func (this.ReturnFrom(opt))
   member inline this.Bind(opt : Result<_, _>, [<IIL>]_func) = ValueOption.bind _func (this.ReturnFrom(opt))
   member inline this.Combine(opt : _ voption, [<IIL>]_func) = this.Bind(opt, _func)
+  
+  member inline this.MergeSources(x : _ voption, y : _ voption) : _ voption =
+    this.Bind(x, fun xValue -> (
+      this.Bind(y, fun yValue -> (
+        this.Return(xValue, yValue)
+      ))
+    ))
   
   override _.While(cond, func) =
     let mutable continuing = true

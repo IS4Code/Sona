@@ -31,6 +31,13 @@ type ResultBuilder<'TError>() =
   member inline this.Bind(opt : _ voption, [<IIL>]_func) = this.Bind(this.ReturnFrom(opt), _func)
   member inline this.Combine(opt : Result<_, _>, [<IIL>]_func) = this.Bind(opt, _func)
   
+  member inline this.MergeSources(x : Result<_, _>, y : Result<_, _>) : Result<_, _> =
+    this.Bind(x, fun xValue -> (
+      this.Bind(y, fun yValue -> (
+        this.Return(xValue, yValue)
+      ))
+    ))
+  
   override _.While(cond, func) =
     let mutable continuing = true
     let mutable errorResult = Unchecked.defaultof<_>
@@ -56,6 +63,13 @@ type ErrorResultBuilder<'TSuccess>() =
   member inline this.Bind(opt : _ option, [<IIL>]_func) = this.Bind(this.ReturnFrom(opt), _func)
   member inline this.Bind(opt : _ voption, [<IIL>]_func) = this.Bind(this.ReturnFrom(opt), _func)
   member inline this.Combine(opt : Result<_, _>, [<IIL>]_func) = this.Bind(opt, _func)
+  
+  member inline this.MergeSources(x : Result<_, _>, y : Result<_, _>) : Result<_, _> =
+    this.Bind(x, fun xValue -> (
+      this.Bind(y, fun yValue -> (
+        this.Return(xValue, yValue)
+      ))
+    ))
   
   override _.While(cond, func) =
     let mutable continuing = true
