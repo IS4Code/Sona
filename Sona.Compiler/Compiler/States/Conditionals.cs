@@ -2074,6 +2074,10 @@ namespace Sona.Compiler.States
 
         public override void EnterPattern(PatternContext context)
         {
+            if(LexerContext.GetState<RecursivePragma>()?.Value == true)
+            {
+                Error("An 'if let' statement is not supported together with '#pragma recursive'.", context);
+            }
             if(patternCapture != null)
             {
                 Error("COMPILER ERROR: Entered pattern while another is being captured.", context);
@@ -2464,6 +2468,10 @@ namespace Sona.Compiler.States
 
         public override void EnterPattern(PatternContext context)
         {
+            if(LexerContext.GetState<RecursivePragma>()?.Value == true)
+            {
+                Error("A 'while let' statement is not supported together with '#pragma recursive'.", context);
+            }
             if(patternCapture != null)
             {
                 Error("COMPILER ERROR: Entered unexpected pattern.", context);
