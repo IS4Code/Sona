@@ -306,7 +306,8 @@ attrNamedArg:
 // Plain statement, allowed anywhere
 statement:
   followVariableDecl |
-  variableDecl |
+  simpleVariableDecl |
+  multiVariableDecl |
   lazyVariableDecl |
   multiFuncDecl |
   inlineFuncDecl |
@@ -2712,28 +2713,22 @@ packageStatement:
 /* Declarations and assignments */
 /* ---------------------------- */
 
-variableDecl:
-  localAttrList (
-    let | var | useVar | use | const
-  ) (multiDeclAssignment | declaration '=' expression);
+simpleVariableDecl:
+  variableDecl_Prefix declaration '=' expression;
 
 followVariableDecl:
-  localAttrList (
-    let | var | useVar | use
-  )
-  declaration '=' followExpression (',' declaration '=' followExpression)*;
+  variableDecl_Prefix declaration '=' followExpression;
 
-let: 'let';
-var: 'var';
-const: 'const';
-use: 'use';
-useVar: 'use' 'var';
+multiVariableDecl:
+  variableDecl_Prefix declaration '=' (followExpression | expression) (',' declaration '=' (followExpression | expression))*;
+
+variableDecl_Prefix:
+  localAttrList (
+    'let' | 'var' | 'use' 'var'? | 'const'
+  );
 
 lazyVariableDecl:
   localAttrList 'lazy' declaration '=' expression (',' declaration '=' expression)*;
-
-multiDeclAssignment:
-  declaration '=' expression (',' declaration '=' expression)+;
 
 multiFuncDecl:
   (funcDecl | caseFuncDecl)+;

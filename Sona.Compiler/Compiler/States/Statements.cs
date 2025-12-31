@@ -233,19 +233,24 @@ namespace Sona.Compiler.States
             EnterState<FollowState>().EnterFollowStatement(context);
         }
 
-        public sealed override void EnterVariableDecl(VariableDeclContext context)
+        public sealed override void EnterSimpleVariableDecl(SimpleVariableDeclContext context)
         {
-            EnterState<NewVariableState>().EnterVariableDecl(context);
+            EnterState<SimpleDeclarationState>().EnterSimpleVariableDecl(context);
+        }
+
+        public sealed override void EnterMultiVariableDecl(MultiVariableDeclContext context)
+        {
+            EnterState<MultiDeclarationState>().EnterMultiVariableDecl(context);
+        }
+
+        public sealed override void EnterFollowVariableDecl(FollowVariableDeclContext context)
+        {
+            EnterState<MultiDeclarationState>().EnterFollowVariableDecl(context);
         }
 
         public override void EnterLazyVariableDecl(LazyVariableDeclContext context)
         {
             EnterState<LazyDeclarationState>().EnterLazyVariableDecl(context);
-        }
-
-        public sealed override void EnterFollowVariableDecl(FollowVariableDeclContext context)
-        {
-            EnterState<NewFollowVariableState>().EnterFollowVariableDecl(context);
         }
 
         public sealed override void EnterMemberOrAssignment(MemberOrAssignmentContext context)

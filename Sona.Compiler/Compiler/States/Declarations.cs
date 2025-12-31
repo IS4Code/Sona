@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using Sona.Compiler.Tools;
@@ -388,10 +390,12 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal class NewVariableState : NodeState, IExpressionContext
+    internal abstract class VariableDeclarationState : DeclarationState, IExpressionContext
     {
         protected bool IsConst { get; private set; }
         protected bool IsUse { get; private set; }
+        protected bool IsRec { get; private set; }
+        protected bool IsMutable { get; private set; }
 
         ExpressionFlags IExpressionContext.Flags => (FindContext<IExpressionContext>()?.Flags ?? 0) | ExpressionFlags.IsValue | (IsConst ? ExpressionFlags.IsConstant : 0);
         
@@ -401,29 +405,23 @@ namespace Sona.Compiler.States
 
             IsConst = false;
             IsUse = false;
+            IsRec = false;
+            IsMutable = false;
         }
 
-        public sealed override void EnterVariableDecl(VariableDeclContext context)
+        protected void OnEnter(ParserRuleContext context)
         {
-
-        }
-
-        public sealed override void ExitVariableDecl(VariableDeclContext context)
-        {
-            ExitState().ExitVariableDecl(context);
-        }
-
-        protected virtual void WriteRec(ParserRuleContext context)
-        {
-            if(LexerContext.GetState<RecursivePragma>()?.Value ?? false)
-            {
-                Out.Write("rec ");
-            }
+            IsRec = LexerContext.GetState<RecursivePragma>()?.Value ?? false;
         }
 
         public override void EnterDeclaration(DeclarationContext context)
         {
-            EnterState<DeclarationState>().EnterDeclaration(context);
+            if(IsConst)
+            {
+                Out.Write("[<");
+                Out.WriteCoreName("LiteralAttribute");
+                Out.WriteLine(">]");
+            }
         }
 
         public override void ExitDeclaration(DeclarationContext context)
@@ -431,100 +429,29 @@ namespace Sona.Compiler.States
 
         }
 
-        public sealed override void EnterMultiDeclAssignment(MultiDeclAssignmentContext context)
+        public override void VisitTerminal(ITerminalNode node)
         {
-            // Constants cannot actually use variables declared further.
-            // `use rec` is invalid and will be exposed this way.
-            if(IsConst || IsUse || (LexerContext.GetState<RecursivePragma>()?.Value ?? false))
+            base.VisitTerminal(node);
+
+            switch(node.Symbol.Type)
             {
-                EnterState<RecursiveMultiDeclarationState>().EnterMultiDeclAssignment(context);
+                case SonaLexer.VAR:
+                    IsMutable = true;
+                    break;
+                case SonaLexer.USE:
+                    IsUse = true;
+                    break;
+                case SonaLexer.CONST:
+                    if(FindContext<IFunctionContext>() is DeclarationsBlockState)
+                    {
+                        IsConst = true;
+                    }
+                    else
+                    {
+                        Error("A `const` variable may be specified only at the package level.", node);
+                    }
+                    break;
             }
-            else
-            {
-                EnterState<MultiDeclarationState>().EnterMultiDeclAssignment(context);
-            }
-        }
-
-        public sealed override void ExitMultiDeclAssignment(MultiDeclAssignmentContext context)
-        {
-
-        }
-
-        public override void EnterLet(LetContext context)
-        {
-            Out.Write("let ");
-            WriteRec(context);
-        }
-
-        public override void ExitLet(LetContext context)
-        {
-
-        }
-
-        public override void EnterVar(VarContext context)
-        {
-            Out.Write("let ");
-            WriteRec(context);
-            Out.Write("mutable ");
-        }
-
-        public sealed override void ExitVar(VarContext context)
-        {
-
-        }
-
-        public override void EnterConst(ConstContext context)
-        {
-            Out.Write("[<");
-            Out.WriteCoreName("LiteralAttribute");
-            Out.WriteLine(">]");
-            Out.Write("let ");
-            WriteRec(context);
-        }
-
-        public sealed override void ExitConst(ConstContext context)
-        {
-            IsConst = true;
-        }
-
-        public override void EnterUse(UseContext context)
-        {
-            Out.Write("use ");
-            WriteRec(context);
-        }
-
-        public sealed override void ExitUse(UseContext context)
-        {
-            IsUse = true;
-        }
-
-        public override void EnterUseVar(UseVarContext context)
-        {
-            Out.Write("use ");
-            WriteRec(context);
-            Out.Write("mutable ");
-        }
-
-        public sealed override void ExitUseVar(UseVarContext context)
-        {
-            IsUse = true;
-        }
-
-        public sealed override void EnterExpression(ExpressionContext context)
-        {
-            Out.WriteOperator('=');
-            EnterState<ExpressionState>().EnterExpression(context);
-        }
-
-        public sealed override void ExitExpression(ExpressionContext context)
-        {
-
-        }
-
-        public sealed override void ExitLocalAttribute(LocalAttributeContext context)
-        {
-            Out.WriteLine();
-            base.ExitLocalAttribute(context);
         }
     }
 
@@ -604,125 +531,558 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal sealed class MultiDeclarationState : DeclarationState
+    internal sealed class SimpleDeclarationState : VariableDeclarationState
     {
-        bool first;
-        ISourceCapture? valueCapture;
-        readonly List<ISourceCapture> valueCaptures = new();
+        public override void EnterSimpleVariableDecl(SimpleVariableDeclContext context)
+        {
+            OnEnter(context);
+        }
+
+        public override void ExitSimpleVariableDecl(SimpleVariableDeclContext context)
+        {
+            ExitState().ExitSimpleVariableDecl(context);
+        }
+
+        public override void EnterDeclaration(DeclarationContext context)
+        {
+            base.EnterDeclaration(context);
+
+            if(IsUse)
+            {
+                Out.Write("use ");
+            }
+            else
+            {
+                Out.Write("let ");
+            }
+            if(IsRec)
+            {
+                Out.Write("rec ");
+            }
+            if(IsMutable)
+            {
+                Out.Write("mutable ");
+            }
+        }
+
+        public override void EnterExpression(ExpressionContext context)
+        {
+            Out.WriteOperator('=');
+            EnterState<ExpressionState>().EnterExpression(context);
+        }
+
+        public override void ExitExpression(ExpressionContext context)
+        {
+
+        }
+
+        public sealed override void ExitLocalAttribute(LocalAttributeContext context)
+        {
+            Out.WriteLine();
+            base.ExitLocalAttribute(context);
+        }
+    }
+
+    internal sealed class MultiDeclarationState : VariableDeclarationState
+    {
+        bool anyIsFollow, anyIsNonFollow;
+        ISourceCapture? capture;
+        Variable currentVariable;
+        readonly List<Variable> variables = new();
+        readonly List<ISourceCapture> attributes = new();
+
+        bool? _isComputation;
+        bool isComputation {
+            get {
+                if(_isComputation is bool result)
+                {
+                    return result;
+                }
+                result = FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false;
+                _isComputation = result;
+                return result;
+            }
+        }
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            first = true;
-            valueCapture = null;
-            valueCaptures.Clear();
+            anyIsFollow = false;
+            anyIsNonFollow = false;
+            capture = null;
+            currentVariable = default;
+            variables.Clear();
+            attributes.Clear();
+            _isComputation = null;
         }
 
-        public override void EnterMultiDeclAssignment(MultiDeclAssignmentContext context)
+        public override void EnterMultiVariableDecl(MultiVariableDeclContext context)
         {
+            OnEnter(context);
+        }
+
+        public override void ExitMultiVariableDecl(MultiVariableDeclContext context)
+        {
+            OnExit(context);
+            ExitState().ExitMultiVariableDecl(context);
+        }
+
+        public override void EnterFollowVariableDecl(FollowVariableDeclContext context)
+        {
+            OnEnter(context);
+        }
+
+        public override void ExitFollowVariableDecl(FollowVariableDeclContext context)
+        {
+            OnExit(context);
+            ExitState().ExitFollowVariableDecl(context);
+        }
+
+        private void OnExit(ParserRuleContext context)
+        {
+            if(IsRec)
+            {
+                if(IsUse)
+                {
+                    Error("A `use` declaration is not supported together with `#pragma recursive`.", context);
+                }
+                if(anyIsFollow)
+                {
+                    Error("The use of `#pragma recursive` is not supported together with a `follow`-initialized variable.", context);
+                }
+                OnExitRecursive(context);
+                return;
+            }
+            
+            if(IsConst)
+            {
+                if(anyIsFollow)
+                {
+                    Error("A `const` variable cannot be initialized with `follow`.", context);
+                }
+                // Always recursive (using further-declared variables is prevented anyway).
+                OnExitRecursive(context);
+                return;
+            }
+
+            if(IsUse)
+            {
+                if(variables.Count > 1)
+                {
+                    // Multi-variable `use` is too complex
+                    Error("A `use` declaration initializing multiple variables is not supported. Use multiple individual `use` declarations.", context);
+                }
+                else
+                {
+                    OnExitSingleUse(variables[0], context);
+                    return;
+                }
+            }
+
+            if(anyIsFollow)
+            {
+                if(isComputation)
+                {
+                    if(anyIsNonFollow || IsMutable)
+                    {
+                        OnExitFollowComplex(context);
+                    }
+                    else
+                    {
+                        OnExitFollowSimple(context);
+                    }
+                }
+                else
+                {
+                    if(variables.Where(v => v.IsFollow).Take(2).Count() > 1)
+                    {
+                        // Calling `MergeSources` manually is not supported
+                        Error("Multiple `follow`-initialized variables are supported only in a computation.", context);
+                    }
+                    OnExitTupled(context);
+                }
+            }
+            else
+            {
+                OnExitTupled(context);
+            }
+        }
+
+        private void OnExitTupled(ParserRuleContext context)
+        {
+            // Ignore `const`, `rec`, `use`, `follow` (computation).
+
+            WriteAttributes(false);
+            Out.Write("let ");
+            if(IsMutable)
+            {
+                Out.Write("mutable ");
+            }
             Out.Write('(');
-        }
 
-        public override void ExitMultiDeclAssignment(MultiDeclAssignmentContext context)
-        {
+            bool first = true;
+            foreach(var variable in variables)
+            {
+                Out.WriteNext(',', ref first);
+                variable.Declaration.Play(Out);
+            }
+
             Out.Write(')');
             Out.WriteOperator('=');
             Out.EnterNestedScope();
             Out.Write('(');
-            var first = true;
-            foreach(var capture in valueCaptures)
-            {
-                Out.WriteNext(',', ref first);
-                capture.Play(Out);
-            }
-            Out.ExitNestedScope();
-            Out.Write(')');
-            ExitState().ExitMultiDeclAssignment(context);
-        }
-
-        public override void EnterDeclaration(DeclarationContext context)
-        {
-            Out.WriteNext(',', ref first);
-        }
-
-        public override void ExitDeclaration(DeclarationContext context)
-        {
-
-        }
-
-        public override void EnterExpression(ExpressionContext context)
-        {
-            valueCapture = Out.StartCapture();
-            EnterState<ExpressionState>().EnterExpression(context);
-        }
-
-        public override void ExitExpression(ExpressionContext context)
-        {
-            if(valueCapture != null)
-            {
-                Out.StopCapture(valueCapture);
-                valueCaptures.Add(valueCapture);
-                valueCapture = null;
-            }
-        }
-    }
-
-    internal sealed class RecursiveMultiDeclarationState : DeclarationState
-    {
-        bool first, isConst;
-
-        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
-        {
-            base.Initialize(environment, parent);
 
             first = true;
-            isConst = FindContext<IExpressionContext>()?.HasFlag(ExpressionFlags.IsConstant) ?? false;
-        }
-
-        public override void EnterMultiDeclAssignment(MultiDeclAssignmentContext context)
-        {
-
-        }
-
-        public override void ExitMultiDeclAssignment(MultiDeclAssignmentContext context)
-        {
-            ExitState().ExitMultiDeclAssignment(context);
-        }
-
-        public override void EnterDeclaration(DeclarationContext context)
-        {
-            if(first)
+            foreach(var variable in variables)
             {
-                first = false;
+                Out.WriteNext(',', ref first);
+
+                if(variable.IsFollow)
+                {
+                    // Not in a computation (checked already)
+                    Out.WriteGlobalComputationOperator("ReturnFrom");
+                }
+
+                variable.Value.Play(Out);
+
+                if(variable.IsFollow)
+                {
+                    Out.WriteAfterGlobalComputationOperator();
+                }
+            }
+
+            Out.ExitNestedScope();
+            Out.Write(')');
+        }
+
+        private void OnExitSingleUse(Variable variable, ParserRuleContext context)
+        {
+            // Ignore `rec`.
+
+            if(variable.IsFollow && isComputation)
+            {
+                // Follow first, use later (`use!` has too limiting syntax)
+                var name = Out.CreateTemporaryIdentifier();
+                Out.Write("let! ");
+                Out.WriteIdentifier(name);
+                Out.WriteOperator('=');
+                variable.Value.Play(Out);
+                Out.WriteLine();
+
+                Out.Write("use ");
+                if(IsMutable)
+                {
+                    Out.Write("mutable ");
+                }
+                WriteAttributes(true);
+                variable.Declaration.Play(Out);
+                Out.WriteOperator('=');
+                Out.WriteIdentifier(name);
             }
             else
             {
-                Out.WriteLine();
-                Out.Write("and ");
-                if(isConst)
+                Out.Write("use ");
+                if(IsMutable)
                 {
-                    Out.Write("[<");
-                    Out.WriteCoreName("LiteralAttribute");
-                    Out.Write(">]");
+                    Out.Write("mutable ");
+                }
+                WriteAttributes(true);
+                variable.Declaration.Play(Out);
+                Out.WriteOperator('=');
+
+                if(variable.IsFollow)
+                {
+                    Out.WriteGlobalComputationOperator("ReturnFrom");
+                }
+
+                variable.Value.Play(Out);
+
+                if(variable.IsFollow)
+                {
+                    Out.WriteAfterGlobalComputationOperator();
                 }
             }
         }
 
+        private void OnExitRecursive(ParserRuleContext context)
+        {
+            // Ignore `use`, `follow`.
+
+            Out.Write("let rec ");
+
+            WriteAttributes(true);
+
+            if(IsMutable)
+            {
+                // Detected by F#
+                Out.Write("mutable ");
+            }
+
+            bool first = true;
+            foreach(var variable in variables)
+            {
+                if(first)
+                {
+                    first = false;
+                }
+                else
+                {
+                    Out.WriteLine();
+                    Out.Write("and ");
+                    WriteAttributes(true);
+                }
+
+                variable.Declaration.Play(Out);
+
+                Out.WriteOperator('=');
+
+                variable.Value.Play(Out);
+            }
+        }
+
+        private void OnExitFollowSimple(ParserRuleContext context)
+        {
+            // Ignore `const`, `rec`, `use`, `mutable`, non-`follow`.
+
+            bool first = true;
+            foreach(var variable in variables)
+            {
+                if(first)
+                {
+                    Out.Write("let! ");
+                    WriteAttributes(true);
+
+                    first = false;
+                }
+                else
+                {
+                    Out.WriteLine();
+                    Out.Write("and! ");
+                    WriteAttributes(true);
+                }
+
+                Out.Write('(');
+                variable.Declaration.Play(Out);
+                Out.Write(')');
+
+                Out.WriteOperator('=');
+
+                variable.Value.Play(Out);
+            }
+        }
+
+        private void OnExitFollowComplex(ParserRuleContext context)
+        {
+            // Ignore `const`, `rec`, `use`, non-computation.
+
+            int numVariables = variables.Count;
+            var names = new string[numVariables];
+
+            if(anyIsNonFollow)
+            {
+                // Store non-followed values first
+
+                for(int i = 0; i < numVariables; i++)
+                {
+                    Out.Write("let ");
+
+                    var name = Out.CreateTemporaryIdentifier();
+                    names[i] = name;
+
+                    Out.WriteIdentifier(name);
+                    Out.WriteOperator('=');
+                    variables[i].Value.Play(Out);
+
+                    Out.WriteLine();
+                }
+
+                // Follow those that should be followed
+
+                bool first = true;
+                for(int i = 0; i < numVariables; i++)
+                {
+                    var variable = variables[i];
+                    if(!variable.IsFollow)
+                    {
+                        continue;
+                    }
+
+                    if(first)
+                    {
+                        Out.Write("let! ");
+                        first = false;
+                    }
+                    else
+                    {
+                        Out.Write("and! ");
+                    }
+
+                    var name = names[i];
+                    Out.WriteIdentifier(name);
+                    Out.WriteOperator('=');
+                    Out.WriteIdentifier(name);
+
+                    Out.WriteLine();
+                }
+            }
+            else
+            {
+                // Store and follow as a single operation
+
+                bool first = true;
+                for(int i = 0; i < numVariables; i++)
+                {
+                    if(first)
+                    {
+                        Out.Write("let! ");
+                        first = false;
+                    }
+                    else
+                    {
+                        Out.Write("and! ");
+                    }
+
+                    var name = Out.CreateTemporaryIdentifier();
+                    names[i] = name;
+
+                    Out.WriteIdentifier(name);
+                    Out.WriteOperator('=');
+                    variables[i].Value.Play(Out);
+
+                    Out.WriteLine();
+                }
+            }
+
+            // Bind to result
+
+            WriteAttributes(false);
+            Out.Write("let ");
+            if(IsMutable)
+            {
+                Out.Write("mutable ");
+            }
+            Out.Write('(');
+
+            {
+                bool first = true;
+                foreach(var variable in variables)
+                {
+                    Out.WriteNext(',', ref first);
+                    variable.Declaration.Play(Out);
+                }
+            }
+
+            Out.Write(')');
+            Out.WriteOperator('=');
+            Out.Write('(');
+
+            {
+                bool first = true;
+                foreach(var name in names)
+                {
+                    Out.WriteNext(',', ref first);
+                    Out.WriteIdentifier(name);
+                }
+            }
+
+            Out.Write(')');
+        }
+
+        private void WriteAttributes(bool inline)
+        {
+            if(attributes.Count == 0 && !IsConst)
+            {
+                return;
+            }
+
+            if(inline) Out.EnterNestedScope();
+
+            foreach(var attr in attributes)
+            {
+                attr.Play(Out);
+                Out.WriteLine();
+            }
+
+            if(IsConst)
+            {
+                Out.Write("[<");
+                Out.WriteCoreName("LiteralAttribute");
+                Out.Write(">]");
+                Out.WriteLine();
+            }
+
+            if(inline) Out.ExitNestedScope();
+        }
+
+        public override void EnterDeclaration(DeclarationContext context)
+        {
+            capture = Out.StartCapture();
+            currentVariable.Declaration = capture;
+            base.EnterDeclaration(context);
+        }
+
         public override void ExitDeclaration(DeclarationContext context)
         {
-
+            base.ExitDeclaration(context);
+            if(capture != null)
+            {
+                Out.StopCapture(capture);
+            }
         }
 
         public override void EnterExpression(ExpressionContext context)
         {
-            Out.WriteOperator('=');
+            capture = Out.StartCapture();
+            currentVariable.Value = capture;
+            currentVariable.IsFollow = false;
+            anyIsNonFollow = true;
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
         public override void ExitExpression(ExpressionContext context)
         {
-
+            if(capture != null)
+            {
+                Out.StopCapture(capture);
+                variables.Add(currentVariable);
+            }
         }
+
+        public override void EnterFollowExpression(FollowExpressionContext context)
+        {
+            capture = Out.StartCapture();
+            currentVariable.Value = capture;
+            currentVariable.IsFollow = true;
+            anyIsFollow = true;
+            EnterState<FollowStatementState.Operand>().EnterFollowExpression(context);
+        }
+
+        public override void ExitFollowExpression(FollowExpressionContext context)
+        {
+            if(capture != null)
+            {
+                Out.StopCapture(capture);
+                variables.Add(currentVariable);
+            }
+        }
+
+        public override void EnterLocalAttribute(LocalAttributeContext context)
+        {
+            capture = Out.StartCapture();
+            attributes.Add(capture);
+            base.EnterLocalAttribute(context);
+        }
+
+        public override void ExitLocalAttribute(LocalAttributeContext context)
+        {
+            base.ExitLocalAttribute(context);
+            if(capture != null)
+            {
+                Out.StopCapture(capture);
+            }
+        }
+
+        record struct Variable(ISourceCapture Declaration, ISourceCapture Value, bool IsFollow);
     }
 }
