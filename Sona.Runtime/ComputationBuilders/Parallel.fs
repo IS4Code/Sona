@@ -156,8 +156,8 @@ type ParallelBuilder() =
     finally _cleanup()
 
   member inline _.Using(x : #IDisposable, [<IIL>]_f : _ -> _) =
-    try _f x
-    finally x.Dispose()
+    use _ = x
+    _f x
 
   member inline _.TryWith([<IIL>]_f : unit -> Immediate<_>, [<IIL>]_fail : exn -> Immediate<_>) =
     try _f()
@@ -200,8 +200,8 @@ type ParallelOptionsBuilder = { Options : ParallelOptions } with
     finally _cleanup()
 
   member inline _.Using(x : #IDisposable, [<IIL>]_f : _ -> _) =
-    try _f x
-    finally x.Dispose()
+    use _ = x
+    _f x
 
   member inline _.TryWith([<IIL>]_f : unit -> Immediate<_>, [<IIL>]_fail : exn -> Immediate<_>) =
     try _f()

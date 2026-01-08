@@ -16,7 +16,7 @@ type CoroutineBuilder() =
   member inline _.Combine(first : ICoroutine<_, _, unit>, [<IIL>]_second) = Coroutine.bind first _second
   member inline _.TryFinally([<IIL>]_first, [<IIL>]_second) = Coroutine.withCleanup _first _second
   member inline _.TryWith([<IIL>]_first, [<IIL>]_second) = Coroutine.withCatch _first _second
-  member inline _.Using(x : #IDisposable, [<IIL>]_f) = Coroutine.withCleanup (fun() -> _f(x)) (fun() -> x.Dispose())
+  member inline _.Using(x : #IDisposable, [<IIL>]_f) = Coroutine.withCleanup (fun() -> _f(x)) (fun() -> use _ = x in ())
   member inline _.While([<IIL>]_cond, [<IIL>]_f) = Coroutine.loop _cond _f
   member inline _.For(s : _ seq, [<IIL>]_f) =
     let enumerator = s.GetEnumerator()

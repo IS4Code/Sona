@@ -22,8 +22,8 @@ type SequenceBuilder() =
       yield! _second e
   }
   member inline _.Using(x, [<IIL>]_f) = seq {
-    use t = x
-    yield! _f t
+    use _ = x
+    yield! _f x
   }
   member inline _.While([<IIL>]_cond, [<IIL>]_f) = seq {
     while _cond() do

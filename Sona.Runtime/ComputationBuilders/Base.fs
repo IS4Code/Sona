@@ -1,7 +1,5 @@
 ﻿namespace Sona.Runtime.ComputationBuilders
 
-open System
-
 type internal IIL = InlineIfLambdaAttribute
 
 [<AbstractClass>]
@@ -14,9 +12,8 @@ type BaseBuilder() =
     try _f()
     finally _cleanup()
 
-  member inline _.Using(x : #IDisposable, [<IIL>]_f : _ -> _) =
-    try _f x
-    finally x.Dispose()
+  member inline _.Using(x, [<IIL>]_f : _ -> _) =
+    use _ = x in _f x
 
 [<AbstractClass>]
 type BaseBuilder<'TZero>() =
