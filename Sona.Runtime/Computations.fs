@@ -47,6 +47,15 @@ let inline parallelOptions options : ParallelOptionsBuilder = { Options = option
 [<CompiledName("UniversalSequenceBuilder")>]
 let inline sequenceVia builder : UniversalSequenceBuilder<_, _> = { BoolBuilder = builder; UnitBuilder = builder }
 
+[<CompiledName("ListBuilder")>]
+let inline list<'T> : ListBuilder<'T> = { State = FSharp.Core.CompilerServices.ListCollector<'T>() }
+
+[<CompiledName("ArrayBuilder")>]
+let inline array<'T> : ArrayBuilder<'T> = { State = FSharp.Core.CompilerServices.ArrayCollector<'T>() }
+
+[<CompiledName("StringBuilder")>]
+let inline stringBuilder<'T when 'T :> System.Enum and 'T : not struct> : StringBuilderBuilder<_> = { State = System.Text.StringBuilder() }
+
 open System.Threading.Tasks
 
 let inline private startTask a ct =
@@ -384,3 +393,41 @@ type UniversalSequenceBuilderExtensions3 private() =
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
       s _f
       
+[<AbstractClass; Extension>]
+type StringBuilderBuilderExtensions1 internal() =
+  [<Extension>]
+  static member inline Yield(self : StringBuilderBuilder<_>, x) =
+    (^T : (member Append : _ -> ^T) self.State, x) |> ignore
+
+  [<Extension>]
+  static member inline YieldFrom(self : StringBuilderBuilder<_>, s) =
+    for x in s do
+      (^T : (member Append : _ -> ^T) self.State, x) |> ignore
+
+[<Sealed; AbstractClass; Extension>]
+type StringBuilderBuilderExtensions2 private() =
+  inherit StringBuilderBuilderExtensions1()
+
+  [<Extension>]
+  static member inline Yield(self : StringBuilderBuilder<_>, x, y) =
+    (^T : (member Append : _ * _ -> ^T) self.State, x, y) |> ignore
+
+  [<Extension>]
+  static member inline Yield(self : StringBuilderBuilder<_>, struct(x, y)) =
+    (^T : (member Append : _ * _ -> ^T) self.State, x, y) |> ignore
+  
+  [<Extension>]
+  static member inline Yield(self : StringBuilderBuilder<_>, x, y, z) =
+    (^T : (member Append : _ * _ * _ -> ^T) self.State, x, y, z) |> ignore
+
+  [<Extension>]
+  static member inline Yield(self : StringBuilderBuilder<_>, struct(x, y, z)) =
+    (^T : (member Append : _ * _ * _ -> ^T) self.State, x, y, z) |> ignore
+  
+  [<Extension>]
+  static member inline Yield(self : StringBuilderBuilder<_>, x, y, z, w) =
+    (^T : (member Append : _ * _ * _ * _ -> ^T) self.State, x, y, z, w) |> ignore
+
+  [<Extension>]
+  static member inline Yield(self : StringBuilderBuilder<_>, struct(x, y, z, w)) =
+    (^T : (member Append : _ * _ * _ * _ -> ^T) self.State, x, y, z, w) |> ignore
