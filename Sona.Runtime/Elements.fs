@@ -128,6 +128,8 @@ module Core =
   [<MeasureAnnotatedAbbreviation>]
   type complex<[<Measure>]'M> = complex
 
+  type multistring = Multivalue<string, System.IFormatProvider>
+
   [<System.Obsolete("This marks unimplemented code that should be implemented prior to publishing.")>]
   let inline todo<'T> : 'T =
     raise(System.NotImplementedException())

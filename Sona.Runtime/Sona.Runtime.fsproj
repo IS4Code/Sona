@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -41,9 +41,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Attributes.fs" />
+    <Compile Include="Multivalue.fs" />
     <Compile Include="Elements.fs" />
     <Compile Include="Helpers.fs" />
-    <Compile Include="Attributes.fs" />
     <Compile Include="Operators.fs" />
     <Compile Include="UniversalEnumerable.fs" />
     <Compile Include="Reflection.fs" />
