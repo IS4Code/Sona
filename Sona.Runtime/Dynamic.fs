@@ -123,6 +123,9 @@ type internal DynamicType<'T> private() =
       else
         CSharpArgumentInfoFlags.UseCompileTimeType), null
     )
+    
+type UnsetMarker = UnsetMarker
+let unset = UnsetMarker
 
 [<Sealed; AbstractClass>]
 type DynamicOperation<'TObject, 'TValue when 'TObject :> dynamic> private() =
@@ -175,6 +178,38 @@ type DynamicOperation<'TObject, 'TValue when 'TObject :> dynamic> private() =
         )
       fun operand -> site.Target.Invoke(site, operand)
   )
+  
+  static let deleteIndexCache = ConcurrentDictionary<ValueTuple<Type>, 'TObject -> 'TValue -> unit>()
+  static let deleteIndexFactory = Func<ValueTuple<Type>, _>(
+    fun _ -> // Context might be useful for potential future heuristics
+      let site =
+        CallSite<Action<CallSite, 'TObject, 'TValue>>.Create(
+          {
+            new DeleteIndexBinder(CallInfo(1, Array.Empty<string>())) with
+            member _.FallbackDeleteIndex(target : DynamicMetaObject, indexes : DynamicMetaObject[], errorSuggestion : DynamicMetaObject) =
+              if isNull errorSuggestion then
+                DynamicMetaObject(
+                  Expression.Throw(
+                    Expression.New(
+                      typeof<RuntimeBinderException>.GetConstructor [| typeof<string> |],
+                      Expression.Constant($"Dynamically deleting an index is not supported on an object of type '{target.RuntimeType}'.")
+                    )
+                  ),
+                  let mutable restrictions = BindingRestrictions.GetTypeRestriction(target.Expression, target.RuntimeType)
+                  for index in indexes do
+                    restrictions <- restrictions.Merge(
+                      if isNull(index.Value) then
+                        BindingRestrictions.GetInstanceRestriction(index.Expression, index.Value)
+                      else
+                        BindingRestrictions.GetTypeRestriction(index.Expression, index.RuntimeType)
+                    )
+                  restrictions
+                )
+              else errorSuggestion
+          }
+        )
+      fun obj index -> site.Target.Invoke(site, obj, index)
+  )
 
   static member GetMember(object : 'TObject, memberName : string, context : Type) : 'TValue =
     let dict = getCache.GetValue(memberName, getDictFactory)
@@ -216,6 +251,9 @@ type DynamicOperation<'TObject, 'TValue when 'TObject :> dynamic> private() =
   static member OnesComplement(operand : 'TObject, context : Type) : 'TValue =
     unaryCache.GetOrAdd(struct(ExpressionType.OnesComplement, context), unaryDictFactory) operand
   
+  static member DeleteIndex(object : 'TObject, index : 'TValue, context : Type) =
+    deleteIndexCache.GetOrAdd(ValueTuple<_>(context), deleteIndexFactory) object index
+
   static member Implicit(operand : 'TObject, context : Type) : 'TValue =
     convertCache.GetOrAdd(struct(false, context), convertDictFactory) operand
   
@@ -229,8 +267,12 @@ type DynamicOperation<'TObject, 'TValue when 'TObject :> dynamic> private() =
     convertFromCache.GetOrAdd(struct(true, context), convertFromDictFactory) operand
 
 [<Sealed; AbstractClass>]
-type DynamicOperation<'TLeft, 'TRight, 'TResult when 'TLeft :> dynamic> private() =
-  static let binaryCache = ConcurrentDictionary<struct(ExpressionType * Type), 'TLeft -> 'TRight -> 'TResult>()
+type DynamicOperation<'TLeft, 'TRight, 'TValue when 'TLeft :> dynamic> private() =
+  static let argumentType = typeof<'TValue>
+  static let argumentTypeIsObject = typeof<obj>.Equals argumentType
+  static let argumentTypeIsDynamic = typeof<dynamic>.Equals argumentType
+
+  static let binaryCache = ConcurrentDictionary<struct(ExpressionType * Type), 'TLeft -> 'TRight -> 'TValue>()
   static let binaryDictFactory = Func<struct(ExpressionType * Type), _>(
     let args = [|
       DynamicType<'TLeft>.ArgumentInfo
@@ -238,26 +280,84 @@ type DynamicOperation<'TLeft, 'TRight, 'TResult when 'TLeft :> dynamic> private(
     |]
     fun (struct(exprType, context)) ->
       let site =
-        CallSite<Func<CallSite, 'TLeft, 'TRight, 'TResult>>.Create(
+        CallSite<Func<CallSite, 'TLeft, 'TRight, 'TValue>>.Create(
           Binder.BinaryOperation(CSharpBinderFlags.None, exprType, context, args)
         )
       fun left right -> site.Target.Invoke(site, left, right)
   )
 
-  static member Add(left : 'TLeft, right : 'TRight, context : Type) : 'TResult =
+  static let getIndexCache = ConcurrentDictionary<ValueTuple<Type>, 'TLeft -> 'TRight -> 'TValue>()
+  static let getIndexFactory = Func<ValueTuple<Type>, _>(
+    let args = [|
+      DynamicType<'TLeft>.ArgumentInfo
+      DynamicType<'TRight>.ArgumentInfo
+    |]
+    if argumentTypeIsObject then
+      fun context ->
+        // No need to convert
+        let site = CallSite<Func<CallSite, 'TLeft, 'TRight, 'TValue>>.Create(
+          Binder.GetIndex(CSharpBinderFlags.None, context.Item1, args)
+        )
+        fun obj index -> site.Target.Invoke(site, obj, index)
+    elif argumentTypeIsDynamic then
+      fun context ->
+        let site = CallSite<Func<CallSite, 'TLeft, 'TRight, obj>>.Create(
+          Binder.GetIndex(CSharpBinderFlags.None, context.Item1, args)
+        )
+        // No need to convert
+        fun obj index ->
+          let result = site.Target.Invoke(site, obj, index)
+          match result with
+          | :? 'TValue as result -> result
+          | _ -> (DynamicValue<_> result) |> box :?> 'TValue
+    else
+      fun context ->
+        let convertSite =
+          CallSite<Func<CallSite, obj, 'TValue>>.Create(
+            Binder.Convert(CSharpBinderFlags.None, argumentType, context.Item1)
+          )
+        let getSite =
+          CallSite<Func<CallSite, 'TLeft, 'TRight, obj>>.Create(
+            Binder.GetIndex(CSharpBinderFlags.None, context.Item1, args)
+          )
+        fun obj index -> convertSite.Target.Invoke(convertSite, getSite.Target.Invoke(getSite, obj, index))
+  )
+
+  static let setIndexCache = ConcurrentDictionary<ValueTuple<Type>, 'TLeft -> 'TRight -> 'TValue -> unit>()
+  static let setIndexFactory = Func<ValueTuple<Type>, _>(
+    let args = [|
+      DynamicType<'TLeft>.ArgumentInfo
+      DynamicType<'TRight>.ArgumentInfo
+      DynamicType<'TValue>.ArgumentInfo
+    |]
+    fun context ->
+      let site =
+        CallSite<Func<CallSite, 'TLeft, 'TRight, 'TValue, obj>>.Create(
+          Binder.SetIndex(CSharpBinderFlags.None, context.Item1, args)
+        )
+      fun obj index value -> site.Target.Invoke(site, obj, index, value) |> ignore
+  )
+
+  static member Add(left : 'TLeft, right : 'TRight, context : Type) : 'TValue =
     binaryCache.GetOrAdd(struct(ExpressionType.Add, context), binaryDictFactory) left right
 
-  static member Subtract(left : 'TLeft, right : 'TRight, context : Type) : 'TResult =
+  static member Subtract(left : 'TLeft, right : 'TRight, context : Type) : 'TValue =
     binaryCache.GetOrAdd(struct(ExpressionType.Subtract, context), binaryDictFactory) left right
 
-  static member Multiply(left : 'TLeft, right : 'TRight, context : Type) : 'TResult =
+  static member Multiply(left : 'TLeft, right : 'TRight, context : Type) : 'TValue =
     binaryCache.GetOrAdd(struct(ExpressionType.Multiply, context), binaryDictFactory) left right
 
-  static member Divide(left : 'TLeft, right : 'TRight, context : Type) : 'TResult =
+  static member Divide(left : 'TLeft, right : 'TRight, context : Type) : 'TValue =
     binaryCache.GetOrAdd(struct(ExpressionType.Divide, context), binaryDictFactory) left right
 
-  static member Modulo(left : 'TLeft, right : 'TRight, context : Type) : 'TResult =
+  static member Modulo(left : 'TLeft, right : 'TRight, context : Type) : 'TValue =
     binaryCache.GetOrAdd(struct(ExpressionType.Modulo, context), binaryDictFactory) left right
+
+  static member GetIndex(object : 'TLeft, index : 'TRight, context : Type) : 'TValue =
+    getIndexCache.GetOrAdd(ValueTuple<_>(context), getIndexFactory) object index
+
+  static member SetIndex(object : 'TLeft, index : 'TRight, value : 'TValue, context : Type) =
+    setIndexCache.GetOrAdd(ValueTuple<_>(context), setIndexFactory) object index value
 
 type table = System.Dynamic.ExpandoObject
 
@@ -290,6 +390,45 @@ let inline (~-) (operand : 'TOperand) : 'TResult =
 
 let inline (~~~) (operand : 'TOperand) : 'TResult =
   DynamicOperation<'TOperand, 'TResult>.OnesComplement(operand, null)
+
+[<Sealed; AbstractClass; Extension>]
+type DynamicExtensions private() =
+  [<Extension>]
+  static member inline Get(object : 'TObject, index : 'TIndex) : 'TResult =
+    DynamicOperation<'TObject, 'TIndex, 'TResult>.GetIndex(object, index, null)
+    
+  [<Extension>]
+  static member inline Set(object : 'TObject, index : 'TIndex, value : 'TValue) =
+    DynamicOperation<'TObject, 'TIndex, 'TValue>.SetIndex(object, index, value, null)
+    
+  [<Extension>]
+  static member inline Delete(object : 'TObject, index : 'TIndex) =
+    DynamicOperation<'TObject, 'TIndex>.DeleteIndex(object, index, null)
+
+type IDynamicMetaObjectProvider with
+  member inline this.Item
+    with get(index : obj) : dynamic = this.Get index
+    and set(index : obj) (value : objnull) =
+      if Object.ReferenceEquals(value, unset) then this.Delete(index)
+      else this.Set(index, value)
+    
+  member inline this.Item
+    with get(index : dynamic) : dynamic = this.Get index
+    and set(index : dynamic) (value : objnull) =
+      if Object.ReferenceEquals(value, unset) then this.Delete(index)
+      else this.Set(index, value)
+    
+  member inline this.Item
+    with get(index : int) : dynamic = this.Get index
+    and set(index : int) (value : objnull) =
+      if Object.ReferenceEquals(value, unset) then this.Delete(index)
+      else this.Set(index, value)
+
+  member inline this.Item
+    with get(index : string) : dynamic = this.Get index
+    and set(index : string) (value : objnull) =
+      if Object.ReferenceEquals(value, unset) then this.Delete(index)
+      else this.Set(index, value)
 
 type DynamicValue<'T> with
   static member inline op_Implicit(operand : DynamicValue<'T>) : 'TResult =
@@ -336,6 +475,45 @@ module CallerContext =
 
   let inline (~~~) (operand : 'TOperand) : 'TResult =
     DynamicOperation<'TOperand, 'TResult>.OnesComplement(operand, getContext())
+
+  [<Sealed; AbstractClass; Extension>]
+  type DynamicExtensions private() =
+    [<Extension>]
+    static member inline Get(object : 'TObject, index : 'TIndex) : 'TResult =
+      DynamicOperation<'TObject, 'TIndex, 'TResult>.GetIndex(object, index, getContext())
+
+    [<Extension>]
+    static member inline Set(object : 'TObject, index : 'TIndex, value : 'TValue) =
+      DynamicOperation<'TObject, 'TIndex, 'TValue>.SetIndex(object, index, value, getContext())
+
+    [<Extension>]
+    static member inline Delete(object : 'TObject, index : 'TIndex) =
+      DynamicOperation<'TObject, 'TIndex>.DeleteIndex(object, index, getContext())
+
+  type IDynamicMetaObjectProvider with
+    member inline this.Item
+      with get(index : obj) : dynamic = this.Get index
+      and set(index : obj) (value : objnull) =
+        if Object.ReferenceEquals(value, unset) then this.Delete(index)
+        else this.Set(index, value)
+
+    member inline this.Item
+      with get(index : dynamic) : dynamic = this.Get index
+      and set(index : dynamic) (value : objnull) =
+        if Object.ReferenceEquals(value, unset) then this.Delete(index)
+        else this.Set(index, value)
+
+    member inline this.Item
+      with get(index : int) : dynamic = this.Get index
+      and set(index : int) (value : objnull) =
+        if Object.ReferenceEquals(value, unset) then this.Delete(index)
+        else this.Set(index, value)
+
+    member inline this.Item
+      with get(index : string) : dynamic = this.Get index
+      and set(index : string) (value : objnull) =
+        if Object.ReferenceEquals(value, unset) then this.Delete(index)
+        else this.Set(index, value)
 
   type DynamicValue<'T> with
     static member inline op_Implicit(operand : DynamicValue<'T>) : 'TResult =
@@ -391,6 +569,45 @@ module CalleeContext =
 
   let inline (~~~) (operand : 'TOperand) : 'TResult =
     DynamicOperation<'TOperand, 'TResult>.OnesComplement(operand, getContext operand)
+
+  [<Sealed; AbstractClass; Extension>]
+  type DynamicExtensions private() =
+    [<Extension>]
+    static member inline Get(object : 'TObject, index : 'TIndex) : 'TResult =
+      DynamicOperation<'TObject, 'TIndex, 'TResult>.GetIndex(object, index, getContext object)
+
+    [<Extension>]
+    static member inline Set(object : 'TObject, index : 'TIndex, value : 'TValue) =
+      DynamicOperation<'TObject, 'TIndex, 'TValue>.SetIndex(object, index, value, getContext object)
+
+    [<Extension>]
+    static member inline Delete(object : 'TObject, index : 'TIndex) =
+      DynamicOperation<'TObject, 'TIndex>.DeleteIndex(object, index, getContext object)
+      
+  type IDynamicMetaObjectProvider with
+    member inline this.Item
+      with get(index : obj) : dynamic = this.Get index
+      and set(index : obj) (value : objnull) =
+        if Object.ReferenceEquals(value, unset) then this.Delete(index)
+        else this.Set(index, value)
+
+    member inline this.Item
+      with get(index : dynamic) : dynamic = this.Get index
+      and set(index : dynamic) (value : objnull) =
+        if Object.ReferenceEquals(value, unset) then this.Delete(index)
+        else this.Set(index, value)
+
+    member inline this.Item
+      with get(index : int) : dynamic = this.Get index
+      and set(index : int) (value : objnull) =
+        if Object.ReferenceEquals(value, unset) then this.Delete(index)
+        else this.Set(index, value)
+
+    member inline this.Item
+      with get(index : string) : dynamic = this.Get index
+      and set(index : string) (value : objnull) =
+        if Object.ReferenceEquals(value, unset) then this.Delete(index)
+        else this.Set(index, value)
 
   type DynamicValue<'T> with
     static member inline op_Implicit(operand : DynamicValue<'T>) : 'TResult =
