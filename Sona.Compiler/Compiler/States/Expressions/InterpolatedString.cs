@@ -86,113 +86,78 @@ namespace Sona.Compiler.States
         public override void EnterInterpStrAlignment(InterpStrAlignmentContext context)
         {
             AddFill();
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public override void ExitInterpStrAlignment(InterpStrAlignmentContext context)
         {
-            try
-            {
-                parts.Add(context.GetText());
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            parts.Add(StopCaptureInput(context));
         }
 
         public sealed override void EnterInterpStrGeneralFormat(InterpStrGeneralFormatContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public sealed override void ExitInterpStrGeneralFormat(InterpStrGeneralFormatContext context)
         {
-            try
-            {
-                var text = context.GetText().TrimStart(':');
-                parts.Add("%");
-                parts.Add(text);
-                AddFill();
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            var text = StopCaptureInput(context).TrimStart(':');
+            parts.Add("%");
+            parts.Add(text);
+            AddFill();
         }
 
         public sealed override void EnterInterpStrStandardFormat(InterpStrStandardFormatContext context)
         {
             AddFill();
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public sealed override void ExitInterpStrStandardFormat(InterpStrStandardFormatContext context)
         {
-            try
+            var text = StopCaptureInput(context).TrimStart(':');
+            var parsedText = Syntax.GetStringLiteralValue(text);
+            if(parsedText.Length == 1 && !Char.IsLetter(parsedText[0]))
             {
-                var text = context.GetText().TrimStart(':');
-                var parsedText = Syntax.GetStringLiteralValue(text);
-                if(parsedText.Length == 1 && !Char.IsLetter(parsedText[0]))
+                var suggestion = parsedText[0] switch
                 {
-                    var suggestion = parsedText[0] switch
-                    {
-                        '"' => "\"\\\"\"",
-                        '\'' => "\"'\"",
-                        _ => text.Replace('\'', '\"')
-                    };
-                    Error($"Standard format specifiers (as '…') must be a single letter. Use `{suggestion}` if you wish to use a custom format specifier.", context);
-                }
-                AddUncheckedFormat(parsedText, context);
+                    '"' => "\"\\\"\"",
+                    '\'' => "\"'\"",
+                    _ => text.Replace('\'', '\"')
+                };
+                Error($"Standard format specifiers (as '…') must be a single letter. Use `{suggestion}` if you wish to use a custom format specifier.", context);
             }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            AddUncheckedFormat(parsedText, context);
         }
 
         public sealed override void EnterInterpStrCustomFormat(InterpStrCustomFormatContext context)
         {
             AddFill();
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public sealed override void ExitInterpStrCustomFormat(InterpStrCustomFormatContext context)
         {
-            try
+            var text = StopCaptureInput(context).TrimStart(':');
+            var parsedText = Syntax.GetStringLiteralValue(text);
+            if(parsedText.Length == 1 && Char.IsLetter(parsedText[0]))
             {
-                var text = context.GetText().TrimStart(':');
-                var parsedText = Syntax.GetStringLiteralValue(text);
-                if(parsedText.Length == 1 && Char.IsLetter(parsedText[0]))
-                {
-                    Error($"Custom format specifiers (as \"…\") are not expressed as a single letter. Use the format-specific method (such as `\"%{parsedText[0]}\"`) to express it, or `'{parsedText[0]}'` if you wanted to use a standard format specifier.\"", context);
-                }
-                AddUncheckedFormat(parsedText, context);
+                Error($"Custom format specifiers (as \"…\") are not expressed as a single letter. Use the format-specific method (such as `\"%{parsedText[0]}\"`) to express it, or `'{parsedText[0]}'` if you wanted to use a standard format specifier.\"", context);
             }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            AddUncheckedFormat(parsedText, context);
         }
 
         public sealed override void EnterInterpStrNumberFormat(InterpStrNumberFormatContext context)
         {
             AddFill();
             Out.WriteTraitAssertion("number");
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public sealed override void ExitInterpStrNumberFormat(InterpStrNumberFormatContext context)
         {
-            try
-            {
-                var text = context.GetText().TrimStart(':');
-                AddUncheckedFormat(text, context);
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            var text = StopCaptureInput(context).TrimStart(':');
+            AddUncheckedFormat(text, context);
         }
 
         public sealed override void EnterInterpStrComponentFormat(InterpStrComponentFormatContext context)

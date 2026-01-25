@@ -1,156 +1,8 @@
-﻿[<AutoOpen>]
-module Sona.Runtime.Computations
+﻿module Sona.Runtime.Computations
 
-open System
 open System.Runtime.CompilerServices
-open System.Threading.Tasks
-
-type internal IIL = InlineIfLambdaAttribute
-
-let coroutine = { new Coroutines.CoroutineBuilder() with member _.ToString() = "coroutine" }
-
-[<AbstractClass>]
-type BaseBuilder<'TZero>() =
-  abstract member While : (unit -> bool) * (unit -> 'TZero) -> 'TZero
-
-  member inline _.TryFinally([<IIL>]_f : unit -> _, [<IIL>]_cleanup : unit -> unit) =
-    try
-      _f()
-    finally
-      _cleanup()
-  
-  member inline _.TryWith([<IIL>]_f : unit -> _, [<IIL>]_fail : _ -> _) =
-    try
-      _f()
-    with
-    | e -> _fail e
-  
-  member inline _.Using(x : #IDisposable, [<IIL>]_f : _ -> _ option) =
-    try
-      _f x
-    finally
-      x.Dispose()
-  
-  member inline this.For(s : _ seq, [<IIL>]_f : _ -> 'TZero) =
-    let enumerator = s.GetEnumerator()
-    try
-      this.While(enumerator.MoveNext, (fun() -> _f enumerator.Current))
-    finally
-      enumerator.Dispose()
-
-[<AbstractClass>]
-type OptionBuilder() =
-  inherit BaseBuilder<unit option>()
-
-  member inline _.Zero() = Some()
-
-  member inline _.Return(value) = Some value
-  member inline _.Delay([<IIL>]_f : _ -> _ option) = _f
-  member inline _.Run([<IIL>]_f : _ -> _ option) = _f()
-
-  member inline _.ReturnFrom(opt : _ option) = opt
-  
-  member inline _.ReturnFrom(opt : _ voption) =
-    match opt with
-    | ValueSome value -> Some value
-    | _ -> None
-  
-  member inline _.ReturnFrom(opt : Result<_, _>) =
-    match opt with
-    | Ok value -> Some value
-    | _ -> None
-  
-  member inline this.Bind(opt : _ option, [<IIL>]_func) = Option.bind _func (this.ReturnFrom(opt))
-  member inline this.Bind(opt : _ voption, [<IIL>]_func) = Option.bind _func (this.ReturnFrom(opt))
-  member inline this.Bind(opt : Result<_, _>, [<IIL>]_func) = Option.bind _func (this.ReturnFrom(opt))
-  member inline this.Combine(opt : _ option, [<IIL>]_func) = this.Bind(opt, _func)
-
-  override _.While(cond, func) =
-    let mutable continuing = true
-    while continuing && cond() do
-      if func().IsNone then
-        continuing <- false
-    if continuing then Some()
-    else None
-
-let option = { new OptionBuilder() with member _.ToString() = "option" }
-
-[<AbstractClass>]
-type ValueOptionBuilder() =
-  inherit BaseBuilder<unit voption>()
-
-  member inline _.Zero() = ValueSome()
-  member inline _.Return(value) = ValueSome value
-  member inline _.Delay([<IIL>]_f : _ -> _ voption) = _f
-  member inline _.Run([<IIL>]_f : _ -> _ voption) = _f()
-  
-  member inline _.ReturnFrom(opt : _ option) =
-    match opt with
-    | Some value -> ValueSome value
-    | _ -> ValueNone
-  
-  member inline _.ReturnFrom(opt : _ voption) = opt
-  
-  member inline _.ReturnFrom(opt : Result<_, _>) =
-    match opt with
-    | Ok value -> ValueSome value
-    | _ -> ValueNone
-    
-  member inline this.Bind(opt : _ option, [<IIL>]_func) = ValueOption.bind _func (this.ReturnFrom(opt))
-  member inline this.Bind(opt : _ voption, [<IIL>]_func) = ValueOption.bind _func (this.ReturnFrom(opt))
-  member inline this.Bind(opt : Result<_, _>, [<IIL>]_func) = ValueOption.bind _func (this.ReturnFrom(opt))
-  member inline this.Combine(opt : _ voption, [<IIL>]_func) = this.Bind(opt, _func)
-  
-  override _.While(cond, func) =
-    let mutable continuing = true
-    while continuing && cond() do
-      if func().IsValueNone then
-        continuing <- false
-    if continuing then ValueSome()
-    else ValueNone
-
-let voption = { new ValueOptionBuilder() with member _.ToString() = "voption" }
-
-[<AbstractClass>]
-type ResultBaseBuilder<'TZeroOk, 'TZeroError>() =
-  inherit BaseBuilder<Result<'TZeroOk, 'TZeroError>>()
-  
-  member inline _.Delay([<IIL>]_f : _ -> Result<_, _>) = _f
-  member inline _.Run([<IIL>]_f : _ -> Result<_, _>) = _f()
-
-  member inline _.ReturnFrom(opt : _ option) =
-    match opt with
-    | Some value -> Ok value
-    | _ -> Error()
-  
-  member inline _.ReturnFrom(opt : _ voption) =
-    match opt with
-    | ValueSome value -> Ok value
-    | _ -> Error()
-  
-  member inline _.ReturnFrom(opt : Result<_, _>) = opt
-
-[<AbstractClass>]
-type ResultBuilder<'TError>() =
-  inherit ResultBaseBuilder<unit, 'TError>()
-
-  member inline _.Zero() = Ok()
-  member inline _.Return(value) = Ok value
-  
-  member inline this.Bind(opt : Result<_, _>, [<IIL>]_func) = Result.bind _func (this.ReturnFrom(opt))
-  member inline this.Bind(opt : _ option, [<IIL>]_func) = this.Bind(this.ReturnFrom(opt), _func)
-  member inline this.Bind(opt : _ voption, [<IIL>]_func) = this.Bind(this.ReturnFrom(opt), _func)
-  member inline this.Combine(opt : Result<_, _>, [<IIL>]_func) = this.Bind(opt, _func)
-  
-  override _.While(cond, func) =
-    let mutable continuing = true
-    let mutable errorResult = Unchecked.defaultof<_>
-    while continuing && cond() do
-      errorResult <- func()
-      if errorResult.IsError then
-        continuing <- false
-    if continuing then Ok()
-    else errorResult
+open Sona.Runtime.ComputationBuilders
+open Sona.Runtime.Collections
 
 [<Sealed>]
 type private ResultBuilderImpl<'TError>() =
@@ -160,34 +12,6 @@ type private ResultBuilderImpl<'TError>() =
 
   override _.ToString() = "result"
 
-let result<'TError> = ResultBuilderImpl<'TError>.Instance
-
-[<AbstractClass>]
-type ErrorResultBuilder<'TSuccess>() =
-  inherit ResultBaseBuilder<'TSuccess, unit>()
-
-  member inline _.Zero() = Error()
-  member inline _.Return(value) = Error value
-  
-  member inline _.Bind(opt : Result<_, _>, [<IIL>]_func) =
-    match opt with
-    | Ok _ -> opt
-    | Error err -> _func err
-  
-  member inline this.Bind(opt : _ option, [<IIL>]_func) = this.Bind(this.ReturnFrom(opt), _func)
-  member inline this.Bind(opt : _ voption, [<IIL>]_func) = this.Bind(this.ReturnFrom(opt), _func)
-  member inline this.Combine(opt : Result<_, _>, [<IIL>]_func) = this.Bind(opt, _func)
-  
-  override _.While(cond, func) =
-    let mutable continuing = true
-    let mutable okResult = Unchecked.defaultof<_>
-    while continuing && cond() do
-      okResult <- func()
-      if okResult.IsOk then
-        continuing <- false
-    if continuing then Error()
-    else okResult
-
 [<Sealed>]
 type private ErrorResultBuilderImpl<'TSuccess>() =
   inherit ErrorResultBuilder<'TSuccess>()
@@ -195,518 +19,102 @@ type private ErrorResultBuilderImpl<'TSuccess>() =
   static member val Instance : ErrorResultBuilder<'TSuccess> = ErrorResultBuilderImpl<'TSuccess>()
 
   override _.ToString() = "errorResult"
-
+  
+[<CompiledName("CoroutineBuilder")>]
+let coroutine = { new CoroutineBuilder() with member _.ToString() = "coroutine" }
+[<CompiledName("SequenceBuilder")>]
+let sequence = { new SequenceBuilder() with member _.ToString() = "sequence" }
+[<CompiledName("OptionBuilder")>]
+let option = { new OptionBuilder() with member _.ToString() = "option" }
+[<CompiledName("ValueOptionBuilder")>]
+let voption = { new ValueOptionBuilder() with member _.ToString() = "voption" }
+[<CompiledName("ResultBuilder")>]
+let result<'TError> = ResultBuilderImpl<'TError>.Instance
+[<CompiledName("ErrorResultBuilder")>]
 let errorResult<'TSuccess> = ErrorResultBuilderImpl<'TSuccess>.Instance
-
-[<AbstractClass>]
-type ImmediateBuilderBase<'TZero when 'TZero : not struct>() =
-  inherit BaseBuilder<'TZero>()
-
-  override _.While(cond, func) =
-    while cond() do
-      let _ = func() in ()
-    Unchecked.defaultof<_>
-
-[<AbstractClass>]
-type DelayedBuilder() =
-  inherit ImmediateBuilderBase<unit>()
-
-  member inline _.Zero() = ()
-  member inline _.Return(value) = value
-  member inline _.Delay([<IIL>]_f : _ -> _) = _f
-  member inline _.Run([<IIL>]_f : _ -> _) = _f
-  member inline _.Combine(x, [<IIL>]_f) = _f x
-
+[<CompiledName("DelayedBuilder")>]
 let delayed = { new DelayedBuilder() with member _.ToString() = "delayed" }
-
-[<Literal>]
-let private noValueWarningMessage = "This `follow` operator may result in an exception if the argument has no value."
-[<Literal>]
-let private noSingleValueWarningMessage = "This `follow` operator may result in an exception if the argument does not contain exactly one element."
-[<Literal>]
-let private blockingWarningMessage = "This `follow` operator may result in a blocking operation."
-[<Literal>]
-let private warningNumber = 99999
-#nowarn "99999"
-
-[<AbstractClass>]
-type GlobalBuilder() =
-  inherit ImmediateBuilderBase<unit>()
-
-  member inline _.Zero() = ()
-  member inline _.Return(value) = value
-  member inline _.Delay([<IIL>]_f : _ -> _) = _f
-  member inline _.Run([<IIL>]_f : _ -> _) = _f()
-
-  static member inline private ErrorNoValue() =
-    raise (ArgumentException("The object has no value.", "arg"))
-
-  [<CompilerMessage(noValueWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : _ option) =
-    match arg with
-    | Some value -> value
-    | _ -> GlobalBuilder.ErrorNoValue()
-  
-  [<CompilerMessage(noValueWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : _ voption) =
-    match arg with
-    | ValueSome value -> value
-    | _ -> GlobalBuilder.ErrorNoValue()
-  
-  [<CompilerMessage(noValueWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : Result<_, _>) =
-    match arg with
-    | Ok value -> value
-    | Error err -> raise (ArgumentException(sprintf "The object has an error value %A." err, "arg"))
-  
-  [<CompilerMessage(noSingleValueWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : _ seq) = System.Linq.Enumerable.Single(arg)
-
-  [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : Async<_>) = Async.RunSynchronously arg
-  [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : Task) = arg.GetAwaiter().GetResult()
-  [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : Task<_>) = arg.GetAwaiter().GetResult()
-  [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : ValueTask) = arg.Preserve().GetAwaiter().GetResult()
-  [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline _.ReturnFrom(arg : ValueTask<_>) = arg.Preserve().GetAwaiter().GetResult()
-  member inline _.ReturnFrom(arg : Lazy<_>) = arg.Force()
-
-  [<CompilerMessage(noValueWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : _ option, [<IIL>]_func) = _func(this.ReturnFrom arg)
-  [<CompilerMessage(noValueWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : _ voption, [<IIL>]_func) = _func(this.ReturnFrom arg)
-  [<CompilerMessage(noValueWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : Result<_, _>, [<IIL>]_func) = _func(this.ReturnFrom arg)
-  [<CompilerMessage(noSingleValueWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : 'T seq, [<IIL>]_func) = _func(this.ReturnFrom arg)
-  [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : Async<_>, [<IIL>]_func) = _func(this.ReturnFrom arg)
-  [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : Task, [<IIL>]_func) = _func(this.ReturnFrom arg)
-  [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : Task<_>, [<IIL>]_func) = _func(this.ReturnFrom arg)
-  [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : ValueTask, [<IIL>]_func) = _func(this.ReturnFrom arg)
-  [<CompilerMessage(blockingWarningMessage, warningNumber)>]
-  member inline this.Bind(arg : ValueTask<_>, [<IIL>]_func) = _func(this.ReturnFrom arg)
-  member inline this.Bind(arg : Lazy<_>, [<IIL>]_func) = _func(this.ReturnFrom arg)
-
+[<CompiledName("ImmediateBuilder")>]
+let immediate = { new ImmediateBuilder() with member _.ToString() = "immediate" }
+[<CompiledName("ParallelBuilder")>]
+let ``parallel`` = { new ParallelBuilder() with member _.ToString() = "parallel" }
+[<CompiledName("GlobalBuilder")>]
 let ``global`` = { new GlobalBuilder() with member _.ToString() = "global" }
 
-[<Literal>]
-let private emptySequenceException = "The enumerator is not pointing at any element."
+[<CompiledName("ParallelOptionsBuilder")>]
+let inline parallelOptions options : ParallelOptionsBuilder = { Options = options }
 
-[<Literal>]
-let private nonThreadSafeException = "The enumerator is not thread-safe."
+[<CompiledName("UniversalSequenceBuilder")>]
+let inline sequenceVia builder : UniversalSequenceBuilder<_, _> = { BoolBuilder = builder; UnitBuilder = builder }
 
-module UniversalSequence =
-  open System.Threading
-  
-  [<CompiledName("Zero")>]
-  let inline zero boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) = {
-    new IUniversalEnumerator<_, _, _> with
+[<CompiledName("ListBuilder")>]
+let inline list<'T> : ListBuilder<'T> = { State = FSharp.Core.CompilerServices.ListCollector<'T>() }
 
-    member _.Current = raise(InvalidOperationException emptySequenceException)
+[<CompiledName("ArrayBuilder")>]
+let inline array<'T> : ArrayBuilder<'T> = { State = FSharp.Core.CompilerServices.ArrayCollector<'T>() }
 
-    member _.MoveNextUniversal() =
-      boolWrap(fun() -> (
-        (^B : (member Return : _ -> _) boolBuilder, false)
-      ))
+[<CompiledName("StringBuilder")>]
+let inline stringBuilder<'T when 'T :> System.Enum and 'T : not struct> : StringBuilderBuilder<_> = { State = System.Text.StringBuilder() }
 
-    member _.DisposeUniversal() =
-      unitWrap(fun() -> (
-        (^U : (member Return : _ -> _) unitBuilder, ())
-      ))
-  }
-  
-  [<CompiledName("Delay")>]
-  let inline delay ([<IIL>]_f : unit -> IUniversalEnumerator<_, _, _>) = _f
-  
-  [<CompiledName("Run")>]
-  let inline run ([<IIL>]_f) = {
-    new IUniversalEnumerable<_, _, _> with
-    member _.GetUniversalEnumerator() = _f()
-  }
-  
-  [<CompiledName("Yield")>]
-  let inline ``yield`` boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) x =
-   let mutable state = -1 in {
-    new IUniversalEnumerator<_, _, _> with
+open System.Threading.Tasks
 
-    member _.Current =
-      match Volatile.Read(&state) with
-      | 0 -> x
-      | _ -> raise(InvalidOperationException emptySequenceException)
-    
-    member _.MoveNextUniversal() =
-      boolWrap(fun() -> (
-        (^B : (member Return : _ -> _) boolBuilder, Interlocked.Increment(&state) = 0)
-      ))
-    
-    member _.DisposeUniversal() =
-      unitWrap(fun() -> (
-        (^U : (member Return : _ -> _) unitBuilder, ())
-      ))
-   }
-   
-  [<CompiledName("Bind")>]
-  let inline bind boolBuilder ([<IIL>]boolWrap) ([<IIL>]boolReturnFrom) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) m ([<IIL>]_f) =
-   let mutable inner = Unchecked.defaultof<IUniversalEnumerator<_, _, _>> in {
-    new IUniversalEnumerator<_, _, _> with
+let inline private startTask a ct =
+  Async.StartImmediateAsTask(a, cancellationToken = ct)
 
-    member _.Current =
-      if not(isNull(Volatile.Read(&inner) |> box)) then inner.Current
-      else raise(InvalidOperationException emptySequenceException)
+let inline private task (t : Task<_>) =
+  t :> Task
 
-    member _.MoveNextUniversal() =
-      if not(isNull(Volatile.Read(&inner) |> box)) then
-        // Never changes once set
-        inner.MoveNextUniversal()
-      else
-        boolWrap(fun() -> (
-          (^B : (member Bind : _ * _ -> _) boolBuilder, m, fun x -> (
-            // Initialize with the continuation
-            if
-              // Still empty
-              isNull(Volatile.Read(&inner) |> box) &&
-              // But non-empty before the value could be moved inside
-              not(isNull(Interlocked.CompareExchange(&inner, _f x, Unchecked.defaultof<_>) |> box))
-              then raise(InvalidOperationException nonThreadSafeException)
-            
-            // Return the inner result
-            boolReturnFrom(inner.MoveNextUniversal())
-          ))
-        ))
+type AsyncBuilder with
+  member _.MergeSources(x : Async<_>, y : Async<_>) =
+    async {
+      let! ct = Async.CancellationToken
+      let inline start t = startTask t ct
+      let t1 = start x
+      let t2 = start y
 
-    member _.DisposeUniversal() =
-      if not(isNull(Volatile.Read(&inner) |> box)) then
-        // Never changes once set
-        inner.DisposeUniversal()
-      else
-        unitWrap(fun() -> (
-          // Initialize with an empty value
-          if
-            // Still empty
-            isNull(Volatile.Read(&inner) |> box) &&
-            // But non-empty before the value could be moved inside
-            not(isNull(Interlocked.CompareExchange(&inner, zero boolBuilder boolWrap unitBuilder unitWrap, Unchecked.defaultof<_>) |> box))
-            then raise(InvalidOperationException nonThreadSafeException)
-          
-          // Return the inner result
-          unitReturnFrom(inner.DisposeUniversal())
-        ))
-   }
-   
-  [<CompiledName("YieldFrom")>]
-  let inline yieldFrom (x : IUniversalEnumerable<_, _, _>) = x.GetUniversalEnumerator()
-  
-  [<CompiledName("Combine")>]
-  let inline combine boolBuilder ([<IIL>]boolWrap) ([<IIL>]boolReturnFrom) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) (first : IUniversalEnumerator<_, _, _>) ([<IIL>]_second : unit -> IUniversalEnumerator<_, _, _>) =
-   let mutable inner = Unchecked.defaultof<IUniversalEnumerator<_, _, _>> in {
-    new IUniversalEnumerator<_, _, _> with
+      do! Task.WhenAll(task t1, task t2) |> Async.AwaitTask
 
-    member _.Current =
-      if not(isNull(Volatile.Read(&inner) |> box)) then inner.Current
-      else raise(InvalidOperationException emptySequenceException)
-    
-    member _.MoveNextUniversal() =
-      let enumerator = Volatile.Read(&inner)
-      if not(isNull(enumerator |> box)) && not(Object.ReferenceEquals(first, enumerator |> box)) then
-        // Delegate to the second enumerator (will never change)
-        enumerator.MoveNextUniversal()
-      else
-        boolWrap(fun() -> (
-          // Attempt to read
-          let enumerator =
-            let current = Volatile.Read(&inner)
-            if isNull(current |> box) then
-              // First read
-              if not(isNull(Interlocked.CompareExchange(&inner, first, Unchecked.defaultof<_>) |> box)) then
-                // Non-empty before the value could be moved inside
-                raise(InvalidOperationException nonThreadSafeException)
-              first
-            else
-              current
-          
-          // Enumerator is available
-          if not(Object.ReferenceEquals(first, enumerator)) then
-            // Is in the second enumerator, just delegate to it
-            boolReturnFrom(enumerator.MoveNextUniversal())
-          else
-            // Decide based on the result
-            (^B : (member Bind : _ * _ -> _) boolBuilder, enumerator.MoveNextUniversal(), fun hasNext -> (
-              // Initialize with the continuation
-              if hasNext then
-                // Just return the information
-                (^B : (member Return : _ -> _) boolBuilder, true)
-              else
-                // Cleanup and move to the next
-                (^U : (member Bind : _ * _ -> _) unitBuilder, enumerator.DisposeUniversal(), fun() -> (
-                  if
-                    // Still on the first enumerator
-                    Object.ReferenceEquals(first, Volatile.Read(&inner)) &&
-                    // But changed before the new value could be moved inside
-                    not(Object.ReferenceEquals(first, Interlocked.CompareExchange(&inner, _second(), first)))
-                    then raise(InvalidOperationException nonThreadSafeException)
-                  
-                  // Return the inner result
-                  boolReturnFrom(inner.MoveNextUniversal())
-                ))
-            ))
-        ))
-    
-    member _.DisposeUniversal() =
-      let enumerator = Volatile.Read(&inner)
-      if not(isNull(enumerator |> box)) && not(Object.ReferenceEquals(first, enumerator |> box)) then
-        // Delegate to the second enumerator (will never change)
-        enumerator.DisposeUniversal()
-      else
-        unitWrap(fun() -> (
-          // Initialize with an empty value
-          if
-            // Is empty
-            isNull(Volatile.Read(&inner) |> box) &&
-            // But non-empty before the value could be moved inside
-            not(isNull(Interlocked.CompareExchange(&inner, zero boolBuilder boolWrap unitBuilder unitWrap, Unchecked.defaultof<_>) |> box))
-            then raise(InvalidOperationException nonThreadSafeException)
-          
-          // Return the inner result
-          unitReturnFrom(inner.DisposeUniversal())
-        ))
-   }
-  
-  [<CompiledName("TryFinally")>]
-  let inline tryFinally boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) ([<IIL>]_f) ([<IIL>]_cleanup : unit -> unit) =
-    let mutable enumeratorReceived = false
-    try
-     let enumerator : IUniversalEnumerator<_, _, _> = _f()
-     enumeratorReceived <- true
+      return (t1.Result, t2.Result)
+    }
 
-     let mutable finished = 0
-     let inline isFinished() = 0 <> Volatile.Read(&finished)
-     let inline doCleanup() = 
-       if 0 = Interlocked.CompareExchange(&finished, 1, 0) then _cleanup()
-     {
-      new IUniversalEnumerator<_, _, _> with
-        
-      member _.Current = enumerator.Current
+  member _.Bind2(a1 : Async<_>, a2 : Async<_>, _func) =
+    async {
+      let! ct = Async.CancellationToken
+      let inline start t = startTask t ct
+      let t1 = start a1
+      let t2 = start a2
 
-      member _.MoveNextUniversal() =
-        if isFinished() then enumerator.MoveNextUniversal()
-        else boolWrap(fun() -> (
-          // Signal if there are more elements to read
-          let mutable continuing = false
-          
-          let delayed = (^B : (member Delay : _ -> _) boolBuilder, fun() -> (
-            (^B : (member Bind : _ * _ -> _) boolBuilder, enumerator.MoveNextUniversal(), fun hasNext -> (
-              // Prevent cleanup
-              if hasNext then continuing <- true
-              (^B : (member Return : _ -> _) boolBuilder, hasNext)
-            ))
-          ))
-          
-          (^B : (member TryFinally : _ * _ -> _) boolBuilder, delayed, fun() -> (
-            if not continuing then
-              // There was an exception - cleanup immediately
-              doCleanup()
-          ))
-        ))
-      
-      member _.DisposeUniversal() =
-        if isFinished() then enumerator.DisposeUniversal()
-        else unitWrap(fun() -> (
-          let delayed = (^U : (member Delay : _ -> _) unitBuilder, fun() -> (
-            unitReturnFrom(enumerator.DisposeUniversal())
-          ))
-          
-          (^U : (member TryFinally : _ * _ -> _) unitBuilder, delayed, fun() -> doCleanup())
-        ))
-     }
-    finally
-     if not enumeratorReceived then
-       _cleanup()
-  
-  [<CompiledName("TryWith")>]
-  let inline tryWith boolBuilder ([<IIL>]boolWrap) ([<IIL>]boolReturnFrom) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) ([<IIL>]_f : unit -> IUniversalEnumerator<_, _, _>) ([<IIL>]_fail : exn -> IUniversalEnumerator<_, _, _>) =
-    try
-     let mutable enumerator : IUniversalEnumerator<_, _, _> = _f()
+      do! Task.WhenAll(task t1, task t2) |> Async.AwaitTask
 
-     let mutable failed = 0
-     let inline isFailed() = 0 <> Volatile.Read(&failed)
-     let inline doFail e = 
-       if 0 <> Interlocked.CompareExchange(&failed, 1, 0) then
-         // Already failed; propagate
-         System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(e).Throw()
-     
-     {
-      new IUniversalEnumerator<_, _, _> with
-  
-      member _.Current = enumerator.Current
-  
-      member _.MoveNextUniversal() =
-        if isFailed() then enumerator.MoveNextUniversal()
-        else boolWrap(fun() -> (
-          let delayed = (^B : (member Delay : _ -> _) boolBuilder, fun() -> (
-            boolReturnFrom(enumerator.MoveNextUniversal())
-          ))
-          
-          (^B : (member TryWith : _ * _ -> _) boolBuilder, delayed, fun e -> (
-            doFail e
-            
-            // Signal if dispose was successful
-            let mutable disposed = false
+      return! _func(t1.Result, t2.Result)
+    }
 
-            let delayed = (^B : (member Delay : _ -> _) boolBuilder, fun() -> (
-              (^U : (member Bind : _ * _ -> _) unitBuilder, enumerator.DisposeUniversal(), fun() -> (
-                disposed <- true
+  member _.Bind3(a1 : Async<_>, a2 : Async<_>, a3 : Async<_>, _func) =
+    async {
+      let! ct = Async.CancellationToken
+      let inline start t = startTask t ct
+      let t1 = start a1
+      let t2 = start a2
+      let t3 = start a3
 
-                // Replace enumerator and start enumerating
-                enumerator <- _fail e
-                boolReturnFrom(enumerator.MoveNextUniversal())
-              ))
-            ))
+      do! Task.WhenAll(task t1, task t2, task t3) |> Async.AwaitTask
 
-            (^B : (member TryWith : _ * _ -> _) boolBuilder, delayed, fun e -> (
-              if disposed then
-                // The exception comes from the failure enumerator, propagate anyway
-                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(e).Throw()
-              
-              // Disposing caused another exception, use this one
-              enumerator <- _fail e
-              boolReturnFrom(enumerator.MoveNextUniversal())
-            ))
-          ))
-        ))
-      
-      member _.DisposeUniversal() =
-        if isFailed() then enumerator.DisposeUniversal()
-        else unitWrap(fun() -> (
-          let delayed = (^U : (member Delay : _ -> _) unitBuilder, fun() -> (
-            unitReturnFrom(enumerator.DisposeUniversal())
-          ))
-        
-          (^U : (member TryWith : _ * _ -> _) unitBuilder, delayed, fun e -> (
-            doFail e
+      return! _func(t1.Result, t2.Result, t3.Result)
+    }
 
-            // Cleanup is requested but handler must be given a chance to run
-            enumerator <- _fail e
-            
-            let delayed = (^U : (member Delay : _ -> _) unitBuilder, fun() -> (
-              (^B : (member Bind : _ * _ -> _) boolBuilder, enumerator.MoveNextUniversal(), fun (_ : bool) -> (
-                // We don't care about whether there is next element since the enumerator will be disposed
-                (^U : (member Return : _ -> _) unitBuilder, ())
-              ))
-            ))
+  member _.Bind4(a1 : Async<_>, a2 : Async<_>, a3 : Async<_>, a4 : Async<_>, _func) =
+    async {
+      let! ct = Async.CancellationToken
+      let inline start t = startTask t ct
+      let t1 = start a1
+      let t2 = start a2
+      let t3 = start a3
+      let t4 = start a4
 
-            (^U : (member TryFinally : _ * _ -> _) unitBuilder, delayed, fun() -> (
-              // Finally dispose
-              unitReturnFrom(enumerator.DisposeUniversal())
-            ))
-          ))
-        ))
-     }
-    with
-    | e -> _fail e
-  
-  [<CompiledName("Using")>]
-  let inline using boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) (x : #IDisposable) ([<IIL>]_f) =
-    tryFinally boolBuilder boolWrap unitBuilder unitWrap unitReturnFrom (fun() -> _f(x)) (fun() -> x.Dispose())
-  
-  [<CompiledName("While")>]
-  let inline ``while`` boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) ([<IIL>]_cond : unit -> bool) ([<IIL>]_f : unit -> IUniversalEnumerator<_, _, _>) =
-   let mutable inner = Unchecked.defaultof<IUniversalEnumerator<_, _, _>> in {
-    new IUniversalEnumerator<_, _, _> with
+      do! Task.WhenAll(task t1, task t2, task t3, task t4) |> Async.AwaitTask
 
-    member _.Current =
-      if not(isNull(Volatile.Read(&inner) |> box)) then inner.Current
-      else raise(InvalidOperationException emptySequenceException)
-    
-    member _.MoveNextUniversal() =
-      boolWrap(fun() -> (
-        let rec loop (enumerator : IUniversalEnumerator<_, _, _>) =
-          (^B : (member Bind : _ * _ -> _) boolBuilder, enumerator.MoveNextUniversal(), fun hasNext -> (
-            // Initialize with the continuation
-            if hasNext then
-              // Just return the information
-              (^B : (member Return : _ -> _) boolBuilder, true)
-            else
-              // Cleanup and move to the next
-              (^U : (member Bind : _ * _ -> _) unitBuilder, enumerator.DisposeUniversal(), fun() -> (
-                let current = Volatile.Read(&inner)
-                if Object.ReferenceEquals(enumerator, current) then
-                  // Still on the enumerator
-                  if not(_cond()) then
-                    // Terminate
-                    (^B : (member Return : _ -> _) boolBuilder, false)
-                  else
-                    // Start next iteration
-                    let next = _f()
-                    if not(Object.ReferenceEquals(enumerator, Interlocked.CompareExchange(&inner, next, enumerator))) then
-                      // But changed before the new value could be moved inside
-                      raise(InvalidOperationException nonThreadSafeException)
-                    // Try the next enumerator
-                    loop next
-                else
-                  loop current
-              ))
-          ))
-
-        // Attempt to read
-        let current = Volatile.Read(&inner)
-        if isNull(current |> box) then
-          // First read
-          if not(_cond()) then
-            // Terminate
-            (^B : (member Return : _ -> _) boolBuilder, false)
-          else
-            let next = _f()
-            if not(isNull(Interlocked.CompareExchange(&inner, next, Unchecked.defaultof<_>) |> box)) then
-              // Non-empty before the value could be moved inside
-              raise(InvalidOperationException nonThreadSafeException)
-            // Go inside
-            loop next
-        else
-          loop current
-      ))
-    
-    member _.DisposeUniversal() =
-      unitWrap(fun() -> (
-        let current = Volatile.Read(&inner)
-        if isNull(current |> box) then
-          // Did not even run
-          (^U : (member Return : _ -> _) unitBuilder, ())
-        else
-          // Set to an empty value
-          if not(Object.ReferenceEquals(current, Interlocked.CompareExchange(&inner, zero boolBuilder boolWrap unitBuilder unitWrap, current)))
-            then raise(InvalidOperationException nonThreadSafeException)
-          // Dispose
-          unitReturnFrom(current.DisposeUniversal())
-      ))
-   }
-   
-  [<CompiledName("For")>]
-  let inline ``for`` boolBuilder ([<IIL>]boolWrap) unitBuilder ([<IIL>]unitWrap) ([<IIL>]unitReturnFrom) (s : _ seq) ([<IIL>]_f) =
-    let enumerator = s.GetEnumerator()
-    tryFinally boolBuilder boolWrap unitBuilder unitWrap unitReturnFrom
-      (fun() -> (
-        ``while`` boolBuilder boolWrap unitBuilder unitWrap unitReturnFrom
-          (fun() -> enumerator.MoveNext())
-          (fun() -> _f enumerator.Current)
-      ))
-      (fun() -> enumerator.Dispose())
-
-[<NoEquality; NoComparison; Struct>]
-type UniversalSequenceBuilder<'TBoolBuilder, 'TUnitBuilder> =
-  {
-    BoolBuilder : 'TBoolBuilder
-    UnitBuilder : 'TUnitBuilder
-  }
-  member inline _.YieldFrom x = UniversalSequence.yieldFrom x
-  member inline _.Delay([<IIL>]_f) = UniversalSequence.delay _f
-  member inline _.Run([<IIL>]_f) = UniversalSequence.run _f
+      return! _func(t1.Result, t2.Result, t3.Result, t4.Result)
+    }
 
 [<AbstractClass; Extension>]
 type UniversalSequenceBuilderExtensions1 internal() =
@@ -985,5 +393,41 @@ type UniversalSequenceBuilderExtensions3 private() =
       (fun m -> (^U : (member ReturnFrom : _ -> _) self.UnitBuilder, m))
       s _f
       
-[<CompiledName("SequenceVia")>]
-let inline sequenceVia builder = { BoolBuilder = builder; UnitBuilder = builder }
+[<AbstractClass; Extension>]
+type StringBuilderBuilderExtensions1 internal() =
+  [<Extension>]
+  static member inline Yield(self : StringBuilderBuilder<_>, x) =
+    (^T : (member Append : _ -> ^T) self.State, x) |> ignore
+
+  [<Extension>]
+  static member inline YieldFrom(self : StringBuilderBuilder<_>, s) =
+    for x in s do
+      (^T : (member Append : _ -> ^T) self.State, x) |> ignore
+
+[<Sealed; AbstractClass; Extension>]
+type StringBuilderBuilderExtensions2 private() =
+  inherit StringBuilderBuilderExtensions1()
+
+  [<Extension>]
+  static member inline Yield(self : StringBuilderBuilder<_>, x, y) =
+    (^T : (member Append : _ * _ -> ^T) self.State, x, y) |> ignore
+
+  [<Extension>]
+  static member inline Yield(self : StringBuilderBuilder<_>, struct(x, y)) =
+    (^T : (member Append : _ * _ -> ^T) self.State, x, y) |> ignore
+  
+  [<Extension>]
+  static member inline Yield(self : StringBuilderBuilder<_>, x, y, z) =
+    (^T : (member Append : _ * _ * _ -> ^T) self.State, x, y, z) |> ignore
+
+  [<Extension>]
+  static member inline Yield(self : StringBuilderBuilder<_>, struct(x, y, z)) =
+    (^T : (member Append : _ * _ * _ -> ^T) self.State, x, y, z) |> ignore
+  
+  [<Extension>]
+  static member inline Yield(self : StringBuilderBuilder<_>, x, y, z, w) =
+    (^T : (member Append : _ * _ * _ * _ -> ^T) self.State, x, y, z, w) |> ignore
+
+  [<Extension>]
+  static member inline Yield(self : StringBuilderBuilder<_>, struct(x, y, z, w)) =
+    (^T : (member Append : _ * _ * _ * _ -> ^T) self.State, x, y, z, w) |> ignore

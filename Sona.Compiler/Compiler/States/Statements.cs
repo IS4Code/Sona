@@ -1,5 +1,6 @@
 ﻿using System;
 using Antlr4.Runtime;
+using Sona.Compiler.Tools;
 using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
@@ -14,12 +15,31 @@ namespace Sona.Compiler.States
         InterruptPath = 8
     }
 
-    internal class BlockState : ScriptState, IStatementContext
+    internal class BlockState : ScriptState, IStatementContext, IBindingContext
     {
         bool IStatementContext.TrailAllowed => true;
 
         ISourceWriter IScopeContext.GlobalWriter => GlobalOut;
         ISourceWriter IScopeContext.LocalWriter => Out;
+
+        BindingSet bindings;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            bindings = new(FindContext<IBindingContext>());
+        }
+
+        void IBindingContext.Set(string name, BindingKind kind)
+        {
+            bindings.Set(name, kind);
+        }
+
+        BindingKind IBindingContext.Get(string name)
+        {
+            return bindings.Get(name);
+        }
 
         public sealed override void EnterMultiFuncDecl(MultiFuncDeclContext context)
         {
@@ -83,6 +103,11 @@ namespace Sona.Compiler.States
             EnterState<ReturnOptionState>().EnterReturnOptionStatement(context);
         }
 
+        public sealed override void EnterReturnFollowStatement(ReturnFollowStatementContext context)
+        {
+            EnterState<ReturnFollowState>().EnterReturnFollowStatement(context);
+        }
+
         public sealed override void EnterThrowStatement(ThrowStatementContext context)
         {
             EnterState<ThrowState>().EnterThrowStatement(context);
@@ -98,6 +123,11 @@ namespace Sona.Compiler.States
             EnterState<ContinueState>().EnterContinueStatement(context);
         }
 
+        public sealed override void EnterContinueFollowStatement(ContinueFollowStatementContext context)
+        {
+            EnterState<ContinueFollowState>().EnterContinueFollowStatement(context);
+        }
+
         public sealed override void EnterEchoStatement(EchoStatementContext context)
         {
             EnterState<EchoState>().EnterEchoStatement(context);
@@ -106,6 +136,11 @@ namespace Sona.Compiler.States
         public sealed override void EnterYieldStatement(YieldStatementContext context)
         {
             EnterState<YieldState>().EnterYieldStatement(context);
+        }
+
+        public sealed override void EnterYieldFollowStatement(YieldFollowStatementContext context)
+        {
+            EnterState<YieldFollowState>().EnterYieldFollowStatement(context);
         }
 
         public sealed override void EnterYieldEachStatement(YieldEachStatementContext context)
@@ -121,6 +156,11 @@ namespace Sona.Compiler.States
         public sealed override void EnterYieldReturnStatement(YieldReturnStatementContext context)
         {
             EnterState<YieldReturnState>().EnterYieldReturnStatement(context);
+        }
+
+        public sealed override void EnterYieldReturnFollowStatement(YieldReturnFollowStatementContext context)
+        {
+            EnterState<YieldReturnFollowState>().EnterYieldReturnFollowStatement(context);
         }
 
         public sealed override void EnterWithStatement(WithStatementContext context)
@@ -188,19 +228,24 @@ namespace Sona.Compiler.States
             EnterState<YieldWithStatementState>().EnterYieldWithConditional(context);
         }
 
-        public sealed override void EnterFollowDiscardStatement(FollowDiscardStatementContext context)
-        {
-            EnterState<FollowDiscardState>().EnterFollowDiscardStatement(context);
-        }
-
         public sealed override void EnterFollowStatement(FollowStatementContext context)
         {
             EnterState<FollowState>().EnterFollowStatement(context);
         }
 
-        public sealed override void EnterVariableDecl(VariableDeclContext context)
+        public sealed override void EnterSimpleVariableDecl(SimpleVariableDeclContext context)
         {
-            EnterState<NewVariableState>().EnterVariableDecl(context);
+            EnterState<SimpleDeclarationState>().EnterSimpleVariableDecl(context);
+        }
+
+        public sealed override void EnterMultiVariableDecl(MultiVariableDeclContext context)
+        {
+            EnterState<MultiDeclarationState>().EnterMultiVariableDecl(context);
+        }
+
+        public sealed override void EnterFollowVariableDecl(FollowVariableDeclContext context)
+        {
+            EnterState<MultiDeclarationState>().EnterFollowVariableDecl(context);
         }
 
         public override void EnterLazyVariableDecl(LazyVariableDeclContext context)
@@ -208,14 +253,14 @@ namespace Sona.Compiler.States
             EnterState<LazyDeclarationState>().EnterLazyVariableDecl(context);
         }
 
-        public sealed override void EnterFollowVariableDecl(FollowVariableDeclContext context)
-        {
-            EnterState<NewFollowVariableState>().EnterFollowVariableDecl(context);
-        }
-
         public sealed override void EnterMemberOrAssignment(MemberOrAssignmentContext context)
         {
             EnterState<MemberOrAssignmentState>().EnterMemberOrAssignment(context);
+        }
+
+        public sealed override void EnterFollowAssignmentStatement(FollowAssignmentStatementContext context)
+        {
+            EnterState<FollowAssignmentState>().EnterFollowAssignmentStatement(context);
         }
 
         public sealed override void EnterMemberDiscard(MemberDiscardContext context)
@@ -682,98 +727,6 @@ namespace Sona.Compiler.States
         #endregion
     }
 
-    internal sealed class ChunkState : BlockState, IFunctionContext, IDeclarationsBlockContext
-    {
-        ExpressionFlags IExpressionContext.Flags => ExpressionFlags.IsValue;
-
-        BlockFlags IBlockContext.Flags => BlockFlags.None;
-
-        ReturnFlags IReturnableContext.Flags => ReturnFlags.None;
-
-        InterruptFlags IInterruptibleContext.Flags => InterruptFlags.None;
-
-        string? IInterruptibleContext.InterruptingVariable => null;
-
-        ComputationFlags IComputationContext.Flags => ComputationFlags.None;
-
-        bool IDeclarationsBlockContext.Recursive => false;
-
-        public ChunkState(ScriptEnvironment environment)
-        {
-            Initialize(environment, null);
-        }
-
-        public override void ExitMainBlock(MainBlockContext context)
-        {
-
-        }
-
-        void IComputationContext.WriteBeginBlockExpression(ParserRuleContext context)
-        {
-            Defaults.WriteBeginBlockExpression(context);
-        }
-
-        void IComputationContext.WriteEndBlockExpression(ParserRuleContext context)
-        {
-            Defaults.WriteEndBlockExpression(context);
-        }
-
-        void IReturnableContext.WriteEarlyReturn(ParserRuleContext context)
-        {
-            Defaults.WriteEarlyReturn(context);
-        }
-
-        void IReturnableContext.WriteReturnStatement(ParserRuleContext context)
-        {
-            Out.Write("do ");
-        }
-
-        void IReturnableContext.WriteAfterReturnStatement(ParserRuleContext context)
-        {
-
-        }
-
-        void IBlockContext.WriteImplicitReturnStatement(ParserRuleContext context)
-        {
-            Defaults.WriteImplicitReturnStatement(context);
-        }
-
-        void IReturnableContext.WriteReturnValue(bool isOption, ParserRuleContext context)
-        {
-            Defaults.WriteReturnValue(isOption, context);
-        }
-
-        void IReturnableContext.WriteAfterReturnValue(ParserRuleContext context)
-        {
-            Defaults.WriteAfterReturnValue(context);
-        }
-
-        void IReturnableContext.WriteEmptyReturnValue(ParserRuleContext context)
-        {
-            Defaults.WriteEmptyReturnValue(context);
-        }
-
-        void IInterruptibleContext.WriteBreak(bool hasExpression, ParserRuleContext context)
-        {
-            Defaults.WriteBreak(hasExpression, context);
-        }
-
-        void IInterruptibleContext.WriteContinue(bool hasExpression, ParserRuleContext context)
-        {
-            Defaults.WriteContinue(hasExpression, context);
-        }
-
-        void IInterruptibleContext.WriteAfterBreak(ParserRuleContext context)
-        {
-            Defaults.WriteAfterBreak(context);
-        }
-
-        void IInterruptibleContext.WriteAfterContinue(ParserRuleContext context)
-        {
-            Defaults.WriteAfterContinue(context);
-        }
-    }
-
     internal sealed class MemberOrAssignmentState : MemberExprState
     {
         public override void EnterMemberOrAssignment(MemberOrAssignmentContext context)
@@ -852,6 +805,76 @@ namespace Sona.Compiler.States
         public override void ExitAltMemberExpr(AltMemberExprContext context)
         {
 
+        }
+    }
+
+    internal sealed class FollowAssignmentState : FollowStatementState
+    {
+        ISourceCapture? capture;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            capture = null;
+        }
+
+        public override void EnterFollowAssignmentStatement(FollowAssignmentStatementContext context)
+        {
+
+        }
+
+        public override void ExitFollowAssignmentStatement(FollowAssignmentStatementContext context)
+        {
+            OnExit(context);
+            ExitState().ExitFollowAssignmentStatement(context);
+        }
+
+        public override void EnterMemberExpr(MemberExprContext context)
+        {
+            OnEnterMember(context);
+            EnterState<MemberExprState>().EnterMemberExpr(context);
+        }
+
+        public override void ExitMemberExpr(MemberExprContext context)
+        {
+            OnExitMember(context);
+        }
+
+        public override void EnterAltMemberExpr(AltMemberExprContext context)
+        {
+            OnEnterMember(context);
+            EnterState<AltMemberExprState>().EnterAltMemberExpr(context);
+        }
+
+        public override void ExitAltMemberExpr(AltMemberExprContext context)
+        {
+            OnExitMember(context);
+        }
+
+        private void OnEnterMember(ParserRuleContext context)
+        {
+            capture = Out.StartCapture();
+            StartCaptureInput(context);
+        }
+
+        private void OnExitMember(ParserRuleContext context)
+        {
+            if(capture != null)
+            {
+                Out.StopCapture(capture);
+            }
+            var variable = StopCaptureInputIdentifier(context);
+
+            Validate.BindingIsVariable(variable, context);
+
+            OnEnter(context);
+        }
+
+        protected override void OnStatement(ParserRuleContext context)
+        {
+            (capture ?? ErrorCapture("COMPILER ERROR: Variable missing.", context)).Play(Out);
+            Out.WriteOperator("<-");
         }
     }
 }

@@ -329,7 +329,7 @@ namespace Sona.Compiler.States
 
         ReturnFlags IReturnableContext.Flags => ReturnFlags;
 
-        bool closeReturnStatement, closeVariableStatement;
+        bool closeReturnStatement, closeVariableStatement, closeGlobalFollowOperator;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -337,6 +337,7 @@ namespace Sona.Compiler.States
 
             closeReturnStatement = false;
             closeVariableStatement = false;
+            closeGlobalFollowOperator = false;
         }
 
         protected override void OnComputationEnter(StatementFlags flags, ParserRuleContext context)
@@ -354,8 +355,9 @@ namespace Sona.Compiler.States
                 {
                     // Unwrap directly
                     ReturnScope.WriteReturnStatement(context);
-                    Out.WriteGlobalComputationOperator("ReturnFrom");
                     closeReturnStatement = true;
+                    Out.WriteGlobalComputationOperator("ReturnFrom");
+                    closeGlobalFollowOperator = true;
                 }
             }
             else
@@ -370,12 +372,17 @@ namespace Sona.Compiler.States
                 {
                     Out.Write("do ");
                     Out.WriteGlobalComputationOperator("ReturnFrom");
+                    closeGlobalFollowOperator = true;
                 }
             }
         }
 
         protected override void OnComputationExit(StatementFlags flags, ParserRuleContext context)
         {
+            if(closeGlobalFollowOperator)
+            {
+                Out.WriteAfterGlobalComputationOperator();
+            }
             if(closeReturnStatement)
             {
                 ReturnScope.WriteAfterReturnStatement(context);
@@ -509,49 +516,101 @@ namespace Sona.Compiler.States
         }
     }
 
-    internal sealed class FollowState : NodeState
+    internal sealed class FollowState : ExpressionState
     {
+        bool first;
+        bool inComputation;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            first = true;
+            inComputation = false;
+        }
+
         public override void EnterFollowStatement(FollowStatementContext context)
         {
-            if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false)
+            inComputation = FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false;
+        }
+
+        public override void ExitFollowStatement(FollowStatementContext context)
+        {
+            ExitState().ExitFollowStatement(context);
+        }
+
+        private void OnEnterExpression(ParserRuleContext context)
+        {
+            if(inComputation)
+            {
+                if(first)
+                {
+                    Out.Write("let! ");
+                    first = false;
+                }
+                else
+                {
+                    Out.WriteLine();
+                    Out.Write("and! ");
+                }
+            }
+            else
+            {
+                if(first)
+                {
+                    first = false;
+                }
+                else
+                {
+                    Out.WriteLine();
+                    Error("Multiple operands for the `follow` statement are supported only in a computation.", context);
+                }
+            }
+        }
+
+        private void OnExitExpression(ParserRuleContext context)
+        {
+            if(inComputation)
+            {
+                Out.Write(')');
+            }
+            else
+            {
+                Out.WriteAfterGlobalComputationOperator();
+            }
+        }
+
+        public override void EnterExpression(ExpressionContext context)
+        {
+            OnEnterExpression(context);
+            if(inComputation)
             {
                 // Not `do!` because that sometimes abuses `Return`.
-                Out.Write("let! ()");
+                Out.Write("()");
                 Out.WriteOperator('=');
+                Out.Write('(');
             }
             else
             {
                 Out.Write("do ");
                 Out.WriteGlobalComputationOperator("ReturnFrom");
             }
-            Out.Write('(');
-        }
-
-        public override void ExitFollowStatement(FollowStatementContext context)
-        {
-            Out.Write(')');
-            ExitState().ExitFollowStatement(context);
-        }
-
-        public override void EnterExpression(ExpressionContext context)
-        {
             EnterState<ExpressionState>().EnterExpression(context);
         }
 
         public override void ExitExpression(ExpressionContext context)
         {
-
+            OnExitExpression(context);
         }
-    }
 
-    internal sealed class FollowDiscardState : ExpressionState
-    {
-        public override void EnterFollowDiscardStatement(FollowDiscardStatementContext context)
+        public override void EnterMemberDiscard(MemberDiscardContext context)
         {
-            if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) ?? false)
+            OnEnterExpression(context);
+            if(inComputation)
             {
-                Out.Write("let! _");
+                Out.Write("_");
                 Out.WriteOperator('=');
+                Out.Write('(');
             }
             else
             {
@@ -559,184 +618,96 @@ namespace Sona.Compiler.States
                 Out.WriteOperator('=');
                 Out.WriteGlobalComputationOperator("ReturnFrom");
             }
-            Out.Write('(');
         }
 
-        public override void ExitFollowDiscardStatement(FollowDiscardStatementContext context)
+        public override void ExitMemberDiscard(MemberDiscardContext context)
         {
-            Out.Write(')');
-            ExitState().ExitFollowDiscardStatement(context);
+            OnExitExpression(context);
         }
     }
 
-    internal sealed class NewFollowVariableState : NewVariableState
+    internal abstract class FollowStatementState : NodeState
     {
-        readonly List<ISourceCapture> captures = new();
-        readonly List<string> variables = new();
+        string? variableName;
 
-        ISourceCapture? capture;
-        bool first;
-        bool isUse;
+        protected bool UsesComputationForm { get; private set; }
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
             base.Initialize(environment, parent);
 
-            captures.Clear();
-            variables.Clear();
-            capture = null;
-            first = true;
+            variableName = null;
+            UsesComputationForm = false;
         }
 
-        public override void EnterFollowVariableDecl(FollowVariableDeclContext context)
+        protected void OnEnter(ParserRuleContext context)
         {
-            // Capture any attributes
-            capture = Out.StartCapture();
-        }
-
-        public override void ExitFollowVariableDecl(FollowVariableDeclContext context)
-        {
-            if(captures.Count > 0)
+            var computationScope = FindContext<IComputationContext>();
+            if(computationScope?.HasFlag(ComputationFlags.IsComputation) ?? false)
             {
-                if(IsUse)
+                if(OnComputationStatement(context))
                 {
-                    Error("A `use` declaration initializing multiple variables with `follow` is not supported.", context);
+                    // Computation form was used
+                    UsesComputationForm = true;
+                    return;
                 }
-
-                Out.WriteLine();
-
-                // Play the prolog
-                captures[0].Play(Out);
-
-                if(captures.Count == 2)
-                {
-                    // Exactly one variable, just play out
-                    captures[1].Play(Out);
-                    Out.WriteOperator('=');
-                    Out.WriteIdentifier(variables[0]);
-                }
-                else
-                {
-                    // Assign via a tuple
-                    Out.Write('(');
-                    bool first = true;
-                    foreach(var capture in captures.Skip(1))
-                    {
-                        Out.WriteNext(',', ref first);
-                        capture.Play(Out);
-                    }
-                    Out.Write(')');
-                    Out.WriteOperator('=');
-                    Out.Write('(');
-                    first = true;
-                    foreach(var variable in variables)
-                    {
-                        Out.WriteNext(',', ref first);
-                        Out.WriteIdentifier(variable);
-                    }
-                    Out.Write(')');
-                }
-            }
-
-            ExitState().ExitFollowVariableDecl(context);
-        }
-
-        protected override void WriteRec(ParserRuleContext context)
-        {
-            if(LexerContext.GetState<RecursivePragma>()?.Value ?? false)
-            {
-                Error("The use of `#pragma recursive` is not supported together with a `follow`-initialized variable.", context);
-            }
-        }
-
-        private void FlushCapture()
-        {
-            if(capture != null)
-            {
-                // Buffering was not needed because this can be expressed without a temporary variable
-                Out.StopCapture(capture);
-                capture.Play(Out);
-                capture = null;
-            }
-        }
-
-        public override void EnterLet(LetContext context)
-        {
-            FlushCapture();
-            // ( needed for syntax
-            Out.Write("let! (");
-            WriteRec(context);
-        }
-
-        public override void EnterDeclaration(DeclarationContext context)
-        {
-            if(first)
-            {
-                if(capture != null)
-                {
-                    // Recording prolog before the first declaration, needs to be stored separately
-                    Out.StopCapture(capture);
-                    captures.Add(capture);
-
-                    // Another one for the variable
-                    capture = Out.StartCapture();
-                }
+                variableName = Out.CreateTemporaryIdentifier();
+                Out.Write("let! ");
+                Out.WriteIdentifier(variableName);
+                Out.WriteOperator('=');
             }
             else
             {
-                Out.WriteLine();
-                Out.Write("and! ");
-
-                if(capture != null)
-                {
-                    // This one was already stopped before the expression
-                    capture = Out.StartCapture();
-                }
-                else
-                {
-                    // Direct pattern
-                    Out.Write('(');
-                }
+                OnStatement(context);
+                Out.WriteGlobalComputationOperator("ReturnFrom");
             }
-            base.EnterDeclaration(context);
         }
 
-        public sealed override void EnterUnaryExpr(UnaryExprContext context)
+        protected void OnExit(ParserRuleContext context)
         {
-            if(capture != null)
+            if(UsesComputationForm)
             {
-                // Store capture for the pattern
-                Out.StopCapture(capture);
-                captures.Add(capture);
-                // Do not set to null (will be checked on next declaration)
-
-                if(first)
-                {
-                    // Real destination
-                    Out.Write("let! ");
-                }
-                else
-                {
-                    // `and!` is already prepared
-                }
-
-                // We need a temporary variable to store the result
-                var name = Out.CreateTemporaryIdentifier();
-                Out.WriteIdentifier(name);
-                variables.Add(name);
+                return;
             }
-            else
+            if(variableName == null)
             {
-                // End ( from let! or and!
-                Out.Write(')');
+                // Non-computation form
+                Out.WriteAfterGlobalComputationOperator();
+                return;
             }
-            Out.WriteOperator('=');
-            EnterState<ExpressionState.Unary>().EnterUnaryExpr(context);
+            Out.WriteLine();
+            OnStatement(context);
+            Out.WriteIdentifier(variableName);
         }
 
-        public sealed override void ExitUnaryExpr(UnaryExprContext context)
+        protected abstract void OnStatement(ParserRuleContext context);
+
+        protected virtual bool OnComputationStatement(ParserRuleContext context)
         {
-            first = false;
+            return false;
+        }
+
+        public override void EnterFollowExpression(FollowExpressionContext context)
+        {
+            EnterState<Operand>().EnterFollowExpression(context);
+        }
+
+        public override void ExitFollowExpression(FollowExpressionContext context)
+        {
+
+        }
+
+        public sealed class Operand : ExpressionState
+        {
+            public override void EnterFollowExpression(FollowExpressionContext context)
+            {
+
+            }
+
+            public override void ExitFollowExpression(FollowExpressionContext context)
+            {
+                ExitState().ExitFollowExpression(context);
+            }
         }
     }
 }

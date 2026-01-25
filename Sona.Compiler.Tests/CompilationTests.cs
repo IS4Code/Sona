@@ -31,8 +31,11 @@ namespace Sona.Tests
             var options = new CompilerOptions
             (
                 Target: BinaryTarget.Exe,
-                Flags: CompilerFlags.Privileged | CompilerFlags.DebuggingBlockComments |
-                    (GenerateLineNumbers ? 0 : CompilerFlags.IgnoreLineNumbers),
+                Flags:
+                    CompilerFlags.Privileged |
+                    CompilerFlags.DebuggingBlockComments |
+                    (GenerateLineNumbers ? 0 : CompilerFlags.IgnoreLineNumbers) |
+                    CompilerFlags.SkipDefaultNamespaces,
                 AssemblyLoader: AssemblyContextLoader.Default
             );
 

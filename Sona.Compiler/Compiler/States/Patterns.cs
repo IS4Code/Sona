@@ -10,7 +10,10 @@ namespace Sona.Compiler.States
         int parenthesisLevel;
         bool patternExpected;
 
-        ExpressionFlags IExpressionContext.Flags => ExpressionFlags.IsPattern;
+        ExpressionFlags? parentFlags;
+
+        protected virtual ExpressionFlags Flags => parentFlags ?? ExpressionFlags.IsPattern;
+        ExpressionFlags IExpressionContext.Flags => Flags;
 
         protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
         {
@@ -18,6 +21,11 @@ namespace Sona.Compiler.States
 
             parenthesisLevel = 0;
             patternExpected = false;
+
+            if(FindContext<IExpressionContext>()?.Flags is { } flags && (flags & ExpressionFlags.IsPattern) != 0)
+            {
+                parentFlags = flags;
+            }
         }
 
         public override void EnterPattern(PatternContext context)
@@ -146,6 +154,31 @@ namespace Sona.Compiler.States
         public override void ExitUnaryCharConvertExpr(UnaryCharConvertExprContext context)
         {
 
+        }
+
+        public override void EnterNamedPattern(NamedPatternContext context)
+        {
+
+        }
+
+        public override void ExitNamedPattern(NamedPatternContext context)
+        {
+
+        }
+
+        public sealed override void EnterSimpleNamedPattern(SimpleNamedPatternContext context)
+        {
+            StartCaptureInput(context);
+        }
+
+        public sealed override void ExitSimpleNamedPattern(SimpleNamedPatternContext context)
+        {
+            var name = StopCaptureInputIdentifier(context);
+
+            if((Flags & ExpressionFlags.IsValue) == 0 && FindContext<IBindingContext>() is { } binding)
+            {
+                binding.Set(name, BindingKind.Variable);
+            }
         }
 
         public override void EnterSomePattern(SomePatternContext context)
@@ -372,6 +405,19 @@ namespace Sona.Compiler.States
             }
         }
 
+        public sealed class Annotation : PatternState
+        {
+            public override void EnterAnnotationPattern(AnnotationPatternContext context)
+            {
+
+            }
+
+            public override void ExitAnnotationPattern(AnnotationPatternContext context)
+            {
+                ExitState().ExitAnnotationPattern(context);
+            }
+        }
+
         abstract class OperatorPattern : PatternState
         {
             public sealed override void EnterUnaryPattern(UnaryPatternContext context)
@@ -449,6 +495,9 @@ namespace Sona.Compiler.States
 
             ISourceCapture? ignoredCapture;
             bool? usesFields;
+            bool lastTuple;
+
+            protected override ExpressionFlags Flags => (lastTuple ? ExpressionFlags.None : ExpressionFlags.IsValue) | base.Flags;
 
             protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
             {
@@ -457,6 +506,7 @@ namespace Sona.Compiler.States
                 errorFieldMismatch = false;
                 usesFields = null;
                 ignoredCapture = null;
+                lastTuple = false;
             }
 
             public override void EnterPatternArguments(PatternArgumentsContext context)
@@ -522,6 +572,16 @@ namespace Sona.Compiler.States
             public override void ExitEmptyPatternArgTuple(EmptyPatternArgTupleContext context)
             {
                 OnExitArgTuple(context);
+            }
+
+            public override void EnterLastPatternArgTuple(LastPatternArgTupleContext context)
+            {
+                lastTuple = true;
+            }
+
+            public override void ExitLastPatternArgTuple(LastPatternArgTupleContext context)
+            {
+
             }
 
             private void OnEnterArgument(ParserRuleContext context)
@@ -743,20 +803,12 @@ namespace Sona.Compiler.States
             public override void EnterEmptyFieldAssignment(EmptyFieldAssignmentContext context)
             {
                 OnEnterField();
-                Environment.EnableParseTree();
+                StartCaptureInput(context);
             }
 
             public override void ExitEmptyFieldAssignment(EmptyFieldAssignmentContext context)
             {
-                string name;
-                try
-                {
-                    name = Tools.Syntax.GetIdentifierFromName(context.GetText());
-                }
-                finally
-                {
-                    Environment.DisableParseTree();
-                }
+                var name = StopCaptureInputIdentifier(context);
                 Out.WriteOperator('=');
                 Out.WriteIdentifier(name);
             }
@@ -931,20 +983,12 @@ namespace Sona.Compiler.States
             public override void EnterEmptyFieldAssignment(EmptyFieldAssignmentContext context)
             {
                 OnEnterField();
-                Environment.EnableParseTree();
+                StartCaptureInput(context);
             }
 
             public override void ExitEmptyFieldAssignment(EmptyFieldAssignmentContext context)
             {
-                string name;
-                try
-                {
-                    name = Tools.Syntax.GetIdentifierFromName(context.GetText());
-                }
-                finally
-                {
-                    Environment.DisableParseTree();
-                }
+                var name = StopCaptureInputIdentifier(context);
                 Out.Write('(');
                 Out.WriteIdentifier(name);
                 Out.Write(')');
@@ -962,20 +1006,12 @@ namespace Sona.Compiler.States
 
             public override void EnterName(NameContext context)
             {
-                Environment.EnableParseTree();
+                StartCaptureInput(context);
             }
 
             public override void ExitName(NameContext context)
             {
-                string identifier;
-                try
-                {
-                    identifier = Tools.Syntax.GetIdentifierFromName(context.GetText());
-                }
-                finally
-                {
-                    Environment.DisableParseTree();
-                }
+                var identifier = StopCaptureInputIdentifier(context);
 
                 var patternIdentifier = "Get " + identifier;
 
@@ -1019,6 +1055,8 @@ namespace Sona.Compiler.States
 
         sealed class RelationalPattern : OperatorPattern
         {
+            protected override ExpressionFlags Flags => ExpressionFlags.IsValue | base.Flags;
+
             public sealed override void EnterRelationalPattern(RelationalPatternContext context)
             {
 

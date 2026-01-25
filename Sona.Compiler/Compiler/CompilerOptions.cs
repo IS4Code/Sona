@@ -21,6 +21,7 @@ namespace Sona.Compiler
         IgnoreLineNumbers = 4,
         DebuggingBlockComments = 8,
         DebuggingStatementComments = 16,
-        DebuggingComments = DebuggingBlockComments | DebuggingStatementComments
+        DebuggingComments = DebuggingBlockComments | DebuggingStatementComments,
+        SkipDefaultNamespaces = 32
     }
 }

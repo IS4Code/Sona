@@ -80,20 +80,12 @@ namespace Sona.Compiler.States
 
         public override void EnterEmptyFieldAssignment(EmptyFieldAssignmentContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public override void ExitEmptyFieldAssignment(EmptyFieldAssignmentContext context)
         {
-            string name;
-            try
-            {
-                name = Tools.Syntax.GetIdentifierFromName(context.GetText());
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            var name = StopCaptureInputIdentifier(context);
             Out.WriteOperator('=');
             Out.WriteIdentifier(name);
         }

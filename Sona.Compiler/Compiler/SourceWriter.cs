@@ -291,9 +291,24 @@ namespace Sona.Compiler
 
         public static void WriteGlobalComputationOperator(this ISourceWriter writer, string name)
         {
+            writer.Write('(');
             writer.WriteCustomComputation("global");
             writer.Write('.');
             writer.WriteIdentifier(name);
+            writer.Write('(');
+        }
+
+        public static void WriteAfterGlobalComputationOperator(this ISourceWriter writer)
+        {
+            writer.Write(')');
+            writer.WriteOperator(':');
+            writer.WriteNamespacedName("Sona.Runtime", "ComputationBuilders");
+            writer.Write('.');
+            writer.WriteIdentifier("Immediate");
+            writer.Write("<_>");
+            writer.Write(')');
+            writer.Write('.');
+            writer.WriteIdentifier("Value");
         }
 
         public static void WriteSpecialMember(this ISourceWriter writer, string name)
@@ -388,6 +403,13 @@ namespace Sona.Compiler
             {
                 writer.Write(str);
             }
+        }
+
+        public static void WriteString(this ISourceWriter writer, string str)
+        {
+            writer.Write('"');
+            writer.WriteStringPart(str);
+            writer.Write('"');
         }
 
         public static void WriteNext(this ISourceWriter writer, string text, ref bool isFirst)

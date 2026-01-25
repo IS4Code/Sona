@@ -98,6 +98,15 @@ BEGIN_TARGETED_LOCAL_ATTRIBUTE:
 BEGIN_TARGETED_GLOBAL_ATTRIBUTE:
   '#' ATTR_TARGET_GLOBAL ATTR_TARGET_SEPARATOR -> mode(Directive);
 
+BEGIN_NAMESPACE_SECTION:
+  '#namespace' LINE_WHITESPACE -> mode(Directive);
+
+UNNAMED_NAMESPACE_SECITON:
+  '#namespace' END_DIRECTIVE;
+
+BEGIN_PACKAGE_SECTION:
+  '#package' LINE_WHITESPACE -> mode(Directive);
+
 BEGIN_INLINE_SOURCE:
   '#inline' LINE_WHITESPACE -> mode(InlineDirective);
 
@@ -120,6 +129,7 @@ ABSTRACT: 'abstract';
 ADD: 'add';
 AND: 'and';
 AS: 'as';
+AWAIT: 'await';
 BASE: 'base';
 BREAK: 'break';
 BY: 'by';
@@ -133,6 +143,7 @@ DEFER: 'defer';
 DELEGATE: 'delegate';
 DELETE: 'delete';
 DO: 'do';
+DYNAMIC: 'dynamic';
 ECHO: 'echo';
 ELSE: 'else';
 ELSEIF: 'elseif';
@@ -287,7 +298,6 @@ DOUBLE_OR: '||';
 SINGLE_AND: '&';
 SINGLE_OR: '|';
 SINGLE_XOR: '^';
-LSHIFT: '<<';
 EXCLAMATION: '!';
 TILDE: '~';
 AT: '@';
@@ -343,6 +353,7 @@ Directive_ABSTRACT: ABSTRACT -> type(ABSTRACT);
 Directive_ADD: ADD -> type(ADD);
 Directive_AND: AND -> type(AND);
 Directive_AS: AS -> type(AS);
+Directive_AWAIT: AWAIT -> type(AWAIT);
 Directive_BASE: BASE -> type(BASE);
 Directive_BREAK: BREAK -> type(BREAK);
 Directive_BY: BY -> type(BY);
@@ -356,6 +367,7 @@ Directive_DEFER: DEFER -> type(DEFER);
 Directive_DELEGATE: DELEGATE -> type(DELEGATE);
 Directive_DELETE: DELETE -> type(DELETE);
 Directive_DO: DO -> type(DO);
+Directive_DYNAMIC: DYNAMIC -> type(DYNAMIC);
 Directive_ECHO: ECHO -> type(ECHO);
 Directive_ELSE: ELSE -> type(ELSE);
 Directive_ELSEIF: ELSEIF -> type(ELSEIF);
@@ -510,7 +522,6 @@ Directive_DOUBLE_OR: DOUBLE_OR -> type(DOUBLE_OR);
 Directive_SINGLE_AND: SINGLE_AND -> type(SINGLE_AND);
 Directive_SINGLE_OR: SINGLE_OR -> type(SINGLE_OR);
 Directive_SINGLE_XOR: SINGLE_XOR -> type(SINGLE_XOR);
-Directive_LSHIFT: LSHIFT -> type(LSHIFT);
 Directive_EXCLAMATION: EXCLAMATION -> type(EXCLAMATION);
 Directive_TILDE: TILDE -> type(TILDE);
 Directive_AT: AT -> type(AT);
@@ -723,6 +734,7 @@ Interpolation_ABSTRACT: ABSTRACT -> type(ABSTRACT);
 Interpolation_ADD: ADD -> type(ADD);
 Interpolation_AND: AND -> type(AND);
 Interpolation_AS: AS -> type(AS);
+Interpolation_AWAIT: AWAIT -> type(AWAIT);
 Interpolation_BASE: BASE -> type(BASE);
 Interpolation_BREAK: BREAK -> type(BREAK);
 Interpolation_BY: BY -> type(BY);
@@ -736,6 +748,7 @@ Interpolation_DEFER: DEFER -> type(DEFER);
 Interpolation_DELEGATE: DELEGATE -> type(DELEGATE);
 Interpolation_DELETE: DELETE -> type(DELETE);
 Interpolation_DO: DO -> type(DO);
+Interpolation_DYNAMIC: DYNAMIC -> type(DYNAMIC);
 Interpolation_ECHO: ECHO -> type(ECHO);
 Interpolation_ELSE: ELSE -> type(ELSE);
 Interpolation_ELSEIF: ELSEIF -> type(ELSEIF);
@@ -890,7 +903,6 @@ Interpolation_DOUBLE_OR: DOUBLE_OR -> type(DOUBLE_OR);
 Interpolation_SINGLE_AND: SINGLE_AND -> type(SINGLE_AND);
 Interpolation_SINGLE_OR: SINGLE_OR -> type(SINGLE_OR);
 Interpolation_SINGLE_XOR: SINGLE_XOR -> type(SINGLE_XOR);
-Interpolation_LSHIFT: LSHIFT -> type(LSHIFT);
 Interpolation_EXCLAMATION: EXCLAMATION -> type(EXCLAMATION);
 Interpolation_TILDE: TILDE -> type(TILDE);
 Interpolation_AT: AT -> type(AT);
@@ -945,6 +957,7 @@ CHAR_LITERAL:
   BEGIN_CHAR CHAR_PART END_CHAR;
 
 GTE: '>=';
+LSHIFT: '<<';
 RSHIFT: '>>';
 DOUBLE_QUESTION: '??';
 

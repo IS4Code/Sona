@@ -1,5 +1,9 @@
 ﻿namespace Sona.Runtime.CompilerServices
 
+#nowarn "62" // This construct is for ML compatibility.
+#nowarn "64" // This construct causes code to be less generic than indicated by the type annotations.
+#nowarn "77" // Member constraints with the name 'op_LogicalNot' are given special status by the F# compiler as certain .NET types are implicitly augmented with this member.
+
 module private helpers =
   let inline curry1(func, a)() = func(a)
   let inline curry2(func, a)(b) = func(a, b)

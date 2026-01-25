@@ -26,7 +26,7 @@ namespace Sona.Compiler.States
         HasTrySemantics = 1
     }
 
-    internal interface IBlockContext : IStatementContext
+    internal interface IBlockContext : IStatementContext, IBindingContext
     {
         BlockFlags Flags { get; }
 
@@ -106,7 +106,7 @@ namespace Sona.Compiler.States
         void WriteEmptyReturnValue(ParserRuleContext context);
     }
 
-    internal interface IFunctionContext : IReturnableContext, IInterruptibleContext, IStatementContext, IComputationContext, IExpressionContext
+    internal interface IFunctionContext : IReturnableContext, IInterruptibleContext, IStatementContext, IComputationContext, IExpressionContext, IBindingContext
     {
 
     }
@@ -169,10 +169,38 @@ namespace Sona.Compiler.States
         IsPattern = 4
     }
 
-    internal interface IBindingContext
+    internal interface IBindingContext : IScopeContext
     {
-        void Add(string name);
-        bool Contains(string name);
+        void Set(string name, BindingKind kind);
+        BindingKind Get(string name);
+    }
+
+    internal enum BindingKind
+    {
+        /// <summary>
+        /// Indicates that the binding is not present or explicitly removed.
+        /// </summary>
+        Undefined,
+
+        /// <summary>
+        /// Indicates an existing binding of an unspecified kind.
+        /// </summary>
+        Unspecified,
+
+        /// <summary>
+        /// Indicates a variable binding.
+        /// </summary>
+        Variable,
+
+        /// <summary>
+        /// Indicates a function binding.
+        /// </summary>
+        Function,
+
+        /// <summary>
+        /// Indicates a type variable binding.
+        /// </summary>
+        TypeVariable
     }
 
     [Flags]

@@ -9,7 +9,20 @@ options {
 
 // The whole program
 chunk:
-  mainBlock EOF;
+  (
+    namespaceSection+ |
+    packageSection |
+    mainBlock
+  ) EOF;
+
+namespaceSection:
+  (
+    BEGIN_NAMESPACE_SECTION WHITESPACE* (compoundName WHITESPACE*)? END_DIRECTIVE |
+    UNNAMED_NAMESPACE_SECITON
+  ) mainBlock;
+
+packageSection:
+  BEGIN_PACKAGE_SECTION WHITESPACE* (compoundName WHITESPACE*)? END_DIRECTIVE mainBlock;
 
 /*
 The sequence of statements is intentionally lazy, to make the
@@ -293,18 +306,21 @@ attrNamedArg:
 // Plain statement, allowed anywhere
 statement:
   followVariableDecl |
-  variableDecl |
+  simpleVariableDecl |
+  multiVariableDecl |
   lazyVariableDecl |
   multiFuncDecl |
   inlineFuncDecl |
   inlineCaseFuncDecl |
   memberDiscard |
+  followAssignmentStatement |
   memberOrAssignment |
   echoStatement |
+  yieldFollowStatement |
   yieldStatement |
   yieldEachStatement |
+  yieldReturnFollowStatement |
   yieldReturnStatement |
-  followDiscardStatement |
   followStatement |
   inlineSourceFree |
   ifStatementFree |
@@ -342,8 +358,14 @@ returnStatement:
 returnOptionStatement:
   'return' atomicExpr '?';
 
+returnFollowStatement:
+  'return' followExpression;
+
 yieldStatement:
   'yield' (expression | errorMissingExpression);
+
+yieldFollowStatement:
+  'yield' followExpression;
 
 yieldEachStatement:
   'yield' spreadExpression;
@@ -354,11 +376,17 @@ yieldBreakStatement:
 yieldReturnStatement:
   YIELD_RETURN (expression | errorMissingExpression);
 
+yieldReturnFollowStatement:
+  YIELD_RETURN followExpression;
+
 breakStatement:
   'break' expression?;
 
 continueStatement:
   'continue' expression?;
+
+continueFollowStatement:
+  'continue' followExpression;
 
 throwStatement:
   'throw' expression?;
@@ -379,11 +407,10 @@ with_Argument:
 withStatement:
   'with' with_Argument valueTrail;
 
-followDiscardStatement:
-  'follow' memberDiscard;
-
 followStatement:
-  'follow' (expression | errorMissingExpression);
+  'follow'
+    (memberDiscard | expression | errorMissingExpression)
+    (',' (memberDiscard | expression | errorMissingExpression))*;
 
 followWithTrailing:
   FOLLOW_WITH with_Argument freeTrail;
@@ -430,6 +457,7 @@ trailingStatement:
 // A statement that has a returning path and all other paths are closing
 returningStatement:
   returnOptionStatement |
+  returnFollowStatement |
   returnStatement |
   yieldBreakStatement |
   withStatement |
@@ -456,6 +484,7 @@ returningStatement:
 // A statement that has interrupting paths and all other paths are terminating
 interruptingStatement:
   breakStatement |
+  continueFollowStatement |
   continueStatement |
   followWithInterrupting |
   yieldWithInterrupting |
@@ -1456,7 +1485,10 @@ finallyBranch:
   'finally';
 
 catch_Group:
-  case | catchCase;
+  case | catchAsCase | catchCase;
+
+catchAsCase:
+  'catch' annotationPattern 'as' type whenClause? 'do';
 
 catchCase:
   'catch' (pattern whenClause? | whenClause) 'do';
@@ -2681,28 +2713,22 @@ packageStatement:
 /* Declarations and assignments */
 /* ---------------------------- */
 
-variableDecl:
-  localAttrList (
-    let | var | useVar | use | const
-  ) (multiDeclAssignment | declaration '=' expression);
+simpleVariableDecl:
+  variableDecl_Prefix declaration '=' expression;
 
 followVariableDecl:
-  localAttrList (
-    let | var | useVar | use
-  )
-  declaration '=' followExpression (',' declaration '=' followExpression)*;
+  variableDecl_Prefix declaration '=' followExpression;
 
-let: 'let';
-var: 'var';
-const: 'const';
-use: 'use';
-useVar: 'use' 'var';
+multiVariableDecl:
+  variableDecl_Prefix declaration '=' (followExpression | expression) (',' declaration '=' (followExpression | expression))*;
+
+variableDecl_Prefix:
+  localAttrList (
+    'let' | 'var' | 'use' 'var'? | 'const'
+  );
 
 lazyVariableDecl:
   localAttrList 'lazy' declaration '=' expression (',' declaration '=' expression)*;
-
-multiDeclAssignment:
-  declaration '=' expression (',' declaration '=' expression)+;
 
 multiFuncDecl:
   (funcDecl | caseFuncDecl)+;
@@ -2745,6 +2771,9 @@ assignment:
 
 memberDiscard:
   (altMemberExpr | memberExpr) '!';
+
+followAssignmentStatement:
+  (altMemberExpr | memberExpr) '=' followExpression;
 
 /* -------- */
 /* Patterns */
@@ -2843,6 +2872,7 @@ atomicPattern:
   regexPattern |
   fullConstructPattern |
   memberTestPattern |
+  simpleNamedPattern |
   namedPattern |
   memberPattern |
   nestedPattern;
@@ -2855,6 +2885,9 @@ somePattern:
     '(' patternArgument ')' |
     unaryPattern
   );
+
+simpleNamedPattern:
+  name;
 
 namedPattern:
   compoundName;
@@ -2877,7 +2910,8 @@ regexGroupStart:
 // Calls
 
 patternArguments:
-  ('(' (emptyPatternArgTuple | patternArgTuple) (';' (emptyPatternArgTuple | patternArgTuple))* ')')+;
+  ('(' (emptyPatternArgTuple | patternArgTuple) (';' (emptyPatternArgTuple | patternArgTuple))* ')')*
+  ('(' ((emptyPatternArgTuple | patternArgTuple) ';')* (emptyPatternArgTuple | lastPatternArgTuple) ')');
 
 simplePatternArgument:
   basicConstructPattern |
@@ -2885,6 +2919,9 @@ simplePatternArgument:
   string;
 
 emptyPatternArgTuple:;
+
+lastPatternArgTuple:
+  patternArgTuple;
 
 patternArgTuple:
   (fieldAssignment pattern | fieldRelation | patternArgument) (',' (fieldAssignment pattern | fieldRelation | patternArgument))*;
@@ -2982,7 +3019,7 @@ bitAndExpr:
   bitShiftExpr ('&' bitShiftExpr)*;
 
 bitShiftExpr:
-  innerExpr (('<<' | tokenRSHIFT) innerExpr)*;
+  innerExpr ((tokenLSHIFT | tokenRSHIFT) innerExpr)*;
 
 innerExpr:
   annotationExpr (('+' | '-' | '*' | '/' | '%') annotationExpr)*;
@@ -3412,6 +3449,9 @@ relationalOperator:
 
 tokenGTE:
   '>' {combinedOperator}? '=';
+
+tokenLSHIFT:
+  '<' {combinedOperator}? '<';
 
 tokenRSHIFT:
   '>' {combinedOperator}? '>';

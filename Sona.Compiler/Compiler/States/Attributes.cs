@@ -40,53 +40,39 @@ namespace Sona.Compiler.States
 
         public override void EnterLocalAttrTarget(LocalAttrTargetContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public override void ExitLocalAttrTarget(LocalAttrTargetContext context)
         {
-            try
+            var target = StopCaptureInputAttributeTarget(context);
+            switch(target)
             {
-                var target = Tools.Syntax.GetAttributeTargetFromToken(context.GetText());
-                switch(target)
-                {
-                    case "item":
-                        return;
-                }
-                Out.WriteIdentifier(target);
-                Out.Write(':');
+                case "item":
+                    return;
             }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            Out.WriteIdentifier(target);
+            Out.Write(':');
         }
 
         public override void EnterGlobalAttrTarget(GlobalAttrTargetContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public override void ExitGlobalAttrTarget(GlobalAttrTargetContext context)
         {
-            try
+            var target = StopCaptureInputAttributeTarget(context);
+            switch(target)
             {
-                var target = Tools.Syntax.GetAttributeTargetFromToken(context.GetText());
-                switch(target)
-                {
-                    case "entry":
-                        target = "method";
-                        break;
-                    case "program":
-                        return;
-                }
-                Out.WriteIdentifier(target);
-                Out.Write(':');
+                case "entry":
+                    target = "method";
+                    break;
+                case "program":
+                    return;
             }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            Out.WriteIdentifier(target);
+            Out.Write(':');
         }
 
         public override void EnterAttrGroup(AttrGroupContext context)

@@ -46,26 +46,19 @@ namespace Sona.Compiler.States
 
         public override void EnterInlineSourceLanguage(InlineSourceLanguageContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public override void ExitInlineSourceLanguage(InlineSourceLanguageContext context)
         {
-            try
+            var text = StopCaptureInputStringLiteral(context);
+            if(
+                !text.Equals("F#", StringComparison.OrdinalIgnoreCase) &&
+                !text.Equals("FSharp", StringComparison.OrdinalIgnoreCase) &&
+                !text.Equals("JS", StringComparison.OrdinalIgnoreCase) &&
+                !text.Equals("JavaScript", StringComparison.OrdinalIgnoreCase))
             {
-                var text = Syntax.GetStringLiteralValue(context.GetText());
-                if(
-                    !text.Equals("F#", StringComparison.OrdinalIgnoreCase) &&
-                    !text.Equals("FSharp", StringComparison.OrdinalIgnoreCase) &&
-                    !text.Equals("JS", StringComparison.OrdinalIgnoreCase) &&
-                    !text.Equals("JavaScript", StringComparison.OrdinalIgnoreCase))
-                {
-                    Error("Only F# and JavaScript inline source is supported.", context);
-                }
-            }
-            finally
-            {
-                Environment.DisableParseTree();
+                Error("Only F# and JavaScript inline source is supported.", context);
             }
         }
 
@@ -178,19 +171,12 @@ namespace Sona.Compiler.States
 
         public override void EnterInlineSourceFSNewLine(InlineSourceFSNewLineContext context)
         {
-            Environment.EnableParseTree();
+            StartCaptureInput(context);
         }
 
         public override void ExitInlineSourceFSNewLine(InlineSourceFSNewLineContext context)
         {
-            try
-            {
-                Out.WriteLineEnd(context.GetText());
-            }
-            finally
-            {
-                Environment.DisableParseTree();
-            }
+            Out.WriteLineEnd(StopCaptureInput(context));
         }
 
         public override void EnterInlineSourceFSIndentation(InlineSourceFSIndentationContext context)

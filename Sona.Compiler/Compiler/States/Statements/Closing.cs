@@ -64,21 +64,7 @@ namespace Sona.Compiler.States
 
         protected virtual void OnEnter(ParserRuleContext context)
         {
-            var computationScope = FindContext<IComputationContext>();
-            if(computationScope?.HasFlag(ComputationFlags.IsCollection) ?? false)
-            {
-                const string msg = "`return` in a collection construction is not supported.";
-                if(computationScope?.HasFlag(ComputationFlags.IsComputation) != true)
-                {
-                    // Can't return from a sequence
-                    Error(msg + " Use `yield` instead.", context);
-                }
-                else
-                {
-                    // No mechanism to indicate returning only
-                    Error(msg + " Use `yield` or `yield return` instead.", context);
-                }
-            }
+            Validate.ReturnPlacement(context);
         }
 
         protected virtual void OnExit(ParserRuleContext context)
@@ -135,6 +121,68 @@ namespace Sona.Compiler.States
         public sealed override void ExitAtomicExpr(AtomicExprContext context)
         {
             OnExitExpression(context);
+        }
+    }
+    
+
+    internal sealed class ReturnFollowState : FollowStatementState
+    {
+        IReturnableContext? returnScope;
+
+        IReturnableContext ReturnScope => returnScope ?? Defaults;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            returnScope = FindContext<IReturnableContext>();
+        }
+
+        public override void EnterReturnFollowStatement(ReturnFollowStatementContext context)
+        {
+            Validate.ReturnPlacement(context);
+            OnEnter(context);
+        }
+
+        public override void ExitReturnFollowStatement(ReturnFollowStatementContext context)
+        {
+            OnExit(context);
+
+            if(!UsesComputationForm)
+            {
+                ReturnScope.WriteAfterDirectReturnStatement(context);
+            }
+
+            var interruptScope = FindContext<IInterruptibleContext>();
+            if(interruptScope?.HasFlag(InterruptFlags.CanBreak) != true)
+            {
+                // No need for break
+                interruptScope = null;
+            }
+
+            if(interruptScope != null)
+            {
+                Out.WriteLine();
+                interruptScope.WriteBreak(false, context);
+            }
+
+            ExitState().ExitReturnFollowStatement(context);
+        }
+
+        protected override void OnStatement(ParserRuleContext context)
+        {
+            ReturnScope.WriteDirectReturnStatement(false, context);
+        }
+
+        protected override bool OnComputationStatement(ParserRuleContext context)
+        {
+            if(ReturnScope.Flags != ReturnFlags.None)
+            {
+                // Special return semantics
+                return false;
+            }
+            Out.Write("return! ");
+            return true;
         }
     }
 
@@ -307,6 +355,51 @@ namespace Sona.Compiler.States
             {
                 ExitState().ExitContinueStatement(context);
             }
+        }
+    }
+
+    internal sealed class ContinueFollowState : FollowStatementState
+    {
+        IInterruptibleContext? scope;
+
+        protected override void Initialize(ScriptEnvironment environment, ScriptState? parent)
+        {
+            base.Initialize(environment, parent);
+
+            scope = FindContext<IInterruptibleContext>();
+            if(scope != null && (scope.Flags & InterruptFlags.CanContinue) == 0)
+            {
+                scope = null;
+            }
+        }
+
+        public override void EnterContinueFollowStatement(ContinueFollowStatementContext context)
+        {
+            OnEnter(context);
+        }
+
+        public override void ExitContinueFollowStatement(ContinueFollowStatementContext context)
+        {
+            OnExit(context);
+            Out.Write(")");
+            if(scope != null)
+            {
+                scope.WriteAfterContinue(context);
+            }
+            ExitState().ExitContinueFollowStatement(context);
+        }
+
+        protected override void OnStatement(ParserRuleContext context)
+        {
+            if(scope == null)
+            {
+                Error("`continue` must be used in a statement that supports it.", context);
+            }
+            else
+            {
+                scope.WriteContinue(true, context);
+            }
+            Out.Write('(');
         }
     }
 }

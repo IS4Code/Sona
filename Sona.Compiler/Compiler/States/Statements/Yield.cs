@@ -1,4 +1,5 @@
-﻿using static Sona.Grammar.SonaParser;
+﻿using Antlr4.Runtime;
+using static Sona.Grammar.SonaParser;
 
 namespace Sona.Compiler.States
 {
@@ -6,10 +7,7 @@ namespace Sona.Compiler.States
     {
         public override void EnterYieldStatement(YieldStatementContext context)
         {
-            if(FindContext<IComputationContext>()?.HasAnyFlag(ComputationFlags.IsCollection | ComputationFlags.IsComputation) != true)
-            {
-                Error("`yield` is not allowed outside a collection or computation.", context);
-            }
+            Validate.YieldPlacement(context);
             Out.Write("yield ");
         }
 
@@ -29,14 +27,31 @@ namespace Sona.Compiler.States
         }
     }
 
+    internal sealed class YieldFollowState : FollowStatementState
+    {
+        public override void EnterYieldFollowStatement(YieldFollowStatementContext context)
+        {
+            Validate.YieldPlacement(context);
+            OnEnter(context);
+        }
+
+        public override void ExitYieldFollowStatement(YieldFollowStatementContext context)
+        {
+            OnExit(context);
+            ExitState().ExitYieldFollowStatement(context);
+        }
+
+        protected override void OnStatement(ParserRuleContext context)
+        {
+            Out.Write("yield ");
+        }
+    }
+
     internal sealed class YieldEachState : NodeState
     {
         public override void EnterYieldEachStatement(YieldEachStatementContext context)
         {
-            if(FindContext<IComputationContext>()?.HasAnyFlag(ComputationFlags.IsCollection | ComputationFlags.IsComputation) != true)
-            {
-                Error("`yield` is not allowed outside a collection or computation.", context);
-            }
+            Validate.YieldPlacement(context);
             Out.Write("yield! ");
         }
 
@@ -127,14 +142,7 @@ namespace Sona.Compiler.States
     {
         public override void EnterYieldReturnStatement(YieldReturnStatementContext context)
         {
-            if(FindContext<IComputationContext>()?.HasFlag(ComputationFlags.IsComputation) != true)
-            {
-                Error("`yield return` is not allowed outside a computation.", context);
-            }
-            if(FindContext<IReturnableContext>()?.HasFlag(ReturnFlags.Optional) ?? false)
-            {
-                Error("`yield return` cannot be used in an optional function.", context);
-            }
+            Validate.YieldReturnPlacement(context);
             Out.Write("return ");
         }
 
@@ -151,6 +159,32 @@ namespace Sona.Compiler.States
         public override void ExitExpression(ExpressionContext context)
         {
 
+        }
+    }
+
+    internal sealed class YieldReturnFollowState : FollowStatementState
+    {
+        public override void EnterYieldReturnFollowStatement(YieldReturnFollowStatementContext context)
+        {
+            Validate.YieldReturnPlacement(context);
+            OnEnter(context);
+        }
+
+        public override void ExitYieldReturnFollowStatement(YieldReturnFollowStatementContext context)
+        {
+            OnExit(context);
+            ExitState().ExitYieldReturnFollowStatement(context);
+        }
+
+        protected override void OnStatement(ParserRuleContext context)
+        {
+            Out.Write("return ");
+        }
+
+        protected override bool OnComputationStatement(ParserRuleContext context)
+        {
+            Out.Write("return! ");
+            return true;
         }
     }
 }

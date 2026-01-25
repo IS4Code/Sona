@@ -5,7 +5,7 @@ namespace Sona.Tests
     [TestClass]
     public class Statements : CompilationTests
     {
-        const string not = "global.Microsoft.FSharp.Core.Operators.``not``";
+        new const string not = "global.Microsoft.FSharp.Core.Operators.``not``";
 
         [DataRow("import a", "open a")]
         [DataRow("import a.n", "open a.n")]
@@ -28,19 +28,21 @@ open B")]
 open B")]
         [DataRow(@"import((""a/b.c""))", @"#load ""a/b.c""
 open B")]
-        [DataRow(@"import @""a/b.c""", @"#load @""a/b.c""
+        [DataRow(@"import @""a/b.c""", @"#load ""a/b.c""
 open B")]
         [DataRow(@"include ""a""", @"#load ""a""")]
         [DataRow(@"include(""a"")", @"#load ""a""")]
         [DataRow(@"include((""a""))", @"#load ""a""")]
-        [DataRow(@"include @""a""", @"#load @""a""")]
+        [DataRow(@"include @""a""", @"#load ""a""")]
+        [DataRow(@"include @""\""", @"#load ""\\""")]
         [DataRow("include", null)]
         [DataRow("include a", null)]
         [DataRow("include 0", null)]
         [DataRow(@"require ""a""", @"#r ""a""")]
         [DataRow(@"require(""a"")", @"#r ""a""")]
         [DataRow(@"require((""a""))", @"#r ""a""")]
-        [DataRow(@"require @""a""", @"#r @""a""")]
+        [DataRow(@"require @""a""", @"#r ""a""")]
+        [DataRow(@"require @""\""", @"#r ""\\""")]
         [DataRow("require", null)]
         [DataRow("require a", null)]
         [DataRow("require 0", null)]

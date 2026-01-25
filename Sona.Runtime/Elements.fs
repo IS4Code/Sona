@@ -1,5 +1,4 @@
 ﻿namespace Sona.Runtime.Traits
-[<AutoOpen(path = "Sona.Runtime.Traits")>]do()
 
 type ``trait number``<^T
   when ^T : comparison
@@ -101,29 +100,34 @@ type ``trait comparable``<^T when ^T : comparison> = ^T
 type ``trait equatable``<^T when ^T : equality> = ^T
 type ``trait unmanaged``<^T when ^T : unmanaged> = ^T
 
-namespace Sona.Runtime.Core
+namespace Sona.Runtime
 
-type object = obj
-type short = int16
-type ushort = uint16
-type long = int64
-type ulong = uint64
-type ``exception`` = System.Exception
-type ``void`` = System.Void
+module Core =
+  type object = obj
+  type short = int16
+  type ushort = uint16
+  type long = int64
+  type ulong = uint64
+  type ``exception`` = System.Exception
+  type ``void`` = System.Void
 
-[<MeasureAnnotatedAbbreviation>]
-type unit<[<Measure>]'M> = unit
+  [<MeasureAnnotatedAbbreviation>]
+  type unit<[<Measure>]'M> = unit
 
-type float64 = double
+  type float64 = double
 
-type float64<[<Measure>]'M> = double<'M>
+  type float64<[<Measure>]'M> = double<'M>
 
-type bigint = System.Numerics.BigInteger
+  type bigint = System.Numerics.BigInteger
 
-[<MeasureAnnotatedAbbreviation>]
-type bigint<[<Measure>]'M> = bigint
+  [<MeasureAnnotatedAbbreviation>]
+  type bigint<[<Measure>]'M> = bigint
 
-type complex = System.Numerics.Complex
+  type complex = System.Numerics.Complex
 
-[<MeasureAnnotatedAbbreviation>]
-type complex<[<Measure>]'M> = complex
+  [<MeasureAnnotatedAbbreviation>]
+  type complex<[<Measure>]'M> = complex
+
+  [<System.Obsolete("This marks unimplemented code that should be implemented prior to publishing.")>]
+  let inline todo<'T> : 'T =
+    raise(System.NotImplementedException())
