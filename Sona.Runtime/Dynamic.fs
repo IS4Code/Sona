@@ -128,6 +128,35 @@ type UnsetMarker = UnsetMarker
 let unset = UnsetMarker
 
 [<Sealed; AbstractClass>]
+type DynamicOperation<'TObject when 'TObject :> dynamic> private() =
+  static let deleteCache = ConditionalWeakTable<string, ConcurrentDictionary<ValueTuple<Type>, 'TObject -> unit>>()
+  static let deleteDictFactory = ConditionalWeakTable<string, _>.CreateValueCallback(fun _ -> ConcurrentDictionary<ValueTuple<Type>, 'TObject -> unit>())
+
+  static member DeleteMember(object : 'TObject, memberName : string, context : Type) =
+    let dict = deleteCache.GetValue(memberName, deleteDictFactory)
+    dict.GetOrAdd(ValueTuple<_>(context), Func<ValueTuple<Type>, _>(fun _ -> (
+      let site =
+        CallSite<Action<CallSite, 'TObject>>.Create(
+          {
+            new DeleteMemberBinder(memberName, false) with
+            member _.FallbackDeleteMember(target : DynamicMetaObject, errorSuggestion : DynamicMetaObject) =
+              if isNull errorSuggestion then
+                DynamicMetaObject(
+                  Expression.Throw(
+                    Expression.New(
+                      typeof<RuntimeBinderException>.GetConstructor [| typeof<string> |],
+                      Expression.Constant($"Dynamically deleting a member is not supported on an object of type '{target.RuntimeType}'.")
+                    )
+                  ),
+                  BindingRestrictions.GetTypeRestriction(target.Expression, target.RuntimeType)
+                )
+              else errorSuggestion
+          }
+        )
+      fun obj -> site.Target.Invoke(site, obj)
+    ))) object
+
+[<Sealed; AbstractClass>]
 type DynamicOperation<'TObject, 'TValue when 'TObject :> dynamic> private() =
   static let argumentType = typeof<'TValue>
   static let argumentTypeIsObject = typeof<obj>.Equals argumentType
@@ -365,7 +394,10 @@ let inline (?) (object : 'TObject) memberName : 'TValue =
   DynamicOperation<'TObject, 'TValue>.GetMember(object, memberName, null)
 
 let inline (?<-) (object : 'TObject) memberName (value : 'TValue) =
-  DynamicOperation<'TObject, 'TValue>.SetMember(object, memberName, value, null)
+  if Object.ReferenceEquals(value, unset) then
+    DynamicOperation<'TObject>.DeleteMember(object, memberName, null)
+  else
+    DynamicOperation<'TObject, 'TValue>.SetMember(object, memberName, value, null)
 
 let inline (+) (left : 'TLeft) (right : 'TRight) : 'TResult =
   DynamicOperation<'TLeft, 'TRight, 'TResult>.Add(left, right, null)
@@ -450,7 +482,11 @@ module CallerContext =
     DynamicOperation<'TObject, 'TValue>.GetMember(object, memberName, getContext())
 
   let inline (?<-) (object : 'TObject) memberName (value : 'TValue) =
-    DynamicOperation<'TObject, 'TValue>.SetMember(object, memberName, value, getContext())
+    let context = getContext()
+    if Object.ReferenceEquals(value, unset) then
+      DynamicOperation<'TObject>.DeleteMember(object, memberName, context)
+    else
+      DynamicOperation<'TObject, 'TValue>.SetMember(object, memberName, value, context)
 
   let inline (+) (left : 'TLeft) (right : 'TRight) : 'TResult =
     DynamicOperation<'TLeft, 'TRight, 'TResult>.Add(left, right, getContext())
@@ -544,7 +580,11 @@ module CalleeContext =
     DynamicOperation<'TObject, 'TValue>.GetMember(object, memberName, getContext object)
 
   let inline (?<-) (object : 'TObject) memberName (value : 'TValue) =
-    DynamicOperation<'TObject, 'TValue>.SetMember(object, memberName, value, getContext object)
+    let context = getContext object
+    if Object.ReferenceEquals(value, unset) then
+      DynamicOperation<'TObject>.DeleteMember(object, memberName, context)
+    else
+      DynamicOperation<'TObject, 'TValue>.SetMember(object, memberName, value, context)
 
   let inline (+) (left : 'TLeft) (right : 'TRight) : 'TResult =
     DynamicOperation<'TLeft, 'TRight, 'TResult>.Add(left, right, getContextBinary left right)
