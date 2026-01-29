@@ -235,6 +235,7 @@ type DynamicOperation<'TObject when 'TObject :> dynamic> private() =
 type DynamicOperation<'TObject, 'TValue when 'TObject :> dynamic> private() =
   static let argumentType = typeof<'TValue>
   static let argumentTypeIsObject = typeof<obj>.Equals argumentType
+  static let argumentTypeIsUnset = typeof<UnsetMarker>.Equals argumentType
 
   // Wrap key in value to avoid null errors
   static let getCache = ConditionalWeakTable<string, ConcurrentDictionary<DynamicContext, 'TObject -> 'TValue>>()
@@ -353,14 +354,17 @@ type DynamicOperation<'TObject, 'TValue when 'TObject :> dynamic> private() =
     ))) object
 
   static member SetMember(object : 'TObject, memberName : string, value : 'TValue, context : DynamicContext) =
-    let dict = setCache.GetValue(memberName, setDictFactory)
-    dict.GetOrAdd(context, Func<DynamicContext, _>(fun context -> (
-      let site =
-        CallSite<Func<CallSite, 'TObject, 'TValue, obj>>.Create(
-          Binder.SetMember(CSharpBinderFlags.ResultDiscarded, memberName, context.Scope, setArgs)
+    if argumentTypeIsUnset || (argumentTypeIsObject && Object.ReferenceEquals(value, unset)) then
+      DynamicOperation<'TObject>.DeleteMember(object, memberName, context)
+    else
+      let dict = setCache.GetValue(memberName, setDictFactory)
+      dict.GetOrAdd(context, Func<DynamicContext, _>(fun context -> (
+        let site =
+          CallSite<Func<CallSite, 'TObject, 'TValue, obj>>.Create(
+            Binder.SetMember(CSharpBinderFlags.ResultDiscarded, memberName, context.Scope, setArgs)
         )
-      fun obj value -> site.Target.Invoke(site, obj, value) |> ignore
-    ))) object value
+        fun obj value -> site.Target.Invoke(site, obj, value) |> ignore
+      ))) object value
   
   static member Unary(``type`` : ExpressionType, operand : 'TObject, context : DynamicContext) : 'TValue =
     unaryCache.GetOrAdd(struct(context, ``type``), unaryDictFactory) operand
@@ -385,6 +389,7 @@ type DynamicOperation<'TLeft, 'TRight, 'TValue when 'TLeft :> dynamic> private()
   static let argumentType = typeof<'TValue>
   static let argumentTypeIsObject = typeof<obj>.Equals argumentType
   static let argumentTypeIsDynamic = typeof<dynamic>.Equals argumentType
+  static let argumentTypeIsUnset = typeof<UnsetMarker>.Equals argumentType
 
   static let binaryCache = ConcurrentDictionary<struct(DynamicContext * ExpressionType), 'TLeft -> 'TRight -> 'TValue>()
   static let binaryDictFactory = Func<struct(DynamicContext * ExpressionType), _>(
@@ -472,7 +477,10 @@ type DynamicOperation<'TLeft, 'TRight, 'TValue when 'TLeft :> dynamic> private()
     getIndexCache.GetOrAdd(context, getIndexFactory) object index
 
   static member SetIndex(object : 'TLeft, index : 'TRight, value : 'TValue, context : DynamicContext) =
-    setIndexCache.GetOrAdd(context, setIndexFactory) object index value
+    if argumentTypeIsUnset || (argumentTypeIsObject && Object.ReferenceEquals(value, unset)) then
+      DynamicOperation<'TLeft, 'TRight>.DeleteIndex(object, index, context)
+    else
+      setIndexCache.GetOrAdd(context, setIndexFactory) object index value
 
 type table = System.Dynamic.ExpandoObject
 
@@ -485,10 +493,7 @@ let inline (?) (object : 'TObject) memberName : 'TValue =
   DynamicOperation<'TObject, 'TValue>.GetMember(object, memberName, getContext())
 
 let inline (?<-) (object : 'TObject) memberName (value : 'TValue) =
-  if Object.ReferenceEquals(value, unset) then
-    DynamicOperation<'TObject>.DeleteMember(object, memberName, getContext())
-  else
-    DynamicOperation<'TObject, 'TValue>.SetMember(object, memberName, value, getContext())
+  DynamicOperation<'TObject, 'TValue>.SetMember(object, memberName, value, getContext())
 
 let inline (+) (left : 'TLeft) (right : 'TRight) : 'TResult =
   DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Add, left, right, getContext())
@@ -553,26 +558,22 @@ module Extensions =
     member inline this.Item
       with get(index : obj) : dynamic = this.Get index
       and set(index : obj) (value : objnull) =
-        if Object.ReferenceEquals(value, unset) then this.Delete(index)
-        else this.Set(index, value)
+        this.Set(index, value)
 
     member inline this.Item
       with get(index : dynamic) : dynamic = this.Get index
       and set(index : dynamic) (value : objnull) =
-        if Object.ReferenceEquals(value, unset) then this.Delete(index)
-        else this.Set(index, value)
+        this.Set(index, value)
 
     member inline this.Item
       with get(index : int) : dynamic = this.Get index
       and set(index : int) (value : objnull) =
-        if Object.ReferenceEquals(value, unset) then this.Delete(index)
-        else this.Set(index, value)
+        this.Set(index, value)
 
     member inline this.Item
       with get(index : string) : dynamic = this.Get index
       and set(index : string) (value : objnull) =
-        if Object.ReferenceEquals(value, unset) then this.Delete(index)
-        else this.Set(index, value)
+        this.Set(index, value)
 
   type DynamicValue<'T> with
     static member inline op_Implicit(operand : DynamicValue<'T>) : 'TResult =
@@ -619,11 +620,7 @@ module CallerContext =
     DynamicOperation<'TObject, 'TValue>.GetMember(object, memberName, getContext())
 
   let inline (?<-) (object : 'TObject) memberName (value : 'TValue) =
-    let context = getContext()
-    if Object.ReferenceEquals(value, unset) then
-      DynamicOperation<'TObject>.DeleteMember(object, memberName, context)
-    else
-      DynamicOperation<'TObject, 'TValue>.SetMember(object, memberName, value, context)
+    DynamicOperation<'TObject, 'TValue>.SetMember(object, memberName, value, getContext())
 
   let inline (+) (left : 'TLeft) (right : 'TRight) : 'TResult =
     DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Add, left, right, getContext())
@@ -685,26 +682,22 @@ module CallerContext =
     member inline this.Item
       with get(index : obj) : dynamic = this.Get index
       and set(index : obj) (value : objnull) =
-        if Object.ReferenceEquals(value, unset) then this.Delete(index)
-        else this.Set(index, value)
+        this.Set(index, value)
 
     member inline this.Item
       with get(index : dynamic) : dynamic = this.Get index
       and set(index : dynamic) (value : objnull) =
-        if Object.ReferenceEquals(value, unset) then this.Delete(index)
-        else this.Set(index, value)
+        this.Set(index, value)
 
     member inline this.Item
       with get(index : int) : dynamic = this.Get index
       and set(index : int) (value : objnull) =
-        if Object.ReferenceEquals(value, unset) then this.Delete(index)
-        else this.Set(index, value)
+        this.Set(index, value)
 
     member inline this.Item
       with get(index : string) : dynamic = this.Get index
       and set(index : string) (value : objnull) =
-        if Object.ReferenceEquals(value, unset) then this.Delete(index)
-        else this.Set(index, value)
+        this.Set(index, value)
 
   type DynamicValue<'T> with
     static member inline op_Implicit(operand : DynamicValue<'T>) : 'TResult =
@@ -767,11 +760,7 @@ module CalleeContext =
     DynamicOperation<'TObject, 'TValue>.GetMember(object, memberName, getContext object)
 
   let inline (?<-) (object : 'TObject) memberName (value : 'TValue) =
-    let context = getContext object
-    if Object.ReferenceEquals(value, unset) then
-      DynamicOperation<'TObject>.DeleteMember(object, memberName, context)
-    else
-      DynamicOperation<'TObject, 'TValue>.SetMember(object, memberName, value, context)
+    DynamicOperation<'TObject, 'TValue>.SetMember(object, memberName, value, getContext object)
 
   let inline (+) (left : 'TLeft) (right : 'TRight) : 'TResult =
     DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Add, left, right, getContextBinary left right)
@@ -833,26 +822,22 @@ module CalleeContext =
     member inline this.Item
       with get(index : obj) : dynamic = this.Get index
       and set(index : obj) (value : objnull) =
-        if Object.ReferenceEquals(value, unset) then this.Delete(index)
-        else this.Set(index, value)
+        this.Set(index, value)
 
     member inline this.Item
       with get(index : dynamic) : dynamic = this.Get index
       and set(index : dynamic) (value : objnull) =
-        if Object.ReferenceEquals(value, unset) then this.Delete(index)
-        else this.Set(index, value)
+        this.Set(index, value)
 
     member inline this.Item
       with get(index : int) : dynamic = this.Get index
       and set(index : int) (value : objnull) =
-        if Object.ReferenceEquals(value, unset) then this.Delete(index)
-        else this.Set(index, value)
+        this.Set(index, value)
 
     member inline this.Item
       with get(index : string) : dynamic = this.Get index
       and set(index : string) (value : objnull) =
-        if Object.ReferenceEquals(value, unset) then this.Delete(index)
-        else this.Set(index, value)
+        this.Set(index, value)
 
   type DynamicValue<'T> with
     static member inline op_Implicit(operand : DynamicValue<'T>) : 'TResult =
