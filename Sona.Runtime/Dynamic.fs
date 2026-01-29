@@ -17,23 +17,30 @@ type IDynamicValue =
   abstract member Type : Type
   abstract member Value : objnull
 
-[<Struct; IsReadOnly>]
+#nowarn "386" // A type with attribute 'NoEquality' should not usually have an explicit implementation of 'Object.Equals(obj)'. Disable this warning if this is intentional for interoperability purposes
+
+[<Struct; IsReadOnly; NoEquality; NoComparison>]
 type DynamicValue<'T> private(boxedValue : objnull) =
   static let genericType = typedefof<DynamicValue<_>>
   static let selfType = typeof<DynamicValue<'T>>
-  static let unboxedProperty = selfType.GetProperty("Value")
-  static let boxedProperty = selfType.GetProperty("BoxedValue")
+  static let unboxedProperty = selfType.GetProperty(nameof(Unchecked.defaultof<DynamicValue<'T>>.Value))
+  static let boxedProperty = selfType.GetProperty(nameof(Unchecked.defaultof<DynamicValue<'T>>.BoxedValue))
   
   static let interfaceType = typeof<IDynamicValue>
-  static let interfaceProperty = interfaceType.GetProperty("Value")
+  static let interfaceProperty = interfaceType.GetProperty(nameof(Unchecked.defaultof<IDynamicValue>.Value))
 
   static let instanceType = typeof<'T>
 
   new(value : 'T) =
     DynamicValue<'T>(box value)
 
+  new(other : DynamicValue<'T>) =
+    DynamicValue<'T>(System.Runtime.CompilerServices.RuntimeHelpers.GetObjectValue(other.RawBoxedValue))
+
   static member Default =
     DynamicValue<_>(box Unchecked.defaultof<'T>)
+
+  member private _.RawBoxedValue = boxedValue
 
   member _.BoxedValue =
     if isNull boxedValue then
@@ -145,6 +152,27 @@ type DynamicValue<'T> private(boxedValue : objnull) =
        member _.BindUnaryOperation(binder) = inner.BindUnaryOperation(binder)
        member _.GetDynamicMemberNames() = inner.GetDynamicMemberNames()
      }
+
+  override _.GetHashCode() =
+    System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(boxedValue)
+    
+  member _.Equals(other : DynamicValue<'T>) =
+    Object.ReferenceEquals(boxedValue, other.RawBoxedValue)
+
+  override this.Equals other =
+    match other with
+    | :? DynamicValue<'T> as other -> this.Equals other
+    | _ -> false
+
+  interface IEquatable<DynamicValue<'T>> with
+    member this.Equals other = this.Equals other
+
+  interface System.Collections.IStructuralEquatable with
+    member _.GetHashCode comparer = comparer.GetHashCode(boxedValue)
+    member _.Equals(other, comparer) =
+      match other with
+      | :? DynamicValue<'T> as other -> comparer.Equals(boxedValue, other.RawBoxedValue)
+      | _ -> false
 
 [<Sealed; AbstractClass>]
 type internal DynamicType<'T> private() =
