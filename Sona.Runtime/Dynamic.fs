@@ -250,11 +250,23 @@ type DynamicOperation<'TObject, 'TValue when 'TObject :> dynamic> private() =
       DynamicType<'TObject>.ArgumentInfo
     |]
     fun (struct(exprType, context)) ->
-      let site =
-        CallSite<Func<CallSite, 'TObject, 'TValue>>.Create(
-          Binder.UnaryOperation(CSharpBinderFlags.None, exprType, context, args)
-        )
-      fun operand -> site.Target.Invoke(site, operand)
+      if argumentTypeIsObject then
+        // No need to convert
+        let site =
+          CallSite<Func<CallSite, 'TObject, 'TValue>>.Create(
+            Binder.UnaryOperation(CSharpBinderFlags.None, exprType, context, args)
+          )
+        fun operand -> site.Target.Invoke(site, operand)
+      else
+        let convertSite =
+          CallSite<Func<CallSite, obj, 'TValue>>.Create(
+            Binder.Convert(CSharpBinderFlags.None, argumentType, context)
+          )
+        let unarySite =
+          CallSite<Func<CallSite, 'TObject, obj>>.Create(
+            Binder.UnaryOperation(CSharpBinderFlags.None, exprType, context, args)
+          )
+        fun operand -> convertSite.Target.Invoke(convertSite, unarySite.Target.Invoke(unarySite, operand))
   )
 
   static let convertCache = ConcurrentDictionary<struct(bool * Type), 'TObject -> 'TValue>()
@@ -371,11 +383,23 @@ type DynamicOperation<'TLeft, 'TRight, 'TValue when 'TLeft :> dynamic> private()
       DynamicType<'TRight>.ArgumentInfo
     |]
     fun (struct(exprType, context)) ->
-      let site =
-        CallSite<Func<CallSite, 'TLeft, 'TRight, 'TValue>>.Create(
-          Binder.BinaryOperation(CSharpBinderFlags.None, exprType, context, args)
-        )
-      fun left right -> site.Target.Invoke(site, left, right)
+      if argumentTypeIsObject then
+        // No need to convert
+        let site =
+          CallSite<Func<CallSite, 'TLeft, 'TRight, 'TValue>>.Create(
+            Binder.BinaryOperation(CSharpBinderFlags.None, exprType, context, args)
+          )
+        fun left right -> site.Target.Invoke(site, left, right)
+      else
+        let convertSite =
+          CallSite<Func<CallSite, obj, 'TValue>>.Create(
+            Binder.Convert(CSharpBinderFlags.None, argumentType, context)
+          )
+        let binarySite =
+          CallSite<Func<CallSite, 'TLeft, 'TRight, obj>>.Create(
+            Binder.BinaryOperation(CSharpBinderFlags.None, exprType, context, args)
+          )
+        fun left right -> convertSite.Target.Invoke(convertSite, binarySite.Target.Invoke(binarySite, left, right))
   )
 
   static let getIndexCache = ConcurrentDictionary<ValueTuple<Type>, 'TLeft -> 'TRight -> 'TValue>()
