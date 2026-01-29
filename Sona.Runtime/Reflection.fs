@@ -88,7 +88,7 @@ type Type<'T> private() =
       && System.Runtime.CompilerServices.RuntimeHelpers.Equals(Unchecked.defaultof<'T>, instance)
     )
 
-  static member GetBoxedType(instance : 'T) : Type =
+  static member GetBoxedType<'T>(instance : obj) : Type =
     if not(isNull(nullableT)) then
       nullableT
     elif Type<'T>.IsValueType || isNull(box instance) then

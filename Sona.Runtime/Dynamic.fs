@@ -17,43 +17,84 @@ type IDynamicValue =
   abstract member Type : Type
   abstract member Value : objnull
 
-[<Struct>]
-type DynamicValue<'T>(value : 'T) =
+[<Struct; IsReadOnly>]
+type DynamicValue<'T> private(boxedValue : objnull) =
   static let genericType = typedefof<DynamicValue<_>>
   static let selfType = typeof<DynamicValue<'T>>
-  static let property = selfType.GetProperty("Value")
+  static let unboxedProperty = selfType.GetProperty("Value")
+  static let boxedProperty = selfType.GetProperty("BoxedValue")
   
   static let interfaceType = typeof<IDynamicValue>
   static let interfaceProperty = interfaceType.GetProperty("Value")
 
-  member _.Value = value
+  static let instanceType = typeof<'T>
+
+  new(value : 'T) =
+    DynamicValue<'T>(box value)
+
+  static member Default =
+    DynamicValue<_>(box Unchecked.defaultof<'T>)
+
+  member _.BoxedValue =
+    if isNull boxedValue then
+      box Unchecked.defaultof<'T>
+    else
+      boxedValue
+
+  member _.Value =
+    if isNull boxedValue then
+      Unchecked.defaultof<'T>
+    else
+      unbox<'T> boxedValue
 
   interface IDynamicValue with
-    member _.Type = Type<'T>.GetBoxedType value
-    member _.Value = box value
+    member this.Type = Type<'T>.GetBoxedType<'T> this.BoxedValue
+    member this.Value = this.BoxedValue
 
   interface dynamic with
     member this.GetMetaObject parameter =
-     // Get value from parameter
-     let instanceExpr = Expression.Property(
-       (if not(selfType.Equals parameter.Type) then
-         // Convert to this type if necessary
-         Expression.Convert(parameter, selfType) : Expression
+     // Get self instance
+     let selfExpr =
+       if not(selfType.Equals parameter.Type) then
+         // Convert to concrete type if necessary
+         if parameter.Type.IsAssignableFrom(selfType) then
+           // It's a supertype, can unbox
+           Expression.Unbox(parameter, selfType) : Expression
+         else
+           // Convert via other means
+           Expression.Convert(parameter, selfType)
        else
-         parameter), property
-     )
-     let inner = DynamicMetaObject.Create(value, instanceExpr)
+         parameter
+         
+     // Get value from parameter
+     let instanceExpr =
+       if instanceType.IsValueType then
+         // Unbox manually to refer to the stored value (in case of mutability)
+         Expression.Unbox(Expression.Property(selfExpr, boxedProperty), instanceType) : Expression
+       else
+         Expression.Property(selfExpr, unboxedProperty)
+
+     let inner = DynamicMetaObject.Create(this.BoxedValue, instanceExpr)
 
      // Retrieve dynamic value
      let unwrap(arg : DynamicMetaObject) =
        let limitType = arg.LimitType
        if interfaceType.IsAssignableFrom limitType then
-         let property = Expression.Property(arg.Expression,
+         // Can unwrap
+         let expr = arg.Expression
+
+         let property =
            if limitType.IsGenericType && genericType.Equals(limitType.GetGenericTypeDefinition()) then
-             limitType.GetProperty("Value")
+             // Is concrete type
+             let unboxed = limitType.GetProperty("Value")
+             let elementType = unboxed.PropertyType
+             if elementType.IsValueType then
+               // Unbox manually
+               Expression.Unbox(Expression.Property(expr, limitType.GetProperty("BoxedValue")), elementType) : Expression
+             else
+               Expression.Property(expr, unboxed)
            else
-             interfaceProperty
-         )
+             Expression.Property(expr, interfaceProperty)
 
          match arg.Value with
          | :? IDynamicValue as dyn ->
@@ -338,7 +379,7 @@ type DynamicOperation<'TLeft, 'TRight, 'TValue when 'TLeft :> dynamic> private()
           let result = site.Target.Invoke(site, obj, index)
           match result with
           | :? 'TValue as result -> result
-          | _ -> (DynamicValue<_> result) |> box :?> 'TValue
+          | _ -> (DynamicValue<_> result) |> box |> unbox<'TValue>
     else
       fun context ->
         let convertSite =
