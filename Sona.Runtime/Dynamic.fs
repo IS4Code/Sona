@@ -17,7 +17,7 @@ type IDynamicValue =
   abstract member Type : Type
   abstract member Value : objnull
 
-#nowarn "386" // A type with attribute 'NoEquality' should not usually have an explicit implementation of 'Object.Equals(obj)'. Disable this warning if this is intentional for interoperability purposes
+#nowarn "386" // A type with attribute 'NoEquality' should not usually have an explicit implementation of 'Object.Equals(obj)'.
 
 [<Struct; IsReadOnly; NoEquality; NoComparison>]
 type DynamicValue<'T> private(boxedValue : objnull) =
@@ -340,14 +340,8 @@ type DynamicOperation<'TObject, 'TValue when 'TObject :> dynamic> private() =
       fun obj value -> site.Target.Invoke(site, obj, value) |> ignore
     ))) object value
   
-  static member UnaryPlus(operand : 'TObject, context : Type) : 'TValue =
-    unaryCache.GetOrAdd(struct(ExpressionType.UnaryPlus, context), unaryDictFactory) operand
-  
-  static member Negate(operand : 'TObject, context : Type) : 'TValue =
-    unaryCache.GetOrAdd(struct(ExpressionType.Negate, context), unaryDictFactory) operand
-  
-  static member OnesComplement(operand : 'TObject, context : Type) : 'TValue =
-    unaryCache.GetOrAdd(struct(ExpressionType.OnesComplement, context), unaryDictFactory) operand
+  static member Unary(``type`` : ExpressionType, operand : 'TObject, context : Type) : 'TValue =
+    unaryCache.GetOrAdd(struct(``type``, context), unaryDictFactory) operand
   
   static member DeleteIndex(object : 'TObject, index : 'TValue, context : Type) =
     deleteIndexCache.GetOrAdd(ValueTuple<_>(context), deleteIndexFactory) object index
@@ -436,20 +430,8 @@ type DynamicOperation<'TLeft, 'TRight, 'TValue when 'TLeft :> dynamic> private()
       fun obj index value -> site.Target.Invoke(site, obj, index, value) |> ignore
   )
 
-  static member Add(left : 'TLeft, right : 'TRight, context : Type) : 'TValue =
-    binaryCache.GetOrAdd(struct(ExpressionType.Add, context), binaryDictFactory) left right
-
-  static member Subtract(left : 'TLeft, right : 'TRight, context : Type) : 'TValue =
-    binaryCache.GetOrAdd(struct(ExpressionType.Subtract, context), binaryDictFactory) left right
-
-  static member Multiply(left : 'TLeft, right : 'TRight, context : Type) : 'TValue =
-    binaryCache.GetOrAdd(struct(ExpressionType.Multiply, context), binaryDictFactory) left right
-
-  static member Divide(left : 'TLeft, right : 'TRight, context : Type) : 'TValue =
-    binaryCache.GetOrAdd(struct(ExpressionType.Divide, context), binaryDictFactory) left right
-
-  static member Modulo(left : 'TLeft, right : 'TRight, context : Type) : 'TValue =
-    binaryCache.GetOrAdd(struct(ExpressionType.Modulo, context), binaryDictFactory) left right
+  static member Binary(``type`` : ExpressionType, left : 'TLeft, right : 'TRight, context : Type) : 'TValue =
+    binaryCache.GetOrAdd(struct(``type``, context), binaryDictFactory) left right
 
   static member GetIndex(object : 'TLeft, index : 'TRight, context : Type) : 'TValue =
     getIndexCache.GetOrAdd(ValueTuple<_>(context), getIndexFactory) object index
@@ -458,6 +440,9 @@ type DynamicOperation<'TLeft, 'TRight, 'TValue when 'TLeft :> dynamic> private()
     setIndexCache.GetOrAdd(ValueTuple<_>(context), setIndexFactory) object index value
 
 type table = System.Dynamic.ExpandoObject
+
+#nowarn "86" // The '%s' operator should not normally be redefined.
+open type ExpressionType
 
 let inline (?) (object : 'TObject) memberName : 'TValue =
   DynamicOperation<'TObject, 'TValue>.GetMember(object, memberName, null)
@@ -469,28 +454,46 @@ let inline (?<-) (object : 'TObject) memberName (value : 'TValue) =
     DynamicOperation<'TObject, 'TValue>.SetMember(object, memberName, value, null)
 
 let inline (+) (left : 'TLeft) (right : 'TRight) : 'TResult =
-  DynamicOperation<'TLeft, 'TRight, 'TResult>.Add(left, right, null)
+  DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Add, left, right, null)
 
 let inline (-) (left : 'TLeft) (right : 'TRight) : 'TResult =
-  DynamicOperation<'TLeft, 'TRight, 'TResult>.Subtract(left, right, null)
+  DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Subtract, left, right, null)
 
 let inline (*) (left : 'TLeft) (right : 'TRight) : 'TResult =
-  DynamicOperation<'TLeft, 'TRight, 'TResult>.Multiply(left, right, null)
+  DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Multiply, left, right, null)
 
 let inline (/) (left : 'TLeft) (right : 'TRight) : 'TResult =
-  DynamicOperation<'TLeft, 'TRight, 'TResult>.Divide(left, right, null)
+  DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Divide, left, right, null)
 
 let inline (%) (left : 'TLeft) (right : 'TRight) : 'TResult =
-  DynamicOperation<'TLeft, 'TRight, 'TResult>.Modulo(left, right, null)
+  DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Modulo, left, right, null)
+
+let inline (=) (left : 'TLeft) (right : 'TRight) : 'TResult =
+  DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Equal, left, right, null)
+
+let inline (<>) (left : 'TLeft) (right : 'TRight) : 'TResult =
+  DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(NotEqual, left, right, null)
+
+let inline (<) (left : 'TLeft) (right : 'TRight) : 'TResult =
+  DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(LessThan, left, right, null)
+
+let inline (>) (left : 'TLeft) (right : 'TRight) : 'TResult =
+  DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(GreaterThan, left, right, null)
+
+let inline (<=) (left : 'TLeft) (right : 'TRight) : 'TResult =
+  DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(LessThanOrEqual, left, right, null)
+
+let inline (>=) (left : 'TLeft) (right : 'TRight) : 'TResult =
+  DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(GreaterThanOrEqual, left, right, null)
 
 let inline (~+) (operand : 'TOperand) : 'TResult =
-  DynamicOperation<'TOperand, 'TResult>.UnaryPlus(operand, null)
+  DynamicOperation<'TOperand, 'TResult>.Unary(UnaryPlus, operand, null)
 
 let inline (~-) (operand : 'TOperand) : 'TResult =
-  DynamicOperation<'TOperand, 'TResult>.Negate(operand, null)
+  DynamicOperation<'TOperand, 'TResult>.Unary(Negate, operand, null)
 
 let inline (~~~) (operand : 'TOperand) : 'TResult =
-  DynamicOperation<'TOperand, 'TResult>.OnesComplement(operand, null)
+  DynamicOperation<'TOperand, 'TResult>.Unary(OnesComplement, operand, null)
 
 [<Sealed; AbstractClass; Extension>]
 type DynamicExtensions private() =
@@ -558,28 +561,46 @@ module CallerContext =
       DynamicOperation<'TObject, 'TValue>.SetMember(object, memberName, value, context)
 
   let inline (+) (left : 'TLeft) (right : 'TRight) : 'TResult =
-    DynamicOperation<'TLeft, 'TRight, 'TResult>.Add(left, right, getContext())
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Add, left, right, getContext())
 
   let inline (-) (left : 'TLeft) (right : 'TRight) : 'TResult =
-    DynamicOperation<'TLeft, 'TRight, 'TResult>.Subtract(left, right, getContext())
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Subtract, left, right, getContext())
 
   let inline (*) (left : 'TLeft) (right : 'TRight) : 'TResult =
-    DynamicOperation<'TLeft, 'TRight, 'TResult>.Multiply(left, right, getContext())
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Multiply, left, right, getContext())
 
   let inline (/) (left : 'TLeft) (right : 'TRight) : 'TResult =
-    DynamicOperation<'TLeft, 'TRight, 'TResult>.Divide(left, right, getContext())
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Divide, left, right, getContext())
 
   let inline (%) (left : 'TLeft) (right : 'TRight) : 'TResult =
-    DynamicOperation<'TLeft, 'TRight, 'TResult>.Modulo(left, right, getContext())
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Modulo, left, right, getContext())
+
+  let inline (=) (left : 'TLeft) (right : 'TRight) : 'TResult =
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Equal, left, right, getContext())
+
+  let inline (<>) (left : 'TLeft) (right : 'TRight) : 'TResult =
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(NotEqual, left, right, getContext())
+
+  let inline (<) (left : 'TLeft) (right : 'TRight) : 'TResult =
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(LessThan, left, right, getContext())
+
+  let inline (>) (left : 'TLeft) (right : 'TRight) : 'TResult =
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(GreaterThan, left, right, getContext())
+
+  let inline (<=) (left : 'TLeft) (right : 'TRight) : 'TResult =
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(LessThanOrEqual, left, right, getContext())
+
+  let inline (>=) (left : 'TLeft) (right : 'TRight) : 'TResult =
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(GreaterThanOrEqual, left, right, getContext())
 
   let inline (~+) (operand : 'TOperand) : 'TResult =
-    DynamicOperation<'TOperand, 'TResult>.UnaryPlus(operand, getContext())
+    DynamicOperation<'TOperand, 'TResult>.Unary(UnaryPlus, operand, getContext())
 
   let inline (~-) (operand : 'TOperand) : 'TResult =
-    DynamicOperation<'TOperand, 'TResult>.Negate(operand, getContext())
+    DynamicOperation<'TOperand, 'TResult>.Unary(Negate, operand, getContext())
 
   let inline (~~~) (operand : 'TOperand) : 'TResult =
-    DynamicOperation<'TOperand, 'TResult>.OnesComplement(operand, getContext())
+    DynamicOperation<'TOperand, 'TResult>.Unary(OnesComplement, operand, getContext())
 
   [<Sealed; AbstractClass; Extension>]
   type DynamicExtensions private() =
@@ -656,28 +677,46 @@ module CalleeContext =
       DynamicOperation<'TObject, 'TValue>.SetMember(object, memberName, value, context)
 
   let inline (+) (left : 'TLeft) (right : 'TRight) : 'TResult =
-    DynamicOperation<'TLeft, 'TRight, 'TResult>.Add(left, right, getContextBinary left right)
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Add, left, right, getContextBinary left right)
 
   let inline (-) (left : 'TLeft) (right : 'TRight) : 'TResult =
-    DynamicOperation<'TLeft, 'TRight, 'TResult>.Subtract(left, right, getContextBinary left right)
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Subtract, left, right, getContextBinary left right)
 
   let inline (*) (left : 'TLeft) (right : 'TRight) : 'TResult =
-    DynamicOperation<'TLeft, 'TRight, 'TResult>.Multiply(left, right, getContextBinary left right)
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Multiply, left, right, getContextBinary left right)
 
   let inline (/) (left : 'TLeft) (right : 'TRight) : 'TResult =
-    DynamicOperation<'TLeft, 'TRight, 'TResult>.Divide(left, right, getContextBinary left right)
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Divide, left, right, getContextBinary left right)
 
   let inline (%) (left : 'TLeft) (right : 'TRight) : 'TResult =
-    DynamicOperation<'TLeft, 'TRight, 'TResult>.Modulo(left, right, getContextBinary left right)
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Modulo, left, right, getContextBinary left right)
+
+  let inline (=) (left : 'TLeft) (right : 'TRight) : 'TResult =
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(Equal, left, right, getContextBinary left right)
+
+  let inline (<>) (left : 'TLeft) (right : 'TRight) : 'TResult =
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(NotEqual, left, right, getContextBinary left right)
+
+  let inline (<) (left : 'TLeft) (right : 'TRight) : 'TResult =
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(LessThan, left, right, getContextBinary left right)
+
+  let inline (>) (left : 'TLeft) (right : 'TRight) : 'TResult =
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(GreaterThan, left, right, getContextBinary left right)
+
+  let inline (<=) (left : 'TLeft) (right : 'TRight) : 'TResult =
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(LessThanOrEqual, left, right, getContextBinary left right)
+
+  let inline (>=) (left : 'TLeft) (right : 'TRight) : 'TResult =
+    DynamicOperation<'TLeft, 'TRight, 'TResult>.Binary(GreaterThanOrEqual, left, right, getContextBinary left right)
 
   let inline (~+) (operand : 'TOperand) : 'TResult =
-    DynamicOperation<'TOperand, 'TResult>.UnaryPlus(operand, getContext operand)
+    DynamicOperation<'TOperand, 'TResult>.Unary(UnaryPlus, operand, getContext operand)
 
   let inline (~-) (operand : 'TOperand) : 'TResult =
-    DynamicOperation<'TOperand, 'TResult>.Negate(operand, getContext operand)
+    DynamicOperation<'TOperand, 'TResult>.Unary(Negate, operand, getContext operand)
 
   let inline (~~~) (operand : 'TOperand) : 'TResult =
-    DynamicOperation<'TOperand, 'TResult>.OnesComplement(operand, getContext operand)
+    DynamicOperation<'TOperand, 'TResult>.Unary(OnesComplement, operand, getContext operand)
 
   [<Sealed; AbstractClass; Extension>]
   type DynamicExtensions private() =
