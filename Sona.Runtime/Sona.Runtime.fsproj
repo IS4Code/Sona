@@ -21,12 +21,15 @@
     <DebugType>embedded</DebugType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
+    <FSharpPreferNetFrameworkTools>false</FSharpPreferNetFrameworkTools>
+    <FSharpPrefer64BitTools>true</FSharpPrefer64BitTools>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
     <DisableAutoSetFscCompilerPath>true</DisableAutoSetFscCompilerPath>
     <FSharp_Shim_Present>false</FSharp_Shim_Present>
     <FscToolExe>$(ProgramFiles)\dotnet\dotnet.exe</FscToolExe>
     <DotnetFscCompilerPath>"$(ProgramFiles)\dotnet\sdk\9.0.303\FSharp\fsc.dll"</DotnetFscCompilerPath>
-    <FSharpPreferNetFrameworkTools>false</FSharpPreferNetFrameworkTools>
-    <FSharpPrefer64BitTools>true</FSharpPrefer64BitTools>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
