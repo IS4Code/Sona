@@ -392,6 +392,7 @@ namespace Sona.Compiler.States
 
     internal abstract class VariableDeclarationState : DeclarationState, IExpressionContext
     {
+        protected bool KindKnown { get; private set; }
         protected bool IsConst { get; private set; }
         protected bool IsUse { get; private set; }
         protected bool IsRec { get; private set; }
@@ -403,6 +404,7 @@ namespace Sona.Compiler.States
         {
             base.Initialize(environment, parent);
 
+            KindKnown = false;
             IsConst = false;
             IsUse = false;
             IsRec = false;
@@ -416,6 +418,7 @@ namespace Sona.Compiler.States
 
         public override void EnterDeclaration(DeclarationContext context)
         {
+            KindKnown = true;
             if(IsConst)
             {
                 Out.Write("[<");
@@ -578,7 +581,11 @@ namespace Sona.Compiler.States
 
         public sealed override void ExitLocalAttribute(LocalAttributeContext context)
         {
-            Out.WriteLine();
+            if(!KindKnown)
+            {
+                // Attribute placed in the prefix
+                Out.WriteLine();
+            }
             base.ExitLocalAttribute(context);
         }
     }
