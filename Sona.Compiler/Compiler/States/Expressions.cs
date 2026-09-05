@@ -235,7 +235,7 @@ namespace Sona.Compiler.States
 
         public override void EnterHashExpr(HashExprContext context)
         {
-            Out.Write('(');
+            Out.Write("((");
         }
 
         public override void ExitHashExpr(HashExprContext context)
@@ -249,6 +249,7 @@ namespace Sona.Compiler.States
             {
                 Out.WriteSpecialUnaryOperator("Length");
             }
+            Out.Write(')');
         }
 
         public override void EnterNotExpr(NotExprContext context)
