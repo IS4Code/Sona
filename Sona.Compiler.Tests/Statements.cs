@@ -751,5 +751,279 @@ end")]
         {
             AssertBlockEquivalence(source, expected);
         }
+
+        [DataRow("switch a case 1 do f(b) else f(c) end", @"match(a)with
+| (1) -> begin
+ f(b)
+ ()
+end
+| _ -> begin
+ f(c)
+ ()
+end
+()")]
+        [DataRow("switch a case 1 do f(b) case 2 do f(c) end", @"match(a)with
+| (1) -> begin
+ f(b)
+ ()
+end
+| (2) -> begin
+ f(c)
+ ()
+end
+()")]
+        [DataRow("switch a case x when x > 0 do f(x) else f(a) end", @"match(a)with
+| (x) when(x > 0) -> begin
+ f(x)
+ ()
+end
+| _ -> begin
+ f(a)
+ ()
+end
+()")]
+        [DataRow("switch a case 1 when x do f(b) case when y do f(c) end", @"match(a)with
+| (1) when(x) -> begin
+ f(b)
+ ()
+end
+| _ when(y) -> begin
+ f(c)
+ ()
+end
+()")]
+        [DataRow("switch a case 1 do f(b) else f(c) end f(d)", @"match(a)with
+| (1) -> begin
+ f(b)
+ ()
+end
+| _ -> begin
+ f(c)
+ ()
+end
+<?do?>f(d)
+()")]
+        [DataRow("switch a case do f(b) end", null)]
+        [DataRow("switch a case 1 do break end", null)]
+        [TestMethod]
+        public void SwitchNonReturning(string source, string? expected)
+        {
+            AssertTopLevelBlockEquivalence(source, expected);
+        }
+
+        [DataRow("switch a case 1 do throw b else throw c end", $@"if true then begin
+ match(a)with
+ | (1) -> begin
+  (b){@throw}
+ end
+ | _ -> begin
+  (c){@throw}
+ end
+end
+else <?do?>{@default}")]
+        [DataRow("switch a case 1 do throw b else throw c end f()", $@"if true then begin
+ match(a)with
+ | (1) -> begin
+  (b){@throw}
+ end
+ | _ -> begin
+  (c){@throw}
+ end
+end
+else begin
+ {ignore_begin}
+  f()
+  ()
+ {ignore_end}
+ <?do?>{@default}
+end")]
+        [TestMethod]
+        public void SwitchThrowing(string source, string? expected)
+        {
+            AssertTopLevelBlockEquivalence(source, expected);
+        }
+
+        [DataRow("switch a case 1 do return b else return c end", $@"let mutable <$returning$> = false
+let mutable <$result$> = {@default}
+let mutable <$switch$> = a
+let mutable <$looping$> = true
+while <$looping$> do begin
+ <$looping$> <- false
+ let mutable <$matched$> = false
+ match <$switch$> with
+ | (1) -> begin
+  <$result$> <- (b);<$returning$> <- true
+ end
+ | _ -> begin
+  <$result$> <- (c);<$returning$> <- true
+ end
+end
+if <$returning$> then <$result$>
+else {@default}")]
+        [TestMethod]
+        public void SwitchReturning(string source, string? expected)
+        {
+            AssertBlockEquivalence(source, expected);
+        }
+
+        [DataRow("switch a case 1 do continue b else f(c) end", $@"let mutable <$switch$> = a
+let mutable <$looping$> = true
+while <$looping$> do begin
+ <$looping$> <- false
+ let mutable <$matched$> = false
+ match <$switch$> with
+ | (1) -> begin
+  <$switch$> <- (b)
+  <$looping$> <- true
+  <$matched$> <- true
+ end
+ | _ -> begin
+  f(c)
+  ()
+ end
+end
+()")]
+        [DataRow("switch a case 1 do continue b end", $@"if true then begin
+ let mutable <$switch$> = a
+ let mutable <$looping$> = true
+ while <$looping$> do begin
+  <$looping$> <- false
+  let mutable <$matched$> = false
+  match <$switch$> with
+  | (1) -> begin
+   <$switch$> <- (b)
+   <$looping$> <- true
+   <$matched$> <- true
+  end
+ end
+end
+else <?do?>{@default}")]
+        [TestMethod]
+        public void SwitchContinue(string source, string? expected)
+        {
+            AssertTopLevelBlockEquivalence(source, expected);
+        }
+
+        const string exceptionType = "global.System.Exception";
+
+        [DataRow("try f(a) catch e do f(b) end", $@"try begin
+ f(a)
+ ()
+end
+with
+| (:? _ as(e) : {exceptionType}) -> begin
+ f(b)
+ ()
+end
+()")]
+        [DataRow("try f(a) catch e as InvalidOperationException do f(b) end", $@"try begin
+ f(a)
+ ()
+end
+with
+| (:? InvalidOperationException as(e) : {exceptionType}) -> begin
+ f(b)
+ ()
+end
+()")]
+        [DataRow("try f(a) case e do f(b) end", $@"try begin
+ f(a)
+ ()
+end
+with
+| (e) -> begin
+ f(b)
+ ()
+end
+()")]
+        [DataRow("try f(a) catch e when x do f(b) end", $@"try begin
+ f(a)
+ ()
+end
+with
+| (:? _ as(e) : {exceptionType}) when(x) -> begin
+ f(b)
+ ()
+end
+()")]
+        [DataRow("try f(a) catch e do f(b) end f(c)", $@"try begin
+ f(a)
+ ()
+end
+with
+| (:? _ as(e) : {exceptionType}) -> begin
+ f(b)
+ ()
+end
+<?do?>f(c)
+()")]
+        [DataRow("try f(a) finally f(b) end", @"try begin
+ f(a)
+ ()
+end
+finally begin
+ f(b)
+ ()
+end
+()")]
+        [DataRow("try f(a) catch e do f(b) finally f(c) end", $@"try begin
+ try begin
+  f(a)
+  ()
+ end
+ with
+ | (:? _ as(e) : {exceptionType}) -> begin
+  f(b)
+  ()
+ end
+end
+finally begin
+ f(c)
+ ()
+end
+()")]
+        [DataRow("try f(a) break end", null)]
+        [TestMethod]
+        public void Try(string source, string? expected)
+        {
+            AssertTopLevelBlockEquivalence(source, expected);
+        }
+
+        [DataRow("try return a catch e do return b end", $@"let mutable <$returning$> = false
+let mutable <$result$> = {@default}
+try begin
+ <$result$> <- (a);<$returning$> <- true
+end
+with
+| (:? _ as(e) : {exceptionType}) -> begin
+ <$result$> <- (b);<$returning$> <- true
+end
+if <$returning$> then <$result$>
+else {@default}")]
+        [TestMethod]
+        public void TryReturning(string source, string? expected)
+        {
+            AssertBlockEquivalence(source, expected);
+        }
+
+        const string printfn = "global.Microsoft.FSharp.Core.ExtraTopLevelOperators.printfn";
+
+        [DataRow(@"echo ""abc""", $@"do {printfn}(""abc"")")]
+        [DataRow(@"echo ""n=%d"", n", $@"do {printfn}(let <$_1$> = (""n=%d"") in let <$_2$> = (n) in $""{{<$_1$>}}{{<$_2$>}}"")")]
+        [DataRow("echo a", $@"do {printfn}(let <$_1$> = (a) in $""{{<$_1$>}}"")")]
+        [DataRow("echo a, b", $@"do {printfn}(let <$_1$> = (a) in let <$_2$> = (b) in $""{{<$_1$>}}{{<$_2$>}}"")")]
+        [DataRow("echo", null)]
+        [TestMethod]
+        public void Echo(string source, string? expected)
+        {
+            AssertTopLevelStatementEquivalence(source, expected);
+        }
+
+        [DataRow(@"echo ""abc""", $@"{printfn}(""abc"")")]
+        [TestMethod]
+        public void EchoInner(string source, string? expected)
+        {
+            AssertInnerStatementEquivalence(source, expected);
+        }
     }
 }

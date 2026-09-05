@@ -104,5 +104,144 @@ a) end", $"let rec f([<param:X()>]a) = {emptyBody}")]
         {
             AssertTopLevelStatementEquivalence(source, expected);
         }
+
+        const string @default = "global.Microsoft.FSharp.Core.Operators.Unchecked.defaultof<_>";
+
+        const string AbstractSealed = "[<global.Microsoft.FSharp.Core.AbstractClassAttribute;global.Microsoft.FSharp.Core.SealedAttribute>]";
+        const string enumConstraint = "when '<$_1$> :> global.System.Enum and '<$_1$> : not struct";
+
+        [DataRow("lazy v=a", $@"type {AbstractSealed}``lazy v``<'<$_1$> {enumConstraint}> private() = begin
+ static member val v = (a)
+ static member ``<Force>``<'x>(x : 'x) : 'x = x
+end
+let [<global.Microsoft.FSharp.Core.CompiledNameAttribute(""get_v"")>]<$_2$>() = ``lazy v``<global.System.Enum>.v
+let [<global.Microsoft.FSharp.Core.CompiledNameAttribute(""<get>v"")>]inline v<'<$_1$> {enumConstraint}> = ``lazy v``<'<$_1$>>.v
+open type ``lazy v``<global.System.Enum>")]
+        [TestMethod]
+        public void Lazy(string source, string? expected)
+        {
+            AssertTopLevelStatementEquivalence(source, expected);
+        }
+
+        [DataRow("use v=a", "use v = a")]
+        [DataRow("use var v=a", "use mutable v = a")]
+        [DataRow("use v=a, w=b", null)]
+        [TestMethod]
+        public void Use(string source, string? expected)
+        {
+            AssertStatementEquivalence(source, expected);
+        }
+
+        const string literalAttr = "[<global.Microsoft.FSharp.Core.LiteralAttribute>]";
+
+        [DataRow("package P const v=1 end", $@"module P = begin
+ {literalAttr}
+ let v = 1
+ ()
+end")]
+        [DataRow("const v=1", $@"{literalAttr}
+let v = 1")]
+        [DataRow("package P const v=follow a end", null)]
+        [TestMethod]
+        public void Const(string source, string? expected)
+        {
+            AssertTopLevelStatementEquivalence(source, expected);
+        }
+
+        [DataRow("function test() const v=1 end", null)]
+        [TestMethod]
+        public void ConstInsideFunction(string source, string? expected)
+        {
+            AssertTopLevelStatementEquivalence(source, expected);
+        }
+
+        [DataRow("let v=a, w=b", "let (v,w) = (a,b)")]
+        [DataRow("let (x, y) = a", "let ((struct(x,y))) = a")]
+        [TestMethod]
+        public void MultipleAndPatternDeclarations(string source, string? expected)
+        {
+            AssertStatementEquivalence(source, expected);
+        }
+
+        [DataRow("inline function f(a) return a end", $@"let inline f(a) = (
+ (a)
+)")]
+        [TestMethod]
+        public void InlineFunction(string source, string? expected)
+        {
+            AssertStatementEquivalence(source, expected);
+        }
+
+        const string voption = "global.Microsoft.FSharp.Core.voption";
+        const string ValueSome = "global.Microsoft.FSharp.Core.ValueSome";
+        const string ValueNone = "global.Microsoft.FSharp.Core.ValueNone";
+
+        [DataRow("function f?() if a then return 1 end return end", $@"let rec f() : _ {voption} = (
+ let mutable <$returning$> = false
+ let mutable <$result$> = {@default}
+ if(a)then begin
+  <$result$> <- {ValueSome}(1);<$returning$> <- true
+ end
+ if <$returning$> then <$result$>
+ else begin
+  {ValueNone}
+ end
+)")]
+        [TestMethod]
+        public void OptionalFunction(string source, string? expected)
+        {
+            AssertStatementEquivalence(source, expected);
+        }
+
+        [DataRow("case function C(x) return x end", $@"let rec (|C|)(x) = (
+ (x)
+)")]
+        [DataRow("case function (A or B)(x) if x then return A end return B end", $@"let rec (|A|B|)(x) = (
+ let mutable <$returning$> = false
+ let mutable <$result$> = {@default}
+ if(x)then begin
+  <$result$> <- (A);<$returning$> <- true
+ end
+ if <$returning$> then <$result$>
+ else begin
+  (B)
+ end
+)")]
+        [DataRow("case function C?(x) if x then return x end end", $@"let rec (|C|_|)(x) = (
+ let mutable <$returning$> = false
+ let mutable <$result$> = {@default}
+ if(x)then begin
+  <$result$> <- {ValueSome}(x);<$returning$> <- true
+ end
+ if <$returning$> then <$result$>
+ else begin
+  {ValueNone}
+ end
+)")]
+        [TestMethod]
+        public void CaseFunction(string source, string? expected)
+        {
+            AssertStatementEquivalence(source, expected);
+        }
+
+        [DataRow("let f = case C", "let f = (|C|)")]
+        [TestMethod]
+        public void CaseFunctionReference(string source, string? expected)
+        {
+            AssertStatementEquivalence(source, expected);
+        }
+
+        [DataRow("package P let v=1 end", @"module P = begin
+ let v = 1
+ ()
+end")]
+        [DataRow("package P end", @"module P = begin
+ ()
+end")]
+        [TestMethod]
+        public void Package(string source, string? expected)
+        {
+            AssertTopLevelStatementEquivalence(source, expected);
+        }
     }
 }
