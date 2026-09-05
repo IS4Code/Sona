@@ -14,7 +14,10 @@ namespace Sona.Tests
     {
         protected virtual bool GenerateLineNumbers => false;
 
-        static readonly char[] newlineChars = Environment.NewLine.ToCharArray();
+        const string newline = @"
+";
+
+        static readonly char[] newlineChars = newline.ToCharArray();
 
         private protected const string not = "global.Sona.Runtime.CompilerServices.UnaryOperators.Not";
         private protected const string cat = " |> global.Sona.Runtime.CompilerServices.BinaryOperators.Concat";
@@ -37,7 +40,9 @@ namespace Sona.Tests
                     (GenerateLineNumbers ? 0 : CompilerFlags.IgnoreLineNumbers) |
                     CompilerFlags.SkipDefaultNamespaces,
                 AssemblyLoader: AssemblyContextLoader.Default
-            );
+            ) {
+                NewLine = newline
+            };
 
             var writer = new StringWriter();
             try
@@ -84,7 +89,7 @@ namespace Sona.Tests
             expected = ReplacePlaceholders(expected);
             if(expected != null)
             {
-                expected = expected + Environment.NewLine + "()";
+                expected = expected + newline + "()";
             }
             var actual = CompileToSource(source, expected == null);
             Assert.AreEqual(expected, actual);
@@ -95,7 +100,7 @@ namespace Sona.Tests
             expected = ReplacePlaceholders(expected);
             if(expected != null)
             {
-                var indented = String.Join(Environment.NewLine, expected.Split(Environment.NewLine).Select(l => " " + l));
+                var indented = String.Join(newline, expected.Split(newline).Select(l => " " + l));
                 expected = $@"let rec test() = (
 {indented}
  ()
@@ -129,8 +134,8 @@ namespace Sona.Tests
             source = $"function test() {source} end";
             if(expected != null)
             {
-                var indented = String.Join(Environment.NewLine, expected.Split(Environment.NewLine).Select(l => " " + l));
-                expected = expected + Environment.NewLine + "()";
+                var indented = String.Join(newline, expected.Split(newline).Select(l => " " + l));
+                expected = expected + newline + "()";
                 expected = $@"let rec test() = (
 {indented}
 )
@@ -147,7 +152,7 @@ namespace Sona.Tests
             if(expected != null)
             {
                 bool first = true;
-                var indented = indent ? String.Join(Environment.NewLine, expected.Split(Environment.NewLine).Select(l => {
+                var indented = indent ? String.Join(newline, expected.Split(newline).Select(l => {
                     if(first)
                     {
                         first = false;

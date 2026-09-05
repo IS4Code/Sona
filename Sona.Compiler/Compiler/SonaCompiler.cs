@@ -59,10 +59,12 @@ namespace Sona.Compiler
             bool noNamespaces = (options.Flags & CompilerFlags.SkipDefaultNamespaces) != 0;
 
             using var writer = new SourceWriter(output);
+            writer.NewLine = options.NewLine;
             writer.AdjustLines = (options.Flags & CompilerFlags.IgnoreLineNumbers) == 0;
             writer.SkipEmptyLines = !debugBeginEnd;
 
             using var globalWriter = new SourceWriter(new StringWriter(result.GlobalCode = new()));
+            globalWriter.NewLine = options.NewLine;
 
             if(!debugging)
             {
@@ -70,7 +72,9 @@ namespace Sona.Compiler
                 parser.BuildParseTree = false;
             }
 
-            var context = new ScriptEnvironment(parser, writer, globalWriter, lexerContext, debugBeginEnd ? "(*begin*)" : "", debugBeginEnd ? "(*end*)" : "", debugReturn ? "(*return*)" : "", noNamespaces ? Array.Empty<string>() : defaultNamespaces);
+            var context = new ScriptEnvironment(parser, writer, globalWriter, lexerContext, debugBeginEnd ? "(*begin*)" : "", debugBeginEnd ? "(*end*)" : "", debugReturn ? "(*return*)" : "", noNamespaces ? Array.Empty<string>() : defaultNamespaces) {
+                DefaultNewLine = options.NewLine
+            };
             lexerContext.Environment = context;
 
             // Lexer context is fully set up
@@ -230,7 +234,7 @@ namespace Sona.Compiler
             var result = CompileToString(inputStream, options);
             var source = result.IntermediateCode!;
 
-            var fs = GetFileSystem(PrepareCode(source, result), fileName, options, out var inputPath, out var outputPath, out var manifestPath, out var depsPath);
+            var fs = GetFileSystem(PrepareCode(source, result, options), fileName, options, out var inputPath, out var outputPath, out var manifestPath, out var depsPath);
 
             fs.OutputFiles[outputPath] = outputStream;
 
@@ -287,19 +291,19 @@ namespace Sona.Compiler
             return CompileToStream(inputStream, fileName, new BlockBufferStream(), options, cancellationToken: cancellationToken);
         }
 
-        private string PrepareCode(string source, CompilerResult result)
+        private string PrepareCode(string source, CompilerResult result, CompilerOptions options)
         {
             if(result.GlobalCode?.Length > 0)
             {
                 var newResult = new StringBuilder();
                 newResult.Append(result.GlobalCode);
-                newResult.Append(Environment.NewLine);
+                newResult.Append(options.NewLine);
                 newResult.Append(source);
-                newResult.Append(Environment.NewLine);
+                newResult.Append(options.NewLine);
                 newResult.Append("()");
                 return newResult.ToString();
             }
-            return source + Environment.NewLine + "()";
+            return source + options.NewLine + "()";
         }
 
         readonly ConcurrentDictionary<CompilerOptions, FsiEvaluationSession> sessionCache = new();
@@ -324,7 +328,7 @@ namespace Sona.Compiler
                 return FsiEvaluationSession.Create(config, args, Console.In, Console.Out, Console.Error, collectible: true, legacyReferenceResolver: null);
             });
 
-            string source = PrepareCode(result.IntermediateCode!, result);
+            string source = PrepareCode(result.IntermediateCode!, result, options);
 
             // Check for errors separately 
             var (parseResults, fileResults, projectResults) = session.ParseAndCheckInteraction(source);
@@ -374,7 +378,7 @@ namespace Sona.Compiler
 
             Task EvalInteraction()
             {
-                var (evalResult, evalDiagnostics) = session.EvalInteractionNonThrowing(PrepareCode(source, result), inputPath, cancelTokenOption);
+                var (evalResult, evalDiagnostics) = session.EvalInteractionNonThrowing(PrepareCode(source, result, options), inputPath, cancelTokenOption);
 
                 if(evalResult is FSharpChoice<FSharpOption<FsiValue>, Exception>.Choice2Of2 { Item: { } exception })
                 {

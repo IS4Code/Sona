@@ -12,7 +12,7 @@ namespace Sona.Compiler.States
         {
             base.Initialize(environment, parent);
 
-            NewLineSequence = LexerContext.GetState<NewlinePragma>()?.NewLineSequence ?? ScriptEnvironment.DefaultNewLineSequence;
+            NewLineSequence = LexerContext.GetState<NewlinePragma>()?.NewLineSequence ?? environment.DefaultNewLineSequence;
         }
     }
 

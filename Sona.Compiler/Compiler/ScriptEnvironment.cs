@@ -18,7 +18,10 @@ namespace Sona.Compiler
         ConcurrentDictionary<string, Microsoft.FSharp.Core.Unit?>? globalSymbols;
         public ICollection<string> DefinedGlobalSymbols => globalSymbols?.Keys ?? Array.Empty<string>();
 
-        public static string DefaultNewLineSequence { get; } = String.Join("", Tools.Syntax.EscapeString(Environment.NewLine));
+        static readonly string platformNewLineSequence = String.Join("", Tools.Syntax.EscapeString(Environment.NewLine));
+
+        public string DefaultNewLineSequence { get; private init; } = platformNewLineSequence;
+        public string DefaultNewLine { init => DefaultNewLineSequence = String.Join("", Tools.Syntax.EscapeString(value)); }
 
         readonly bool buildParseTreeDefault = Parser.BuildParseTree;
         int buildParseTreeLevel = 0;

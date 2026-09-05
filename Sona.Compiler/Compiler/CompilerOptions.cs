@@ -2,7 +2,14 @@
 
 namespace Sona.Compiler
 {
-    public record CompilerOptions(BinaryTarget Target, CompilerFlags Flags, ICompilerAssemblyLoader AssemblyLoader);
+    public record CompilerOptions(
+        BinaryTarget Target,
+        CompilerFlags Flags,
+        ICompilerAssemblyLoader AssemblyLoader
+    )
+    {
+        public string NewLine { get; init; } = Environment.NewLine;
+    }
 
     public enum BinaryTarget
     {

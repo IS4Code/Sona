@@ -253,16 +253,16 @@ namespace Sona.Compiler.States
     [LexerStateName("newline")]
     internal sealed class NewlinePragma : StringPragma
     {
-        public string NewLineSequence { get; private set; } = ScriptEnvironment.DefaultNewLineSequence;
+        public string? NewLineSequence { get; private set; }
 
-        public NewlinePragma() : base("newline")
+        public NewlinePragma(string? newLineSequence) : base("newline")
         {
-
+            NewLineSequence = newLineSequence;
         }
 
         public override LexerState ForkNew(IToken token)
         {
-            return new NewlinePragma();
+            return new NewlinePragma(NewLineSequence);
         }
 
         public override bool OnArgument(IToken token)

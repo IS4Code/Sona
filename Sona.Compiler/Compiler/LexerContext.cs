@@ -334,7 +334,7 @@ namespace Sona.Compiler
                 case "option":
                     return new OptionPragma();
                 case "newline":
-                    return new NewlinePragma();
+                    return new NewlinePragma(Environment?.DefaultNewLineSequence);
                 case "recursive":
                     return new RecursivePragma();
                 case "collection":
