@@ -279,6 +279,26 @@ namespace Sona.Compiler
             return namePrefix;
         }
 
+        public Task<CompilerResult> CompileToMemory(string fileName, ICharStream inputStream, out Stream outputStream, CompilerOptions options, CancellationToken cancellationToken = default)
+        {
+            return CompileToMemory(new SinglePairDictionary<string, ICharStream>(new(fileName, inputStream)), out outputStream, options, cancellationToken);
+        }
+
+        public Task<CompilerResult> CompileToMemory<TInputs>(TInputs inputs, out Stream outputStream, CompilerOptions options, CancellationToken cancellationToken = default) where TInputs : IReadOnlyCollection<KeyValuePair<string, ICharStream>>
+        {
+            var memoryStream = new BlockBufferStream();
+            outputStream = memoryStream;
+            try
+            {
+                return CompileToStream(inputs, new BlockBufferStream(memoryStream), options, cancellationToken);
+            }
+            catch(Exception e)
+            {
+                // Expose the stream even for synchronous exceptions
+                return Task.FromException<CompilerResult>(e);
+            }
+        }
+
         public Task<CompilerResult> CompileToStream(string fileName, ICharStream inputStream, Stream outputStream, CompilerOptions options, CancellationToken cancellationToken = default)
         {
             return CompileToStream(new SinglePairDictionary<string, ICharStream>(new(fileName, inputStream)), outputStream, options, cancellationToken);
