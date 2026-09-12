@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -36,9 +38,16 @@ namespace Sona.Compiler
 
         }
 
-        public CompilerResult CompileToSource(ICharStream inputStream, TextWriter output, CompilerOptions options)
+        public CompilerResult CompileToSource(string fileName, ICharStream inputStream, TextWriter output, CompilerOptions options)
         {
             var result = new CompilerResult(options);
+            CompileToSource(fileName, inputStream, output, result);
+            return result;
+        }
+
+        private CompilerResultFile CompileToSource(string fileName, ICharStream inputStream, TextWriter output, CompilerResult result)
+        {
+            var options = result.Options;
 
             // Will add diagnostics to result
             var errorListener = new ErrorHandler(result);
@@ -63,7 +72,11 @@ namespace Sona.Compiler
             writer.AdjustLines = (options.Flags & CompilerFlags.IgnoreLineNumbers) == 0;
             writer.SkipEmptyLines = !debugBeginEnd;
 
-            using var globalWriter = new SourceWriter(new StringWriter(result.GlobalCode = new()));
+            var stringBuilder = new StringBuilder();
+            var resultFile = new CompilerResultTextFile(fileName, output, stringBuilder);
+            result.AddFile(resultFile);
+
+            using var globalWriter = new SourceWriter(new StringWriter(stringBuilder));
             globalWriter.NewLine = options.NewLine;
 
             if(!debugging)
@@ -97,7 +110,7 @@ namespace Sona.Compiler
                 result.AddDiagnostic(new(error, lexer.Line));
             }
 
-            return result;
+            return resultFile;
         }
 
         [CLSCompliant(false)]
@@ -193,34 +206,51 @@ namespace Sona.Compiler
             return currentAssembly.GetManifestResourceStream(file);
         }
 
-        public CompilerResult CompileToString(AntlrInputStream inputStream, CompilerOptions options)
+        public CompilerResult CompileToString(string fileName, ICharStream inputStream, CompilerOptions options)
         {
-            CompilerResult result;
-            string source;
-            using(var sourceWriter = new StringWriter())
-            {
-                result = CompileToSource(inputStream, sourceWriter, options);
-                sourceWriter.Flush();
-                source = sourceWriter.ToString();
-            }
-            result.IntermediateCode = source;
+            var result = new CompilerResult(options);
+            CompileToString(fileName, inputStream, result);
             return result;
         }
 
-        private LocalFileSystem GetFileSystem(string source, string fileName, CompilerOptions options, out string inputPath, out string outputPath, out string manifestPath, out string depsPath)
+        public CompilerResult CompileToString<TInputs>(TInputs inputs, CompilerOptions options) where TInputs : IReadOnlyCollection<KeyValuePair<string, ICharStream>>
+        {
+            if(inputs.Count == 0)
+            {
+                throw new ArgumentException("At least one input is required.", nameof(inputs));
+            }
+
+            var result = new CompilerResult(options);
+            foreach(var pair in inputs)
+            {
+                CompileToString(pair.Key, pair.Value, result);
+            }
+            return result;
+        }
+
+        private CompilerResultStringFile CompileToString(string fileName, ICharStream inputStream, CompilerResult result)
+        {
+            string source;
+            CompilerResultFile resultFile;
+            using(var sourceWriter = new StringWriter())
+            {
+                resultFile = CompileToSource(fileName, inputStream, sourceWriter, result);
+                sourceWriter.Flush();
+                source = sourceWriter.ToString();
+            }
+            // Replace with string result
+            var resultStringFile = new CompilerResultStringFile(resultFile.OriginalFileName, source, resultFile.GlobalCode);
+            result.ReplaceFile(resultFile, resultStringFile);
+            return resultStringFile;
+        }
+
+        private LocalFileSystem CreateFileSystem(CompilerOptions options, out string depsPath)
         {
             // A virtual file prefix (accessed through the local file system) to stand for in-memory dependencies
-            var fsPrefix = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), Path.GetFileNameWithoutExtension(fileName));
+            var fsPrefix = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
 
             var fs = new LocalFileSystem(fsPrefix, options.AssemblyLoader);
-            inputPath = fsPrefix + ".fsx";
-            outputPath = fsPrefix + ".dll";
-            manifestPath = fsPrefix + ".win32manifest";
-
-            fs.InputFiles[inputPath] = source;
-            fs.InputFiles[manifestPath] = defaultWin32Manifest;
-
-            depsPath = fsPrefix + ".deps";
+            depsPath = Path.Combine(fsPrefix, ".deps");
             foreach(var file in embeddedLibraries.Values)
             {
                 var path = Path.Combine(depsPath, file);
@@ -229,22 +259,80 @@ namespace Sona.Compiler
             return fs;
         }
 
-        public async Task<CompilerResult> CompileToStream(AntlrInputStream inputStream, string fileName, Stream outputStream, CompilerOptions options, CancellationToken cancellationToken = default)
+        private string AddSourceDependency(LocalFileSystem fs, string fileName, string source, out string inputPath)
         {
-            var result = CompileToString(inputStream, options);
-            var source = result.IntermediateCode!;
+            // Preserve file name for the top-level module
+            var namePrefix = Path.Combine(fs.FileNamePrefix, Guid.NewGuid().ToString(), Path.GetFileNameWithoutExtension(fileName));
+            inputPath = namePrefix + ".fsx";
 
-            var fs = GetFileSystem(PrepareCode(source, result, options), fileName, options, out var inputPath, out var outputPath, out var manifestPath, out var depsPath);
+            fs.InputFiles[inputPath] = source;
+            return namePrefix;
+        }
+
+        private string AddSourceMain(LocalFileSystem fs, string fileName, string source, out string inputPath, out string outputPath, out string manifestPath)
+        {
+            var namePrefix = AddSourceDependency(fs, fileName, source, out inputPath);
+            outputPath = namePrefix + ".dll";
+            manifestPath = namePrefix + ".win32manifest";
+
+            fs.InputFiles[manifestPath] = defaultWin32Manifest;
+            return namePrefix;
+        }
+
+        public Task<CompilerResult> CompileToStream(string fileName, ICharStream inputStream, Stream outputStream, CompilerOptions options, CancellationToken cancellationToken = default)
+        {
+            return CompileToStream(new SinglePairDictionary<string, ICharStream>(new(fileName, inputStream)), outputStream, options, cancellationToken);
+        }
+
+        public async Task<CompilerResult> CompileToStream<TInputs>(TInputs inputs, Stream outputStream, CompilerOptions options, CancellationToken cancellationToken = default) where TInputs : IReadOnlyCollection<KeyValuePair<string, ICharStream>>
+        {
+            if(inputs.Count == 0)
+            {
+                throw new ArgumentException("At least one input is required.", nameof(inputs));
+            }
+
+            var result = new CompilerResult(options);
+            var fs = CreateFileSystem(options, out var depsPath);
+
+            var inputPaths = new List<string>(inputs.Count);
+
+            // Last input is the program code
+            string mainInputPath = null!, mainSource = null!, outputPath = null!, manifestPath = null!;
+
+            int index = 0;
+            foreach(var pair in inputs)
+            {
+                var fileName = pair.Key;
+                var inputStream = pair.Value;
+                index++;
+
+                // Finalize code and its prefix statements
+                var resultFile = CompileToString(fileName, inputStream, result);
+                var source = PrepareCode(resultFile.IntermediateCode, resultFile, options);
+
+                string inputPath;
+                if(index == inputs.Count)
+                {
+                    AddSourceMain(fs, fileName, source, out inputPath, out outputPath, out manifestPath);
+                    mainInputPath = inputPath;
+                    mainSource = source;
+                }
+                else
+                {
+                    AddSourceDependency(fs, fileName, source, out inputPath);
+                }
+                inputPaths.Add(inputPath);
+            }
 
             fs.OutputFiles[outputPath] = outputStream;
 
             using var replacedEnv = await FSharpIsolatedEnvironment.CreateAsync(fs, depsPath, cancellationToken);
 
-            var sourceText = SourceText.ofString(source);
+            var sourceText = SourceText.ofString(mainSource);
 
             FSharpOption<CancellationToken>? cancelTokenOption = cancellationToken.CanBeCanceled ? cancellationToken : null;
                 
-            var (checker, flags) = await GetCheckerAndOptions(inputPath, sourceText, manifestPath, options, cancelTokenOption);
+            var (checker, flags) = await GetCheckerAndOptions(mainInputPath, sourceText, manifestPath, options, cancelTokenOption);
 
             var args = new[]
             {
@@ -253,7 +341,7 @@ namespace Sona.Compiler
             }.Concat(referencedLibraries.Select(f => $"-r:{Path.Combine(depsPath, f)}.dll"))
             .Concat(flags.OtherOptions)
             .Concat(flags.ReferencedProjects.Select(p => p.OutputFile))
-            .Concat(flags.SourceFiles)
+            .Concat(inputPaths) // use actual inputs
             .ToArray();
 
             var (diagnostics, exception) = await FSharpAsync.StartAsTask(
@@ -286,17 +374,22 @@ namespace Sona.Compiler
             result.AddDiagnostic(new(message, diagnostic));
         }
 
-        public Task<CompilerResult> CompileToBinary(AntlrInputStream inputStream, string fileName, CompilerOptions options, CancellationToken cancellationToken = default)
+        public Task<CompilerResult> CompileToBinary(string fileName, ICharStream inputStream, CompilerOptions options, CancellationToken cancellationToken = default)
         {
-            return CompileToStream(inputStream, fileName, new BlockBufferStream(), options, cancellationToken: cancellationToken);
+            return CompileToStream(fileName, inputStream, new BlockBufferStream(), options, cancellationToken: cancellationToken);
         }
 
-        private string PrepareCode(string source, CompilerResult result, CompilerOptions options)
+        public Task<CompilerResult> CompileToBinary<TInputs>(TInputs inputs, CompilerOptions options, CancellationToken cancellationToken = default) where TInputs : IReadOnlyCollection<KeyValuePair<string, ICharStream>>
         {
-            if(result.GlobalCode?.Length > 0)
+            return CompileToStream(inputs, new BlockBufferStream(), options, cancellationToken: cancellationToken);
+        }
+
+        private string PrepareCode(string source, CompilerResultFile resultFile, CompilerOptions options)
+        {
+            if(resultFile.GlobalCode?.Length > 0)
             {
                 var newResult = new StringBuilder();
-                newResult.Append(result.GlobalCode);
+                newResult.Append(resultFile.GlobalCode);
                 newResult.Append(options.NewLine);
                 newResult.Append(source);
                 newResult.Append(options.NewLine);
@@ -308,7 +401,7 @@ namespace Sona.Compiler
 
         readonly ConcurrentDictionary<CompilerOptions, FsiEvaluationSession> sessionCache = new();
 
-        private FsiEvaluationSession CheckEvaluation(CompilerResult result, string manifestPath, string depsPath, CompilerOptions options)
+        private FsiEvaluationSession CheckEvaluation(CompilerResult result, string manifestPath, string depsPath, CompilerOptions options, IReadOnlyList<string> preloadFiles, string mainSource, FSharpOption<CancellationToken>? cancelTokenOption = null)
         {
             var session = sessionCache.GetOrAdd(options, options => {
                 var flags = GetOptions(manifestPath, options);
@@ -328,10 +421,42 @@ namespace Sona.Compiler
                 return FsiEvaluationSession.Create(config, args, Console.In, Console.Out, Console.Error, collectible: true, legacyReferenceResolver: null);
             });
 
-            string source = PrepareCode(result.IntermediateCode!, result, options);
+            if(preloadFiles.Count > 0)
+            {
+                // Non-main files must be referenced via evaluated #load
+                var sb = new StringBuilder();
+                foreach(var preloadFile in preloadFiles)
+                {
+                    sb.AppendFormat("#load @\"{0}\"{1}", preloadFile, options.NewLine);
+                }
 
-            // Check for errors separately 
-            var (parseResults, fileResults, projectResults) = session.ParseAndCheckInteraction(source);
+                var (preloadResult, preloadDiagnostics) = session.EvalInteractionNonThrowing(sb.ToString(), cancelTokenOption);
+
+                foreach(var diagnostic in preloadDiagnostics)
+                {
+                    AddDiagnostic(result, diagnostic);
+                }
+
+                if(preloadResult is FSharpChoice<FSharpOption<FsiValue>, Exception>.Choice2Of2 { Item: { } exception })
+                {
+                    if(GetExceptionDiagnostics(exception) is { Length: > 0 } errors)
+                    {
+                        foreach(var error in errors)
+                        {
+                            AddDiagnostic(result, error);
+                        }
+                    }
+                    else
+                    {
+                        result.AddDiagnostic(new(exception));
+                    }
+                    result.Success = false;
+                    return session;
+                }
+            }
+
+            // Check main source without evaluating
+            var (parseResults, fileResults, projectResults) = session.ParseAndCheckInteraction(mainSource);
 
             foreach(var diagnostic in parseResults.Diagnostics.Concat(fileResults.Diagnostics).Concat(projectResults.Diagnostics).Distinct())
             {
@@ -345,24 +470,71 @@ namespace Sona.Compiler
             return session;
         }
 
-        public Task<CompilerResult> CompileToDelegate(AntlrInputStream inputStream, string fileName, CompilerOptions options, CancellationToken cancellationToken = default)
+        private LocalFileSystem CreateEvaluationFileSystem(CompilerResult result, CompilerOptions options, out string depsPath, out string mainInputPath, out string manifestPath, out IReadOnlyList<string> preloadedFiles, out string mainSource)
         {
-            return CompileToDelegate(CompileToString(inputStream, options), fileName, cancellationToken);
+            var fs = CreateFileSystem(options, out depsPath);
+
+            var codeFiles = result.CodeFiles;
+            if(codeFiles.Count > 1)
+            {
+                var preload = new List<string>();
+                for(int i = 0; i < codeFiles.Count - 1; i++)
+                {
+                    var stringFile = (CompilerResultStringFile)codeFiles[i];
+                    var depSource = PrepareCode(stringFile.IntermediateCode, stringFile, options);
+                    AddSourceDependency(fs, stringFile.OriginalFileName, depSource, out var inputPath);
+                    preload.Add(inputPath);
+                }
+                preloadedFiles = preload;
+            }
+            else
+            {
+                preloadedFiles = Array.Empty<string>();
+            }
+
+            var mainFile = (CompilerResultStringFile)codeFiles[codeFiles.Count - 1];
+            mainSource = PrepareCode(mainFile.IntermediateCode, mainFile, options);
+            AddSourceMain(fs, mainFile.OriginalFileName, mainSource, out mainInputPath, out _, out manifestPath);
+
+            return fs;
         }
 
-        public async Task<CompilerResult> CompileToDelegate(CompilerResult result, string fileName, CancellationToken cancellationToken = default)
+        public Task<CompilerResult> CompileToDelegate(string fileName, ICharStream inputStream, CompilerOptions options, CancellationToken cancellationToken = default)
+        {
+            return CompileToDelegate(new SinglePairDictionary<string, ICharStream>(new(fileName, inputStream)), options, cancellationToken);
+        }
+
+        public async Task<CompilerResult> CompileToDelegate<TInputs>(TInputs inputs, CompilerOptions options, CancellationToken cancellationToken = default) where TInputs : IReadOnlyCollection<KeyValuePair<string, ICharStream>>
+        {
+            if(inputs.Count == 0)
+            {
+                throw new ArgumentException("At least one input is required.", nameof(inputs));
+            }
+
+            var result = new CompilerResult(options);
+            foreach(var pair in inputs)
+            {
+                CompileToString(pair.Key, pair.Value, result);
+            }
+            return await CompileToDelegate(result, cancellationToken);
+        }
+
+        public async Task<CompilerResult> CompileToDelegate(CompilerResult result, CancellationToken cancellationToken = default)
         {
             var options = result.Options;
 
-            var source = result.IntermediateCode ?? throw new ArgumentException("Argument is missing intermediate code.", nameof(result));
+            if(result.CodeFiles.Count == 0)
+            {
+                throw new ArgumentException("Result is missing compilable code.", nameof(result));
+            }
 
-            var fs = GetFileSystem(source, fileName, options, out var inputPath, out _, out var manifestPath, out var depsPath);
+            var fs = CreateEvaluationFileSystem(result, options, out var depsPath, out var mainInputPath, out var manifestPath, out var preloadedFiles, out var mainSource);
 
             using var replacedEnv = await FSharpIsolatedEnvironment.CreateAsync(fs, depsPath, cancellationToken);
 
             FSharpOption<CancellationToken>? cancelTokenOption = cancellationToken.CanBeCanceled ? cancellationToken : null;
 
-            var session = CheckEvaluation(result, manifestPath, depsPath, options);
+            var session = CheckEvaluation(result, manifestPath, depsPath, options, preloadedFiles, mainSource, cancelTokenOption);
 
             if(!result.Success)
             {
@@ -378,27 +550,26 @@ namespace Sona.Compiler
 
             Task EvalInteraction()
             {
-                var (evalResult, evalDiagnostics) = session.EvalInteractionNonThrowing(PrepareCode(source, result, options), inputPath, cancelTokenOption);
+                // Evaluate the main source with dependencies already loaded
+                var (evalResult, evalDiagnostics) = session.EvalInteractionNonThrowing(mainSource, mainInputPath, cancelTokenOption);
 
                 if(evalResult is FSharpChoice<FSharpOption<FsiValue>, Exception>.Choice2Of2 { Item: { } exception })
                 {
                     // Unwrap exception
-                    if(exception is FsiCompilationException fsiException)
+                    switch(GetExceptionDiagnostics(exception))
                     {
-                        if(fsiException.ErrorInfos is { Value: { Length: > 0 } errors })
-                        {
+                        case { Length: > 0 } errors:
                             // Process errors normally
                             var phantomResult = new CompilerResult(result.Options);
                             foreach(var error in errors)
                             {
                                 AddDiagnostic(phantomResult, error);
                             }
-                            exception = new CompilationException(fsiException.Message, phantomResult.Diagnostics, fsiException);
-                        }
-                        else
-                        {
-                            exception = new CompilationException(fsiException.Message, Array.Empty<CompilerDiagnostic>(), fsiException);
-                        }
+                            exception = new CompilationException(exception.Message, phantomResult.Diagnostics, exception);
+                            break;
+                        case { Length: 0 }:
+                            exception = new CompilationException(exception.Message, Array.Empty<CompilerDiagnostic>(), exception);
+                            break;
                     }
                     return Task.FromException(exception);
                 }
@@ -406,24 +577,39 @@ namespace Sona.Compiler
             }
         }
 
-        public Task<CompilerResult> Compile(AntlrInputStream inputStream, string fileName, CompilerOptions options, CancellationToken cancellationToken = default)
+        private FSharp.Compiler.Diagnostics.FSharpDiagnostic[]? GetExceptionDiagnostics(Exception exception)
+        {
+            if(exception is not FsiCompilationException fsiException)
+            {
+                return null;
+            }
+            return fsiException.ErrorInfos?.Value;
+        }
+
+        public Task<CompilerResult> Compile(string fileName, ICharStream inputStream, CompilerOptions options, CancellationToken cancellationToken = default)
         {
             if(options.Target == BinaryTarget.Script)
             {
-                return CompileToDelegate(inputStream, fileName, options, cancellationToken);
+                return CompileToDelegate(fileName, inputStream, options, cancellationToken);
             }
             else
             {
-                return CompileToBinary(inputStream, fileName, options, cancellationToken);
+                return CompileToBinary(fileName, inputStream, options, cancellationToken);
             }
         }
 
-        public void CheckResult(CompilerResult result, string fileName, CompilerOptions options, CancellationToken cancellationToken = default)
+        public void CheckResult(CompilerResult result, CompilerOptions options, CancellationToken cancellationToken = default)
         {
-            var fs = GetFileSystem(result.IntermediateCode ?? throw new ArgumentException("Result is missing compilable code.", nameof(result)), fileName, options, out _, out _, out var manifestPath, out var depsPath);
+            if(result.CodeFiles.Count == 0)
+            {
+                throw new ArgumentException("Result is missing compilable code.", nameof(result));
+            }
+
+            var fs = CreateEvaluationFileSystem(result, options, out var depsPath, out _, out var manifestPath, out var preloadedFiles, out var mainSource);
 
             using var replacedEnv = FSharpIsolatedEnvironment.Create(fs, depsPath, cancellationToken);
-            CheckEvaluation(result, manifestPath, depsPath, options);
+            FSharpOption<CancellationToken>? cancelTokenOption = cancellationToken.CanBeCanceled ? cancellationToken : null;
+            CheckEvaluation(result, manifestPath, depsPath, options, preloadedFiles, mainSource, cancelTokenOption);
         }
 
         static readonly string[] executableFlags =
@@ -599,6 +785,36 @@ namespace Sona.Compiler
                     Environment.SetEnvironmentVariable("FSHARP_COMPILER_BIN", previousBin);
                 }
                 semaphore.Release();
+            }
+        }
+
+        readonly record struct SinglePairDictionary<TKey, TValue>(KeyValuePair<TKey, TValue> Pair) : IReadOnlyDictionary<TKey, TValue>
+        {
+            public TValue this[TKey key] => ContainsKey(key) ? Pair.Value : throw new KeyNotFoundException();
+
+            public IEnumerable<TKey> Keys => new[] { Pair.Key };
+            public IEnumerable<TValue> Values => new[] { Pair.Value };
+            public int Count => 1;
+            public bool ContainsKey(TKey key) => EqualityComparer<TKey>.Default.Equals(key, Pair.Key);
+            public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => ((IEnumerable<KeyValuePair<TKey, TValue>>)new[] { Pair }).GetEnumerator();
+
+#nullable disable
+#nullable enable annotations
+            public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
+            {
+                if(!ContainsKey(key))
+                {
+                    value = default;
+                    return false;
+                }
+                value = Pair.Value;
+                return true;
+            }
+#nullable restore
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
             }
         }
 

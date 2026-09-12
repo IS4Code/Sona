@@ -934,13 +934,14 @@ ReadKey(true)!");
 
             try
             {
-                var result = compiler.CompileToString(inputStream, options);
+                var result = compiler.CompileToString("input", inputStream, options);
+                var resultFile = (CompilerResultStringFile)result.CodeFiles[0];
 
-                var resultText = result.IntermediateCode ?? "";
+                var resultText = resultFile.IntermediateCode;
 
-                if(result.GlobalCode?.Length > 0)
+                if(resultFile.GlobalCode.Length > 0)
                 {
-                    resultText = result.GlobalCode + Environment.NewLine + resultText;
+                    resultText = resultFile.GlobalCode + Environment.NewLine + resultText;
                 }
 
                 Invoke(() => {
@@ -1043,7 +1044,7 @@ ReadKey(true)!");
 
         private IReadOnlyCollection<CompilerDiagnostic> CheckSource(CompilerResult result, out Func<Task>? entryPoint)
         {
-            var tuple = (result.IntermediateCode, result.Options);
+            var tuple = (((CompilerResultStringFile)result.CodeFiles[0]).IntermediateCode, result.Options);
             if(latestSourceTuple == tuple)
             {
                 var lastResult = latestSourceResult;
@@ -1054,7 +1055,7 @@ ReadKey(true)!");
             try
             {
                 // Expose F# errors
-                result = compiler.CompileToDelegate(result, "input").Result;
+                result = compiler.CompileToDelegate(result).Result;
                 entryPoint = result.Success ? result.EntryPoint : null;
                 latestSourceResult = (result.Diagnostics, entryPoint);
                 return result.Diagnostics;

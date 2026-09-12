@@ -47,7 +47,7 @@ namespace Sona.Tests
             var writer = new StringWriter();
             try
             {
-                var result = compiler.CompileToSource(inputStream, writer, options);
+                var result = compiler.CompileToSource("input", inputStream, writer, options);
 
                 if(!result.Success)
                 {

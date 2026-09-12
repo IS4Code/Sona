@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,14 +14,14 @@ namespace Sona.Compiler
 {
     public class CompilerResult
     {
+        readonly List<CompilerResultFile> files = new();
         readonly List<CompilerDiagnostic> diagnostics = new();
 
         public CompilerOptions Options { get; }
         public Exception? Exception { get; internal set; }
-        public string? IntermediateCode { get; internal set; }
-        public StringBuilder? GlobalCode { get; internal set; }
         public Stream? Stream { get; internal set; }
 
+        public IReadOnlyList<CompilerResultFile> CodeFiles => files;
         public IReadOnlyCollection<CompilerDiagnostic> Diagnostics => diagnostics;
 
         bool? success;
@@ -50,9 +51,19 @@ namespace Sona.Compiler
             Options = options;
         }
 
-        internal void AddDiagnostic(CompilerDiagnostic diagnostic)
+        internal void AddFile(CompilerResultFile file) => files.Add(file);
+        internal void AddDiagnostic(CompilerDiagnostic diagnostic) => diagnostics.Add(diagnostic);
+
+        internal void ReplaceFile(CompilerResultFile oldFile, CompilerResultFile newFile)
         {
-            diagnostics.Add(diagnostic);
+            var span = CollectionsMarshal.AsSpan(files);
+            for(int i = 0; i < span.Length; i++)
+            {
+                if(Object.ReferenceEquals(files[i], oldFile))
+                {
+                    files[i] = newFile;
+                }
+            }
         }
 
         private Func<Task>? CreateEntryPoint()
@@ -68,6 +79,10 @@ namespace Sona.Compiler
 #pragma warning restore CS1998
         }
     }
+
+    public abstract record CompilerResultFile(string OriginalFileName, StringBuilder GlobalCode);
+    public sealed record CompilerResultStringFile(string OriginalFileName, string IntermediateCode, StringBuilder GlobalCode) : CompilerResultFile(OriginalFileName, GlobalCode);
+    public sealed record CompilerResultTextFile(string OriginalFileName, TextWriter IntermediateCodeWriter, StringBuilder GlobalCode) : CompilerResultFile(OriginalFileName, GlobalCode);
 
     public class CompilationException : Exception
     {
