@@ -8,7 +8,7 @@
     <Authors>IS4</Authors>
     <Copyright>Copyright (c) $(Authors) $([System.DateTime]::UtcNow.ToString('yyyy'))</Copyright>
     <RootNamespace>Sona.Compiler.Tool</RootNamespace>
-    <LangVersion>10.0</LangVersion>
+    <LangVersion>12.0</LangVersion>
     <Nullable>enable</Nullable>
     <AssemblyTitle>$(Product) Compiler Executable</AssemblyTitle>
     <PackageId>Sona.Compiler.Tool</PackageId>
@@ -37,6 +37,10 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" Version="2.0.12" />
   </ItemGroup>
 
   <ItemGroup>
